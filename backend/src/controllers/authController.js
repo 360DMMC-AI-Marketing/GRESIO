@@ -29,7 +29,6 @@ exports.login = async (req, res, next) => {
 
     user.lastActive = new Date();
     user.status = 'active';
-    user.onboardingCompleted = true;
     await user.save();
 
     await Activity.create({
@@ -61,7 +60,7 @@ exports.register = async (req, res, next) => {
 
     const user = await User.create({
       name, email, password, domain: bareDomain,
-      role: 'admin', onboardingCompleted: true,
+      role: 'admin', onboardingCompleted: false,
     });
 
     const company = await Company.create({

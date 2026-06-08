@@ -80,11 +80,11 @@ app.get('/api/seed', async (req, res) => {
     await Company.create({ name: "Admin's Company", domain: 'admin@cios.com', plan: 'enterprise' });
 
     // Users
-    const admin = await User.create({ name: 'Admin User', email: 'admin@cios.com', password: 'password123', role: 'admin', domain: 'admin@cios.com' });
-    const pm = await User.create({ name: 'Project Manager', email: 'pm@cios.com', password: 'password123', role: 'project_manager', domain: 'admin@cios.com' });
-    const dev = await User.create({ name: 'Developer User', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com' });
-    const qa = await User.create({ name: 'QA Tester', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com' });
-    const intern = await User.create({ name: 'Intern User', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com' });
+    const admin = await User.create({ name: 'Admin User', email: 'admin@cios.com', password: 'password123', role: 'admin', domain: 'admin@cios.com', onboardingCompleted: false });
+    const pm = await User.create({ name: 'Project Manager', email: 'pm@cios.com', password: 'password123', role: 'project_manager', domain: 'admin@cios.com', onboardingCompleted: false });
+    const dev = await User.create({ name: 'Developer User', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com', onboardingCompleted: false });
+    const qa = await User.create({ name: 'QA Tester', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com', onboardingCompleted: false });
+    const intern = await User.create({ name: 'Intern User', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com', onboardingCompleted: false });
     const users = { admin, pm, dev, qa, intern };
 
     // Projects
