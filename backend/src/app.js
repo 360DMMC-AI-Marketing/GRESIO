@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -29,16 +28,14 @@ const testCaseRoutes = require('./routes/testCases');
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = env.FRONTEND_URL ? env.FRONTEND_URL.split(',') : ['http://localhost:5173'];
 const io = new Server(server, {
-  cors: { origin: env.FRONTEND_URL, methods: ['GET', 'POST'] },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
 });
 
-app.use(cors({ origin: env.FRONTEND_URL }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
-
-const frontendDist = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(frontendDist));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -55,10 +52,6 @@ app.use('/api/test-cases', testCaseRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 app.use(errorHandler);
