@@ -54,6 +54,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/seed', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const Company = require('./models/Company');
+    const existing = await User.findOne({ email: 'admin@cios.com' });
+    if (existing) return res.json({ message: 'Already seeded' });
+
+    await Company.create({ name: "Admin's Company", domain: 'admin@cios.com', plan: 'enterprise' });
+    await User.create({ name: 'Admin User', email: 'admin@cios.com', password: 'password123', role: 'admin', domain: 'admin@cios.com' });
+    await User.create({ name: 'Project Manager', email: 'pm@cios.com', password: 'password123', role: 'project_manager', domain: 'admin@cios.com' });
+    await User.create({ name: 'Developer User', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com' });
+    await User.create({ name: 'QA Tester', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com' });
+    await User.create({ name: 'Intern User', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com' });
+    res.json({ message: 'Seeded! Login: admin@cios.com / password123' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.use(errorHandler);
 setupSocket(io);
 
