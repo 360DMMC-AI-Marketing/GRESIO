@@ -12,7 +12,8 @@ const generateToken = (user) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const email = (req.body.email || '').toLowerCase().trim();
+    const password = req.body.password;
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
@@ -48,7 +49,8 @@ exports.login = async (req, res, next) => {
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role, plan } = req.body;
+    const { name, password, role, plan } = req.body;
+    const email = (req.body.email || '').toLowerCase().trim();
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(409).json({ message: 'Email already registered' });
