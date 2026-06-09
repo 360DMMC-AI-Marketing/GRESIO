@@ -32,6 +32,7 @@ router.post('/:projectId/team/groups', authorize('admin', 'project_manager', 'te
 router.patch('/:projectId/team/groups/:groupId', authorize('admin', 'project_manager', 'team_lead'), teamGroupController.updateGroup);
 router.delete('/:projectId/team/groups/:groupId', authorize('admin', 'project_manager', 'team_lead'), teamGroupController.archiveGroup);
 router.get('/teams/grouped', authorize('admin', 'project_manager', 'team_lead'), teamGroupController.getAllDomainGrouped);
+router.get('/:projectId/team/suggested', teamController.getSuggestedTeams);
 router.get('/:projectId/team/grouped', teamGroupController.getGroupedMembers);
 router.post('/:projectId/team/accept/:token', teamController.acceptInvitation);
 router.post('/:projectId/team/decline/:token', teamController.declineInvitation);

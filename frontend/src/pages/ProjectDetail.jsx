@@ -91,6 +91,7 @@ export default function ProjectDetail() {
   const failFileRef = useRef(null);
   const [projectMembers, setProjectMembers] = useState([]);
   const [groupedData, setGroupedData] = useState({ groups: [], ungrouped: [] });
+  const [suggestedTeams, setSuggestedTeams] = useState([]);
   const [taskGroupFilter, setTaskGroupFilter] = useState('');
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -119,6 +120,8 @@ export default function ProjectDetail() {
       if (groupedRes?.data) {
         setGroupedData(groupedRes.data);
       }
+      // Fetch suggested teams
+      projects.getSuggestedTeams(id).then(r => setSuggestedTeams(r.data?.suggestedTeams || [])).catch(() => {});
       // extra[0] = settings, extra[1] = test cases, extra[2] = stats
       if (canManage && extra[0]) {
         const settingsData = extra[0].data?.settings || {};
@@ -361,6 +364,19 @@ export default function ProjectDetail() {
       setModalAlert({ title:'Success', message:'Settings saved!', type:'success' });
     } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
     finally { setSaving(false); }
+  };
+
+  const handleQuickInvite = async (group, user) => {
+    try {
+      const payload = { email: user.email, role: group.totalRoles[0] || 'developer', teamGroup: group.groupId, message: `You're invited to join the ${group.groupName}!` };
+      const res = await projects.addTeamMember(id, payload);
+      setMembers(prev => [...prev, res.data]);
+      const groupedRes = await projects.getGroupedMembers(id);
+      if (groupedRes.data) setGroupedData(groupedRes.data);
+      const sugRes = await projects.getSuggestedTeams(id);
+      if (sugRes.data) setSuggestedTeams(sugRes.data?.suggestedTeams || []);
+      setModalAlert({ title:'Invitation sent', message:`Invited ${user.name} to ${group.groupName}.`, type:'success' });
+    } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
   };
 
   const handleAddMember = async () => {
@@ -966,6 +982,38 @@ export default function ProjectDetail() {
             </div>
             {canManage && <button className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>}
           </div>
+
+          {/* Suggested teams based on project type */}
+          {canManage && suggestedTeams.filter(s => s.existingCount === 0).length > 0 && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:600,color:'#374151',marginBottom:6}}>💡 Suggested teams for {project?.projectType || 'software'} project</div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                {suggestedTeams.filter(s => s.existingCount === 0).map(s => (
+                  <div key={s.groupName} style={{background:'#f0fdf4',border:'0.5px solid #bbf7d0',borderRadius:8,padding:'8px 12px',minWidth:180,flex:1}}>
+                    <div style={{fontSize:11,fontWeight:600,color:'#166534',marginBottom:4}}>
+                      {s.groupIcon} {s.groupName}
+                    </div>
+                    <div style={{fontSize:9,color:'#15803d',marginBottom:4}}>
+                      Roles: {s.totalRoles.slice(0,3).join(', ')}{s.totalRoles.length > 3 ? '...' : ''}
+                    </div>
+                    {s.availableUsers.length > 0 ? (
+                      <div style={{marginTop:4}}>
+                        {s.availableUsers.slice(0,4).map(u => (
+                          <button key={u._id} onClick={() => handleQuickInvite(s, u)}
+                            style={{display:'inline-flex',alignItems:'center',gap:4,margin:'2px 4px 2px 0',padding:'3px 8px',background:'white',border:'0.5px solid #bbf7d0',borderRadius:6,fontSize:9,cursor:'pointer',color:'#166534',whiteSpace:'nowrap'}}>
+                            + {u.name}
+                          </button>
+                        ))}
+                        {s.availableUsers.length > 4 && <span style={{fontSize:9,color:'#6b7280'}}>+{s.availableUsers.length - 4} more</span>}
+                      </div>
+                    ) : (
+                      <div style={{fontSize:9,color:'#6b7280'}}>No matching users found</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {groupedData.groups.length === 0 && groupedData.ungrouped.length === 0 ? (
             <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>👥</p><p style={{fontSize:11}}>No team members yet</p></div>

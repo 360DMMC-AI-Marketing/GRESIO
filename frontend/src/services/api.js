@@ -62,6 +62,7 @@ export const projects = {
   createTeamGroup: (id, data) => api.post(`/projects/${id}/team/groups`, data),
   updateTeamGroup: (projectId, groupId, data) => api.patch(`/projects/${projectId}/team/groups/${groupId}`, data),
   archiveTeamGroup: (projectId, groupId) => api.delete(`/projects/${projectId}/team/groups/${groupId}`),
+  getSuggestedTeams: (id) => api.get(`/projects/${id}/team/suggested`),
   getGroupedMembers: (id, params) => api.get(`/projects/${id}/team/grouped`, { params }),
   getTeamAnalytics: (id) => api.get(`/projects/${id}/team/analytics`),
   getAllDomainTeamGroups: () => api.get('/projects/teams/grouped'),

@@ -1,10 +1,19 @@
 const ProjectMember = require('../models/ProjectMember');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const TeamGroup = require('../models/TeamGroup');
 const Notification = require('../models/Notification');
 const crypto = require('crypto');
 const env = require('../config/env');
 const { getDomainProjectIds } = require('../config/planLimits');
+
+const PROJECT_TYPE_TEAMS = {
+  software: ['Development Team', 'QA & Testing Team', 'Project Management Team'],
+  design: ['Design Team', 'Project Management Team'],
+  business: ['Business Team', 'Project Management Team'],
+  content: ['Development Team', 'Project Management Team'],
+  research: ['Business Team', 'Project Management Team'],
+};
 
 const populate = q => q
   .populate('user', 'name email avatar role')
@@ -206,6 +215,58 @@ exports.declineInvitation = async (req, res, next) => {
     }
 
     res.json({ message: 'Invitation declined' });
+  } catch (e) { next(e); }
+};
+
+exports.getSuggestedTeams = async (req, res, next) => {
+  try {
+    const project = await Project.findById(req.params.projectId).select('projectType domain settings');
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    const type = project.projectType || 'software';
+    const suggestedNames = PROJECT_TYPE_TEAMS[type] || PROJECT_TYPE_TEAMS.software;
+
+    // Get project team groups and existing members
+    const projectGroups = await TeamGroup.find({ project: req.params.projectId, isArchived: false });
+    const existingMembers = await ProjectMember.find({ project: req.params.projectId }).populate('user', 'name email avatar role');
+
+    const result = [];
+    for (const groupName of suggestedNames) {
+      const group = projectGroups.find(g => g.name === groupName);
+      const roleSet = group ? new Set(group.roles) : new Set();
+      const existingInGroup = existingMembers.filter(m => String(m.teamGroup) === String(group?._id));
+
+      // Find users in the domain whose role matches this group's roles
+      const availableUsers = roleSet.size > 0
+        ? await User.find({ domain: project.domain, role: { $in: group.roles }, isActive: true })
+            .select('name email avatar role')
+            .limit(20)
+        : [];
+
+      result.push({
+        groupId: group?._id || null,
+        groupName,
+        groupIcon: group?.icon || '👥',
+        totalRoles: group?.roles || [],
+        existingCount: existingInGroup.length,
+        existingMembers: existingInGroup.map(m => ({
+          _id: m._id,
+          name: m.user?.name || m.email,
+          email: m.email,
+          status: m.status,
+          role: m.projectRole,
+        })),
+        availableUsers: existingInGroup.length > 0 ? [] : availableUsers.map(u => ({
+          _id: u._id,
+          name: u.name,
+          email: u.email,
+          avatar: u.avatar,
+          role: u.role,
+        })),
+      });
+    }
+
+    res.json({ projectType: type, suggestedTeams: result });
   } catch (e) { next(e); }
 };
 
