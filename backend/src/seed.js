@@ -41,13 +41,18 @@ async function seed() {
     const dev = await User.create({ name: 'Developer User', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com' });
     const qa = await User.create({ name: 'QA Tester', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com' });
     const intern = await User.create({ name: 'Intern User', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com' });
+    const manager = await User.create({ name: 'Team Lead', email: 'manager@cios.com', password: 'password123', role: 'team_leader', domain: 'admin@cios.com' });
+    const designer = await User.create({ name: 'UI/UX Designer', email: 'designer@cios.com', password: 'password123', role: 'ui_designer', domain: 'admin@cios.com' });
+    const analyst = await User.create({ name: 'Business Analyst', email: 'analyst@cios.com', password: 'password123', role: 'business_analyst', domain: 'admin@cios.com' });
+    const scrum = await User.create({ name: 'Scrum Master', email: 'scrum@cios.com', password: 'password123', role: 'scrum_master', domain: 'admin@cios.com' });
     await User.create({ name: 'Test User', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'test@demo.com' });
 
-    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'review', progress: 65, deadline: new Date('2025-08-01'), members: [admin._id, pm._id, dev._id, qa._id, intern._id], domain: 'admin@cios.com' });
-    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: [admin._id, pm._id, dev._id, qa._id, intern._id], domain: 'admin@cios.com' });
-    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'testing', progress: 45, deadline: new Date('2025-06-01'), members: [admin._id, pm._id, dev._id, qa._id, intern._id], domain: 'admin@cios.com' });
-    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'testing', progress: 82, deadline: new Date('2025-07-15'), members: [admin._id, pm._id, dev._id, qa._id, intern._id], domain: 'admin@cios.com' });
-    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'development', progress: 55, deadline: new Date('2025-09-01'), members: [admin._id, pm._id, dev._id, qa._id, intern._id], domain: 'admin@cios.com' });
+    const allUserIds = [admin._id, pm._id, dev._id, qa._id, intern._id, manager._id, designer._id, analyst._id, scrum._id];
+    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'review', progress: 65, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'testing', progress: 45, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'testing', progress: 82, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'development', progress: 55, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@cios.com' });
 
     // Create default team groups for each project
     const allProjects = [projectWeb, projectMobile, projectApi, projectEcom, projectDashboard];
@@ -80,12 +85,10 @@ async function seed() {
       return 'Development Team';
     };
 
-    await User.findByIdAndUpdate(admin._id, { $push: { assignedProjects: { $each: allProjects.map(p => p._id) } } });
     const allProjectIds = allProjects.map(p => p._id);
-    await User.findByIdAndUpdate(pm._id, { $push: { assignedProjects: { $each: allProjectIds } } });
-    await User.findByIdAndUpdate(dev._id, { $push: { assignedProjects: { $each: allProjectIds } } });
-    await User.findByIdAndUpdate(qa._id, { $push: { assignedProjects: { $each: allProjectIds } } });
-    await User.findByIdAndUpdate(intern._id, { $push: { assignedProjects: { $each: allProjectIds } } });
+    for (const u of [admin, pm, dev, qa, intern, manager, designer, analyst, scrum]) {
+      await User.findByIdAndUpdate(u._id, { $push: { assignedProjects: { $each: allProjectIds } } });
+    }
 
     const tasks = await Task.create([
       { title: 'Design homepage mockup', status: 'done', priority: 'high', project: projectWeb._id, assignee: dev._id, deadline: new Date('2025-06-15'), estimatedHours: 20, loggedHours: 18 },
@@ -130,7 +133,7 @@ async function seed() {
 
     const now = new Date();
     const userDomainMap = {};
-    for (const u of [admin, pm, dev, qa, intern]) {
+    for (const u of [admin, pm, dev, qa, intern, manager, designer, analyst, scrum]) {
       userDomainMap[u._id.toString()] = u.domain;
     }
     const activityData = [
@@ -144,6 +147,11 @@ async function seed() {
       { user: intern._id, domain: userDomainMap[intern._id.toString()], type: 'teams_message', source: 'teams', description: 'Question about push notification service', score: 3 },
       { user: admin._id, domain: userDomainMap[admin._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Weekly project status report', score: 3 },
       { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'outlook_calendar', source: 'outlook', description: 'Sprint review meeting', score: 5 },
+      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_message', source: 'teams', description: 'Team lead sync: sprint goals review', score: 5 },
+      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Updated design system components', score: 7 },
+      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 4 },
+      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 3 },
+      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 6 },
     ];
 
     for (let i = 0; i < activityData.length; i++) {
@@ -173,8 +181,12 @@ async function seed() {
       ['dev', 'frontend_developer'],
       ['qa', 'qa_tester'],
       ['intern', 'intern'],
+      ['manager', 'team_leader'],
+      ['designer', 'ui_designer'],
+      ['analyst', 'business_analyst'],
+      ['scrum', 'scrum_master'],
     ];
-    const userMap = { admin, pm, dev, qa, intern };
+    const userMap = { admin, pm, dev, qa, intern, manager, designer, analyst, scrum };
     const membersData = [];
     for (const proj of allProjects) {
       for (const [key, role] of memberEntries) {
@@ -204,13 +216,17 @@ async function seed() {
     ]);
 
     console.log('Seed complete!');
-    console.log('Demo accounts:');
-    console.log('  admin@cios.com / password123 (Admin)');
-    console.log('  pm@cios.com / password123 (PM)');
-    console.log('  dev@cios.com / password123 (Developer)');
-    console.log('  qa@cios.com / password123 (QA Tester)');
-    console.log('  intern@cios.com / password123 (Intern)
-  test@demo.com / password123 (Test User - Admin)');
+    console.log('Demo accounts (all passwords: password123):');
+    console.log('  admin@cios.com     - Admin');
+    console.log('  pm@cios.com        - Project Manager');
+    console.log('  dev@cios.com       - Developer');
+    console.log('  qa@cios.com        - QA Tester');
+    console.log('  intern@cios.com    - Intern');
+    console.log('  manager@cios.com   - Team Leader (Manager)');
+    console.log('  designer@cios.com  - UI/UX Designer');
+    console.log('  analyst@cios.com   - Business Analyst');
+    console.log('  scrum@cios.com     - Scrum Master');
+    console.log('  test@demo.com      - Admin (test domain)');
 
     process.exit(0);
   } catch (error) {
