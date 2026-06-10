@@ -32,11 +32,18 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = env.FRONTEND_URL ? env.FRONTEND_URL.split(',') : ['http://localhost:5173'];
+const corsOrigin = (origin, cb) => {
+  if (!origin || allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app')) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 const io = new Server(server, {
-  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
+  cors: { origin: corsOrigin, methods: ['GET', 'POST'] },
 });
 
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
