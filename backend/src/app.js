@@ -118,7 +118,7 @@ app.get('/api/seed', async (req, res) => {
 
     const roleToGroup = (role) => {
       if (['admin', 'company_owner'].includes(role)) return 'Administration Team';
-      if (['project_manager', 'team_lead', 'scrum_master'].includes(role)) return 'Project Management Team';
+      if (['project_manager', 'team_leader', 'scrum_master'].includes(role)) return 'Project Management Team';
       if (['developer', 'frontend_developer', 'backend_developer', 'full_stack_developer', 'mobile_developer', 'devops_engineer'].includes(role)) return 'Development Team';
       if (['qa_tester', 'automation_tester', 'qa_lead'].includes(role)) return 'QA & Testing Team';
       if (['designer', 'ui_designer', 'ux_designer', 'product_designer'].includes(role)) return 'Design Team';
@@ -129,7 +129,7 @@ app.get('/api/seed', async (req, res) => {
 
     const memberEntries = [
       ['admin', 'admin'], ['pm', 'project_manager'], ['dev', 'frontend_developer'],
-      ['qa', 'qa_tester'], ['intern', 'intern'], ['manager', 'team_lead'],
+      ['qa', 'qa_tester'], ['intern', 'intern'], ['manager', 'team_leader'],
       ['designer', 'ui_designer'], ['analyst', 'business_analyst'], ['scrum', 'scrum_master'],
     ];
     const userMap = { admin, pm, dev, qa, intern, manager, designer, analyst, scrum };
