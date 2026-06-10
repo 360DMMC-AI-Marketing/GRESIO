@@ -164,11 +164,20 @@ async function evaluateProjectPhase(projectId) {
 
   const targetIdx = PHASES.indexOf(targetPhase);
   if (targetPhase !== project.phase) {
-    await Project.findByIdAndUpdate(projectId, { phase: targetPhase }, { new: true });
+    const progress = calcPhaseProgress(project.projectType, targetPhase);
+    await Project.findByIdAndUpdate(projectId, { phase: targetPhase, progress }, { new: true });
     return targetPhase;
   }
 
   return project.phase;
 }
 
-module.exports = { evaluateProjectPhase, TYPE_CONFIGS };
+function calcPhaseProgress(projectType, phase) {
+  const config = TYPE_CONFIGS[projectType || 'software'];
+  if (!config) return 0;
+  const idx = config.phases.indexOf(phase);
+  if (idx === -1) return 0;
+  return Math.round((idx / (config.phases.length - 1)) * 100);
+}
+
+module.exports = { evaluateProjectPhase, TYPE_CONFIGS, calcPhaseProgress };

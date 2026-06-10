@@ -5,7 +5,7 @@ const Activity = require('../models/Activity');
 const Integration = require('../models/Integration');
 const Company = require('../models/Company');
 const microsoftGraphService = require('../services/microsoftGraphService');
-const { evaluateProjectPhase, PHASES } = require('../services/phaseService');
+const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { enforceProjectLimit } = require('../config/planLimits');
 
 exports.getProjects = async (req, res, next) => {
@@ -22,6 +22,15 @@ exports.getProjects = async (req, res, next) => {
       .populate('members', 'name email role avatar')
       .populate('tasks')
       .sort({ updatedAt: -1 });
+    const ops = [];
+    for (const p of projects) {
+      const correct = calcPhaseProgress(p.projectType, p.phase);
+      if (p.progress !== correct) {
+        ops.push(Project.updateOne({ _id: p._id }, { progress: correct }));
+        p.progress = correct;
+      }
+    }
+    if (ops.length) await Promise.all(ops);
     res.json(projects);
   } catch (error) {
     next(error);
@@ -34,6 +43,11 @@ exports.getProjectById = async (req, res, next) => {
       .populate('members', 'name email avatar role activityScore status')
       .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role outlookEmail' } });
     if (!project) return res.status(404).json({ message: 'Project not found' });
+    const progress = calcPhaseProgress(project.projectType, project.phase);
+    if (project.progress !== progress) {
+      project.progress = progress;
+      await project.save();
+    }
     res.json(project);
   } catch (error) {
     next(error);

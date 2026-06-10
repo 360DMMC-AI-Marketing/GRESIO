@@ -5,7 +5,7 @@ const Sprint = require('../models/Sprint');
 const User = require('../models/User');
 const Activity = require('../models/Activity');
 const Notification = require('../models/Notification');
-const { evaluateProjectPhase } = require('../services/phaseService');
+const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { generateTestsFromTasks } = require('./testCaseController');
 const { getDomainProjectIds } = require('../config/planLimits');
 const { notifyAdmins } = require('../services/notificationService');
@@ -241,10 +241,7 @@ exports.createSeparateTask = async (req, res, next) => {
 
 async function updateProjectProgress(projectId) {
   if (!projectId) return;
-  const allTasks = await Task.find({ project: projectId, isActive: true, scope: 'project' });
-  const total = allTasks.length;
-  const done = allTasks.filter((t) => t.status === 'done').length;
-  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
   const sprints = await Sprint.find({ project: projectId }).populate('tasks');
   for (const sprint of sprints) {
     if (sprint.status === 'completed' || sprint.status === 'cancelled') continue;
@@ -255,17 +252,25 @@ async function updateProjectProgress(projectId) {
       await Sprint.findByIdAndUpdate(sprint._id, { status: 'completed' }, { new: true });
     }
   }
-  const updatedSprints = await Sprint.find({ project: projectId });
-  const allSprintsCompleted = updatedSprints.length === 0 || updatedSprints.every(s => s.status === 'completed' || s.status === 'cancelled');
+
+  await evaluateProjectPhase(projectId);
+
+  const project = await Project.findById(projectId);
+  if (!project) return;
+
+  const progress = calcPhaseProgress(project.projectType, project.phase);
+  const tasks = await Task.find({ project: projectId, isActive: true, scope: 'project' });
+  const total = tasks.length;
+  const done = tasks.filter((t) => t.status === 'done').length;
+
   let status = 'on_track';
   if (total > 0 && done === total) {
     status = 'ready_to_test';
   } else if (progress === 100) {
     status = 'completed';
   }
-  const update = { progress, status };
-  await Project.findByIdAndUpdate(projectId, update, { new: true });
-  await evaluateProjectPhase(projectId);
+
+  await Project.findByIdAndUpdate(projectId, { progress, status }, { new: true });
 }
 
 exports.updateProjectProgress = updateProjectProgress;

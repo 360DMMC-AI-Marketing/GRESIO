@@ -1,6 +1,7 @@
 const Project = require('../models/Project');
 const Activity = require('../models/Activity');
 const { getDomainProjectIds } = require('../config/planLimits');
+const { calcPhaseProgress } = require('../services/phaseService');
 
 exports.getSettings = async (req, res, next) => {
   try {
@@ -21,6 +22,7 @@ exports.updateSettings = async (req, res, next) => {
     const { general, development, sprints, tasks, notifications, permissions, health, archive } = req.body;
 
     const updateFields = {};
+    let recalcProgress = false;
     if (general) {
       if (general.name !== undefined) updateFields.name = general.name;
       if (general.description !== undefined) updateFields.description = general.description;
@@ -30,6 +32,7 @@ exports.updateSettings = async (req, res, next) => {
       if (general.startDate !== undefined) updateFields.startDate = general.startDate;
       if (general.deadline !== undefined) updateFields.deadline = general.deadline;
       if (general.client !== undefined) updateFields.client = general.client;
+      if (general.phase !== undefined && general.progress === undefined) recalcProgress = true;
     }
 
     const settingsUpdate = {};
@@ -97,6 +100,12 @@ exports.updateSettings = async (req, res, next) => {
       .populate('members', 'name email role avatar');
 
     if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    if (recalcProgress) {
+      const syncProgress = calcPhaseProgress(project.projectType, project.phase);
+      project.progress = syncProgress;
+      await project.save();
+    }
 
     await Activity.create({
       user: req.user._id,
