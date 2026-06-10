@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { notifications, projects, tasks, sprints, users } from '../services/api';
+import toast from 'react-hot-toast';
 
 const STATUS_DOT = {
   active: 'bg-success-500', idle: 'bg-warning-500',
@@ -71,14 +72,11 @@ export default function Topbar({ sidebarWidth }) {
 
   useEffect(() => { fetchNotifs(); }, []);
 
-  const [toast, setToast] = useState(null);
-
   useEffect(() => {
     if (!socket) return;
     const onNotif = (n) => {
       setNotifs(prev => [n, ...prev]);
-      setToast(n);
-      setTimeout(() => setToast(null), 4000);
+      toast(n.title, { icon: '🔔', duration: 4000, position: 'top-right' });
     };
     socket.on('notification', onNotif);
     return () => socket.off('notification', onNotif);
@@ -127,11 +125,6 @@ export default function Topbar({ sidebarWidth }) {
 
   return (
     <header style={{ left: sidebarWidth || 200 }} className="h-12 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-5 transition-all duration-300 ease-in-out">
-      {toast && (
-        <div style={{position:'fixed',top:12,left:'50%',transform:'translateX(-50%)',zIndex:10001,background:'#1f2937',color:'white',padding:'10px 18px',borderRadius:10,boxShadow:'0 8px 30px rgba(0,0,0,0.2)',fontSize:12,fontWeight:500,maxWidth:400,pointerEvents:'none',animation:'fadeSlideDown 0.3s ease'}}>
-          🔔 {toast.title}
-        </div>
-      )}
       <div className="relative" ref={searchRef}>
         <div className="flex items-center gap-1.5 bg-neutral-100 border border-neutral-200 rounded-lg px-2.5 py-1 w-[200px]">
           <span className="text-neutral-400 text-[11px]">🔍</span>
