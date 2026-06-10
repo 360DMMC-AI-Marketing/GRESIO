@@ -25,7 +25,6 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [predictions, setPredictions] = useState([]);
   const [projectList, setProjectList] = useState([]);
-  const [workload, setWorkload] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -35,14 +34,12 @@ export default function Dashboard() {
       analytics.getDashboard(),
       projects.getAll(),
       analytics.getPredictions().catch(() => []),
-      analytics.getWorkload().catch(() => ({ workload: [] })),
       companies.getAll().catch(() => []),
     ])
-      .then(([aRes, pRes, predRes, wlRes, compRes]) => {
+      .then(([aRes, pRes, predRes, compRes]) => {
         setStats(aRes.data);
         setProjectList(pRes.data.slice(0, 6));
         setPredictions(Array.isArray(predRes) ? predRes : predRes.data || []);
-        setWorkload((wlRes.data || wlRes).workload || []);
         const comps = Array.isArray(compRes) ? compRes : compRes.data || [];
         setCompany(comps[0] || null);
       })
@@ -56,7 +53,6 @@ export default function Dashboard() {
   const healthColor = healthScore >= 70 ? '#22c55e' : healthScore >= 40 ? '#f59e0b' : '#ef4444';
   const highRisk = predictions.filter(p => p.risk === 'high');
   const mediumRisk = predictions.filter(p => p.risk === 'medium');
-  const workloadSorted = [...workload].sort((a, b) => (b.taskCount + b.activityScore) - (a.taskCount + a.activityScore)).slice(0, 5);
 
   return (
     <div>
@@ -160,34 +156,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {workloadSorted.length > 0 && (
-        <div className="card" style={{marginTop:12,padding:14}}>
-          <div className="card-header" style={{padding:0,marginBottom:10}}>
-            <span className="card-title">Team Workload</span>
-            <span className="text-[11px] text-neutral-400">Top loaded members</span>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:8}}>
-            {workloadSorted.map((w, i) => (
-              <div key={w.userId} style={{padding:'8px 10px',background:i === 0 && w.taskCount > 10 ? '#fef2f2' : '#f9fafb',borderRadius:8,border:'0.5px solid #e5e7eb'}}>
-                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-                  <div style={{width:22,height:22,background:'#e0e7ff',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#2347e8'}}>
-                    {w.name?.charAt(0) || '?'}
-                  </div>
-                  <span style={{fontSize:10,fontWeight:600,color:'#111827',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.name}</span>
-                </div>
-                <div style={{display:'flex',gap:8,fontSize:9,color:'#6b7280'}}>
-                  <span>{w.taskCount} tasks</span>
-                  <span>{w.projectCount} projects</span>
-                </div>
-                <div style={{marginTop:3,height:4,background:'#e5e7eb',borderRadius:2,overflow:'hidden'}}>
-                  <div style={{height:'100%',width:`${Math.min(100, (w.activityScore || 0) * 10)}%`,background:i === 0 && w.taskCount > 10 ? '#ef4444' : '#2347e8',borderRadius:2}} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
