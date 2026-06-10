@@ -23,7 +23,6 @@ export default function Admin() {
   const [teamIdInput, setTeamIdInput] = useState('');
   const [savingTeamId, setSavingTeamId] = useState(false);
   const [importDomain, setImportDomain] = useState('');
-  const [importDefaultRole, setImportDefaultRole] = useState('developer');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
@@ -91,7 +90,7 @@ export default function Admin() {
       if (!company) {
         company = (await companies.create({ name: domain.split('.')[0], domain })).data;
       }
-      const res = await companies.importUsers(company._id, { defaultRole: importDefaultRole });
+      const res = await companies.importUsers(company._id);
       setImportResult({ type: 'success', imported: res.data.imported, skipped: res.data.skipped, total: res.data.total });
       users.getAll({ hasOutlook: 'true' }).then(r => setOutlookUsers(r.data)).catch(() => {});
     } catch (e) {
@@ -381,7 +380,7 @@ export default function Admin() {
 
         <div className="bg-white rounded-xl border border-surface-200 p-5 lg:col-span-2">
           <h2 className="text-lg font-semibold text-surface-900 mb-4">👥 Import from Microsoft 365</h2>
-          <p className="text-xs text-surface-500 mb-4">Enter your company email domain to automatically import all users from Azure AD. New users will receive a welcome email with login credentials.</p>
+          <p className="text-xs text-surface-500 mb-4">Enter your company email domain to import all users from Azure AD. Each user's role is inferred from their Azure AD job title / department, and they are automatically placed in the correct department team group across all projects.</p>
           <div className="flex gap-3 items-end">
             <div className="flex-1">
               <label className="block text-xs font-medium text-surface-700 mb-1">Company domain</label>
@@ -390,20 +389,6 @@ export default function Admin() {
                 <input type="text" value={importDomain} onChange={e => setImportDomain(e.target.value)}
                   placeholder="yourcompany.com" className="flex-1 px-3 py-2 text-sm outline-none bg-white" />
               </div>
-            </div>
-            <div style={{minWidth:140}}>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Default role</label>
-              <select value={importDefaultRole} onChange={e => setImportDefaultRole(e.target.value)}
-                className="s-input" style={{padding:'7px 10px',fontSize:13,border:'1px solid #d1d5db',borderRadius:8,width:'100%',background:'white'}}>
-                <option value="developer">Developer</option>
-                <option value="qa_tester">QA Tester</option>
-                <option value="project_manager">Project Manager</option>
-                <option value="team_lead">Team Lead</option>
-                <option value="designer">Designer</option>
-                <option value="business_analyst">Business Analyst</option>
-                <option value="intern">Intern</option>
-                <option value="admin">Admin</option>
-              </select>
             </div>
             <button onClick={handleImport} disabled={importing || !importDomain.trim()}
               className="px-5 py-2 text-sm font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">

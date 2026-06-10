@@ -24,6 +24,9 @@ const notificationRoutes = require('./routes/notifications');
 const testingRoutes = require('./routes/testing');
 const workLogRoutes = require('./routes/workLogs');
 const testCaseRoutes = require('./routes/testCases');
+const interestRoutes = require('./routes/interests');
+const bugRoutes = require('./routes/bugs');
+const myTasksRoutes = require('./routes/myTasks');
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +52,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/testing', testingRoutes);
 app.use('/api/work-logs', workLogRoutes);
 app.use('/api/test-cases', testCaseRoutes);
+app.use('/api/interests', interestRoutes);
+app.use('/api/bugs', bugRoutes);
+app.use('/api/my-tasks', myTasksRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -216,6 +222,10 @@ async function autoSyncIntegrations() {
 }
 
 cron.schedule('*/30 * * * *', () => { autoSyncIntegrations(); });
+
+const { runAutoDelete } = require('./controllers/interestController');
+cron.schedule('0 3 * * *', () => { runAutoDelete().catch(console.error); });
+
 console.log('CIOS backend starting...');
 
 const PORT = env.PORT;

@@ -1,7 +1,9 @@
 const Sprint = require('../models/Sprint');
 const Task = require('../models/Task');
 const TestingItem = require('../models/TestingItem');
+const Notification = require('../models/Notification');
 const { updateProjectProgress } = require('./taskController');
+const { generateTestsFromTasks } = require('./testCaseController');
 const { evaluateProjectPhase } = require('../services/phaseService');
 const { getDomainProjectIds } = require('../config/planLimits');
 
@@ -43,7 +45,24 @@ exports.createSprint = async (req, res, next) => {
       tasks = projectTasks.map(t => t._id);
     }
     const sprint = await Sprint.create({ ...req.body, tasks, createdBy: req.user._id });
-    if (req.body.project) await evaluateProjectPhase(req.body.project);
+    if (req.body.project) {
+      await evaluateProjectPhase(req.body.project);
+      const Project = require('../models/Project');
+      const proj = await Project.findById(req.body.project).select('members name');
+      if (proj?.members) {
+        const memberIds = proj.members.filter(m => String(m) !== String(req.user._id));
+        for (const mid of memberIds) {
+          await Notification.create({
+            user: mid,
+            domain: req.user.domain,
+            type: 'project_update',
+            title: `New sprint: ${sprint.name}`,
+            message: `A new sprint "${sprint.name}" has been created in ${proj.name}`,
+            link: `/sprints?sprintId=${sprint._id}`,
+          }).catch(() => {});
+        }
+      }
+    }
     res.status(201).json(await populate(Sprint.findById(sprint._id)));
   } catch (e) { next(e); }
 };
@@ -56,7 +75,7 @@ exports.updateSprint = async (req, res, next) => {
     allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
     let isReopen = false;
     if (req.body.status === 'completed') {
-      const sprint = await Sprint.findOne({ _id: req.params.id, project: { $in: projectIds } }).select('createdBy status');
+      const sprint = await Sprint.findOne({ _id: req.params.id, project: { $in: projectIds } }).select('createdBy status name');
       if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
       const MANAGER_ROLES = ['admin', 'project_manager', 'team_lead'];
       const isManager = MANAGER_ROLES.includes(req.user.role);
@@ -65,6 +84,22 @@ exports.updateSprint = async (req, res, next) => {
         return res.status(403).json({ message: 'Only the sprint creator, project manager, team lead, or admin can mark a sprint as completed' });
       }
       updates.completedAt = new Date();
+      generateTestsFromTasks(sprint.project, req.params.id, null, req.user._id, req.user.domain).catch(() => {});
+      const Project = require('../models/Project');
+      const proj = await Project.findById(sprint.project).select('members name');
+      if (proj?.members) {
+        for (const mid of proj.members) {
+          if (String(mid) === String(req.user._id)) continue;
+          await Notification.create({
+            user: mid,
+            domain: req.user.domain,
+            type: 'project_update',
+            title: `Sprint completed: ${sprint.name}`,
+            message: `The sprint "${sprint.name}" in ${proj.name} has been marked as completed`,
+            link: `/sprints?sprintId=${req.params.id}`,
+          }).catch(() => {});
+        }
+      }
     } else if (req.body.status === 'active') {
       const prev = await Sprint.findOne({ _id: req.params.id, project: { $in: projectIds } }).select('status');
       if (prev && prev.status === 'completed') isReopen = true;
@@ -82,6 +117,13 @@ exports.addTaskToSprint = async (req, res, next) => {
     const projectIds = await getDomainProjectIds(req.user.domain);
     const sprint = await populate(Sprint.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { $addToSet: { tasks: req.body.taskId } }, { new: true }));
     if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
+    if (req.body.taskId) {
+      const TaskModel = require('../models/Task');
+      const task = await TaskModel.findById(req.body.taskId);
+      if (task) {
+        generateTestsFromTasks(sprint.project, sprint._id, [task], req.user._id, req.user.domain).catch(() => {});
+      }
+    }
     res.json(sprint);
   } catch (e) { next(e); }
 };

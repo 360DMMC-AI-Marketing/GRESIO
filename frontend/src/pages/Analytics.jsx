@@ -51,8 +51,10 @@ function buildDeptData(project, groupedData) {
       })
       .filter(Boolean);
     if (deptMembers.length === 0) return null;
-    const totalTasks = deptMembers.reduce((s, m) => s + (m.tasksAssigned || 0), 0);
-    const doneTasks = deptMembers.reduce((s, m) => s + (m.tasksDone || 0), 0);
+    const getTotal = m => m.role === 'qa_tester' ? (m.testCasesAssigned||0) : (m.tasksAssigned||0);
+    const getDone = m => m.role === 'qa_tester' ? (m.testCasesPassed||0) : (m.tasksDone||0);
+    const totalTasks = deptMembers.reduce((s, m) => s + getTotal(m), 0);
+    const doneTasks = deptMembers.reduce((s, m) => s + getDone(m), 0);
     const avgParticipation = Math.round(deptMembers.reduce((s, m) => s + (m.participation || 0), 0) / deptMembers.length);
     return {
       groupId: g._id || i,
@@ -72,8 +74,8 @@ function buildDeptData(project, groupedData) {
     depts.push({
       groupId: 'ungrouped', name: 'Ungrouped', icon: '👤',
       headcount: ungrouped.length,
-      totalTasks: ungrouped.reduce((s, m) => s + (m.tasksAssigned || 0), 0),
-      doneTasks: ungrouped.reduce((s, m) => s + (m.tasksDone || 0), 0),
+      totalTasks: ungrouped.reduce((s, m) => s + ((m.role === 'qa_tester' ? (m.testCasesAssigned||0) : (m.tasksAssigned||0))), 0),
+      doneTasks: ungrouped.reduce((s, m) => s + ((m.role === 'qa_tester' ? (m.testCasesPassed||0) : (m.tasksDone||0))), 0),
       avgParticipation: Math.round(ungrouped.reduce((s, m) => s + (m.participation || 0), 0) / ungrouped.length),
       members: ungrouped, color: '#9ca3af',
     });
@@ -143,11 +145,14 @@ export default function AnalyticsPage() {
   projectParticipation.forEach(proj => {
     (proj.members || []).forEach(m => {
       const emp = employeeMap[m.userId] || {};
-      const activeTasks = m.tasksAssigned - m.tasksDone;
+      const isQa = (m.role || emp.role) === 'qa_tester';
+      const activeTasks = isQa
+        ? (m.testCasesAssigned||0) - (m.testCasesPassed||0) - (m.testCasesFailed||0)
+        : m.tasksAssigned - m.tasksDone;
       employeeProjectRows.push({
         employeeId: m.userId,
         employeeName: m.name,
-        employeeRole: emp.role || '—',
+        employeeRole: m.role || emp.role || '—',
         projectId: proj.projectId,
         projectName: proj.name,
         projectCompletion: proj.taskCompletionRate,
@@ -155,6 +160,9 @@ export default function AnalyticsPage() {
         tasksAssigned: m.tasksAssigned,
         tasksDone: m.tasksDone,
         activeTasks: Math.max(0, activeTasks),
+        testCasesAssigned: m.testCasesAssigned || 0,
+        testCasesPassed: m.testCasesPassed || 0,
+        testCasesFailed: m.testCasesFailed || 0,
         overallScore: emp.participationScore || 0,
         taskCompletion: emp.taskCompletion || 0,
         sprintCompletion: emp.sprintCompletion || 0,
@@ -185,10 +193,9 @@ export default function AnalyticsPage() {
   const avgPart = Math.round(employeePerformance.reduce((s, e) => s + (e.participationScore || 0), 0) / (employeePerformance.length || 1));
 
   const tabs = [
-    { key:'workload', label:'📊 Workload' },
+    { key:'workload', label:'📊 Workload & Overview' },
     { key:'projects', label:'📋 Projects' },
     { key:'people', label:'👥 People' },
-    { key:'overview', label:'📈 Overview' },
   ];
 
   return (
@@ -197,7 +204,7 @@ export default function AnalyticsPage() {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
         <div>
           <h1 style={{fontSize:20,fontWeight:700,color:'#111827',margin:0}}>Analytics</h1>
-          <p style={{fontSize:11,color:'#6b7280',margin:'2px 0 0'}}>Project-based workload distribution & employee performance</p>
+          <p style={{fontSize:11,color:'#6b7280',margin:'2px 0 0'}}>Workload distribution, company health, and performance overview</p>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,background:'white',borderRadius:8,border:'0.5px solid #e5e7eb',padding:'4px 6px'}}>
           {tabs.map(t => (
@@ -226,19 +233,19 @@ export default function AnalyticsPage() {
                     <th style={{textAlign:'left',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Project</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Participation</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Tasks</th>
-                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Completed</th>
+                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Done</th>
+                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>TC</th>
+                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Passed</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Active</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Bar</th>
                   </tr>
                 </thead>
                 <tbody>
                   {employeeProjectRows.length === 0 ? (
-                    <tr><td colSpan={8} style={{padding:20,textAlign:'center',color:'#9ca3af'}}>No project participation data available</td></tr>
+                    <tr><td colSpan={10} style={{padding:20,textAlign:'center',color:'#9ca3af'}}>No project participation data available</td></tr>
                   ) : employeeProjectRows.map((r, i) => (
                     <tr key={`${r.employeeId}-${r.projectId}`} style={{borderBottom:'0.5px solid #f3f4f6'}}>
-                      <td style={{padding:'5px 8px',fontWeight:500,color:'#111827'}}
-                        onClick={() => setSelectedEmployee(r)}
-                        title="Click for details">
+                      <td style={{padding:'5px 8px',fontWeight:500,color:'#111827'}}>
                         <div style={{display:'flex',alignItems:'center',gap:6}}>
                           <div style={{width:20,height:20,borderRadius:'50%',background:'#2347e8',color:'white',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                             {r.employeeName.charAt(0)}
@@ -257,8 +264,10 @@ export default function AnalyticsPage() {
                       <td style={{padding:'5px 8px',textAlign:'center'}}>
                         <span style={{fontWeight:700,color:getParticipationColor(r.participation),fontSize:11}}>{r.participation}%</span>
                       </td>
-                      <td style={{padding:'5px 8px',textAlign:'center',fontWeight:500}}>{r.tasksAssigned}</td>
-                      <td style={{padding:'5px 8px',textAlign:'center',color:'#22c55e',fontWeight:500}}>{r.tasksDone}</td>
+                      <td style={{padding:'5px 8px',textAlign:'center',fontWeight:500,color:r.employeeRole==='qa_tester'?'#d1d5db':'#374151'}}>{r.employeeRole === 'qa_tester' ? '—' : r.tasksAssigned}</td>
+                      <td style={{padding:'5px 8px',textAlign:'center',fontWeight:500,color:r.employeeRole==='qa_tester'?'#d1d5db':'#22c55e'}}>{r.employeeRole === 'qa_tester' ? '—' : r.tasksDone}</td>
+                      <td style={{padding:'5px 8px',textAlign:'center',fontWeight:500,color:r.employeeRole!=='qa_tester'?'#d1d5db':'#374151'}}>{r.employeeRole !== 'qa_tester' ? '—' : (r.testCasesAssigned||0)}</td>
+                      <td style={{padding:'5px 8px',textAlign:'center',fontWeight:500,color:r.employeeRole!=='qa_tester'?'#d1d5db':'#22c55e'}}>{r.employeeRole !== 'qa_tester' ? '—' : (r.testCasesPassed||0)}</td>
                       <td style={{padding:'5px 8px',textAlign:'center',color:r.activeTasks > 0 ? '#f59e0b' : '#9ca3af',fontWeight:500}}>{r.activeTasks}</td>
                       <td style={{padding:'5px 8px',textAlign:'center'}}>
                         <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2,margin:'0 auto'}}>
@@ -314,6 +323,202 @@ export default function AnalyticsPage() {
               </table>
             </div>
           </div>
+
+          {/* ── OVERVIEW SECTION (merged) ── */}
+          {/* Health Score Hero */}
+          <div style={{...card,display:'flex',alignItems:'center',gap:16,background:healthColor+'06',border:'0.5px solid '+healthColor+'30',padding:16}}>
+            <div style={{width:60,height:60,borderRadius:'50%',background:healthColor+'20',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <span style={{fontSize:22,fontWeight:800,color:healthColor}}>{healthScore}</span>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#111827',display:'flex',alignItems:'center',gap:6}}>
+                Company Health
+                <span style={{fontSize:9,fontWeight:500,padding:'2px 8px',borderRadius:12,background:healthColor+'20',color:healthColor}}>
+                  {healthScore >= 70 ? '🟢 Healthy' : healthScore >= 40 ? '🟡 Warning' : '🔴 Critical'}
+                </span>
+              </div>
+              <div style={{fontSize:10,color:'#6b7280',marginTop:2}}>
+                {company.completionRate}% project completion · {taskCompletionRateAll}% tasks done · {company.activeProjects} active projects
+              </div>
+              <div style={{marginTop:6,height:5,background:'#e5e7eb',borderRadius:3}}>
+                <div style={{height:5,borderRadius:3,background:healthColor,width:healthScore+'%',transition:'width 0.5s'}} />
+              </div>
+            </div>
+            <div style={{display:'flex',gap:14,flexShrink:0}}>
+              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{company.activeProjects}</div><div style={{fontSize:8,color:'#6b7280'}}>Active</div></div>
+              <div style={{width:1,background:'#e5e7eb'}} />
+              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{employeePerformance.length}</div><div style={{fontSize:8,color:'#6b7280'}}>People</div></div>
+              <div style={{width:1,background:'#e5e7eb'}} />
+              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{sprints.total}</div><div style={{fontSize:8,color:'#6b7280'}}>Sprints</div></div>
+            </div>
+          </div>
+
+          {/* Key Metrics Grid */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:8}}>
+            {[
+              { label:'Total Employees', value:employeePerformance.length, icon:'👥', bg:'#eff6ff', col:'#3b82f6' },
+              { label:'Active Projects', value:company.activeProjects, icon:'📁', bg:'#f0fdf4', col:'#22c55e' },
+              { label:'Sprint Velocity', value:sprints.velocity+' pts', icon:'⚡', bg:'#fefce8', col:'#eab308' },
+              { label:'Completion Rate', value:taskCompletionRateAll+'%', icon:'🎯', bg:'#f0fdf4', col:'#22c55e' },
+              { label:'Total Tasks', value:tasksAll||'—', icon:'📋', bg:'#f5f3ff', col:'#8b5cf6' },
+              { label:'Overdue Tasks', value:risks.overdueTasks, icon:'🔴', bg:'#fef2f2', col:'#ef4444' },
+              { label:'Avg Participation', value:avgPart+'%', icon:'⭐', bg:'#fffbeb', col:'#f59e0b' },
+              { label:'Blocked Projects', value:company.blockedProjects, icon:'🚫', bg:'#fef2f2', col:'#ef4444' },
+            ].map(m => (
+              <div key={m.label} style={{background:'white',borderRadius:10,border:'0.5px solid #e5e7eb',padding:'10px 12px',display:'flex',alignItems:'center',gap:8}}>
+                <div style={{width:32,height:32,borderRadius:8,background:m.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{m.icon}</div>
+                <div>
+                  <div style={{fontSize:15,fontWeight:700,color:m.col}}>{m.value}</div>
+                  <div style={{fontSize:8,color:'#6b7280',marginTop:1}}>{m.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Sprint + Risk + Workload Balance */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>⚡ Sprint Summary</div>
+              <div style={statRow}><span style={{color:'#6b7280'}}>Total Sprints</span><span style={{fontWeight:600,fontSize:12}}>{sprints.total}</span></div>
+              <div style={statRow}><span style={{color:'#6b7280'}}>Active</span><span style={{fontWeight:600,color:'#2347e8'}}>{sprints.active}</span></div>
+              <div style={statRow}><span style={{color:'#6b7280'}}>Completed</span><span style={{fontWeight:600,color:'#22c55e'}}>{sprints.completed}</span></div>
+              <div style={statRow}><span style={{color:'#6b7280'}}>Completion Rate</span><span style={{fontWeight:600}}>{sprints.completionRate}%</span></div>
+              <div style={statRow}><span style={{color:'#6b7280'}}>Velocity</span><span style={{fontWeight:600,color:'#eab308'}}>{sprints.velocity} pts/sprint</span></div>
+              <div style={{marginTop:6,height:4,background:'#e5e7eb',borderRadius:2}}>
+                <div style={{height:4,borderRadius:2,background:'#2347e8',width:Math.min(sprints.completionRate,100)+'%'}} />
+              </div>
+            </div>
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>🚨 Risk Dashboard</div>
+              {[
+                { label:'Overdue Projects', val:risks.overdueProjects, warn:risks.overdueProjects>0 },
+                { label:'Near Deadline', val:risks.nearDeadline, warn:risks.nearDeadline>0 },
+                { label:'Overdue Tasks', val:risks.overdueTasks, warn:risks.overdueTasks>0 },
+                { label:'Unassigned Tasks', val:risks.unassignedTasks, warn:risks.unassignedTasks>0 },
+                { label:'Urgent Projects', val:risks.urgentProjects, warn:risks.urgentProjects>0 },
+                { label:'Blocked', val:company.blockedProjects, warn:company.blockedProjects>0 },
+              ].map(r => (
+                <div key={r.label} style={statRow}>
+                  <span style={{color:'#6b7280'}}>{r.label}</span>
+                  <span style={{fontWeight:600,color:r.warn?'#ef4444':'#22c55e',display:'flex',alignItems:'center',gap:3}}>
+                    {r.warn && '⚠️'}{r.val}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>⚖️ Workload Balance</div>
+              {(() => {
+                const onTrack = employeePerformance.length - overloaded.length - underutilized.length;
+                const bars = [
+                  { label:'On Track', val:onTrack, col:'#22c55e', bg:'#f0fdf4' },
+                  { label:'Underutilized', val:underutilized.length, col:'#f59e0b', bg:'#fffbeb' },
+                  { label:'Overloaded', val:overloaded.length, col:'#ef4444', bg:'#fef2f2' },
+                ];
+                const total = Math.max(1, employeePerformance.length);
+                return (
+                  <>
+                    <div style={{display:'flex',gap:3,height:22,marginBottom:8,borderRadius:4,overflow:'hidden'}}>
+                      {bars.map(b => b.val > 0 && (
+                        <div key={b.label} style={{height:22,background:b.col,flex:b.val,display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'white',fontWeight:600,minWidth:22}}>
+                          {b.val}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                      {bars.map(b => (
+                        <div key={b.label} style={statRow}>
+                          <span style={{display:'flex',alignItems:'center',gap:4}}>
+                            <span style={{width:7,height:7,borderRadius:1,background:b.col,display:'inline-block'}} />
+                            <span style={{color:'#6b7280'}}>{b.label}</span>
+                          </span>
+                          <span style={{fontWeight:600,color:b.col}}>{b.val} ({Math.round(b.val/total*100)}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{marginTop:6,paddingTop:6,borderTop:'0.5px solid #e5e7eb',display:'flex',justifyContent:'space-between'}}>
+                      <span style={{fontSize:9,color:'#6b7280'}}>Total Members</span>
+                      <span style={{fontSize:11,fontWeight:700,color:'#111827'}}>{employeePerformance.length}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Most Active + Recent Activity */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>
+                <span>⭐ Most Active</span>
+                <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· top by score</span>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                {activity.mostActiveUsers.map((u,i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0',borderBottom:'0.5px solid #f3f4f6'}}>
+                    <div style={{width:22,height:22,borderRadius:'50%',background:'#2347e8',color:'white',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{u.name.charAt(0)}</div>
+                    <span style={{fontSize:10,fontWeight:500,color:'#374151',flex:1}}>{u.name}</span>
+                    <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2}}>
+                      <div style={{height:4,borderRadius:2,background:'#2347e8',width:Math.min(u.participationScore||0,100)+'%'}} />
+                    </div>
+                    <span style={{fontSize:9,fontWeight:600,color:'#2347e8'}}>{u.participationScore||0}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>📰 Recent Activity</div>
+              <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:200,overflowY:'auto'}}>
+                {(activity.recentActivities || []).slice(0,10).map((a,i) => (
+                  <div key={i} style={{fontSize:9,padding:'4px 0',borderBottom:'0.5px solid #f3f4f6',color:'#374151'}}>
+                    <span style={{fontWeight:500}}>{a.userName}</span>
+                    <span style={{color:'#6b7280'}}> {a.description}</span>
+                    <span style={{fontSize:8,color:'#9ca3af',marginLeft:4}}>{a.timeAgo || ''}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* AI Insights */}
+          {insights?.length > 0 && (
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>🤖 AI Insights</div>
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                {insights.map((ins,i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',background:'#fffbeb',borderRadius:6,fontSize:10,color:'#92400e'}}>
+                    <span>💡</span>
+                    {ins}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Needs Attention */}
+          {(underutilized.length > 0 || overloaded.length > 0) && (
+            <div style={card}>
+              <div style={{...secTitle,fontSize:13,marginBottom:8}}>⚠️ Needs Attention</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                {underutilized.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:600,color:'#f59e0b',marginBottom:4}}>Underutilized ({underutilized.length})</div>
+                    {underutilized.slice(0,5).map(u => (
+                      <div key={u.userId} style={{fontSize:9,padding:'3px 0',color:'#6b7280'}}>· {u.name} ({u.participationScore}%)</div>
+                    ))}
+                  </div>
+                )}
+                {overloaded.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:600,color:'#ef4444',marginBottom:4}}>Overloaded ({overloaded.length})</div>
+                    {overloaded.slice(0,5).map(u => (
+                      <div key={u.userId} style={{fontSize:9,padding:'3px 0',color:'#6b7280'}}>· {u.name} ({u.assignedTasks} tasks)</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -409,7 +614,7 @@ export default function AnalyticsPage() {
                               <span style={{fontSize:9,fontWeight:600,color:d.color}}>{d.avgParticipation}%</span>
                             </div>
                             <div style={{fontSize:9,color:'#6b7280',marginBottom:4}}>
-                              {d.headcount} member{d.headcount!==1?'s':''} · {d.doneTasks}/{d.totalTasks} tasks
+                              {d.headcount} member{d.headcount!==1?'s':''} · {d.doneTasks}/{d.totalTasks} {d.members.every(m => m.role === 'qa_tester') ? 'tc' : 'tasks'}
                             </div>
                             <div style={{height:3,background:'#e5e7eb',borderRadius:2}}>
                               <div style={{height:3,borderRadius:2,background:d.color,width:Math.min(d.avgParticipation,100)+'%'}} />
@@ -443,6 +648,8 @@ export default function AnalyticsPage() {
                                   <th style={{textAlign:'left',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Team Member</th>
                                   <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Tasks</th>
                                   <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Done</th>
+                                  <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>TC</th>
+                                  <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Passed</th>
                                   <th style={{textAlign:'right',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Contribution</th>
                                 </tr>
                               </thead>
@@ -455,8 +662,10 @@ export default function AnalyticsPage() {
                                         {m.name}
                                       </div>
                                     </td>
-                                    <td style={{padding:'4px 6px',textAlign:'center',color:'#6b7280'}}>{m.tasksAssigned}</td>
-                                    <td style={{padding:'4px 6px',textAlign:'center',color:'#22c55e'}}>{m.tasksDone}</td>
+                                    <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role === 'qa_tester' ? '—' : m.tasksAssigned}</td>
+                                    <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role === 'qa_tester' ? '—' : m.tasksDone}</td>
+                                    <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesAssigned||0)}</td>
+                                    <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesPassed||0)}</td>
                                     <td style={{padding:'4px 6px',textAlign:'right'}}>
                                       <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end'}}>
                                         <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2}}>
@@ -550,6 +759,7 @@ export default function AnalyticsPage() {
               const uid = String(m.user?._id || m.user);
               const emp = (employeePerformance || []).find(e => String(e.userId) === uid) || {};
               const projs = (m.memberships || []).filter(mm => mm.status === 'active').map(mm => mm.project?.name).filter(Boolean);
+              const isQa = (m.user?.role || emp.role) === 'qa_tester';
               return {
                 userId: uid, name: m.user?.name || emp.name || 'Unknown',
                 role: m.user?.role || emp.role || '—', avatar: m.user?.avatar,
@@ -557,22 +767,36 @@ export default function AnalyticsPage() {
                 assignedTasks: emp.assignedTasks || 0, completedTasks: emp.completedTasks || 0,
                 overdueTasks: emp.overdueTasks || 0, taskCompletion: emp.taskCompletion || 0,
                 sprintCompletion: emp.sprintCompletion || 0, participationScore: emp.participationScore || 0,
-                lastActivity: emp.lastActivity,
+                testCasesAssigned: emp.testCasesAssigned || 0, testCasesPassed: emp.testCasesPassed || 0,
+                testCasesFailed: emp.testCasesFailed || 0,
               };
             }).filter(m => m.name !== 'Unknown');
 
             const totM = members.length;
             const allProj = new Set(members.flatMap(m => m.projects));
-            const avgComp = totM > 0 ? Math.round(members.reduce((s,m) => s + m.taskCompletion, 0) / totM) : 0;
-            const avgVel = totM > 0 ? Math.round(members.reduce((s,m) => s + m.sprintCompletion, 0) / totM) : 0;
-            const totDone = members.reduce((s,m) => s + m.completedTasks, 0);
-            const totAss = members.reduce((s,m) => s + m.assignedTasks, 0);
+            const getComp = m => m.role === 'qa_tester'
+              ? (m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0)
+              : m.taskCompletion;
+            const getVel = m => m.role === 'qa_tester'
+              ? (m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0)
+              : m.sprintCompletion;
+            const avgComp = totM > 0 ? Math.round(members.reduce((s,m) => s + getComp(m), 0) / totM) : 0;
+            const avgVel = totM > 0 ? Math.round(members.reduce((s,m) => s + getVel(m), 0) / totM) : 0;
+            const totDone = members.reduce((s,m) => s + (m.role === 'qa_tester' ? m.testCasesPassed : m.completedTasks), 0);
+            const totAss = members.reduce((s,m) => s + (m.role === 'qa_tester' ? m.testCasesAssigned : m.assignedTasks), 0);
 
-            const sortedByComp = [...members].sort((a,b) => (b.taskCompletion - a.taskCompletion) || (b.completedTasks - a.completedTasks));
+            const getDone = m => m.role === 'qa_tester' ? (m.testCasesPassed||0) : (m.completedTasks||0);
+            const sortedByComp = [...members].sort((a,b) => (getComp(b) - getComp(a)) || (getDone(b) - getDone(a)));
             const topContribs = sortedByComp.slice(0, 5);
 
-            const underutilized = members.filter(m => m.taskCompletion < 50 || m.assignedTasks < 3).sort((a,b) => a.taskCompletion - b.taskCompletion);
-            const overloaded = members.filter(m => (m.taskCompletion > 90 && m.assignedTasks > 8) || m.assignedTasks > 10).sort((a,b) => (b.assignedTasks - a.assignedTasks) || (b.taskCompletion - a.taskCompletion));
+            const underutilized = members.filter(m => {
+              if (m.role === 'qa_tester') return m.testCasesAssigned < 3 || (m.testCasesAssigned > 0 && m.testCasesPassed / m.testCasesAssigned < 0.5);
+              return m.taskCompletion < 50 || m.assignedTasks < 3;
+            }).sort((a,b) => getComp(a) - getComp(b));
+            const overloaded = members.filter(m => {
+              if (m.role === 'qa_tester') return m.testCasesAssigned > 10 || (m.testCasesAssigned > 0 && m.testCasesPassed / m.testCasesAssigned > 0.9);
+              return (m.taskCompletion > 90 && m.assignedTasks > 8) || m.assignedTasks > 10;
+            }).sort((a,b) => (b.assignedTasks - a.assignedTasks) || (b.taskCompletion - a.taskCompletion));
 
             const searchLower = deptSearchQ.toLowerCase();
             const filtered = members.filter(m => !deptSearchQ || m.name.toLowerCase().includes(searchLower) || m.role.toLowerCase().includes(searchLower));
@@ -619,7 +843,10 @@ export default function AnalyticsPage() {
                     {topContribs.length === 0 ? (
                       <div style={{fontSize:10,color:'#9ca3af',padding:8}}>No contributors data</div>
                     ) : topContribs.map((m, i) => {
-                      const pct = m.assignedTasks > 0 ? Math.round((m.completedTasks / m.assignedTasks) * 100) : 0;
+                      const isQa = m.role === 'qa_tester';
+                      const pct = isQa
+                        ? (m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0)
+                        : (m.assignedTasks > 0 ? Math.round((m.completedTasks / m.assignedTasks) * 100) : 0);
                       return (
                         <div key={m.userId} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 8px',background:'#f9fafb',borderRadius:8,border:'0.5px solid #e5e7eb'}}>
                           <span style={{fontSize:9,fontWeight:700,color:dc,minWidth:16}}>#{i+1}</span>
@@ -630,7 +857,7 @@ export default function AnalyticsPage() {
                           </div>
                           <div style={{textAlign:'right',minWidth:50}}>
                             <div style={{fontSize:10,fontWeight:600,color:dc}}>{pct}%</div>
-                            <div style={{fontSize:8,color:'#6b7280'}}>{m.completedTasks}/{m.assignedTasks}</div>
+                            <div style={{fontSize:8,color:'#6b7280'}}>{isQa ? `${m.testCasesPassed}/${m.testCasesAssigned}` : `${m.completedTasks}/${m.assignedTasks}`}</div>
                           </div>
                           <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2}}>
                             <div style={{height:4,borderRadius:2,background:dc,width:Math.min(pct,100)+'%'}} />
@@ -650,19 +877,22 @@ export default function AnalyticsPage() {
                     </div>
                     {underutilized.length === 0 ? (
                       <p style={{fontSize:10,color:'#9ca3af'}}>No underutilized members</p>
-                    ) : underutilized.map(m => (
+                    ) : underutilized.map(m => {
+                      const uQa = m.role === 'qa_tester';
+                      return (
                       <div key={m.userId} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #f3f4f6'}}>
                         <div style={{width:20,height:20,borderRadius:'50%',background:'#f59e0b',color:'white',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{m.name.charAt(0)}</div>
                         <div style={{flex:1}}>
                           <div style={{fontSize:10,fontWeight:500,color:'#374151'}}>{m.name}</div>
-                          <div style={{fontSize:8,color:'#6b7280'}}>{m.role.replace(/_/g,' ')} · {m.assignedTasks} tasks</div>
+                          <div style={{fontSize:8,color:'#6b7280'}}>{m.role.replace(/_/g,' ')} · {uQa ? `${m.testCasesAssigned} tc` : `${m.assignedTasks} tasks`}</div>
                         </div>
                         <div style={{width:30,height:4,background:'#e5e7eb',borderRadius:2}}>
-                          <div style={{height:4,borderRadius:2,background:'#f59e0b',width:Math.min(m.taskCompletion,100)+'%'}} />
+                          <div style={{height:4,borderRadius:2,background:'#f59e0b',width:Math.min(uQa ? (m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0) : m.taskCompletion,100)+'%'}} />
                         </div>
                         <span style={{fontSize:8,background:'#f59e0b',color:'white',padding:'2px 6px',borderRadius:4,fontWeight:600,cursor:'pointer'}}>Assign</span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div style={card}>
                     <div style={{...secTitle,fontSize:13,marginBottom:8}}>
@@ -678,7 +908,7 @@ export default function AnalyticsPage() {
                           <div style={{fontSize:10,fontWeight:500,color:'#374151'}}>{m.name}</div>
                           <div style={{fontSize:8,color:'#6b7280'}}>{m.role.replace(/_/g,' ')}</div>
                         </div>
-                        <span style={{fontSize:8,background:'#fef2f2',color:'#ef4444',padding:'2px 5px',borderRadius:4,fontWeight:600}}>{m.assignedTasks} tasks</span>
+                        <span style={{fontSize:8,background:'#fef2f2',color:'#ef4444',padding:'2px 5px',borderRadius:4,fontWeight:600}}>{m.role === 'qa_tester' ? `${m.testCasesAssigned} tc` : `${m.assignedTasks} tasks`}</span>
                         <span style={{fontSize:8,background:'#ef4444',color:'white',padding:'2px 6px',borderRadius:4,fontWeight:600,cursor:'pointer'}}>Rebalance</span>
                       </div>
                     ))}
@@ -703,7 +933,7 @@ export default function AnalyticsPage() {
                         <tr style={{borderBottom:'0.5px solid #e5e7eb'}}>
                           {[
                             { key:'name', label:'Member' }, { key:'role', label:'Role' },
-                            { key:null, label:'Projects' }, { key:'tasks', label:'Tasks' },
+                            { key:null, label:'Projects' }, { key:'tasks', label: members.every(m => m.role === 'qa_tester') ? 'Test Cases' : 'Tasks' },
                             { key:'completion', label:'Completion' }, { key:null, label:'Status' },
                           ].map(h => (
                             <th key={h.key || h.label} onClick={() => {
@@ -718,12 +948,21 @@ export default function AnalyticsPage() {
                       </thead>
                       <tbody>
                         {paged.flatMap(m => {
-                          const pct = m.assignedTasks > 0 ? Math.round((m.completedTasks / m.assignedTasks) * 100) : 0;
+                          const isQa = m.role === 'qa_tester';
+                          const pct = isQa
+                            ? (m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0)
+                            : (m.assignedTasks > 0 ? Math.round((m.completedTasks / m.assignedTasks) * 100) : 0);
                           const isExp = deptExpandedMember === m.userId;
                           let stLbl = 'On Track', stCol = '#22c55e', stBg = '#f0fdf4';
-                          if (overloaded.includes(m)) { stLbl = 'Overloaded'; stCol = '#ef4444'; stBg = '#fef2f2'; }
-                          else if (underutilized.includes(m)) { stLbl = 'Underutilized'; stCol = '#f59e0b'; stBg = '#fffbeb'; }
-                          else if (m.taskCompletion > 0 && m.taskCompletion < 70) { stLbl = 'At Risk'; stCol = '#f97316'; stBg = '#fff7ed'; }
+                          if (isQa) {
+                            if (m.testCasesFailed > m.testCasesPassed) { stLbl = 'Overloaded'; stCol = '#ef4444'; stBg = '#fef2f2'; }
+                            else if (pct > 0 && pct < 50) { stLbl = 'At Risk'; stCol = '#f97316'; stBg = '#fff7ed'; }
+                            else if (m.testCasesAssigned === 0) { stLbl = 'Idle'; stCol = '#9ca3af'; stBg = '#f9fafb'; }
+                          } else {
+                            if (overloaded.includes(m)) { stLbl = 'Overloaded'; stCol = '#ef4444'; stBg = '#fef2f2'; }
+                            else if (underutilized.includes(m)) { stLbl = 'Underutilized'; stCol = '#f59e0b'; stBg = '#fffbeb'; }
+                            else if (m.taskCompletion > 0 && m.taskCompletion < 70) { stLbl = 'At Risk'; stCol = '#f97316'; stBg = '#fff7ed'; }
+                          }
                           const rows = [
                             <tr key={m.userId} onClick={() => setDeptExpandedMember(isExp ? null : m.userId)}
                               style={{borderBottom:'0.5px solid #f3f4f6',cursor:'pointer',background:isExp?dc+'08':'transparent'}}>
@@ -735,7 +974,7 @@ export default function AnalyticsPage() {
                               </td>
                               <td style={{padding:'4px 6px'}}><span style={badge('#e0e7ff','#4338ca')}>{m.role.replace(/_/g,' ')}</span></td>
                               <td style={{padding:'4px 6px',fontSize:9,color:'#6b7280',maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.projects.join(', ') || '—'}</td>
-                              <td style={{padding:'4px 6px',fontWeight:500}}>{m.completedTasks}/{m.assignedTasks}</td>
+                              <td style={{padding:'4px 6px',fontWeight:500}}>{isQa ? `${m.testCasesPassed||0}/${m.testCasesAssigned||0}` : `${m.completedTasks}/${m.assignedTasks}`}</td>
                               <td style={{padding:'4px 6px'}}>
                                 <div style={{display:'flex',alignItems:'center',gap:4}}>
                                   <div style={{width:35,height:4,background:'#e5e7eb',borderRadius:2}}>
@@ -753,9 +992,15 @@ export default function AnalyticsPage() {
                                 <div style={{fontSize:9,color:'#374151',display:'flex',gap:12,flexWrap:'wrap'}}>
                                   <div><span style={{color:'#6b7280'}}>Role:</span> {m.role.replace(/_/g,' ')}</div>
                                   <div><span style={{color:'#6b7280'}}>Projects:</span> {m.projects.join(', ') || 'None'}</div>
-                                  <div><span style={{color:'#6b7280'}}>Tasks:</span> {m.completedTasks}/{m.assignedTasks} done</div>
-                                  <div><span style={{color:'#6b7280'}}>Overdue:</span> {m.overdueTasks}</div>
-                                  <div><span style={{color:'#6b7280'}}>Sprint Completion:</span> {m.sprintCompletion}%</div>
+                                  {isQa ? <>
+                                    <div><span style={{color:'#6b7280'}}>Test Cases:</span> {m.testCasesPassed||0}/{m.testCasesAssigned||0} done</div>
+                                    <div><span style={{color:'#6b7280'}}>Pass Rate:</span> {m.testCasesAssigned > 0 ? Math.round((m.testCasesPassed / m.testCasesAssigned) * 100) : 0}%</div>
+                                    <div><span style={{color:'#6b7280'}}>Failed:</span> {m.testCasesFailed||0}</div>
+                                  </> : <>
+                                    <div><span style={{color:'#6b7280'}}>Tasks:</span> {m.completedTasks}/{m.assignedTasks} done</div>
+                                    <div><span style={{color:'#6b7280'}}>Overdue:</span> {m.overdueTasks}</div>
+                                    <div><span style={{color:'#6b7280'}}>Sprint Completion:</span> {m.sprintCompletion}%</div>
+                                  </>}
                                   <div><span style={{color:'#6b7280'}}>Participation:</span> {m.participationScore}%</div>
                                 </div>
                               </td>
@@ -792,303 +1037,6 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* ── OVERVIEW TAB ── */}
-      {tab === 'overview' && (
-        <div style={{display:'flex',flexDirection:'column',gap:12}}>
-          {/* Health Score Hero */}
-          <div style={{...card,display:'flex',alignItems:'center',gap:16,background:healthColor+'06',border:'0.5px solid '+healthColor+'30',padding:16}}>
-            <div style={{width:60,height:60,borderRadius:'50%',background:healthColor+'20',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-              <span style={{fontSize:22,fontWeight:800,color:healthColor}}>{healthScore}</span>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#111827',display:'flex',alignItems:'center',gap:6}}>
-                Company Health
-                <span style={{fontSize:9,fontWeight:500,padding:'2px 8px',borderRadius:12,background:healthColor+'20',color:healthColor}}>
-                  {healthScore >= 70 ? '🟢 Healthy' : healthScore >= 40 ? '🟡 Warning' : '🔴 Critical'}
-                </span>
-              </div>
-              <div style={{fontSize:10,color:'#6b7280',marginTop:2}}>
-                {company.completionRate}% project completion · {taskCompletionRateAll}% tasks done · {company.activeProjects} active projects
-              </div>
-              <div style={{marginTop:6,height:5,background:'#e5e7eb',borderRadius:3}}>
-                <div style={{height:5,borderRadius:3,background:healthColor,width:healthScore+'%',transition:'width 0.5s'}} />
-              </div>
-            </div>
-            <div style={{display:'flex',gap:14,flexShrink:0}}>
-              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{company.activeProjects}</div><div style={{fontSize:8,color:'#6b7280'}}>Active</div></div>
-              <div style={{width:1,background:'#e5e7eb'}} />
-              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{employeePerformance.length}</div><div style={{fontSize:8,color:'#6b7280'}}>People</div></div>
-              <div style={{width:1,background:'#e5e7eb'}} />
-              <div style={{textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{sprints.total}</div><div style={{fontSize:8,color:'#6b7280'}}>Sprints</div></div>
-            </div>
-          </div>
-
-          {/* Key Metrics Grid */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:8}}>
-            {[
-              { label:'Total Employees', value:employeePerformance.length, icon:'👥', bg:'#eff6ff', col:'#3b82f6' },
-              { label:'Active Projects', value:company.activeProjects, icon:'📁', bg:'#f0fdf4', col:'#22c55e' },
-              { label:'Sprint Velocity', value:sprints.velocity+' pts', icon:'⚡', bg:'#fefce8', col:'#eab308' },
-              { label:'Completion Rate', value:taskCompletionRateAll+'%', icon:'🎯', bg:'#f0fdf4', col:'#22c55e' },
-              { label:'Total Tasks', value:tasksAll||'—', icon:'📋', bg:'#f5f3ff', col:'#8b5cf6' },
-              { label:'Overdue Tasks', value:risks.overdueTasks, icon:'🔴', bg:'#fef2f2', col:'#ef4444' },
-              { label:'Avg Participation', value:avgPart+'%', icon:'⭐', bg:'#fffbeb', col:'#f59e0b' },
-              { label:'Blocked Projects', value:company.blockedProjects, icon:'🚫', bg:'#fef2f2', col:'#ef4444' },
-            ].map(m => (
-              <div key={m.label} style={{background:'white',borderRadius:10,border:'0.5px solid #e5e7eb',padding:'10px 12px',display:'flex',alignItems:'center',gap:8}}>
-                <div style={{width:32,height:32,borderRadius:8,background:m.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{m.icon}</div>
-                <div>
-                  <div style={{fontSize:15,fontWeight:700,color:m.col}}>{m.value}</div>
-                  <div style={{fontSize:8,color:'#6b7280',marginTop:1}}>{m.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Project Progress + Top Contributors */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            {/* Project Progress */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                <span>📋 Project Progress</span>
-                <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· by completion</span>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                {projectWorkload.slice(0,6).map(p => {
-                  const wl = p.workload;
-                  return (
-                    <div key={p.projectId} style={{display:'flex',alignItems:'center',gap:6}}>
-                      <span style={{fontSize:9,fontWeight:500,color:'#374151',minWidth:80,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-                      <div style={{flex:1,height:6,background:'#f3f4f6',borderRadius:3}}>
-                        <div style={{height:6,borderRadius:3,background:wl.color,width:Math.min(p.taskCompletionRate,100)+'%'}} />
-                      </div>
-                      <span style={{fontSize:9,fontWeight:600,color:wl.color,minWidth:35,textAlign:'right'}}>{p.taskCompletionRate}%</span>
-                      <span style={{...badge(wl.bg,wl.color),fontSize:7,minWidth:40,textAlign:'center'}}>{wl.label}</span>
-                    </div>
-                  );
-                })}
-                {projectWorkload.length === 0 && <div style={{fontSize:9,color:'#9ca3af',padding:8}}>No project data</div>}
-              </div>
-            </div>
-
-            {/* Top Contributors */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                <span>🏆 Top Contributors</span>
-                <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· highest scores</span>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                {topContributors.map((u, i) => (
-                  <div key={u.userId} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 6px',background:'#f9fafb',borderRadius:6}}>
-                    <span style={{fontSize:8,minWidth:14,textAlign:'center'}}>{['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
-                    <div style={{width:20,height:20,borderRadius:'50%',background:'#2347e8',color:'white',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{u.name.charAt(0)}</div>
-                    <span style={{fontSize:10,fontWeight:500,color:'#374151',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.name}</span>
-                    <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2}}>
-                      <div style={{height:4,borderRadius:2,background:getParticipationColor(u.participationScore),width:Math.min(u.participationScore,100)+'%'}} />
-                    </div>
-                    <span style={{fontSize:9,fontWeight:700,color:getParticipationColor(u.participationScore)}}>{u.participationScore}</span>
-                  </div>
-                ))}
-                {topContributors.length === 0 && <div style={{fontSize:9,color:'#9ca3af',padding:8}}>No data</div>}
-              </div>
-            </div>
-          </div>
-
-          {/* Sprint + Risk + Workload Balance */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
-            {/* Sprint Summary */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>⚡ Sprint Summary</div>
-              <div style={statRow}><span style={{color:'#6b7280'}}>Total Sprints</span><span style={{fontWeight:600,fontSize:12}}>{sprints.total}</span></div>
-              <div style={statRow}><span style={{color:'#6b7280'}}>Active</span><span style={{fontWeight:600,color:'#2347e8'}}>{sprints.active}</span></div>
-              <div style={statRow}><span style={{color:'#6b7280'}}>Completed</span><span style={{fontWeight:600,color:'#22c55e'}}>{sprints.completed}</span></div>
-              <div style={statRow}><span style={{color:'#6b7280'}}>Completion Rate</span><span style={{fontWeight:600}}>{sprints.completionRate}%</span></div>
-              <div style={statRow}><span style={{color:'#6b7280'}}>Velocity</span><span style={{fontWeight:600,color:'#eab308'}}>{sprints.velocity} pts/sprint</span></div>
-              <div style={{marginTop:6,height:4,background:'#e5e7eb',borderRadius:2}}>
-                <div style={{height:4,borderRadius:2,background:'#2347e8',width:Math.min(sprints.completionRate,100)+'%'}} />
-              </div>
-            </div>
-
-            {/* Risk Dashboard */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>🚨 Risk Dashboard</div>
-              {[
-                { label:'Overdue Projects', val:risks.overdueProjects, warn:risks.overdueProjects>0 },
-                { label:'Near Deadline', val:risks.nearDeadline, warn:risks.nearDeadline>0 },
-                { label:'Overdue Tasks', val:risks.overdueTasks, warn:risks.overdueTasks>0 },
-                { label:'Unassigned Tasks', val:risks.unassignedTasks, warn:risks.unassignedTasks>0 },
-                { label:'Urgent Projects', val:risks.urgentProjects, warn:risks.urgentProjects>0 },
-                { label:'Blocked', val:company.blockedProjects, warn:company.blockedProjects>0 },
-              ].map(r => (
-                <div key={r.label} style={statRow}>
-                  <span style={{color:'#6b7280'}}>{r.label}</span>
-                  <span style={{fontWeight:600,color:r.warn?'#ef4444':'#22c55e',display:'flex',alignItems:'center',gap:3}}>
-                    {r.warn && '⚠️'}{r.val}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Workload Balance */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>⚖️ Workload Balance</div>
-              {(() => {
-                const onTrack = employeePerformance.length - overloaded.length - underutilized.length;
-                const bars = [
-                  { label:'On Track', val:onTrack, col:'#22c55e', bg:'#f0fdf4' },
-                  { label:'Underutilized', val:underutilized.length, col:'#f59e0b', bg:'#fffbeb' },
-                  { label:'Overloaded', val:overloaded.length, col:'#ef4444', bg:'#fef2f2' },
-                ];
-                const total = Math.max(1, employeePerformance.length);
-                return (
-                  <>
-                    <div style={{display:'flex',gap:3,height:22,marginBottom:8,borderRadius:4,overflow:'hidden'}}>
-                      {bars.map(b => b.val > 0 && (
-                        <div key={b.label} style={{height:22,background:b.col,flex:b.val,display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'white',fontWeight:600,minWidth:22}}>
-                          {b.val}
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{display:'flex',flexDirection:'column',gap:3}}>
-                      {bars.map(b => (
-                        <div key={b.label} style={statRow}>
-                          <span style={{display:'flex',alignItems:'center',gap:4}}>
-                            <span style={{width:7,height:7,borderRadius:1,background:b.col,display:'inline-block'}} />
-                            <span style={{color:'#6b7280'}}>{b.label}</span>
-                          </span>
-                          <span style={{fontWeight:600,color:b.col}}>{b.val} ({Math.round(b.val/total*100)}%)</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{marginTop:6,paddingTop:6,borderTop:'0.5px solid #e5e7eb',display:'flex',justifyContent:'space-between'}}>
-                      <span style={{fontSize:9,color:'#6b7280'}}>Total Members</span>
-                      <span style={{fontSize:11,fontWeight:700,color:'#111827'}}>{employeePerformance.length}</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Most Active + Recent Activity */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            {/* Most Active */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                <span>⭐ Most Active</span>
-                <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· top by score</span>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                {activity.mostActiveUsers.map((u,i) => (
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0',borderBottom:'0.5px solid #f3f4f6'}}>
-                    <div style={{width:22,height:22,borderRadius:'50%',background:'#2347e8',color:'white',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{u.name.charAt(0)}</div>
-                    <span style={{fontSize:10,fontWeight:500,color:'#374151',flex:1}}>{u.name}</span>
-                    <div style={{width:50,height:4,background:'#e5e7eb',borderRadius:2}}>
-                      <div style={{height:4,borderRadius:2,background:'#2347e8',width:Math.min(u.participationScore||0,100)+'%'}} />
-                    </div>
-                    <span style={{fontSize:9,fontWeight:600,color:'#2347e8'}}>{u.participationScore||0}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div style={card}>
-              <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                <span>🕐 Recent Activity</span>
-                <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· latest actions</span>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                {activity.recentActions.slice(0,6).map((a,i) => (
-                  <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'#6b7280',padding:'4px 6px',background:i%2===0?'#f9fafb':'transparent',borderRadius:4}}>
-                    <span><span style={{fontWeight:500,color:'#374151'}}>{a.user?.name || 'System'}</span> · {a.action || a.type || 'activity'}</span>
-                    <span style={{whiteSpace:'nowrap'}}>{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</span>
-                  </div>
-                ))}
-                {activity.recentActions.length === 0 && <div style={{fontSize:9,color:'#9ca3af',padding:8}}>No recent activity</div>}
-              </div>
-            </div>
-            {/* AI Insights */}
-            {insights && insights.length > 0 && (
-              <div style={card}>
-                <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                  <span>🤖 AI Insights</span>
-                  <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· smart recommendations</span>
-                </div>
-                <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                  {insights.map((ins, i) => (
-                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:10,color:'#374151',padding:'8px 10px',background:'#f0f4ff',borderRadius:6,borderLeft:'3px solid #2347e8'}}>
-                      <span style={{fontSize:12,flexShrink:0}}>💡</span>
-                      <span>{ins}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Needs Attention */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <div style={card}>
-                <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                  <span>🔥 Needs Attention</span>
-                  <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· overloaded & underutilized</span>
-                </div>
-                {overloaded.length > 0 && (
-                  <div style={{marginBottom:6}}>
-                    <div style={{fontSize:9,color:'#ef4444',fontWeight:600,marginBottom:3}}>🔥 Overloaded ({overloaded.length})</div>
-                    {overloaded.slice(0,4).map(u => (
-                      <div key={u.userId} style={{display:'flex',alignItems:'center',gap:6,padding:'2px 0',fontSize:9,color:'#374151'}}>
-                        <span style={{width:16,height:16,borderRadius:'50%',background:'#fef2f2',color:'#ef4444',fontSize:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{u.name.charAt(0)}</span>
-                        <span style={{flex:1}}>{u.name}</span>
-                        <span style={{fontWeight:600,color:'#ef4444'}}>{u.assignedTasks || 0} tasks</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {underutilized.length > 0 && (
-                  <div>
-                    <div style={{fontSize:9,color:'#f59e0b',fontWeight:600,marginBottom:3}}>⚠️ Underutilized ({underutilized.length})</div>
-                    {underutilized.slice(0,4).map(u => (
-                      <div key={u.userId} style={{display:'flex',alignItems:'center',gap:6,padding:'2px 0',fontSize:9,color:'#374151'}}>
-                        <span style={{width:16,height:16,borderRadius:'50%',background:'#fffbeb',color:'#f59e0b',fontSize:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{u.name.charAt(0)}</span>
-                        <span style={{flex:1}}>{u.name}</span>
-                        <span style={{fontWeight:600,color:'#f59e0b'}}>{u.participationScore}% score</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {overloaded.length === 0 && underutilized.length === 0 && (
-                  <div style={{fontSize:9,color:'#22c55e',padding:8,textAlign:'center'}}>✅ Team is well balanced</div>
-                )}
-              </div>
-              {/* Urgent Flags */}
-              <div style={card}>
-                <div style={{...secTitle,fontSize:13,marginBottom:8}}>
-                  <span>🚨 Urgent Flags</span>
-                  <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· items needing review</span>
-                </div>
-                {[
-                  { icon:'🔴', label:'Urgent Projects', val:risks.urgentProjects, warn:risks.urgentProjects > 0 },
-                  { icon:'⏰', label:'Overdue Tasks', val:risks.overdueTasks, warn:risks.overdueTasks > 0 },
-                  { icon:'👤', label:'Unassigned Tasks', val:risks.unassignedTasks, warn:risks.unassignedTasks > 0 },
-                  { icon:'🚫', label:'Blocked Projects', val:company.blockedProjects, warn:company.blockedProjects > 0 },
-                  { icon:'📋', label:'Total Tasks', val:tasksAll },
-                ].map(f => (
-                  <div key={f.label} style={statRow}>
-                    <span style={{display:'flex',alignItems:'center',gap:4,color:'#6b7280'}}>
-                      {f.icon} {f.label}
-                    </span>
-                    <span style={{fontWeight:600,color:f.warn ? '#ef4444' : '#22c55e'}}>
-                      {f.warn && '⚠️ '}{f.val}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Project Contribution Modal ── */}
       {selectedProject && (() => {
         const proj = projectParticipation.find(p => p.projectId === selectedProject.projectId);
@@ -1112,6 +1060,8 @@ export default function AnalyticsPage() {
                     <th style={{textAlign:'left',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Team Member</th>
                     <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Tasks</th>
                     <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Done</th>
+                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>TC</th>
+                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Passed</th>
                     <th style={{textAlign:'right',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Contribution</th>
                   </tr>
                 </thead>
@@ -1119,8 +1069,10 @@ export default function AnalyticsPage() {
                   {proj.members.map(m => (
                     <tr key={m.userId} style={{borderBottom:'0.5px solid #f3f4f6'}}>
                       <td style={{padding:'4px 6px',fontWeight:500,color:'#374151'}}>{m.name}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:'#6b7280'}}>{m.tasksAssigned}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:'#22c55e'}}>{m.tasksDone}</td>
+                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role === 'qa_tester' ? '—' : m.tasksAssigned}</td>
+                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role === 'qa_tester' ? '—' : m.tasksDone}</td>
+                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesAssigned||0)}</td>
+                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesPassed||0)}</td>
                       <td style={{padding:'4px 6px',textAlign:'right'}}>
                         <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end'}}>
                           <div style={{width:60,height:4,background:'#e5e7eb',borderRadius:2}}>

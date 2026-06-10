@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../services/api';
@@ -7,6 +7,24 @@ export default function OnboardingGuide() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [acknowledged, setAcknowledged] = useState(user?.onboardingCompleted || false);
+  const [reachedBottom, setReachedBottom] = useState(false);
+  const [checklist, setChecklist] = useState({
+    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, help: false,
+  });
+  const footerRef = useRef(null);
+  const allChecked = Object.values(checklist).every(Boolean);
+
+  useEffect(() => {
+    if (acknowledged) return;
+    const el = footerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setReachedBottom(true); },
+      { rootMargin: '-100px 0px 0px 0px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [acknowledged]);
 
   const handleAcknowledge = async () => {
     try {
@@ -23,21 +41,10 @@ export default function OnboardingGuide() {
           <h1 style={{fontSize:18,fontWeight:700,color:'#111827',margin:0}}>📖 User Onboarding & System Overview</h1>
           <p style={{fontSize:11,color:'#6b7280',margin:'4px 0 0'}}>Complete guide to understanding and using CIOS</p>
         </div>
-        {!acknowledged && (
-          <button onClick={handleAcknowledge} className="btn btn-blue" style={{fontSize:10,padding:'6px 14px',whiteSpace:'nowrap'}}>
-            ✅ I Acknowledge
-          </button>
-        )}
-        {acknowledged && (
-          <span style={{fontSize:10,fontWeight:600,color:'#22c55e',background:'#f0fdf4',padding:'4px 10px',borderRadius:6}}>✅ Acknowledged</span>
-        )}
+        <span style={{fontSize:9,fontWeight:600,padding:'3px 10px',borderRadius:12,whiteSpace:'nowrap',background:acknowledged ? '#f0fdf4' : '#fffbeb',color:acknowledged ? '#16a34a' : '#d97706'}}>
+          {acknowledged ? '✅ Acknowledged' : '⏳ Not Acknowledged'}
+        </span>
       </div>
-
-      {!acknowledged && (
-        <div style={{background:'#fffbeb',border:'0.5px solid #fde68a',borderRadius:8,padding:'10px 14px',marginBottom:16,fontSize:11,color:'#92400e'}}>
-          ⚠️ You must acknowledge this guide before accessing the platform.
-        </div>
-      )}
 
       <div style={{display:'flex',flexDirection:'column',gap:24,fontSize:12,color:'#374151',lineHeight:1.6}}>
 
@@ -58,46 +65,46 @@ export default function OnboardingGuide() {
 
         <Section title="3. User Roles & Permissions">
           <p>Your role determines what you can see and do in CIOS. You cannot change your own role — only an Admin can assign or modify roles.</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Role Hierarchy</h4>
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Available Roles</h4>
           <InfoTable rows={[
-            ['Admin','1 — Highest','Full system access. Can create projects, assign roles, override any status, and manage system settings.'],
-            ['Project Manager (PM)','2','Manages multiple projects. Can create sprints, assign tasks, launch projects, and view all reports.'],
-            ['Team Lead','3','Leads a specific team. Can create tasks, assign to developers, manage sprint backlog, and approve phase transitions.'],
-            ['Developer','4','Executes assigned tasks. Can update task status, upload code, comment on tasks, and view project progress.'],
-            ['QA / Tester','4','Executes test cases. Can create bugs, run tests, upload evidence, and mark test results.'],
-            ['Designer','4','Creates UI/UX mockups, prototypes, and design assets. Can view projects, create/edit tasks, manage design resources, and create test cases.'],
-            ['Business Analyst','4','Analyzes requirements, writes user stories, and validates solutions. Can create tasks, view reports, and track project goals.'],
-            ['Intern','5','Supports the team with limited permissions. Can view projects, create and update own tasks, run test cases, and view dashboards. Cannot create sprints, manage members, or approve phases.'],
-            ['Viewer / Stakeholder','6 — Lowest','Read-only access. Can view dashboards and reports but cannot edit anything.'],
+            ['Admin','1 — Highest','Full system access. Can create/delete projects, assign roles, manage company settings, manage integrations, and access all features.'],
+            ['Project Manager (PM)','2','Manages multiple projects. Can create sprints, assign tasks, launch/deliver projects, manage team members, and view all reports.'],
+            ['Team Lead','3','Leads a team. Can create tasks, manage sprint backlog, approve phase transitions, manage resources, and manage team members.'],
+            ['Manager','3','Oversees operations. Can edit projects, create tasks, edit/delete test cases, and view team work logs.'],
+            ['QA Tester','4','Executes test cases. Can create tasks, execute/retest test cases, manage bugs, and mark test results.'],
+            ['Developer','4','Executes assigned tasks. Can update task status, view projects, and run test cases.'],
+            ['Intern','5','Supports the team. Can view projects, update own tasks, run test cases, and view dashboards.'],
+            ['Other','5','Base-level access. Can view dashboards and basic project information.'],
           ]} />
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Detailed Permission Matrix</h4>
           <InfoTable rows={[
-            ['Action','Admin','PM','Team Lead','Developer','QA','Designer','Business','Intern','Viewer'],
-            ['Create Project','✅','✅','❌','❌','❌','❌','❌','❌','❌'],
-            ['Delete Project','✅','✅','❌','❌','❌','❌','❌','❌','❌'],
-            ['Edit Project Settings','✅','✅','❌','❌','❌','❌','❌','❌','❌'],
-            ['Create Sprint','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Edit Sprint','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Create Task','✅','✅','✅','✅','❌','✅','✅','✅','❌'],
-            ['Edit Own Task','✅','✅','✅','✅','❌','✅','✅','✅','❌'],
-            ["Edit Others' Tasks",'✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Assign Task','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Create Test Case','✅','✅','✅','✅','✅','✅','❌','✅','❌'],
-            ['Execute Test Case','✅','✅','✅','❌','✅','❌','❌','✅','❌'],
-            ['Mark Test Pass/Fail','✅','✅','✅','❌','✅','❌','❌','✅','❌'],
-            ['Create Bug from Failed Test','✅','✅','✅','System','System','System','System','System','❌'],
-            ['View Dashboard','✅','✅','✅','✅','✅','✅','✅','✅','✅'],
-            ['View Reports','✅','✅','✅','✅','✅','✅','✅','✅','✅'],
-            ['Move to Planning (Auto)','System','System','System','System','System','System','System','System','—'],
-            ['Move to Development (Auto)','System','System','System','System','System','System','System','System','—'],
-            ['Move to Testing (Auto)','System','System','System','System','System','System','System','System','—'],
-            ['Move to Review (Auto)','System','System','System','System','System','System','System','System','—'],
-            ['🔒 Launch Project (Manual)','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['🔒 Deliver Project (Manual)','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Override Any Status','✅','✅','✅','❌','❌','❌','❌','❌','❌'],
-            ['Manage Team Members','✅','✅','❌','❌','❌','❌','❌','❌','❌'],
-            ['Change User Roles','✅','❌','❌','❌','❌','❌','❌','❌','❌'],
-            ['Access System Settings','✅','❌','❌','❌','❌','❌','❌','❌','❌'],
+            ['Action','Admin','PM','Team Lead','Manager','QA Tester','Developer','Intern'],
+            ['Create Project','✅','✅','✅','❌','❌','❌','❌'],
+            ['Delete Project','✅','✅','✅','❌','❌','❌','❌'],
+            ['Edit Project','✅','✅','✅','✅','❌','❌','❌'],
+            ['Edit Project Settings','✅','✅','✅','❌','❌','❌','❌'],
+            ['Create Sprint','✅','✅','✅','❌','❌','❌','❌'],
+            ['Delete Sprint','✅','❌','❌','❌','❌','❌','❌'],
+            ['Manage Sprint Tasks','✅','✅','✅','❌','❌','❌','❌'],
+            ['Create Task','✅','✅','✅','✅','✅','❌','❌'],
+            ['Create Standalone Task','✅','✅','✅','✅','❌','❌','❌'],
+            ['Update Any Task','✅','✅','✅','✅','✅','✅','✅'],
+            ['Add / Delete Subtasks','✅','✅','✅','❌','❌','❌','❌'],
+            ['Create Test Case','✅','✅','✅','❌','❌','❌','❌'],
+            ['Edit / Delete Test Case','✅','✅','✅','✅','✅','❌','❌'],
+            ['Execute / Retest Test Case','✅','✅','✅','❌','✅','❌','❌'],
+            ['Manage Resources','✅','✅','✅','❌','❌','❌','❌'],
+            ['Manage Team Members','✅','✅','✅','❌','❌','❌','❌'],
+            ['Manage Bugs','✅','✅','✅','❌','✅','❌','❌'],
+            ['🔒 Launch Project','✅','✅','❌','❌','❌','❌','❌'],
+            ['🔒 Deliver Project','✅','✅','❌','❌','❌','❌','❌'],
+            ['Evaluate Phase','✅','✅','✅','❌','❌','❌','❌'],
+            ['View Team Work Logs','✅','✅','✅','✅','❌','❌','❌'],
+            ['View Dashboard / Reports','✅','✅','✅','✅','✅','✅','✅'],
+            ['Change User Roles','✅','❌','❌','❌','❌','❌','❌'],
+            ['Delete Users','✅','❌','❌','❌','❌','❌','❌'],
+            ['Company / Plan Settings','✅','❌','❌','❌','❌','❌','❌'],
+            ['Manage Integrations','✅','❌','❌','❌','❌','❌','❌'],
           ]} />
           <p style={{fontSize:10,color:'#6b7280',marginTop:6}}>🔒 = Manual gate — requires explicit action by permitted role. System will not auto-transition.</p>
         </Section>
@@ -202,21 +209,21 @@ export default function OnboardingGuide() {
 
         <Section title="7. Status Transitions: Auto vs Manual">
           <h4 style={{margin:'0 0 6px',fontSize:11,color:'#111827'}}>Automatic Transitions (System handles these)</h4>
-          <p style={{fontSize:11}}>You don't need to do anything. The system checks conditions based on the project type and moves the project forward.</p>
+          <p style={{fontSize:11}}>You don't need to do anything. The system checks conditions based on the project type and moves the project forward automatically.</p>
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Software / Development</h4>
           <InfoTable rows={[
             ['From','To','Condition'],
-            ['Discovery','Planning','Sprint exists OR (Project Info filled OR Repositories linked)'],
-            ['Planning','Development','Sprint created AND Tasks created'],
-            ['Development','Testing','ALL tasks = Done AND ALL sprints = Completed'],
-            ['Testing','Review','Testing phase ended or all test cases passed'],
+            ['Discovery','Planning','Project info filled (description, deadline, members) OR repos configured'],
+            ['Planning','Development','Tasks exist OR Sprints exist (work started)'],
+            ['Development','Testing','ALL tasks Done AND no critical tasks remain'],
+            ['Testing','Review','All test cases passed OR (all testing items passed with none failed)'],
           ]} />
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Design / Creative</h4>
           <InfoTable rows={[
             ['From','To','Condition'],
             ['Discovery','Planning','Project info filled or repos linked'],
             ['Planning','Designing','Tasks or sprints exist'],
-            ['Designing','Prototyping','Testing items exist or test cases all passed'],
+            ['Designing','Prototyping','Testing items exist OR (test cases exist AND all passed)'],
             ['Prototyping','Testing','Testing ready (test cases passed or all testing passed)'],
             ['Testing','Review','All tasks done and no critical blockers'],
           ]} />
@@ -251,8 +258,8 @@ export default function OnboardingGuide() {
           <p style={{fontSize:11}}>These apply to <strong>all project types</strong> and require explicit action by an authorized user.</p>
           <InfoTable rows={[
             ['From','To','Who Can Click','What System Checks'],
-            ['Any last auto phase','Launch','Admin, PM, Team Lead','All critical tests passed, no open critical bugs'],
-            ['Launch','Delivered','Admin, PM, Team Lead','All acceptance criteria met, stakeholders approved'],
+            ['Any last auto phase','Launch','Admin, PM','All critical tests passed, no open critical bugs'],
+            ['Launch','Delivered','Admin, PM','All acceptance criteria met, stakeholders approved'],
           ]} />
           <p style={{fontSize:11,marginTop:6}}>If you click Launch or Delivered and the system blocks you, a report will show what's missing.</p>
         </Section>
@@ -274,16 +281,34 @@ export default function OnboardingGuide() {
 
         <Section title="9. Getting Started Checklist">
           <p>Before you start using CIOS, complete this checklist:</p>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11}}>
-            <li>[ ] I understand my role and its permissions</li>
-            <li>[ ] I know who my Team Lead / PM is</li>
-            <li>[ ] I understand the lifecycle phases for each project type</li>
-            <li>[ ] I know that Launch and Delivered require manual approval</li>
-            <li>[ ] I know how to create and update tasks</li>
-            <li>[ ] I know how to run test cases (if I'm QA)</li>
-            <li>[ ] I know where to find help if I'm stuck</li>
+          <ul style={{margin:0,padding:0,fontSize:11,listStyle:'none'}}>
+            {[
+              {k:'role',l:'I understand my role and its permissions'},
+              {k:'lead',l:'I know who my Team Lead / PM is'},
+              {k:'lifecycle',l:'I understand the lifecycle phases for each project type'},
+              {k:'manual',l:'I know that Launch and Delivered require manual approval'},
+              {k:'tasks',l:'I know how to create and update tasks'},
+              {k:'qa',l:'I know how to run test cases (if I\'m QA)'},
+              {k:'help',l:'I know where to find help if I\'m stuck'},
+            ].map(({k,l}) => (
+              <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
+                onClick={() => !acknowledged && setChecklist(p => ({...p, [k]: !p[k]}))}>
+                <span style={{fontSize:11,color:checklist[k] ? '#16a34a' : '#d1d5db'}}>
+                  {checklist[k] ? '✅' : '◻️'}
+                </span>
+                <span style={{color:checklist[k] ? '#111827' : '#6b7280',fontWeight:checklist[k] ? 600 : 400}}>{l}</span>
+              </li>
+            ))}
           </ul>
-          <p style={{fontSize:12,fontWeight:600,color:'#111827',marginTop:10}}>✅ Click "I Acknowledge" below to access the platform.</p>
+          {!acknowledged && !allChecked && (
+            <p style={{fontSize:11,fontWeight:600,color:'#d97706',marginTop:10}}>☑️ Check all items above to enable acknowledgment</p>
+          )}
+          {!acknowledged && allChecked && !reachedBottom && (
+            <p style={{fontSize:11,fontWeight:600,color:'#d97706',marginTop:10}}>📖 Scroll to the bottom of the page to acknowledge</p>
+          )}
+          {!acknowledged && allChecked && reachedBottom && (
+            <p style={{fontSize:11,fontWeight:600,color:'#16a34a',marginTop:10}}>✅ All items checked — you can now acknowledge below</p>
+          )}
         </Section>
 
         {user?.role === 'admin' && (
@@ -349,13 +374,17 @@ export default function OnboardingGuide() {
         </Section>
       </div>
 
-      <div style={{textAlign:'center',marginTop:24,paddingTop:16,borderTop:'0.5px solid #e5e7eb'}}>
+      <div ref={footerRef} style={{textAlign:'center',marginTop:24,paddingTop:16,borderTop:'0.5px solid #e5e7eb'}}>
         {acknowledged ? (
           <span style={{fontSize:12,color:'#22c55e',fontWeight:600}}>✅ You have acknowledged this guide</span>
-        ) : (
+        ) : allChecked && reachedBottom ? (
           <button onClick={handleAcknowledge} className="btn btn-blue" style={{fontSize:11,padding:'8px 20px'}}>
             ✅ I Acknowledge and Agree
           </button>
+        ) : (
+          <span style={{fontSize:11,color:'#9ca3af'}}>
+            {!allChecked ? '☑️ Check all items in the checklist above first' : '📖 Scroll down to reach the bottom'}
+          </span>
         )}
       </div>
     </div>

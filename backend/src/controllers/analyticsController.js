@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const TestCase = require('../models/TestCase');
 const Sprint = require('../models/Sprint');
 const Activity = require('../models/Activity');
 const TestingItem = require('../models/TestingItem');
@@ -140,11 +141,12 @@ exports.getCompanyAnalytics = async (req, res, next) => {
     // ── Employees ──
     const users = await User.find({ isActive: true, domain }).populate('assignedProjects').lean();
     const allTasks = await Task.find({ isActive: true, project: { $in: projectIds } }).lean();
+    const allTestCases = await TestCase.find({ project: { $in: projectIds }, isActive: true }).lean();
     const allSprints = await Sprint.find({ project: { $in: projectIds } }).populate('tasks').lean();
     const domainUserIds = users.map(u => u._id);
     const activities = await Activity.find({ user: { $in: domainUserIds } }).sort({ createdAt: -1 }).limit(500).lean();
 
-    const userTaskMap = {}; const userSprintMap = {};
+    const userTaskMap = {}; const userSprintMap = {}; const userTCMap = {};
     allTasks.forEach(t => {
       const id = t.assignee?.toString();
       if (!id) return;
@@ -152,6 +154,14 @@ exports.getCompanyAnalytics = async (req, res, next) => {
       userTaskMap[id].total++;
       if (t.status === 'done') userTaskMap[id].done++;
       if (t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done') userTaskMap[id].overdue++;
+    });
+    allTestCases.forEach(tc => {
+      const id = tc.assignee?.toString();
+      if (!id) return;
+      if (!userTCMap[id]) userTCMap[id] = { assigned: 0, passed: 0, failed: 0 };
+      userTCMap[id].assigned++;
+      if (tc.status === 'passed') userTCMap[id].passed++;
+      if (tc.status === 'failed') userTCMap[id].failed++;
     });
     allSprints.forEach(s => {
       (s.tasks || []).filter(Boolean).forEach(t => {
@@ -176,13 +186,18 @@ exports.getCompanyAnalytics = async (req, res, next) => {
       const uid = u._id.toString();
       const tasks = userTaskMap[uid] || { total: 0, done: 0, overdue: 0 };
       const sprints = userSprintMap[uid] || { assigned: 0, completed: 0 };
+      const tcs = userTCMap[uid] || { assigned: 0, passed: 0, failed: 0 };
       const act = userActivityMap[uid] || { count: 0, last: null };
       const deadlineRate = tasks.total > 0 ? Math.round(((tasks.total - tasks.overdue) / tasks.total) * 100) : 100;
       const taskCompletion = tasks.total > 0 ? Math.round((tasks.done / tasks.total) * 100) : 0;
+      const tcCompletion = tcs.assigned > 0 ? Math.round((tcs.passed / tcs.assigned) * 100) : 0;
       const sprintCompletion = sprints.assigned > 0 ? Math.round((sprints.completed / sprints.assigned) * 100) : 0;
       const activityLevel = Math.min(100, Math.round((act.count / 20) * 100));
+      const combinedCompletion = u.role === 'qa_tester' && tcs.assigned > 0
+        ? tcCompletion
+        : taskCompletion;
       const participationScore = Math.min(100, Math.round(
-        taskCompletion * 0.3 + sprintCompletion * 0.2 + (u.activityScore || 50) * 0.2 + deadlineRate * 0.15 + activityLevel * 0.15
+        combinedCompletion * 0.3 + sprintCompletion * 0.2 + (u.activityScore || 50) * 0.2 + deadlineRate * 0.15 + activityLevel * 0.15
       ));
       return {
         userId: uid, name: u.name, email: u.email, role: u.role, avatar: u.avatar,
@@ -190,6 +205,7 @@ exports.getCompanyAnalytics = async (req, res, next) => {
         assignedProjects: u.assignedProjects?.length || 0,
         assignedTasks: tasks.total, completedTasks: tasks.done, overdueTasks: tasks.overdue,
         assignedSprints: sprints.assigned, completedSprints: sprints.completed,
+        testCasesAssigned: tcs.assigned, testCasesPassed: tcs.passed, testCasesFailed: tcs.failed,
         lastActivity: act.last,
         participationScore,
         taskCompletion, sprintCompletion, deadlineRate, activityLevel,
@@ -230,31 +246,50 @@ exports.getCompanyAnalytics = async (req, res, next) => {
 
     // ── Per-project participation ──
     const projectParticipation = await Promise.all(allProjects.map(async (p) => {
-      const pTasks = allTasks.filter(t => t.project?.toString() === p._id.toString() || t.projectId?.toString() === p._id.toString());
+      const pId = p._id.toString();
+      const pTasks = allTasks.filter(t => t.project?.toString() === pId || t.projectId?.toString() === pId);
+      const pTestCases = allTestCases.filter(tc => tc.project?.toString() === pId);
       const total = pTasks.length;
       const done = pTasks.filter(t => t.status === 'done').length;
       const taskCompletionRate = total > 0 ? Math.round((done / total) * 100) : 0;
 
+      // Build member map: merge task + test case data
       const memberParticipation = {};
       pTasks.forEach(t => {
         const assigneeId = t.assignee?.toString();
         if (!assigneeId) return;
-        if (!memberParticipation[assigneeId]) memberParticipation[assigneeId] = { assigned: 0, done: 0, sprintContribution: 0 };
-        memberParticipation[assigneeId].assigned++;
-        if (t.status === 'done') memberParticipation[assigneeId].done++;
+        if (!memberParticipation[assigneeId]) memberParticipation[assigneeId] = { tasksAssigned: 0, tasksDone: 0, testCasesAssigned: 0, testCasesPassed: 0, testCasesFailed: 0 };
+        memberParticipation[assigneeId].tasksAssigned++;
+        if (t.status === 'done') memberParticipation[assigneeId].tasksDone++;
+      });
+      pTestCases.forEach(tc => {
+        const assigneeId = tc.assignee?.toString();
+        if (!assigneeId) return;
+        if (!memberParticipation[assigneeId]) memberParticipation[assigneeId] = { tasksAssigned: 0, tasksDone: 0, testCasesAssigned: 0, testCasesPassed: 0, testCasesFailed: 0 };
+        memberParticipation[assigneeId].testCasesAssigned++;
+        if (tc.status === 'passed') memberParticipation[assigneeId].testCasesPassed++;
+        if (tc.status === 'failed') memberParticipation[assigneeId].testCasesFailed++;
       });
       const totalDone = pTasks.filter(t => t.status === 'done').length;
       const members = await User.find({ _id: { $in: Object.keys(memberParticipation) } }).lean();
       const memberList = members.map(m => {
-        const mp = memberParticipation[m._id.toString()] || { assigned: 0, done: 0 };
-        const score = totalDone > 0 ? Math.round((mp.done / totalDone) * 100) : 0;
-        return { name: m.name, userId: m._id, participation: score, tasksAssigned: mp.assigned, tasksDone: mp.done };
+        const mId = m._id.toString();
+        const mp = memberParticipation[mId] || { tasksAssigned: 0, tasksDone: 0, testCasesAssigned: 0, testCasesPassed: 0, testCasesFailed: 0 };
+        const score = totalDone > 0 ? Math.round(((mp.tasksDone + mp.testCasesPassed) / Math.max(totalDone + 1, 1)) * 100) : 0;
+        return {
+          name: m.name, userId: m._id, role: m.role, participation: score,
+          tasksAssigned: mp.tasksAssigned, tasksDone: mp.tasksDone,
+          testCasesAssigned: mp.testCasesAssigned,
+          testCasesPassed: mp.testCasesPassed,
+          testCasesFailed: mp.testCasesFailed,
+        };
       });
       memberList.sort((a, b) => b.participation - a.participation);
 
       return {
-        projectId: p._id, name: p.name,
+        projectId: pId, name: p.name,
         taskCompletionRate, totalTasks: total, doneTasks: done,
+        totalTestCases: pTestCases.length,
         members: memberList,
       };
     }));

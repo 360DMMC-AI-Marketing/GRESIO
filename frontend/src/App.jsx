@@ -17,8 +17,10 @@ import Github from './pages/Github';
 import Teams from './pages/Teams';
 import Outlook from './pages/Outlook';
 import WorkLogs from './pages/WorkLogs';
+import TestCaseDashboard from './pages/TestCaseDashboard';
 import OnboardingGuide from './pages/OnboardingGuide';
 import Landing from './pages/Landing';
+
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/sprints" element={<Sprints />} />
             <Route path="/work-logs" element={<WorkLogs />} />
+            <Route path="/test-cases" element={<TestCaseDashboard />} />
+            <Route path="/test-cases/:projectId" element={<TestCaseDashboard />} />
             <Route path="/onboarding-guide" element={<OnboardingGuide />} />
             <Route path="/users" element={<Users />} />
             <Route path="/analytics" element={<Analytics />} />
@@ -44,6 +48,7 @@ export default function App() {
             <Route path="/outlook" element={<Outlook />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
+
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

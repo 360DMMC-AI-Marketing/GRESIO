@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { projects, tasks, users, sprints as sprintsApi, testCases } from '../services/api';
+import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
 
 const TYPE_CONFIGS = {
@@ -12,7 +13,7 @@ const TYPE_CONFIGS = {
   research: { label:'Research / Analysis', phases:['discovery','planning','research','analysis','testing','review','launched','delivered'], autoPhases:['discovery','planning','research','analysis','testing','review'] },
 };
 
-const CAN_MANAGE = ['admin','project_manager','team_lead'];
+const CAN_MANAGE = ['admin','project_manager','team_lead','manager'];
 const STATUS_META = {
   on_track:{label:'On track',cls:'status-on'}, at_risk:{label:'At risk',cls:'status-ar'},
   ready_to_test:{label:'Ready to test',cls:'status-tt'}, delayed:{label:'Delayed',cls:'status-dl'},
@@ -85,7 +86,8 @@ export default function ProjectDetail() {
   const [tcList, setTcList] = useState([]);
   const [tcStats, setTcStats] = useState(null);
   const [showTcForm, setShowTcForm] = useState(false);
-  const [tcForm, setTcForm] = useState({ title:'', description:'', type:'manual', priority:'medium', assignee:'' });
+  const [tcForm, setTcForm] = useState({ title:'', description:'', type:'manual', priority:'medium', assignee:'', sprint:'', linkedTask:'' });
+  const [editingTc, setEditingTc] = useState(null);
   const [showFailForm, setShowFailForm] = useState(false);
   const [failForm, setFailForm] = useState({ description:'', tcId:null });
   const failFileRef = useRef(null);
@@ -93,6 +95,9 @@ export default function ProjectDetail() {
   const [groupedData, setGroupedData] = useState({ groups: [], ungrouped: [] });
   const [suggestedTeams, setSuggestedTeams] = useState([]);
   const [taskGroupFilter, setTaskGroupFilter] = useState('');
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberWorkLogs, setMemberWorkLogs] = useState([]);
+  const [loadingWorkLogs, setLoadingWorkLogs] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -105,7 +110,7 @@ export default function ProjectDetail() {
       projects.getTeam(id),
       projects.getTeamForAssign(id),
     ];
-    if (canManage) promises.push(projects.getSettings(id));
+    if (['admin','project_manager','team_lead'].includes(user?.role)) promises.push(projects.getSettings(id));
     promises.push(testCases.getAll({ project: id }));
     promises.push(testCases.getStats(id));
     promises.push(projects.getGroupedMembers(id));
@@ -144,34 +149,66 @@ export default function ProjectDetail() {
   useEffect(() => {
     if (!socket || !id) return;
     socket.emit('join_project', id);
-    const onCreated = (tc) => setTcList(prev => [tc, ...prev]);
-    const onUpdated = (tc) => setTcList(prev => prev.map(t => t._id === tc._id ? tc : t));
-    const onDeleted = ({ id: deletedId }) => setTcList(prev => prev.filter(t => t._id !== deletedId));
-    const onBulkCreated = (list) => setTcList(prev => [...list, ...prev]);
+
+    const refreshStatsAndProject = () => {
+      testCases.getStats(id).then(r => setTcStats(r.data)).catch(() => {});
+      projects.getById(id).then(r => setProject(r.data)).catch(() => {});
+    };
+
+    const onCreated = (tc) => { setTcList(prev => [tc, ...prev]); refreshStatsAndProject(); };
+    const onUpdated = (tc) => { setTcList(prev => prev.map(t => t._id === tc._id ? tc : t)); refreshStatsAndProject(); };
+    const onExecuted = (tc) => { setTcList(prev => prev.map(t => t._id === tc._id ? tc : t)); refreshStatsAndProject(); };
+    const onDeleted = ({ id: deletedId }) => { setTcList(prev => prev.filter(t => t._id !== deletedId)); refreshStatsAndProject(); };
+    const onBulkCreated = (list) => { setTcList(prev => [...list, ...prev]); refreshStatsAndProject(); };
+
     socket.on('test_case_created', onCreated);
     socket.on('test_case_updated', onUpdated);
+    socket.on('test_case_executed', onExecuted);
     socket.on('test_case_deleted', onDeleted);
     socket.on('test_cases_bulk_created', onBulkCreated);
+    socket.on('test_cases_auto_generated', onBulkCreated);
+
     return () => {
       socket.emit('leave_project', id);
       socket.off('test_case_created', onCreated);
       socket.off('test_case_updated', onUpdated);
+      socket.off('test_case_executed', onExecuted);
       socket.off('test_case_deleted', onDeleted);
       socket.off('test_cases_bulk_created', onBulkCreated);
+      socket.off('test_cases_auto_generated', onBulkCreated);
     };
   }, [socket, id]);
-
-  // Refresh stats whenever tcList changes
-  useEffect(() => {
-    if (!id) return;
-    testCases.getStats(id).then(r => setTcStats(r.data)).catch(() => {});
-  }, [id, tcList.length]);
 
   useEffect(() => {
     const close = () => setActionSprint(null);
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
   }, []);
+
+  // Fetch worklogs when a team member is selected
+  useEffect(() => {
+    if (!selectedMember) { setMemberWorkLogs([]); return; }
+    const uid = selectedMember.user?._id || selectedMember.user;
+    if (!uid) return;
+    setLoadingWorkLogs(true);
+    setMemberWorkLogs([]);
+    const token = localStorage.getItem('cios_token');
+    fetch('/api/work-logs/history/' + uid, { headers: { Authorization: 'Bearer ' + token } })
+      .then(r => {
+        window.__wl_status = r.status;
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+        return r.json();
+      })
+      .then(data => {
+        setMemberWorkLogs(data);
+        window.__wl = { uid, data };
+      })
+      .catch(e => {
+        console.error('Worklog fetch error:', e.message);
+        window.__wl_error = e.message;
+      })
+      .finally(() => setLoadingWorkLogs(false));
+  }, [selectedMember]);
 
   const totalTasks = projectSprints.reduce((sum, s) => sum + (s.tasks?.length || 0), 0);
   const doneTasks = projectSprints.reduce((sum, s) => sum + (s.tasks?.filter(t => t.status === 'done').length || 0), 0);
@@ -337,9 +374,8 @@ export default function ProjectDetail() {
       const body = {
         general: {
           name: project.name, description: project.description,
-          status: project.status, phase: project.phase,
-          deadline: project.deadline, client: project.client,
-          clientName: settingsForm.clientName,
+          status: project.status, phase: settingsForm.manualPhase || project.phase,
+          deadline: project.deadline, clientName: settingsForm.clientName,
         },
         development: {
           frontendRepo: settingsForm.frontendRepo || '',
@@ -413,6 +449,10 @@ export default function ProjectDetail() {
     } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
   };
 
+  const handleMemberClick = (m) => {
+    setSelectedMember(m);
+  };
+
   const openResourceForm = (res = null) => {
     if (res) {
       setEditingResource(res._id);
@@ -473,7 +513,7 @@ export default function ProjectDetail() {
     { key:'test-cases', label:'🧪 Test Cases' },
     { key:'team', label:'👥 Team' },
     { key:'resources', label:'🔗 Resources' },
-    ...(canManage ? [{ key:'settings', label:'⚙️ Settings' }] : []),
+    ...(['admin','project_manager','team_lead'].includes(user?.role) ? [{ key:'settings', label:'⚙️ Settings' }] : []),
   ];
 
   return (
@@ -488,7 +528,7 @@ export default function ProjectDetail() {
               {project.projectType && <span style={{fontSize:8,background:'#f3f4f6',color:'#6b7280',padding:'2px 6px',borderRadius:4,fontWeight:500}}>{typeCfg.label}</span>}
             </div>
             <div className="proj-client">
-              {project.description}{project.client ? ` · Client: ${project.client}` : ''}{project.deadline ? ` · Deadline: ${fmtDate(project.deadline, true)}${daysLeft !== '—' ? ` (${daysLeft}d left)` : ''}` : ''}
+              {project.description ? `${project.description} · ` : ''}Client: {settingsForm.clientName || project.client || 'N/A'}{project.deadline ? ` · Deadline: ${fmtDate(project.deadline, true)}${daysLeft !== '—' ? ` (${daysLeft}d left)` : ''}` : ''}
             </div>
           </div>
           <div className="proj-actions">
@@ -1036,7 +1076,7 @@ export default function ProjectDetail() {
                       const rs = roleStyles[m.projectRole] || roleStyles.developer;
                       const isActive = m.status === 'active';
                       return (
-                        <div key={m._id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6'}}>
+                        <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}>
                           <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,background:rs.bg,color:rs.clr,flexShrink:0}}>
                             {(m.user?.name || m.email || '?').charAt(0).toUpperCase()}
                           </div>
@@ -1068,7 +1108,7 @@ export default function ProjectDetail() {
                     <span style={{fontSize:10,color:'#6b7280',background:'#e5e7eb',padding:'2px 10px',borderRadius:12,fontWeight:600}}>{groupedData.ungrouped.length} members</span>
                   </div>
                   {groupedData.ungrouped.map(m => (
-                    <div key={m._id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6'}}>
+                    <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}>
                       <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,background:'#f3f4f6',color:'#374151',flexShrink:0}}>
                         {(m.user?.name || m.email || '?').charAt(0).toUpperCase()}
                       </div>
@@ -1190,7 +1230,19 @@ export default function ProjectDetail() {
               </span>}
             </div>
             {canManage && (
-              <button className="btn btn-blue" onClick={() => { setTcForm({ title:'', description:'', type:'manual', priority:'medium', assignee:'' }); setShowTcForm(true); }}>+ New Test Case</button>
+              <button className="btn btn-blue" onClick={() => { setTcForm({ title:'', description:'', type:'manual', priority:'medium', assignee:'', sprint:'', linkedTask:'' }); setEditingTc(null); setShowTcForm(true); }}>+ New Test Case</button>
+            )}
+            {canManage && (
+              <button className="btn btn-outline" style={{marginLeft:6}} onClick={async () => {
+                try {
+                  const res = await testCases.generateCompleted({ projectId: id });
+                  const reload = await testCases.getAll({ project: id });
+                  setTcList(reload.data);
+                  const sr = await testCases.getStats(id);
+                  setTcStats(sr.data);
+                  toast.success(res.data.message);
+                } catch(e) { toast.error('Failed'); }
+              }}>📦 From Completed Sprints</button>
             )}
           </div>
 
@@ -1244,41 +1296,64 @@ export default function ProjectDetail() {
                         <td style={{padding:'7px 12px',fontSize:10,color:'#6b7280'}}>{tc.assignee?.name || '—'}</td>
                         <td style={{padding:'7px 12px'}}>
                           <div style={{display:'flex',gap:4}}>
-                            {tc.status === 'draft' && (canManage || user?.role === 'qa_tester') && (
+                            {(tc.status === 'draft' || tc.status === 'auto-draft') && (canManage || user?.role === 'qa_tester') && (
                               <button onClick={async () => {
-                                await testCases.update(tc._id, { status: 'ready' });
-                                const res = await testCases.getAll({ project: id });
-                                setTcList(res.data);
+                                try {
+                                  await testCases.update(tc._id, { status: 'ready' });
+                                  toast.success('Status changed to ready');
+                                  const [res, statsRes, projRes] = await Promise.all([testCases.getAll({ project: id }), testCases.getStats(id), projects.getById(id)]);
+                                  setTcList(res.data);
+                                  setTcStats(statsRes.data);
+                                  setProject(projRes.data);
+                                } catch (e) { toast.error(e.response?.data?.message || 'Failed to update'); }
                               }} style={{fontSize:9,padding:'2px 6px',background:'#3b82f6',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>Ready</button>
                             )}
-                            {tc.status === 'ready' && (
+                            {tc.status === 'ready' && (canManage || user?.role === 'qa_tester') && (
                               <button onClick={async () => {
-                                if (!canManage && user?.role !== 'qa_tester' && tc.assignee?._id !== user._id) return alert('Not assigned to you');
-                                await testCases.update(tc._id, { status: 'in_progress' });
-                                const res = await testCases.getAll({ project: id });
-                                setTcList(res.data);
+                                try {
+                                  if (!canManage && user?.role !== 'qa_tester' && tc.assignee?._id !== user._id) return toast.error('Not assigned to you');
+                                  await testCases.update(tc._id, { status: 'in_progress' });
+                                  toast.success('Test started');
+                                  const [res, statsRes, projRes] = await Promise.all([testCases.getAll({ project: id }), testCases.getStats(id), projects.getById(id)]);
+                                  setTcList(res.data);
+                                  setTcStats(statsRes.data);
+                                  setProject(projRes.data);
+                                } catch (e) { toast.error(e.response?.data?.message || 'Failed to start'); }
                               }} style={{fontSize:9,padding:'2px 6px',background:'#f59e0b',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>Start</button>
                             )}
-                            {tc.status === 'in_progress' && ['passed','failed','blocked','skipped'].map(s => (
+                            {tc.status === 'in_progress' && tc.assignee?._id === user._id && ['passed','failed','blocked','skipped'].map(s => (
                               <button key={s} onClick={async () => {
                                 if (s === 'failed') {
                                   setFailForm({ description:'', tcId:tc._id });
                                   setShowFailForm(true);
                                   return;
                                 }
-                                await testCases.update(tc._id, { status: s });
-                                const res = await testCases.getAll({ project: id });
-                                setTcList(res.data);
+                                try {
+                                  await testCases.update(tc._id, { status: s });
+                                  toast.success(`Status changed to ${s}`);
+                                  const [res, statsRes, projRes] = await Promise.all([testCases.getAll({ project: id }), testCases.getStats(id), projects.getById(id)]);
+                                  setTcList(res.data);
+                                  setTcStats(statsRes.data);
+                                  setProject(projRes.data);
+                                } catch (e) { toast.error(e.response?.data?.message || 'Failed to update'); }
                               }} style={{fontSize:9,padding:'2px 6px',background:s==='passed'?'#22c55e':s==='failed'?'#ef4444':s==='blocked'?'#8b5cf6':'#6b7280',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>
                                 {s === 'passed' ? '✅' : s === 'failed' ? '❌' : s === 'blocked' ? '⛔' : '⏭'} {s}
                               </button>
                             ))}
                             {canManage && (
+                              <button onClick={() => {
+                                setTcForm({ title: tc.title, description: tc.description || '', type: tc.type || 'manual', priority: tc.priority || 'medium', assignee: tc.assignee?._id || '', sprint: tc.sprint?._id || tc.sprint || '', linkedTask: tc.linkedTask?._id || tc.linkedTask || '' });
+                                setEditingTc(tc);
+                                setShowTcForm(true);
+                              }} style={{fontSize:9,padding:'2px 6px',background:'#f3f4f6',color:'#374151',border:'none',borderRadius:4,cursor:'pointer'}}>✏️</button>
+                            )}
+                            {canManage && (
                               <button onClick={async () => {
                                 await testCases.delete(tc._id);
                                 setTcList(prev => prev.filter(t => t._id !== tc._id));
-                                const statsRes = await testCases.getStats(id);
+                                const [statsRes, projRes] = await Promise.all([testCases.getStats(id), projects.getById(id)]);
                                 setTcStats(statsRes.data);
+                                setProject(projRes.data);
                               }} style={{fontSize:9,padding:'2px 6px',background:'#f3f4f6',color:'#ef4444',border:'none',borderRadius:4,cursor:'pointer'}}>✕</button>
                             )}
                           </div>
@@ -1305,11 +1380,6 @@ export default function ProjectDetail() {
                   onChange={e => updateProjectField('name', e.target.value)} disabled={!canManage} />
               </div>
               <div className="s-field">
-                <label className="s-label">Client</label>
-                <input className="s-input" value={project.client || ''}
-                  onChange={e => updateProjectField('client', e.target.value)} disabled={!canManage} />
-              </div>
-              <div className="s-field">
                 <label className="s-label">Deadline</label>
                 <input type="date" className="s-input" value={project.deadline ? project.deadline.split('T')[0] : ''}
                   onChange={e => updateProjectField('deadline', e.target.value)} disabled={!canManage} />
@@ -1320,6 +1390,17 @@ export default function ProjectDetail() {
                   onChange={e => setSettingsForm({...settingsForm, clientName: e.target.value})} disabled={!canManage}
                   placeholder="Acme Corp" />
               </div>
+              {canManage && (
+              <div className="s-field">
+                <label className="s-label">Phase</label>
+                <select className="s-input" value={settingsForm.manualPhase || project.phase || ''}
+                  onChange={e => setSettingsForm({...settingsForm, manualPhase: e.target.value})}>
+                  {(TYPE_CONFIGS[project.projectType]?.phases || []).map(p => (
+                    <option key={p} value={p}>{p.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>
+                  ))}
+                </select>
+              </div>
+              )}
               <div className="s-field" style={{gridColumn:'1/-1'}}>
                 <label className="s-label">Description</label>
                 <textarea className="s-input" rows={2} style={{resize:'none'}} value={project.description || ''}
@@ -1464,21 +1545,55 @@ export default function ProjectDetail() {
         ]}
       />
       <InputModal
-        open={showTcForm} onClose={() => setShowTcForm(false)}
-        title="New Test Case" icon="🧪" submitText="Create"
+        open={showTcForm} onClose={() => { setShowTcForm(false); setEditingTc(null); }}
+        title={editingTc ? 'Edit Test Case' : 'New Test Case'} icon="🧪" submitText={editingTc ? 'Save' : 'Create'}
         onSubmit={async () => {
           if (!tcForm.title.trim()) return;
           try {
             const payload = { ...tcForm, project: id };
             if (!payload.assignee) delete payload.assignee;
-            const res = await testCases.create(payload);
-            setTcList(prev => [res.data, ...prev]);
+            if (!payload.sprint) delete payload.sprint;
+            if (!payload.linkedTask) delete payload.linkedTask;
+            if (editingTc) {
+              const [res, statsRes, projRes] = await Promise.all([testCases.update(editingTc._id, payload), testCases.getStats(id), projects.getById(id)]);
+              setTcList(prev => prev.map(t => t._id === editingTc._id ? res.data : t));
+              setTcStats(statsRes.data);
+              setProject(projRes.data);
+            } else {
+              const [res, statsRes, projRes] = await Promise.all([testCases.create(payload), testCases.getStats(id), projects.getById(id)]);
+              setTcList(prev => [res.data, ...prev]);
+              setTcStats(statsRes.data);
+              setProject(projRes.data);
+            }
             setShowTcForm(false);
+            setEditingTc(null);
           } catch (e) { alert(e.response?.data?.message || 'Failed'); }
         }}
         fields={[
           { key:'title', label:'Title *', type:'text', placeholder:'e.g. Validate API rate limiting', value:tcForm.title, onChange:e => setTcForm({...tcForm,title:e.target.value}) },
           { key:'description', label:'Description', type:'textarea', placeholder:'What does this test case verify?', value:tcForm.description, onChange:e => setTcForm({...tcForm,description:e.target.value}) },
+          ...(canManage ? [{
+            key:'sprint', label:'Sprint', type:'select',
+            value: tcForm.sprint,
+            onChange: (e) => setTcForm({...tcForm, sprint: e.target.value, linkedTask: '' }),
+            options: [
+              { value:'', label:'— No sprint —' },
+              ...projectSprints
+                .filter(s => ['planning','active','completed'].includes(s.status))
+                .map(s => ({ value: s._id, label: `${s.name} (${s.status})` }))
+            ]
+          }] : []),
+          ...(tcForm.sprint ? [{
+            key:'linkedTask', label:'Linked Task', type:'select',
+            value: tcForm.linkedTask,
+            onChange: (e) => setTcForm({...tcForm, linkedTask: e.target.value }),
+            options: [
+              { value:'', label:'— No task (create from scratch) —' },
+              ...((projectSprints.find(s => s._id === tcForm.sprint)?.tasks || [])
+                .filter(t => t.isActive !== false)
+                .map(t => ({ value: t._id, label: t.title })))
+            ]
+          }] : []),
           { key:'assignee', label:'Assignee', type:'select', value:tcForm.assignee, onChange:e => setTcForm({...tcForm,assignee:e.target.value}), options:[{value:'',label:'— Unassigned —'}, ...projectMembers.filter(u => !taskGroupFilter || (u.teamGroup && (u.teamGroup._id || u.teamGroup) === taskGroupFilter)).map(u => ({value:u._id,label:u.name}))] },
           { key:'type', label:'Type', type:'select', value:tcForm.type, onChange:e => setTcForm({...tcForm,type:e.target.value}), options:[{value:'integration',label:'🔌 Integration'},{value:'unit',label:'🧩 Unit'},{value:'e2e',label:'🔄 E2E'},{value:'security',label:'🔒 Security'},{value:'performance',label:'⚡ Performance'},{value:'manual',label:'👤 Manual'}] },
           { key:'priority', label:'Priority', type:'select', value:tcForm.priority, onChange:e => setTcForm({...tcForm,priority:e.target.value}), options:[{value:'critical',label:'🔴 Critical'},{value:'urgent',label:'⛔ Urgent'},{value:'high',label:'🟠 High'},{value:'medium',label:'🟡 Medium'},{value:'low',label:'🟢 Low'}] },
@@ -1502,8 +1617,10 @@ export default function ProjectDetail() {
                   fd.append('file', failFileRef.current.files[0]);
                   await testCases.uploadAttachment(failForm.tcId, fd);
                 }
-                const res = await testCases.getAll({ project: id });
+                const [res, statsRes, projRes] = await Promise.all([testCases.getAll({ project: id }), testCases.getStats(id), projects.getById(id)]);
                 setTcList(res.data);
+                setTcStats(statsRes.data);
+                setProject(projRes.data);
                 setShowFailForm(false);
               } catch (e) { alert(e.response?.data?.message || 'Failed'); }
             }} style={{fontSize:10,padding:'5px 12px'}}>Mark as Failed</button>
@@ -1529,6 +1646,80 @@ export default function ProjectDetail() {
           />
         </label>
       </Modal>
+
+      {/* ===== MEMBER DETAIL SIDE PANEL ===== */}
+      {selectedMember && (
+        <>
+          <div onClick={() => setSelectedMember(null)}
+            style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', zIndex:999 }} />
+          <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'white', zIndex:1000,
+            boxShadow:'-8px 0 30px rgba(0,0,0,0.12)', display:'flex', flexDirection:'column', overflow:'hidden',
+            animation:'slideIn 0.2s ease-out' }}>
+            <style>{`@keyframes slideIn { from { transform:translateX(100%) } to { transform:translateX(0) } }`}</style>
+            <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid #f3f4f6', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, background:'#eef2ff', color:'#4338ca', flexShrink:0 }}>
+                  {(selectedMember.user?.name || selectedMember.email || '?').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#111827' }}>{selectedMember.user?.name || selectedMember.email}</div>
+                  <div style={{ fontSize:10, color:'#6b7280', marginTop:1 }}>{selectedMember.user?.email || selectedMember.email}</div>
+                </div>
+              </div>
+              <button onClick={() => setSelectedMember(null)}
+                style={{ background:'#f3f4f6', border:'none', borderRadius:8, width:28, height:28, fontSize:12, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>
+              <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:8 }}>Work Log</div>
+              {loadingWorkLogs ? (
+                <div style={{ textAlign:'center', padding:'20px 0', color:'#9ca3af', fontSize:11 }}>Loading...</div>
+              ) : memberWorkLogs.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'12px 0', color:'#9ca3af', fontSize:11 }}>No work log entries found</div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:20 }}>
+                  {memberWorkLogs.slice(0, 10).map((wl, i) => (
+                    <div key={i} style={{ padding:'8px 10px', background:'#fafafa', borderRadius:6, border:'0.5px solid #f3f4f6' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span style={{ fontSize:10, fontWeight:600, color:'#111827' }}>{wl.project?.name || wl.taskTitle || 'Work'}</span>
+                        <span style={{ fontSize:10, color:'#2347e8', fontWeight:600 }}>{wl.hours}h</span>
+                      </div>
+                      {wl.description && <div style={{ fontSize:9, color:'#6b7280', marginTop:2 }}>{wl.description}</div>}
+                      <div style={{ fontSize:8, color:'#9ca3af', marginTop:2 }}>
+                        {wl.date} · {wl.category} · {wl.mood}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:8, marginTop:24 }}>
+                Project Assignments ({selectedMember.memberships?.length || selectedMember.user?.assignedProjects?.length || 0})
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {(selectedMember.memberships || []).map((ms, i) => {
+                  const roleStyles = { admin:{bg:'#f0f4ff',clr:'#1a35c4'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'#1a35c4'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
+                  const rs = roleStyles[ms.projectRole] || roleStyles.developer;
+                  return (
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #f3f4f6' }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:11, fontWeight:600, color:'#111827' }}>{ms.project?.name || 'Unknown project'}</div>
+                        <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
+                          <span style={{ fontSize:9, background:rs.bg, color:rs.clr, padding:'1px 6px', borderRadius:3, fontWeight:500 }}>
+                            {ms.projectRole?.replace(/_/g, ' ') || 'developer'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {(!selectedMember.memberships || selectedMember.memberships.length === 0) && (
+                  <div style={{ textAlign:'center', padding:'12px 0', color:'#9ca3af', fontSize:11 }}>No project assignments</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

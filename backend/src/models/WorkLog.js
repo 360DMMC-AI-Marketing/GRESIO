@@ -15,6 +15,7 @@ const workLogSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   notes: { type: String, default: '' },
   mood: { type: String, enum: ['great', 'good', 'okay', 'difficult'], default: 'good' },
+  tags: [{ type: String }],
 }, { timestamps: true });
 
 workLogSchema.index({ user: 1, date: 1 });

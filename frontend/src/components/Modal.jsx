@@ -31,7 +31,7 @@ const MODAL_STYLES = {
   label: { display:'block',fontSize:10,fontWeight:500,color:'#374151',marginTop:8 },
 };
 
-export default function Modal({ open, onClose, title, icon, children, footer }) {
+export default function Modal({ open, onClose, title, icon, children, footer, style }) {
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -43,7 +43,7 @@ export default function Modal({ open, onClose, title, icon, children, footer }) 
 
   return (
     <div style={MODAL_STYLES.backdrop} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={MODAL_STYLES.box} onClick={(e) => e.stopPropagation()}>
+      <div style={{...MODAL_STYLES.box, ...style}} onClick={(e) => e.stopPropagation()}>
         <div style={MODAL_STYLES.header}>
           <span>{icon ? icon + ' ' : ''}{title}</span>
           <button style={MODAL_STYLES.closeBtn} onClick={onClose}>✕</button>

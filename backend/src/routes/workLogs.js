@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { create, update, getMyLogs, getTeamLogs, getHistory, getUserProjectsAndTasks } = require('../controllers/workLogController');
+const { create, update, deleteWorkLog, getMyLogs, getTeamLogs, getHistory, getUserProjectsAndTasks } = require('../controllers/workLogController');
 const { auth, authorize } = require('../middleware/auth');
 const router = Router();
 router.use(auth);
@@ -10,5 +10,6 @@ router.get('/history/:userId', getHistory);
 router.get('/user-data', getUserProjectsAndTasks);
 router.post('/', create);
 router.patch('/:id', update);
+router.delete('/:id', deleteWorkLog);
 
 module.exports = router;

@@ -1,0 +1,14 @@
+const { Router } = require('express');
+const { getProjectInterests, updateProjectInterests, runInterestFilter, getFlaggedTests, restoreFlaggedTest, restoreAllFlagged, deleteAllFlagged, getInterestStats } = require('../controllers/interestController');
+const { auth, authorize } = require('../middleware/auth');
+const router = Router();
+router.use(auth);
+router.get('/project/:projectId', getProjectInterests);
+router.put('/project/:projectId', authorize('admin', 'project_manager'), updateProjectInterests);
+router.post('/project/:projectId/filter', authorize('admin', 'project_manager', 'team_lead'), runInterestFilter);
+router.get('/flagged/:projectId?', authorize('admin', 'project_manager', 'team_lead'), getFlaggedTests);
+router.get('/stats/:projectId?', getInterestStats);
+router.post('/flagged/:id/restore', authorize('admin', 'project_manager'), restoreFlaggedTest);
+router.post('/flagged/restore-all', authorize('admin', 'project_manager'), restoreAllFlagged);
+router.delete('/flagged', authorize('admin'), deleteAllFlagged);
+module.exports = router;

@@ -1,19 +1,22 @@
 const WorkLog = require('../models/WorkLog');
 const Task = require('../models/Task');
 const Project = require('../models/Project');
+const User = require('../models/User');
 const { getDomainProjectIds } = require('../config/planLimits');
 
 exports.create = async (req, res, next) => {
   try {
-    const { date, project, task, taskTitle, hours, category, description, notes, mood } = req.body;
-    const projectIds = await getDomainProjectIds(req.user.domain);
-    if (!projectIds.includes(project)) {
-      return res.status(403).json({ message: 'Project not in your domain' });
+    const { date, project, task, taskTitle, hours, category, description, notes, mood, tags } = req.body;
+    if (!hours) {
+      return res.status(400).json({ message: 'Hours are required' });
+    }
+    if (!date) {
+      return res.status(400).json({ message: 'Date is required' });
     }
     const doc = await WorkLog.create({
       user: req.user._id, date, project, task, taskTitle, hours,
       category: category || 'development', description: description || '',
-      notes: notes || '', mood: mood || 'good',
+      notes: notes || '', mood: mood || 'good', tags: tags || [],
     });
     const populated = await WorkLog.findById(doc._id)
       .populate('project', 'name')
@@ -29,19 +32,19 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { hours, category, description, notes, mood } = req.body;
+    const { hours, category, description, notes, mood, tags } = req.body;
     const existing = await WorkLog.findById(req.params.id);
     if (!existing) return res.status(404).json({ message: 'Work log not found' });
     if (!existing.user.equals(req.user._id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     const projectIds = await getDomainProjectIds(req.user.domain);
-    if (!projectIds.includes(existing.project.toString())) {
+    if (existing.project && !projectIds.includes(existing.project.toString())) {
       return res.status(403).json({ message: 'Project not in your domain' });
     }
     const doc = await WorkLog.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      { hours, category, description, notes, mood },
+      { hours, category, description, notes, mood, tags },
       { new: true, runValidators: true }
     ).populate('project', 'name').populate('task', 'title');
     res.json(doc);
@@ -97,13 +100,25 @@ exports.getHistory = async (req, res, next) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startStr = startDate.toISOString().slice(0, 10);
-    const projectIds = await getDomainProjectIds(req.user.domain);
     const docs = await WorkLog.find({
       user: userId,
-      project: { $in: projectIds },
       date: { $gte: startStr },
     }).populate('project', 'name').populate('task', 'title').sort({ date: -1, createdAt: -1 });
     res.json(docs);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteWorkLog = async (req, res, next) => {
+  try {
+    const existing = await WorkLog.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Work log not found' });
+    if (!existing.user.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    await WorkLog.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Work log deleted' });
   } catch (error) {
     next(error);
   }

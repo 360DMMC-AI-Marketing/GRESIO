@@ -14,7 +14,7 @@ router.get('/:id', getProjectById);
 router.get('/:id/analytics', getProjectAnalytics);
 router.post('/', authorize('admin', 'project_manager', 'team_lead'), createProject);
 router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'manager'), updateProject);
-router.delete('/:id', authorize('admin'), deleteProject);
+router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), deleteProject);
 router.patch('/:id/launch', authorize('admin', 'project_manager'), markLaunched);
 router.patch('/:id/deliver', authorize('admin', 'project_manager'), markDelivered);
 router.get('/:projectId/resources', resourceController.getResources);

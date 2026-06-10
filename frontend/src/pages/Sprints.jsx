@@ -25,6 +25,7 @@ export default function Sprints() {
   const [showAddTask, setShowAddTask] = useState(null);
   const [taskForm, setTaskForm] = useState({ title:'', priority:'medium', assignee:'', deadline:'' });
   const [creatingTask, setCreatingTask] = useState(null);
+  const [highlightId, setHighlightId] = useState(null);
   const canManage = CAN_MANAGE.includes(user?.role);
 
   const fetch = () => {
@@ -37,6 +38,19 @@ export default function Sprints() {
   useEffect(() => { fetch(); }, [filterProject, filterStatus]);
   useEffect(() => { projects.getAll().then(r => setAllProjects(r.data)).catch(() => {}); }, []);
   useEffect(() => { usersApi.getAll().then(r => setAllUsers(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sprintId = params.get('sprintId');
+    if (sprintId) {
+      setHighlightId(sprintId);
+      params.delete('sprintId');
+      window.history.replaceState(null, '', `/sprints?${params.toString()}`);
+      setTimeout(() => {
+        document.getElementById(`sprint-${sprintId}`)?.scrollIntoView({ behavior:'smooth', block:'center' });
+      }, 300);
+      setTimeout(() => setHighlightId(null), 3000);
+    }
+  }, []);
 
   const handleRemoveTask = async (sprintId, taskId) => {
     try { await sprintsApi.removeTask(sprintId, taskId); fetch(); } catch (e) { console.error(e); }
@@ -92,7 +106,7 @@ export default function Sprints() {
             const done = s.tasks?.filter(t => t.status === 'done').length || 0;
             const pct = total > 0 ? Math.round(done / total * 100) : 0;
             return (
-              <div className="sprint-card" key={s._id}>
+              <div className="sprint-card" key={s._id} id={`sprint-${s._id}`} style={highlightId === s._id ? {border:'2px solid #2347e8',boxShadow:'0 0 12px rgba(35,71,232,0.25)',transition:'all 0.3s'} : {}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'start'}}>
                   <div>
                     <div className="sprint-name">{s.name}</div>

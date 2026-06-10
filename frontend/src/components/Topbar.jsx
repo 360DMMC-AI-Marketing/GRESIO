@@ -9,10 +9,11 @@ const STATUS_DOT = {
 };
 
 const PLAN_INFO = {
-  starter: { label: 'Starter', color: '#9ca3af', bg: '#f3f4f6' },
-  team: { label: 'Team', color: '#1a35c4', bg: '#f0f4ff' },
-  enterprise: { label: 'Enterprise', color: '#b45309', bg: '#fffbeb' },
+  starter: { label: 'Starter', color: '#6b7280', bg: '#f3f4f6', limit: 10 },
+  team: { label: 'Team', color: '#1e40af', bg: '#eef2ff', limit: 50 },
+  enterprise: { label: 'Enterprise', color: '#92400e', bg: '#fffbeb', limit: Infinity },
 };
+const PLAN_ICON = { starter: '🌱', team: '🚀', enterprise: '🏢' };
 
 export default function Topbar({ sidebarWidth }) {
   const { user, company, logout, socket } = useAuth();
@@ -205,11 +206,23 @@ export default function Topbar({ sidebarWidth }) {
         </div>
         <div className="w-px h-5 bg-neutral-200" />
         {(() => {
-          const plan = company?.usage?.plan || company?.plan || 'starter';
+          const plan = company?.plan || 'starter';
           const info = PLAN_INFO[plan] || PLAN_INFO.starter;
+          const usage = company?.usage || {};
+          const userPct = info.limit === Infinity ? 0 : Math.round(((usage.userCount || 0) / info.limit) * 100);
           return (
-            <Link to="/admin" style={{ fontSize: 10, fontWeight: 600, color: info.color, background: info.bg, padding: '2px 10px', borderRadius: 20, lineHeight: '18px', textDecoration: 'none', cursor: 'pointer' }}>
-              {info.label}
+            <Link to="/admin" style={{display:'flex',alignItems:'center',gap:6,fontSize:10,fontWeight:600,color:info.color,background:info.bg,padding:'3px 10px',borderRadius:20,textDecoration:'none',cursor:'pointer',lineHeight:'18px'}}>
+              <span style={{fontSize:11}}>{PLAN_ICON[plan] || '📋'}</span>
+              <span style={{fontWeight:700}}>PLAN:</span>
+              <span>{info.label}</span>
+              {info.limit !== Infinity && (
+                <span style={{display:'inline-flex',alignItems:'center',gap:3,marginLeft:2}}>
+                  <span style={{width:32,height:3,background:'rgba(0,0,0,0.08)',borderRadius:2,display:'inline-block',overflow:'hidden',verticalAlign:'middle'}}>
+                    <span style={{display:'block',height:'100%',width:`${Math.min(userPct,100)}%`,background:userPct >= 90 ? '#ef4444' : info.color,borderRadius:2}} />
+                  </span>
+                  <span style={{fontSize:8,opacity:0.7}}>{usage.userCount || 0}/{info.limit}</span>
+                </span>
+              )}
             </Link>
           );
         })()}

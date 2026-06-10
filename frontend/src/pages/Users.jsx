@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { workLogs } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const ROLE_STYLES = {
@@ -55,6 +55,13 @@ export default function Users() {
   const [projects, setProjects] = useState([]);
   const [projectGroups, setProjectGroups] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [activeDrawerTab, setActiveDrawerTab] = useState('assignments');
+  const [memberWorkLogs, setMemberWorkLogs] = useState([]);
+  const [loadingWorkLogs, setLoadingWorkLogs] = useState(false);
+  const [showWLForm, setShowWLForm] = useState(false);
+  const [editingWLId, setEditingWLId] = useState(null);
+  const [wlForm, setWlForm] = useState({ date:new Date().toISOString().split('T')[0], hours:1, project:'', description:'', tags:'' });
+  const [selectedWLDetail, setSelectedWLDetail] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -75,6 +82,14 @@ export default function Users() {
       .then(r => setProjectGroups(r.data))
       .catch(() => setProjectGroups([]));
   }, [addForm.project]);
+
+  useEffect(() => {
+    if (!selectedMember) { setMemberWorkLogs([]); return; }
+    const uid = selectedMember.user?._id;
+    if (!uid) return;
+    setLoadingWorkLogs(true);
+    workLogs.getHistory(uid).then(r => setMemberWorkLogs(r.data)).catch(() => {}).finally(() => setLoadingWorkLogs(false));
+  }, [selectedMember]);
 
   const toggleCollapse = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
 
@@ -105,6 +120,36 @@ export default function Users() {
   };
 
   const totalMembers = groupedData.groups.reduce((s, g) => s + g.members.length, 0) + groupedData.ungrouped.length;
+
+  function formatDateDisplay(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    if (date.getTime() === today.getTime()) return 'Today';
+    if (date.getTime() === yesterday.getTime()) return 'Yesterday';
+    return date.toLocaleDateString('en', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  function getWeekStart() {
+    const d = new Date(); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff)); monday.setHours(0, 0, 0, 0); return monday;
+  }
+
+  function isThisWeek(dateStr) {
+    if (!dateStr) return false;
+    const date = new Date(dateStr + 'T00:00:00');
+    const ws = getWeekStart(); const we = new Date(ws); we.setDate(we.getDate() + 7);
+    return date >= ws && date < we;
+  }
+
+  const TAG_STYLES = {
+    coding:{ bg:'#dbeafe', clr:'#1d4ed8' }, meeting:{ bg:'#fef3c7', clr:'#b45309' },
+    review:{ bg:'#ede9fe', clr:'#6d28d9' }, testing:{ bg:'#dcfce7', clr:'#15803d' },
+    design:{ bg:'#fce7f3', clr:'#be185d' }, deployment:{ bg:'#f5f5f4', clr:'#44403c' },
+    documentation:{ bg:'#e0e7ff', clr:'#4338ca' }, default:{ bg:'#f3f4f6', clr:'#374151' },
+  };
+  function getTagStyle(tag) { return TAG_STYLES[tag.toLowerCase().trim()] || TAG_STYLES.default; }
 
   if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
 
@@ -306,47 +351,376 @@ export default function Users() {
               <button onClick={() => setSelectedMember(null)}
                 style={{ background:'#f3f4f6', border:'none', borderRadius:8, width:28, height:28, fontSize:12, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
             </div>
+
+            {/* Tab navigation */}
+            <div style={{ display:'flex', borderBottom:'1px solid #f3f4f6' }}>
+              <div onClick={() => setActiveDrawerTab('assignments')}
+                style={{ flex:1, padding:'10px 0', textAlign:'center', fontSize:11, fontWeight:600, cursor:'pointer', transition:'color 0.15s',
+                  color: activeDrawerTab === 'assignments' ? '#2347e8' : '#6b7280',
+                  borderBottom: activeDrawerTab === 'assignments' ? '2px solid #2347e8' : '2px solid transparent' }}>
+                Project Assignments
+              </div>
+              <div onClick={() => setActiveDrawerTab('worklog')}
+                style={{ flex:1, padding:'10px 0', textAlign:'center', fontSize:11, fontWeight:600, cursor:'pointer', transition:'color 0.15s',
+                  color: activeDrawerTab === 'worklog' ? '#2347e8' : '#6b7280',
+                  borderBottom: activeDrawerTab === 'worklog' ? '2px solid #2347e8' : '2px solid transparent' }}>
+                Work Log
+              </div>
+            </div>
+
             <div style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>
-              <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:10 }}>
-                Project Assignments ({selectedMember.memberships?.length || 0})
-              </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {(selectedMember.memberships || []).map((ms, i) => {
-                  const rs = ROLE_STYLES[ms.projectRole] || ROLE_STYLES.developer;
-                  const isActive = ms.status === 'active';
-                  return (
-                    <div key={i}
-                      style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #f3f4f6' }}>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#111827' }}>
-                          {ms.project?.name || 'Unknown project'}
+              {activeDrawerTab === 'assignments' && (
+                <>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:10 }}>
+                    Project Assignments ({selectedMember.memberships?.length || 0})
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                    {(selectedMember.memberships || []).map((ms, i) => {
+                      const rs = ROLE_STYLES[ms.projectRole] || ROLE_STYLES.developer;
+                      const isActive = ms.status === 'active';
+                      return (
+                        <div key={i}
+                          style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #f3f4f6' }}>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:11, fontWeight:600, color:'#111827' }}>
+                              {ms.project?.name || 'Unknown project'}
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
+                              <span style={{ fontSize:9, background:rs.bg, color:rs.clr, padding:'1px 6px', borderRadius:3, fontWeight:500 }}>
+                                {ms.projectRole?.replace(/_/g, ' ') || 'developer'}
+                              </span>
+                              <span style={{ display:'flex', alignItems:'center', gap:3 }}>
+                                <span style={{ width:5, height:5, borderRadius:'50%', background:isActive?'#22c55e':'#f59e0b', display:'inline-block' }}></span>
+                                <span style={{ fontSize:9, color:isActive?'#16a34a':'#d97706', fontWeight:500 }}>{isActive ? 'Active' : 'Pending'}</span>
+                              </span>
+                            </div>
+                          </div>
+                          {canManage && (
+                            <button onClick={() => handleRemoveMembership(ms)}
+                              style={{ background:'none', border:'none', color:'#fca5a5', fontSize:13, cursor:'pointer', padding:2, lineHeight:1 }}
+                              onMouseEnter={e => e.currentTarget.style.color='#ef4444'}
+                              onMouseLeave={e => e.currentTarget.style.color='#fca5a5'}
+                              title="Remove from project">✕</button>
+                          )}
                         </div>
-                        <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
-                          <span style={{ fontSize:9, background:rs.bg, color:rs.clr, padding:'1px 6px', borderRadius:3, fontWeight:500 }}>
-                            {ms.projectRole?.replace(/_/g, ' ') || 'developer'}
-                          </span>
-                          <span style={{ display:'flex', alignItems:'center', gap:3 }}>
-                            <span style={{ width:5, height:5, borderRadius:'50%', background:isActive?'#22c55e':'#f59e0b', display:'inline-block' }}></span>
-                            <span style={{ fontSize:9, color:isActive?'#16a34a':'#d97706', fontWeight:500 }}>{isActive ? 'Active' : 'Pending'}</span>
-                          </span>
+                      );
+                    })}
+                  </div>
+                  {(!selectedMember.memberships || selectedMember.memberships.length === 0) && (
+                    <div style={{ textAlign:'center', padding:'20px 0', color:'#9ca3af', fontSize:11 }}>No project assignments</div>
+                  )}
+                </>
+              )}
+
+              {activeDrawerTab === 'worklog' && (
+                <>
+                  {(() => {
+                    const uid = selectedMember.user?._id;
+                    const isOwnProfile = uid && uid === user?._id;
+                    const weekLogs = memberWorkLogs.filter(l => isThisWeek(l.date));
+                    const weekHours = weekLogs.reduce((s, l) => s + (l.hours || 0), 0);
+                    const todayLogs = memberWorkLogs.filter(l => l.date === new Date().toISOString().split('T')[0]);
+                    const todayHours = todayLogs.reduce((s, l) => s + (l.hours || 0), 0);
+                    const goal = 40;
+                    const pct = Math.min(100, Math.round((weekHours / goal) * 100));
+                    return (
+                      <div style={{ background:'linear-gradient(135deg,#f0f4ff,#eef2ff)', borderRadius:10, padding:'14px 16px', marginBottom:14, border:'1px solid #dce6ff' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                          <div>
+                            <div style={{ fontSize:13, fontWeight:700, color:'#111827' }}>This Week: <span style={{ color:'#2347e8', fontSize:16 }}>{weekHours}h</span></div>
+                            <div style={{ fontSize:11, color:'#6b7280', marginTop:2 }}>Today: <span style={{ fontWeight:600, color:'#374151' }}>{todayHours}h</span></div>
+                          </div>
+                          {isOwnProfile && (
+                            <button onClick={() => {
+                              setShowWLForm(true); setEditingWLId(null);
+                              setWlForm({ date:new Date().toISOString().split('T')[0], hours:1, project:'', description:'', tags:'' });
+                            }}
+                              style={{ padding:'7px 16px', background:'#2347e8', color:'white', borderRadius:7, fontSize:11, fontWeight:600, border:'none', cursor:'pointer', whiteSpace:'nowrap', boxShadow:'0 2px 6px rgba(35,71,232,0.3)' }}>
+                              + Add Entry
+                            </button>
+                          )}
                         </div>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <div style={{ flex:1, height:8, background:'#e5e7eb', borderRadius:4, overflow:'hidden' }}>
+                            <div style={{ width:pct+'%', height:'100%', background:pct >= 100 ? '#22c55e' : '#2347e8', borderRadius:4, transition:'width 0.3s' }}></div>
+                          </div>
+                          <span style={{ fontSize:11, fontWeight:700, color:'#6b7280' }}>{pct}%</span>
+                        </div>
+                        <div style={{ fontSize:9, color:'#9ca3af', marginTop:6 }}>Weekly goal: {goal}h</div>
                       </div>
-                      {canManage && (
-                        <button onClick={() => handleRemoveMembership(ms)}
-                          style={{ background:'none', border:'none', color:'#fca5a5', fontSize:13, cursor:'pointer', padding:2, lineHeight:1 }}
-                          onMouseEnter={e => e.currentTarget.style.color='#ef4444'}
-                          onMouseLeave={e => e.currentTarget.style.color='#fca5a5'}
-                          title="Remove from project">✕</button>
-                      )}
+                    );
+                  })()}
+
+                  {loadingWorkLogs ? (
+                    <div style={{ textAlign:'center', padding:'40px 0', color:'#9ca3af', fontSize:11 }}>
+                      <div className="animate-spin w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full" style={{ margin:'0 auto 10px' }}></div>
+                      Loading work logs...
                     </div>
-                  );
-                })}
-              </div>
-              {(!selectedMember.memberships || selectedMember.memberships.length === 0) && (
-                <div style={{ textAlign:'center', padding:'20px 0', color:'#9ca3af', fontSize:11 }}>No project assignments</div>
+                  ) : memberWorkLogs.length === 0 ? (
+                    <div style={{ textAlign:'center', padding:'50px 0', color:'#9ca3af' }}>
+                      <p style={{ fontSize:32, marginBottom:10 }}>📋</p>
+                      <p style={{ fontSize:13, fontWeight:600, color:'#6b7280' }}>No work logged yet</p>
+                      <p style={{ fontSize:11, marginTop:6, color:'#9ca3af' }}>
+                        {(() => {
+                          const uid = selectedMember.user?._id;
+                          return uid && uid === user?._id
+                            ? 'Click Add Entry to log your first activity'
+                            : 'This user has no work log entries';
+                        })()}
+                      </p>
+                    </div>
+                  ) : (
+                    (() => {
+                      const uid = selectedMember.user?._id;
+                      const isOwnProfile = uid && uid === user?._id;
+                      const grouped = {};
+                      memberWorkLogs.forEach(l => {
+                        if (!grouped[l.date]) grouped[l.date] = [];
+                        grouped[l.date].push(l);
+                      });
+                      return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a)).map(([date, logs]) => {
+                        const dayTotal = logs.reduce((s, l) => s + (l.hours || 0), 0);
+                        return (
+                          <div key={date} style={{ marginBottom:16 }}>
+                            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8, paddingBottom:4, borderBottom:'1px solid #f3f4f6' }}>
+                              <span style={{ fontSize:11, fontWeight:700, color:'#374151' }}>
+                                {formatDateDisplay(date)}
+                              </span>
+                              <span style={{ fontSize:11, fontWeight:600, color:'#2347e8' }}>{dayTotal}h</span>
+                            </div>
+                            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                              {logs.map(wl => (
+                                <div key={wl._id}
+                                  onClick={() => { if (!isOwnProfile) setSelectedWLDetail(wl); }}
+                                  style={{ background:'white', borderRadius:8, border:'1px solid #e5e7eb', padding:'12px 14px', boxShadow:'0 1px 3px rgba(0,0,0,0.04)', cursor:isOwnProfile?'default':'pointer', transition:'box-shadow 0.15s' }}
+                                  onMouseEnter={e => { if (!isOwnProfile) e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'; }}
+                                  onMouseLeave={e => { if (!isOwnProfile) e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'; }}>
+                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                                    <div style={{ flex:1, minWidth:0 }}>
+                                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                                        <span style={{ fontSize:16, fontWeight:800, color:'#2347e8' }}>{wl.hours}h</span>
+                                        {wl.project?.name && (
+                                          <span style={{ fontSize:10, fontWeight:600, background:'#dce6ff', color:'#1a35c4', padding:'2px 10px', borderRadius:5 }}>
+                                            {wl.project.name}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {wl.description && (
+                                        <div style={{ fontSize:11, color:'#374151', marginBottom:5, lineHeight:1.5 }}>{wl.description}</div>
+                                      )}
+                                      {wl.tags && wl.tags.length > 0 && (
+                                        <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginTop:4 }}>
+                                          {wl.tags.map((tag, ti) => {
+                                            const s = getTagStyle(tag);
+                                            return (
+                                              <span key={ti} style={{ fontSize:9, fontWeight:600, background:s.bg, color:s.clr, padding:'2px 8px', borderRadius:4 }}>
+                                                {tag}
+                                              </span>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {isOwnProfile ? (
+                                      <div style={{ display:'flex', gap:4, marginLeft:10, flexShrink:0 }}>
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingWLId(wl._id); setShowWLForm(true);
+                                          setWlForm({
+                                            date: wl.date || new Date().toISOString().split('T')[0],
+                                            hours: wl.hours || 1,
+                                            project: wl.project?._id || '',
+                                            description: wl.description || '',
+                                            tags: (wl.tags || []).join(', '),
+                                          });
+                                        }}
+                                          style={{ background:'#f3f4f6', border:'none', borderRadius:5, width:26, height:26, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                                          onMouseEnter={e => e.currentTarget.style.background='#dce6ff'}
+                                          onMouseLeave={e => e.currentTarget.style.background='#f3f4f6'}
+                                          title="Edit">✏️</button>
+                                        <button onClick={(e) => { e.stopPropagation();
+                                          if (window.confirm('Delete this work log entry?')) {
+                                            workLogs.delete(wl._id).then(() => {
+                                              setMemberWorkLogs(prev => prev.filter(x => x._id !== wl._id));
+                                            }).catch(err => alert(err.response?.data?.message || 'Failed to delete'));
+                                          }
+                                        }}
+                                          style={{ background:'#f3f4f6', border:'none', borderRadius:5, width:26, height:26, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                                          onMouseEnter={e => e.currentTarget.style.background='#fee2e2'}
+                                          onMouseLeave={e => e.currentTarget.style.background='#f3f4f6'}
+                                          title="Delete">🗑️</button>
+                                      </div>
+                                    ) : (
+                                      <span style={{ fontSize:9, color:'#9ca3af', flexShrink:0, marginLeft:8 }}>👁️</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()
+                  )}
+                </>
               )}
             </div>
           </div>
+
+          {/* Work Log Form Modal */}
+          {showWLForm && (
+            <>
+              <div onClick={() => setShowWLForm(false)}
+                style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.4)', zIndex:1001 }} />
+              <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', background:'white', borderRadius:16, width:400, zIndex:1002, padding:22, boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:'#111827' }}>{editingWLId ? 'Edit Entry' : 'Add Work Log Entry'}</span>
+                  <button onClick={() => setShowWLForm(false)}
+                    style={{ background:'#f3f4f6', border:'none', borderRadius:6, width:24, height:24, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Date</label>
+                  <input type="date" value={wlForm.date} onChange={e => setWlForm({ ...wlForm, date:e.target.value })}
+                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Hours</label>
+                  <input type="number" min="0.5" max="24" step="0.5" value={wlForm.hours}
+                    onChange={e => setWlForm({ ...wlForm, hours:parseFloat(e.target.value) || 0.5 })}
+                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Project</label>
+                  <select value={wlForm.project} onChange={e => setWlForm({ ...wlForm, project:e.target.value })}
+                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, background:'white', outline:'none', boxSizing:'border-box' }}>
+                    <option value="">— Select project —</option>
+                    {(selectedMember.memberships || []).map(ms => (
+                      <option key={ms.project?._id || ms.project} value={ms.project?._id || ms.project}>
+                        {ms.project?.name || 'Unknown'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Description</label>
+                  <textarea value={wlForm.description} onChange={e => setWlForm({ ...wlForm, description:e.target.value })}
+                    rows={3} placeholder="What was done?"
+                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', resize:'none', boxSizing:'border-box', fontFamily:'inherit' }} />
+                </div>
+
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Tags <span style={{ color:'#9ca3af', fontWeight:400 }}>(optional, comma separated)</span></label>
+                  <input type="text" value={wlForm.tags} onChange={e => setWlForm({ ...wlForm, tags:e.target.value })}
+                    placeholder='e.g. coding, meeting, review'
+                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                </div>
+
+                <div style={{ display:'flex', gap:6 }}>
+                  <button onClick={() => setShowWLForm(false)}
+                    style={{ flex:1, padding:'7px 0', background:'#f3f4f6', color:'#374151', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    if (!wlForm.hours || wlForm.hours <= 0) { alert('Hours must be greater than 0'); return; }
+                    try {
+                      const tags = wlForm.tags ? wlForm.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+                      const body = {
+                        date: wlForm.date,
+                        project: wlForm.project || undefined,
+                        hours: wlForm.hours,
+                        description: wlForm.description,
+                        tags,
+                      };
+                      if (editingWLId) {
+                        const res = await workLogs.update(editingWLId, body);
+                        setMemberWorkLogs(prev => prev.map(l => l._id === editingWLId ? { ...l, ...res.data, tags } : l));
+                      } else {
+                        const res = await workLogs.create(body);
+                        setMemberWorkLogs(prev => [res.data, ...prev]);
+                      }
+                      setShowWLForm(false);
+                      setEditingWLId(null);
+                    } catch (e) { alert(e.response?.data?.message || 'Failed to save'); }
+                  }}
+                    style={{ flex:2, padding:'7px 0', background:'#2347e8', color:'white', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>
+                    {editingWLId ? 'Update Entry' : 'Save Entry'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Work Log Detail Modal */}
+          {selectedWLDetail && (
+            <>
+              <div onClick={() => setSelectedWLDetail(null)}
+                style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.4)', zIndex:1001 }} />
+              <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', background:'white', borderRadius:16, width:400, zIndex:1002, padding:22, boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:'#111827' }}>Work Log Details</span>
+                  <button onClick={() => setSelectedWLDetail(null)}
+                    style={{ background:'#f3f4f6', border:'none', borderRadius:6, width:24, height:24, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#f0f4ff', borderRadius:8, padding:'10px 14px' }}>
+                    <span style={{ fontSize:20, fontWeight:800, color:'#2347e8' }}>{selectedWLDetail.hours}h</span>
+                    <span style={{ fontSize:11, color:'#6b7280' }}>{selectedWLDetail.date}</span>
+                  </div>
+                  {selectedWLDetail.project?.name && (
+                    <div>
+                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Project</div>
+                      <span style={{ fontSize:11, fontWeight:600, background:'#dce6ff', color:'#1a35c4', padding:'3px 10px', borderRadius:5 }}>{selectedWLDetail.project.name}</span>
+                    </div>
+                  )}
+                  {selectedWLDetail.taskTitle && (
+                    <div>
+                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Task</div>
+                      <div style={{ fontSize:11, color:'#374151' }}>{selectedWLDetail.taskTitle}</div>
+                    </div>
+                  )}
+                  {selectedWLDetail.description && (
+                    <div>
+                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Description</div>
+                      <div style={{ fontSize:11, color:'#374151', lineHeight:1.5, background:'#f9fafb', borderRadius:6, padding:'8px 10px' }}>{selectedWLDetail.description}</div>
+                    </div>
+                  )}
+                  {selectedWLDetail.notes && (
+                    <div>
+                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Notes</div>
+                      <div style={{ fontSize:11, color:'#374151', lineHeight:1.5, background:'#f9fafb', borderRadius:6, padding:'8px 10px' }}>{selectedWLDetail.notes}</div>
+                    </div>
+                  )}
+                  <div style={{ display:'flex', gap:16 }}>
+                    {selectedWLDetail.category && (
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Category</div>
+                        <span style={{ fontSize:10, fontWeight:500, background:'#f3f4f6', color:'#374151', padding:'2px 8px', borderRadius:4 }}>{selectedWLDetail.category}</span>
+                      </div>
+                    )}
+                    {selectedWLDetail.mood && (
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Mood</div>
+                        <span style={{ fontSize:11 }}>{selectedWLDetail.mood === 'great' ? '😊' : selectedWLDetail.mood === 'good' ? '🙂' : selectedWLDetail.mood === 'okay' ? '😐' : '😓'} {selectedWLDetail.mood}</span>
+                      </div>
+                    )}
+                  </div>
+                  {selectedWLDetail.tags && selectedWLDetail.tags.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Tags</div>
+                      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                        {selectedWLDetail.tags.map((tag, ti) => {
+                          const s = getTagStyle(tag);
+                          return <span key={ti} style={{ fontSize:9, fontWeight:600, background:s.bg, color:s.clr, padding:'2px 8px', borderRadius:4 }}>{tag}</span>;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
