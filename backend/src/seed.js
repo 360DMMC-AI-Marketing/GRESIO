@@ -41,11 +41,11 @@ async function seed() {
     const dev = await User.create({ name: 'Developer User', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com' });
     const qa = await User.create({ name: 'QA Tester', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com' });
     const intern = await User.create({ name: 'Intern User', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com' });
-    const manager = await User.create({ name: 'Team Lead', email: 'manager@cios.com', password: 'password123', role: 'team_leader', domain: 'admin@cios.com' });
-    const designer = await User.create({ name: 'UI/UX Designer', email: 'designer@cios.com', password: 'password123', role: 'ui_designer', domain: 'admin@cios.com' });
-    const analyst = await User.create({ name: 'Business Analyst', email: 'analyst@cios.com', password: 'password123', role: 'business_analyst', domain: 'admin@cios.com' });
-    const scrum = await User.create({ name: 'Scrum Master', email: 'scrum@cios.com', password: 'password123', role: 'scrum_master', domain: 'admin@cios.com' });
-    await User.create({ name: 'Test User', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'test@demo.com' });
+    const manager = await User.create({ name: 'Team Lead', email: 'manager@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com' });
+    const designer = await User.create({ name: 'UI/UX Designer', email: 'designer@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com' });
+    const analyst = await User.create({ name: 'Business Analyst', email: 'analyst@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com' });
+    const scrum = await User.create({ name: 'Scrum Master', email: 'scrum@cios.com', password: 'password123', role: 'team_lead', domain: 'admin@cios.com' });
+    await User.create({ name: 'Test User', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@cios.com' });
 
     const allUserIds = [admin._id, pm._id, dev._id, qa._id, intern._id, manager._id, designer._id, analyst._id, scrum._id];
     const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@cios.com' });
@@ -222,10 +222,10 @@ async function seed() {
     console.log('  dev@cios.com       - Developer');
     console.log('  qa@cios.com        - QA Tester');
     console.log('  intern@cios.com    - Intern');
-    console.log('  manager@cios.com   - Team Leader (Manager)');
-    console.log('  designer@cios.com  - UI/UX Designer');
-    console.log('  analyst@cios.com   - Business Analyst');
-    console.log('  scrum@cios.com     - Scrum Master');
+    console.log('  manager@cios.com   - Manager');
+    console.log('  designer@cios.com  - UI/UX Designer (developer role)');
+    console.log('  analyst@cios.com   - Business Analyst (manager role)');
+    console.log('  scrum@cios.com     - Scrum Master (team_lead role)');
     console.log('  test@demo.com      - Admin (test domain)');
 
     process.exit(0);
