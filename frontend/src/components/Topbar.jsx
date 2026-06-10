@@ -73,11 +73,30 @@ export default function Topbar({ sidebarWidth }) {
 
   const [toast, setToast] = useState(null);
 
+  function playNotifSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const g = ctx.createGain();
+      g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.08, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      [523.25, 659.25].forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+        o.connect(g);
+        o.start(ctx.currentTime + i * 0.12);
+        o.stop(ctx.currentTime + i * 0.12 + 0.3);
+      });
+    } catch (e) {}
+  }
+
   useEffect(() => {
     if (!socket) return;
     const onNotif = (n) => {
       setNotifs(prev => [n, ...prev]);
       setToast(n);
+      playNotifSound();
       setTimeout(() => setToast(null), 4000);
     };
     socket.on('notification', onNotif);
