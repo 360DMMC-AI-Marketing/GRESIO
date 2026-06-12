@@ -26,6 +26,8 @@ import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PrivacyPage from './pages/PrivacyPage';
+import ReportsPage from './pages/ReportsPage';
+import ReportPreviewPage from './pages/ReportPreviewPage';
 import ScrollToTop from './components/ScrollToTop';
 
 
@@ -43,6 +45,7 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/report/:id" element={<ReportPreviewPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<Layout />}>
@@ -60,6 +63,7 @@ export default function App() {
             <Route path="/github" element={<Github />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/outlook" element={<Outlook />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
 

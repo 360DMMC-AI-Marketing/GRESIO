@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
-  Group, Clock, BarChart3,
+  Group, Clock, BarChart3, FileText,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -35,6 +35,15 @@ const sidebarGroups = [
     items: [
       { id: 'team', label: 'Team', icon: Group, path: '/users', roles: MANAGERS },
       { id: 'worklog', label: 'Work Log', icon: Clock, path: '/work-logs', roles: ALL },
+    ],
+  },
+  {
+    id: 'insights',
+    label: 'Insights',
+    icon: BarChart3,
+    items: [
+      { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics', roles: MANAGERS },
+      { id: 'reports', label: 'Reports', icon: FileText, path: '/reports', roles: MANAGERS },
     ],
   },
 ];
@@ -144,15 +153,6 @@ export default function Sidebar({ user, collapsed, onToggle }) {
               </div>
             );
           })}
-          {MANAGERS.includes(user?.role) && (
-            <NavLink to="/analytics" title="Analytics"
-              className={({ isActive }) =>
-                `flex items-center justify-center py-2.5 rounded-lg text-xs font-medium transition-all ${
-                  isActive ? 'bg-blue-600/30 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/[0.08]'
-                }`}>
-              <BarChart3 className="w-[26px] h-[26px]" />
-            </NavLink>
-          )}
           {filteredBottom.map(item => (
             <NavLink key={item.id} to={item.path} title={item.label}
               className={({ isActive }) =>
@@ -221,21 +221,6 @@ export default function Sidebar({ user, collapsed, onToggle }) {
             user={user}
           />
         ))}
-
-        {/* Analytics (between groups and bottom) */}
-        {MANAGERS.includes(user?.role) && (
-          <NavLink to="/analytics"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${
-                isActive
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-              }`
-            }>
-            <BarChart3 className="w-[26px] h-[26px] shrink-0" />
-            Analytics
-          </NavLink>
-        )}
 
         {/* Divider before bottom */}
         {filteredBottom.length > 0 && (

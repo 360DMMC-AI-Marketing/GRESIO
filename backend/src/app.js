@@ -27,6 +27,7 @@ const testCaseRoutes = require('./routes/testCases');
 const interestRoutes = require('./routes/interests');
 const bugRoutes = require('./routes/bugs');
 const myTasksRoutes = require('./routes/myTasks');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 const server = http.createServer(app);
@@ -79,6 +80,7 @@ app.use('/api/test-cases', testCaseRoutes);
 app.use('/api/interests', interestRoutes);
 app.use('/api/bugs', bugRoutes);
 app.use('/api/my-tasks', myTasksRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -128,7 +130,7 @@ app.get('/api/seed', async (req, res) => {
       { name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@cios.com' },
       { name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@cios.com' },
       { name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@cios.com' },
-      { name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'planning', phase: 'business_analysis', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@cios.com' },
+      { name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@cios.com' },
     ]);
     const [pWeb, pMobile, pApi, pEcom, pDash, pMarketing] = projects;
 

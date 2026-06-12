@@ -57,7 +57,7 @@ const FEATURE_SECTIONS = [
     rows: [
       { label: 'Sprint management with burndown charts', starter: true, team: true, enterprise: true },
       { label: 'Task tracking (Kanban board)', starter: true, team: true, enterprise: true },
-      { label: '7-step project lifecycle phases', starter: true, team: true, enterprise: true },
+      { label: '8-step project lifecycle phases', starter: true, team: true, enterprise: true },
       { label: 'Work log tracking', starter: true, team: true, enterprise: true },
     ],
   },
@@ -80,6 +80,8 @@ const FEATURE_SECTIONS = [
       { label: 'Basic reporting', starter: true, team: true, enterprise: true },
       { label: 'Advanced analytics dashboard', starter: false, team: true, enterprise: true },
       { label: 'Custom reports', starter: false, team: false, enterprise: true },
+      { label: 'Admin project reports (PDF)', starter: false, team: true, enterprise: true },
+      { label: 'Client project reports (PDF)', starter: false, team: true, enterprise: true },
     ],
   },
   {

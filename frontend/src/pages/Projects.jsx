@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { projects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
+import ReportChoiceModal from '../components/ReportChoiceModal';
 
 const STATUS_CLASS = {
   on_track:'bg-success-50 text-success-700', at_risk:'bg-warning-50 text-warning-700',
@@ -20,6 +21,7 @@ export default function Projects() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', projectType: 'software' });
   const [confirmState, setConfirmState] = useState(null);
+  const [reportProject, setReportProject] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -127,11 +129,27 @@ export default function Projects() {
                 <span>{p.members?.length || 0} members · {p.tasks?.length || 0} tasks</span>
                 <span style={{fontWeight:600,color:'#111827'}}>{p.progress}%</span>
               </div>
+              {(p.status === 'completed' || p.phase === 'delivered') && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setReportProject(p); }}
+                  style={{marginTop:8,width:'100%',padding:'5px 0',background:'#2347e8',color:'white',borderRadius:6,fontSize:10,fontWeight:600,border:'none',cursor:'pointer'}}
+                >
+                  Generate Report
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
+      {reportProject && (
+        <ReportChoiceModal
+          projectId={reportProject._id}
+          projectName={reportProject.name}
+          onClose={() => setReportProject(null)}
+          onGenerated={() => {}}
+        />
+      )}
       <ConfirmModal
         open={!!confirmState} onClose={() => setConfirmState(null)}
         title={confirmState?.title} message={confirmState?.message}

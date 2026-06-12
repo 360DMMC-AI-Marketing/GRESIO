@@ -61,6 +61,10 @@ export default function Landing() {
             Whether you build software, run marketing campaigns, design products, manage business operations, 
             or conduct research, CIOS adapts to your workflow with tailored lifecycle phases for each project type.
           </p>
+          <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto mt-4">
+            When projects are delivered, CIOS generates professional audit-ready reports — 
+            one for your internal team and one for your clients — both branded and exportable as PDF.
+          </p>
           <div className="mt-10 flex items-center justify-center gap-6 flex-wrap">
             <Link to="/features" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-base">
               Explore all features <span className="text-lg">→</span>

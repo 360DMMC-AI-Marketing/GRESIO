@@ -1,7 +1,7 @@
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 
-const PHASES = ['Discovery', 'Planning', 'Development', 'Testing', 'Review', 'Launch', 'Delivered'];
+const PHASES = ['Discovery', 'Planning', 'Development', 'Testing', 'Review', 'Launch', 'Delivered', 'Report'];
 
 const PHASE_DETAILS = [
   { num: 1, name: 'Discovery', auto: true, desc: 'Define project scope, collect requirements, and identify stakeholders. CIOS auto-generates a project brief from initial inputs.' },
@@ -11,6 +11,7 @@ const PHASE_DETAILS = [
   { num: 5, name: 'Review', auto: false, desc: 'Code reviews, QA sign-offs, and stakeholder demonstrations. The project lead manually approves the review phase.' },
   { num: 6, name: 'Launch', auto: false, desc: 'Deploy to production. Only Admin, PM, or Team Lead can approve the launch phase manually.' },
   { num: 7, name: 'Delivered', auto: false, desc: 'Project is completed and handed over. Final documentation is archived and team velocity metrics are recorded.' },
+  { num: 8, name: 'Report', auto: false, desc: 'Generate professional project reports — Admin (full audit with KPIs, tasks, sprints, testing) or Client (stakeholder summary). Both export as PDF with CIOS + 360 DMMC branding.' },
 ];
 
 const FAQS = [
@@ -79,11 +80,11 @@ export default function HowItWorksPage() {
       <section className="pt-36 pb-20 px-5">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">How It Works</h1>
-          <p className="text-lg text-surface-500 max-w-xl mx-auto mb-12">Projects move through 7 phases automatically. You focus on the work, we handle the flow.</p>
+          <p className="text-lg text-surface-500 max-w-xl mx-auto mb-12">Projects move through 8 phases automatically. You focus on the work, we handle the flow.</p>
 
           <div className="relative mb-16">
             <div className="hidden md:block absolute top-5 left-0 right-0 h-0.5 bg-surface-200" />
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-3 md:gap-0">
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-0">
               {PHASES.map((phase, i) => (
                 <div key={i} className="flex flex-col items-center relative z-10">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-surface-800 text-white border-surface-800' : 'bg-surface-100 text-surface-400 border-surface-200'}`}>
@@ -116,7 +117,7 @@ export default function HowItWorksPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-surface-400 text-center mt-6">🔒 Phases 6 (Launch) and 7 (Delivered) require manual approval by Admin, PM, or Team Lead.</p>
+          <p className="text-xs text-surface-400 text-center mt-6">🔒 Phases 6 (Launch), 7 (Delivered), and 8 (Report) require manual approval by Admin, PM, or Team Lead.</p>
         </div>
 
         {/* PROJECT TYPES */}
@@ -149,7 +150,7 @@ export default function HowItWorksPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-surface-400 text-center mt-6">All project types share the same auto-flow logic. The system advances phases automatically when conditions are met, with manual gates only for Launch and Delivered.</p>
+          <p className="text-xs text-surface-400 text-center mt-6">All project types share the same auto-flow logic. The system advances phases automatically when conditions are met, with manual gates only for Launch, Delivered, and Report.</p>
         </div>
 
         <div className="max-w-3xl mx-auto border-t border-surface-200 pt-16">
