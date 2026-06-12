@@ -206,6 +206,12 @@ async function seed() {
       { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 4 },
       { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 3 },
       { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 6 },
+      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 3 },
+      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 4 },
+      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 4 },
+      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 6 },
+      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 5 },
+      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 4 },
     ];
 
     for (let i = 0; i < activityData.length; i++) {

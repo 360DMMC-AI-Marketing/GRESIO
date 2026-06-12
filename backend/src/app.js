@@ -247,6 +247,12 @@ app.get('/api/seed', async (req, res) => {
       { user: analyst._id, domain: 'admin@cios.com', type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 4 },
       { user: scrum._id, domain: 'admin@cios.com', type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 3 },
       { user: qa._id, domain: 'admin@cios.com', type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 6 },
+      { user: qa._id, domain: 'admin@cios.com', type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 3 },
+      { user: designer._id, domain: 'admin@cios.com', type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 4 },
+      { user: analyst._id, domain: 'admin@cios.com', type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 4 },
+      { user: pm._id, domain: 'admin@cios.com', type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 6 },
+      { user: manager._id, domain: 'admin@cios.com', type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 5 },
+      { user: scrum._id, domain: 'admin@cios.com', type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 4 },
     ];
     for (let i = 0; i < activityData.length; i++) {
       await Activity.create({ ...activityData[i], createdAt: new Date(now - i * 3600000) });
