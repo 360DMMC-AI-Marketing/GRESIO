@@ -117,6 +117,7 @@ app.get('/api/seed', async (req, res) => {
     const analyst = await User.create({ name: 'Business Analyst', email: 'analyst@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com' });
     const scrum = await User.create({ name: 'Scrum Master', email: 'scrum@cios.com', password: 'password123', role: 'team_lead', domain: 'admin@cios.com' });
     await User.create({ name: 'Test User', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@cios.com' });
+    await User.create({ name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@cios.com' });
 
     const allUsers = [admin, pm, dev, qa, intern, manager, designer, analyst, scrum];
     const allUserIds = allUsers.map(u => u._id);
@@ -127,8 +128,9 @@ app.get('/api/seed', async (req, res) => {
       { name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@cios.com' },
       { name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@cios.com' },
       { name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@cios.com' },
+      { name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'planning', phase: 'business_analysis', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@cios.com' },
     ]);
-    const [pWeb, pMobile, pApi, pEcom, pDash] = projects;
+    const [pWeb, pMobile, pApi, pEcom, pDash, pMarketing] = projects;
 
     const groupMap = {};
     for (const proj of projects) {
@@ -190,6 +192,10 @@ app.get('/api/seed', async (req, res) => {
       { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: pDash._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 25, loggedHours: 12 },
       { title: 'Report export feature', status: 'todo', priority: 'low', project: pDash._id, assignee: dev._id, deadline: new Date('2025-08-01'), estimatedHours: 12 },
       { title: 'User permission system', status: 'in_progress', priority: 'high', project: pDash._id, assignee: pm._id, deadline: new Date('2025-07-20'), estimatedHours: 18, loggedHours: 8 },
+      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: pMarketing._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 15, loggedHours: 14 },
+      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 20, loggedHours: 8 },
+      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: pMarketing._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 25 },
+      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date('2025-08-15'), estimatedHours: 12 },
     ]);
 
     const projTasks = {
@@ -197,7 +203,8 @@ app.get('/api/seed', async (req, res) => {
       [pMobile._id]: tasks.slice(3,5).map(t => t._id),
       [pApi._id]: tasks.slice(5,8).map(t => t._id),
       [pEcom._id]: tasks.slice(8,13).map(t => t._id),
-      [pDash._id]: tasks.slice(13).map(t => t._id),
+      [pDash._id]: tasks.slice(13,17).map(t => t._id),
+      [pMarketing._id]: tasks.slice(17).map(t => t._id),
     };
     for (const [pid, tids] of Object.entries(projTasks)) {
       await Project.findByIdAndUpdate(pid, { $push: { tasks: { $each: tids } } });
@@ -217,6 +224,7 @@ app.get('/api/seed', async (req, res) => {
       { name: 'Sprint 3 — API Core', project: pApi._id, startDate: new Date(today - 21*86400000), endDate: new Date(today + 7*86400000), status: 'active', goal: 'Finalize API rate limiting, documentation, and database migration', tasks: projTasks[pApi._id], createdBy: pm._id },
       { name: 'Sprint 4 — Checkout Flow', project: pEcom._id, startDate: new Date(today - 10*86400000), endDate: new Date(today + 18*86400000), status: 'active', goal: 'Complete payment gateway, product catalog, and shopping cart', tasks: projTasks[pEcom._id], createdBy: pm._id },
       { name: 'Sprint 5 — Data Viz', project: pDash._id, startDate: new Date(today - 5*86400000), endDate: new Date(today + 23*86400000), status: 'active', goal: 'Build data pipeline and real-time chart components', tasks: projTasks[pDash._id], createdBy: pm._id },
+      { name: 'Sprint 1 — Campaign Foundation', project: pMarketing._id, startDate: new Date(today - 10*86400000), endDate: new Date(today + 20*86400000), status: 'active', goal: 'Complete campaign strategy, content calendar, and begin email automation', tasks: projTasks[pMarketing._id], createdBy: pm._id },
     ]);
 
     const now = new Date();
@@ -290,6 +298,8 @@ app.get('/api/seed', async (req, res) => {
       { project: pEcom._id, title: 'ERD Diagram', category:'documentation', type:'pdf', description:'Database entity-relationship diagram', addedBy: dev._id },
       { project: pDash._id, title: 'Dashboard Repo', category:'dev', type:'github', url:'https://github.com/company/analytics-dashboard', description:'Real-time analytics frontend', addedBy: pm._id },
       { project: pDash._id, title: 'Figma Mockups', category:'design', type:'figma', url:'https://figma.com/file/company/analytics-dashboard', description:'Dashboard UI mockups', addedBy: dev._id },
+      { project: pMarketing._id, title: 'Campaign Brief', category:'documentation', type:'link', url:'https://docs.company.com/marketing-q3', description:'Q3 campaign strategy and brief document', addedBy: pm._id },
+      { project: pMarketing._id, title: 'Content Calendar', category:'external', type:'notion', url:'https://notion.so/company/q3-content-calendar', description:'Social media content calendar and scheduling', addedBy: dev._id },
     ]);
 
     await Integration.create([
@@ -298,7 +308,7 @@ app.get('/api/seed', async (req, res) => {
       { name: 'microsoft_graph', isConnected: false, config: {} },
     ]);
 
-    res.json({ message: 'Full demo data seeded! Login with any account (password: password123). Accounts: admin@cios.com, pm@cios.com, dev@cios.com, qa@cios.com, intern@cios.com, manager@cios.com, designer@cios.com, analyst@cios.com, scrum@cios.com, test@demo.com' });
+    res.json({ message: 'Full demo data seeded! Login with any account (password: password123). Accounts: admin@cios.com, pm@cios.com, dev@cios.com, qa@cios.com, intern@cios.com, manager@cios.com, designer@cios.com, analyst@cios.com, scrum@cios.com, test@demo.com, demo@demo.com (password: demo1234)' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

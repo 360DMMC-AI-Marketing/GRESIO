@@ -48,6 +48,7 @@ async function seed() {
     const analyst = await User.create({ name: 'Business Analyst', email: 'analyst@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com' });
     const scrum = await User.create({ name: 'Scrum Master', email: 'scrum@cios.com', password: 'password123', role: 'team_lead', domain: 'admin@cios.com' });
     await User.create({ name: 'Test User', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@cios.com' });
+    await User.create({ name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@cios.com' });
 
     const allUserIds = [admin._id, pm._id, dev._id, qa._id, intern._id, manager._id, designer._id, analyst._id, scrum._id];
     const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@cios.com' });
@@ -55,9 +56,10 @@ async function seed() {
     const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@cios.com' });
     const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@cios.com' });
     const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectMarketing = await Project.create({ name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'planning', phase: 'business_analysis', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@cios.com' });
 
     // Create default team groups for each project
-    const allProjects = [projectWeb, projectMobile, projectApi, projectEcom, projectDashboard];
+    const allProjects = [projectWeb, projectMobile, projectApi, projectEcom, projectDashboard, projectMarketing];
     const groupMap = {}; // projectId -> { groupName -> groupDoc }
     for (const proj of allProjects) {
       const pid = String(proj._id);
@@ -110,20 +112,26 @@ async function seed() {
       { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: projectDashboard._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 25, loggedHours: 12 },
       { title: 'Report export feature', status: 'todo', priority: 'low', project: projectDashboard._id, assignee: dev._id, deadline: new Date('2025-08-01'), estimatedHours: 12 },
       { title: 'User permission system', status: 'in_progress', priority: 'high', project: projectDashboard._id, assignee: pm._id, deadline: new Date('2025-07-20'), estimatedHours: 18, loggedHours: 8 },
+      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: projectMarketing._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 15, loggedHours: 14 },
+      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 20, loggedHours: 8 },
+      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: projectMarketing._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 25 },
+      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date('2025-08-15'), estimatedHours: 12 },
     ]);
 
     await Project.findByIdAndUpdate(projectWeb._id, { $push: { tasks: { $each: tasks.slice(0, 3).map((t) => t._id) } } });
     await Project.findByIdAndUpdate(projectMobile._id, { $push: { tasks: { $each: tasks.slice(3, 5).map((t) => t._id) } } });
     await Project.findByIdAndUpdate(projectApi._id, { $push: { tasks: { $each: tasks.slice(5, 8).map((t) => t._id) } } });
     await Project.findByIdAndUpdate(projectEcom._id, { $push: { tasks: { $each: tasks.slice(8, 13).map((t) => t._id) } } });
-    await Project.findByIdAndUpdate(projectDashboard._id, { $push: { tasks: { $each: tasks.slice(13).map((t) => t._id) } } });
+    await Project.findByIdAndUpdate(projectDashboard._id, { $push: { tasks: { $each: tasks.slice(13, 17).map((t) => t._id) } } });
+    await Project.findByIdAndUpdate(projectMarketing._id, { $push: { tasks: { $each: tasks.slice(17).map((t) => t._id) } } });
 
     const today = new Date();
     const webTasks = tasks.slice(0, 3).map(t => t._id);
     const mobileTasks = tasks.slice(3, 5).map(t => t._id);
     const apiTasks = tasks.slice(5, 8).map(t => t._id);
     const ecomTasks = tasks.slice(8, 13).map(t => t._id);
-    const dashTasks = tasks.slice(13).map(t => t._id);
+    const dashTasks = tasks.slice(13, 17).map(t => t._id);
+    const marketingTasks = tasks.slice(17).map(t => t._id);
 
     await Sprint.create([
       { name: 'MVP Launch — Homepage', project: projectWeb._id, startDate: new Date(today - 60*86400000), endDate: new Date(today - 30*86400000), status: 'completed', goal: 'Launch the initial homepage with core sections', tasks: webTasks.slice(0, 1), createdBy: pm._id },
@@ -136,7 +144,43 @@ async function seed() {
       { name: 'Sprint 3 — API Core', project: projectApi._id, startDate: new Date(today - 21*86400000), endDate: new Date(today + 7*86400000), status: 'active', goal: 'Finalize API rate limiting, documentation, and database migration script', tasks: apiTasks, createdBy: pm._id },
       { name: 'Sprint 4 — Checkout Flow', project: projectEcom._id, startDate: new Date(today - 10*86400000), endDate: new Date(today + 18*86400000), status: 'active', goal: 'Complete payment gateway, product catalog, and shopping cart', tasks: ecomTasks.slice(0, 3), createdBy: pm._id },
       { name: 'Sprint 5 — Data Viz', project: projectDashboard._id, startDate: new Date(today - 5*86400000), endDate: new Date(today + 23*86400000), status: 'active', goal: 'Build data pipeline and real-time chart components', tasks: dashTasks, createdBy: pm._id },
+      { name: 'Sprint 1 — Campaign Foundation', project: projectMarketing._id, startDate: new Date(today - 10*86400000), endDate: new Date(today + 20*86400000), status: 'active', goal: 'Complete campaign strategy, content calendar, and begin email automation', tasks: marketingTasks, createdBy: pm._id },
     ]);
+
+    const TestCase = require('./models/TestCase');
+    const sprintDocs = await Sprint.find({ project: { $in: allProjects.map(p => p._id) } });
+    const completedSprints = sprintDocs.filter(s => s.status === 'completed');
+    const testCaseData = [];
+    for (const sprint of completedSprints) {
+      const sprintTasks = tasks.filter(t => sprint.tasks.some(st => st.toString() === t._id.toString()));
+      for (const task of sprintTasks) {
+        testCaseData.push({
+          title: `[Auto] ${task.title} — validation`,
+          project: sprint.project,
+          sprint: sprint._id,
+          assignee: qa._id,
+          linkedTask: task._id,
+          createdBy: pm._id,
+          status: 'passed',
+          type: 'integration',
+          priority: 'high',
+          autoGenerated: true,
+          feature: task.title,
+          steps: [
+            { order: 1, description: `Navigate to the ${task.title} feature`, expectedResult: 'Page loads successfully', status: 'pass' },
+            { order: 2, description: 'Execute the core functionality', expectedResult: 'Operation completes without errors', status: 'pass' },
+            { order: 3, description: 'Verify output matches expected results', expectedResult: 'All assertions pass', status: 'pass' },
+          ],
+        });
+      }
+    }
+    testCaseData.push(
+      { title: 'Login form validation', project: projectMobile._id, assignee: qa._id, createdBy: pm._id, status: 'passed', type: 'manual', priority: 'critical', feature: 'Authentication', steps: [{ order: 1, description: 'Open login page', expectedResult: 'Login form is displayed', status: 'pass' }, { order: 2, description: 'Enter invalid email format', expectedResult: 'Validation error shown', status: 'pass' }] },
+      { title: 'Checkout total calculation', project: projectEcom._id, assignee: qa._id, createdBy: pm._id, status: 'failed', type: 'manual', priority: 'urgent', feature: 'Checkout', steps: [{ order: 1, description: 'Add items to cart', expectedResult: 'Items appear in cart', status: 'pass' }, { order: 2, description: 'Verify total with tax', expectedResult: 'Total matches expected (bug #142)', status: 'fail', actualResult: 'Total is off by $0.01' }] },
+      { title: 'Dashboard chart rendering', project: projectDashboard._id, assignee: qa._id, createdBy: pm._id, status: 'in_progress', type: 'e2e', priority: 'high', feature: 'Dashboard', steps: [{ order: 1, description: 'Load dashboard page', expectedResult: 'Charts render within 2s', status: 'pass' }, { order: 2, description: 'Verify real-time updates', expectedResult: 'Data refreshes every 30s', status: 'pending' }] },
+      { title: 'Responsive navbar breakpoints', project: projectWeb._id, assignee: qa._id, createdBy: pm._id, status: 'ready', type: 'manual', priority: 'medium', feature: 'Navigation', steps: [{ order: 1, description: 'Resize to mobile viewport', expectedResult: 'Nav collapses to hamburger menu', status: 'pending' }, { order: 2, description: 'Test all nav links', expectedResult: 'Each link navigates correctly', status: 'pending' }] },
+    );
+    await TestCase.create(testCaseData);
 
     const now = new Date();
     const userDomainMap = {};
@@ -180,6 +224,8 @@ async function seed() {
       { project: projectEcom._id, title: 'ERD Diagram', category:'documentation', type:'pdf', description:'Database entity-relationship diagram', addedBy: dev._id },
       { project: projectDashboard._id, title: 'Dashboard Repo', category:'dev', type:'github', url:'https://github.com/company/analytics-dashboard', description:'Real-time analytics frontend', addedBy: pm._id },
       { project: projectDashboard._id, title: 'Figma Mockups', category:'design', type:'figma', url:'https://figma.com/file/company/analytics-dashboard', description:'Dashboard UI mockups and prototypes', addedBy: dev._id },
+      { project: projectMarketing._id, title: 'Campaign Brief', category:'documentation', type:'link', url:'https://docs.company.com/marketing-q3', description:'Q3 campaign strategy and brief document', addedBy: pm._id },
+      { project: projectMarketing._id, title: 'Content Calendar', category:'external', type:'notion', url:'https://notion.so/company/q3-content-calendar', description:'Social media content calendar and scheduling', addedBy: dev._id },
     ]);
 
     const memberEntries = [
@@ -234,6 +280,7 @@ async function seed() {
     console.log('  analyst@cios.com   - Business Analyst (manager role)');
     console.log('  scrum@cios.com     - Scrum Master (team_lead role)');
     console.log('  test@demo.com      - Admin (test domain)');
+    console.log('  demo@demo.com      - Admin (password: demo1234)');
 
     process.exit(0);
   } catch (error) {
