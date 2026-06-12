@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { reportsService } from '../services/reports';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { ConfirmModal } from '../components/Modal';
 
+const CAN_VIEW = ['admin', 'project_manager', 'manager', 'team_lead'];
+
 export default function ReportsPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -32,6 +37,11 @@ export default function ReportsPage() {
       setDeleteConfirmId(null);
     }
   };
+
+  if (!CAN_VIEW.includes(user?.role)) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
 
   if (loading) {
     return (

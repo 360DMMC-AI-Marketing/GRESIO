@@ -129,7 +129,7 @@ export default function Projects() {
                 <span>{p.members?.length || 0} members · {p.tasks?.length || 0} tasks</span>
                 <span style={{fontWeight:600,color:'#111827'}}>{p.progress}%</span>
               </div>
-              {(p.status === 'completed' || p.phase === 'delivered') && (
+              {(p.status === 'completed' || p.phase === 'delivered') && ['admin','project_manager','manager','team_lead'].includes(user?.role) && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setReportProject(p); }}
                   style={{marginTop:8,width:'100%',padding:'5px 0',background:'#2347e8',color:'white',borderRadius:6,fontSize:10,fontWeight:600,border:'none',cursor:'pointer'}}
