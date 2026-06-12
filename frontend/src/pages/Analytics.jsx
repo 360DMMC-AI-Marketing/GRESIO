@@ -1042,43 +1042,43 @@ export default function AnalyticsPage() {
         const proj = projectParticipation.find(p => p.projectId === selectedProject.projectId);
         if (!proj) return null;
         return (
-          <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={() => setSelectedProject(null)}>
-            <div style={{background:'white',borderRadius:12,padding:20,maxWidth:500,width:'90%',maxHeight:'80vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-                <div style={{fontSize:16,fontWeight:700,color:'#111827'}}>{proj.name}</div>
-                <button onClick={() => setSelectedProject(null)} style={{fontSize:20,background:'none',border:'none',cursor:'pointer',color:'#9ca3af',padding:'0 4px'}}>&times;</button>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex items-center justify-center" onClick={() => setSelectedProject(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-[500px] w-[90%] max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-base font-bold text-surface-900">{proj.name}</div>
+                <button onClick={() => setSelectedProject(null)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-100 text-surface-400 hover:text-surface-600 cursor-pointer border-none text-sm leading-none">&times;</button>
               </div>
-              <div style={{fontSize:11,color:'#6b7280',marginBottom:8}}>
+              <div className="text-[11px] text-surface-500 mb-2">
                 Progress: {proj.taskCompletionRate}% · {proj.doneTasks}/{proj.totalTasks} tasks done
               </div>
-              <div style={{height:6,background:'#e5e7eb',borderRadius:3,marginBottom:12}}>
-                <div style={{height:6,borderRadius:3,background:'#2347e8',width:Math.min(proj.taskCompletionRate,100)+'%'}} />
+              <div className="h-[6px] bg-surface-200 rounded-[3px] mb-3">
+                <div className="h-[6px] rounded-[3px] bg-primary-600" style={{width:Math.min(proj.taskCompletionRate,100)+'%'}} />
               </div>
-              <table style={{width:'100%',fontSize:10,borderCollapse:'collapse'}}>
+              <table className="w-full text-[10px] border-collapse">
                 <thead>
-                  <tr style={{borderBottom:'0.5px solid #e5e7eb'}}>
-                    <th style={{textAlign:'left',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Team Member</th>
-                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Tasks</th>
-                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Done</th>
-                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>TC</th>
-                    <th style={{textAlign:'center',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Passed</th>
-                    <th style={{textAlign:'right',padding:'5px 6px',color:'#6b7280',fontWeight:500}}>Contribution</th>
+                  <tr className="border-b border-surface-200">
+                    <th className="text-left px-[6px] py-[5px] text-surface-500 font-medium">Team Member</th>
+                    <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">Tasks</th>
+                    <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">Done</th>
+                    <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">TC</th>
+                    <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">Passed</th>
+                    <th className="text-right px-[6px] py-[5px] text-surface-500 font-medium">Contribution</th>
                   </tr>
                 </thead>
                 <tbody>
                   {proj.members.map(m => (
-                    <tr key={m.userId} style={{borderBottom:'0.5px solid #f3f4f6'}}>
-                      <td style={{padding:'4px 6px',fontWeight:500,color:'#374151'}}>{m.name}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role === 'qa_tester' ? '—' : m.tasksAssigned}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role==='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role === 'qa_tester' ? '—' : m.tasksDone}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#6b7280'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesAssigned||0)}</td>
-                      <td style={{padding:'4px 6px',textAlign:'center',color:m.role!=='qa_tester'?'#d1d5db':'#22c55e'}}>{m.role !== 'qa_tester' ? '—' : (m.testCasesPassed||0)}</td>
-                      <td style={{padding:'4px 6px',textAlign:'right'}}>
-                        <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'flex-end'}}>
-                          <div style={{width:60,height:4,background:'#e5e7eb',borderRadius:2}}>
-                            <div style={{height:4,borderRadius:2,background:getParticipationColor(m.participation),width:Math.min(m.participation,100)+'%'}} />
+                    <tr key={m.userId} className="border-b border-surface-100">
+                      <td className="px-[6px] py-[4px] font-medium text-surface-600">{m.name}</td>
+                      <td className={`px-[6px] py-[4px] text-center ${m.role==='qa_tester' ? 'text-surface-300' : 'text-surface-500'}`}>{m.role === 'qa_tester' ? '—' : m.tasksAssigned}</td>
+                      <td className={`px-[6px] py-[4px] text-center ${m.role==='qa_tester' ? 'text-surface-300' : 'text-green-500'}`}>{m.role === 'qa_tester' ? '—' : m.tasksDone}</td>
+                      <td className={`px-[6px] py-[4px] text-center ${m.role!=='qa_tester' ? 'text-surface-300' : 'text-surface-500'}`}>{m.role !== 'qa_tester' ? '—' : (m.testCasesAssigned||0)}</td>
+                      <td className={`px-[6px] py-[4px] text-center ${m.role!=='qa_tester' ? 'text-surface-300' : 'text-green-500'}`}>{m.role !== 'qa_tester' ? '—' : (m.testCasesPassed||0)}</td>
+                      <td className="px-[6px] py-[4px] text-right">
+                        <div className="flex items-center gap-[6px] justify-end">
+                          <div className="w-[60px] h-[4px] bg-surface-200 rounded-[2px]">
+                            <div className="h-[4px] rounded-[2px]" style={{background:getParticipationColor(m.participation), width:Math.min(m.participation,100)+'%'}} />
                           </div>
-                          <span style={{fontWeight:700,fontSize:11,color:getParticipationColor(m.participation)}}>{m.participation}%</span>
+                          <span className="font-bold text-[11px]" style={{color:getParticipationColor(m.participation)}}>{m.participation}%</span>
                         </div>
                       </td>
                     </tr>
@@ -1086,13 +1086,12 @@ export default function AnalyticsPage() {
                 </tbody>
               </table>
               {proj.members.length > 0 && (
-                <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'#f0f4ff',borderRadius:6}}>
-                  <span style={{fontSize:10,color:'#1d4ed8',fontWeight:600}}>Total Team Contribution</span>
-                  <div style={{flex:1,height:4,background:'#dbeafe',borderRadius:2}}>
-                    <div style={{height:4,borderRadius:2,background:'#2347e8',
-                      width:Math.min(Math.round(proj.members.reduce((s,m) => s + m.participation, 0) / proj.members.length), 100)+'%'}} />
+                <div className="flex items-center gap-2 mt-2 px-[8px] py-[6px] bg-primary-50 rounded-lg">
+                  <span className="text-[10px] font-semibold text-primary-700">Total Team Contribution</span>
+                  <div className="flex-1 h-[4px] bg-blue-100 rounded-[2px]">
+                    <div className="h-[4px] rounded-[2px] bg-primary-600" style={{width:Math.min(Math.round(proj.members.reduce((s,m) => s + m.participation, 0) / proj.members.length), 100)+'%'}} />
                   </div>
-                  <span style={{fontWeight:700,fontSize:13,color:'#1d4ed8'}}>{Math.round(proj.members.reduce((s,m) => s + m.participation, 0) / proj.members.length)}%</span>
+                  <span className="font-bold text-[13px] text-primary-700">{Math.round(proj.members.reduce((s,m) => s + m.participation, 0) / proj.members.length)}%</span>
                 </div>
               )}
             </div>

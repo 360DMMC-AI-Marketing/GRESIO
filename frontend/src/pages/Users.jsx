@@ -333,19 +333,17 @@ export default function Users() {
       {selectedMember && (
         <>
           <div onClick={() => setSelectedMember(null)}
-            style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', zIndex:999 }} />
-          <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'white', zIndex:1000,
-            boxShadow:'-8px 0 30px rgba(0,0,0,0.12)', display:'flex', flexDirection:'column', overflow:'hidden',
-            animation:'slideIn 0.2s ease-out' }}>
+            className="fixed inset-0 bg-black/30 z-[999]" />
+          <div className="fixed top-0 right-0 bottom-0 w-[420px] bg-white z-[1000] flex flex-col overflow-hidden shadow-[-8px_0_30px_rgba(0,0,0,0.12)] animate-[slideIn_0.2s_ease-out]">
             <style>{`@keyframes slideIn { from { transform:translateX(100%) } to { transform:translateX(0) } }`}</style>
-            <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid #f3f4f6', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, background:'#eef2ff', color:'#4338ca', flexShrink:0 }}>
+            <div className="px-5 py-[16px] border-b border-surface-100 flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold bg-indigo-50 text-indigo-700 shrink-0">
                   {(selectedMember.user?.name || selectedMember.user?.email || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#111827' }}>{selectedMember.user?.name || selectedMember.user?.email}</div>
-                  <div style={{ fontSize:10, color:'#6b7280', marginTop:1 }}>{selectedMember.user?.email}</div>
+                  <div className="text-[15px] font-bold text-surface-900">{selectedMember.user?.name || selectedMember.user?.email}</div>
+                  <div className="text-[10px] text-surface-500 mt-[1px]">{selectedMember.user?.email}</div>
                 </div>
               </div>
               <button onClick={() => setSelectedMember(null)}
@@ -569,31 +567,31 @@ export default function Users() {
           {showWLForm && (
             <>
               <div onClick={() => setShowWLForm(false)}
-                style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.4)', zIndex:1001 }} />
-              <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', background:'white', borderRadius:16, width:400, zIndex:1002, padding:22, boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color:'#111827' }}>{editingWLId ? 'Edit Entry' : 'Add Work Log Entry'}</span>
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1001]" />
+              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[400px] z-[1002] p-[22px]">
+                <div className="flex items-center justify-between mb-[14px]">
+                  <span className="text-sm font-bold text-surface-900">{editingWLId ? 'Edit Entry' : 'Add Work Log Entry'}</span>
                   <button onClick={() => setShowWLForm(false)}
-                    style={{ background:'#f3f4f6', border:'none', borderRadius:6, width:24, height:24, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                    className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-100 text-surface-500 hover:text-surface-700 cursor-pointer border-none text-xs">✕</button>
                 </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Date</label>
+                <div className="mb-[10px]">
+                  <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Date</label>
                   <input type="date" value={wlForm.date} onChange={e => setWlForm({ ...wlForm, date:e.target.value })}
-                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border" />
                 </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Hours</label>
+                <div className="mb-[10px]">
+                  <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Hours</label>
                   <input type="number" min="0.5" max="24" step="0.5" value={wlForm.hours}
                     onChange={e => setWlForm({ ...wlForm, hours:parseFloat(e.target.value) || 0.5 })}
-                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border" />
                 </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Project</label>
+                <div className="mb-[10px]">
+                  <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Project</label>
                   <select value={wlForm.project} onChange={e => setWlForm({ ...wlForm, project:e.target.value })}
-                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, background:'white', outline:'none', boxSizing:'border-box' }}>
+                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border">
                     <option value="">— Select project —</option>
                     {(selectedMember.memberships || []).map(ms => (
                       <option key={ms.project?._id || ms.project} value={ms.project?._id || ms.project}>
@@ -603,23 +601,23 @@ export default function Users() {
                   </select>
                 </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Description</label>
+                <div className="mb-[10px]">
+                  <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Description</label>
                   <textarea value={wlForm.description} onChange={e => setWlForm({ ...wlForm, description:e.target.value })}
                     rows={3} placeholder="What was done?"
-                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', resize:'none', boxSizing:'border-box', fontFamily:'inherit' }} />
+                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 resize-none box-border font-inherit" />
                 </div>
 
-                <div style={{ marginBottom:14 }}>
-                  <label style={{ display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:3 }}>Tags <span style={{ color:'#9ca3af', fontWeight:400 }}>(optional, comma separated)</span></label>
+                <div className="mb-[14px]">
+                  <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Tags <span className="text-surface-400 font-normal">(optional, comma separated)</span></label>
                   <input type="text" value={wlForm.tags} onChange={e => setWlForm({ ...wlForm, tags:e.target.value })}
                     placeholder='e.g. coding, meeting, review'
-                    style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', boxSizing:'border-box' }} />
+                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border" />
                 </div>
 
-                <div style={{ display:'flex', gap:6 }}>
+                <div className="flex gap-[6px]">
                   <button onClick={() => setShowWLForm(false)}
-                    style={{ flex:1, padding:'7px 0', background:'#f3f4f6', color:'#374151', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>
+                    className="flex-1 py-[7px] bg-surface-100 text-surface-600 rounded-lg text-[10px] font-semibold border-none cursor-pointer hover:bg-surface-200 transition-colors">
                     Cancel
                   </button>
                   <button onClick={async () => {
@@ -644,7 +642,7 @@ export default function Users() {
                       setEditingWLId(null);
                     } catch (e) { alert(e.response?.data?.message || 'Failed to save'); }
                   }}
-                    style={{ flex:2, padding:'7px 0', background:'#2347e8', color:'white', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>
+                    className="flex-[2] py-[7px] bg-primary-600 text-white rounded-lg text-[10px] font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors">
                     {editingWLId ? 'Update Entry' : 'Save Entry'}
                   </button>
                 </div>
@@ -656,63 +654,63 @@ export default function Users() {
           {selectedWLDetail && (
             <>
               <div onClick={() => setSelectedWLDetail(null)}
-                style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.4)', zIndex:1001 }} />
-              <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', background:'white', borderRadius:16, width:400, zIndex:1002, padding:22, boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color:'#111827' }}>Work Log Details</span>
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1001]" />
+              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[400px] z-[1002] p-[22px]">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-bold text-surface-900">Work Log Details</span>
                   <button onClick={() => setSelectedWLDetail(null)}
-                    style={{ background:'#f3f4f6', border:'none', borderRadius:6, width:24, height:24, fontSize:11, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                    className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-100 text-surface-500 hover:text-surface-700 cursor-pointer border-none text-xs">✕</button>
                 </div>
-                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#f0f4ff', borderRadius:8, padding:'10px 14px' }}>
-                    <span style={{ fontSize:20, fontWeight:800, color:'#2347e8' }}>{selectedWLDetail.hours}h</span>
-                    <span style={{ fontSize:11, color:'#6b7280' }}>{selectedWLDetail.date}</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between bg-primary-50 rounded-lg px-[14px] py-[10px]">
+                    <span className="text-xl font-extrabold text-primary-600">{selectedWLDetail.hours}h</span>
+                    <span className="text-[11px] text-surface-500">{selectedWLDetail.date}</span>
                   </div>
                   {selectedWLDetail.project?.name && (
                     <div>
-                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Project</div>
-                      <span style={{ fontSize:11, fontWeight:600, background:'#dce6ff', color:'#1a35c4', padding:'3px 10px', borderRadius:5 }}>{selectedWLDetail.project.name}</span>
+                      <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Project</div>
+                      <span className="text-[11px] font-semibold bg-primary-100 text-primary-700 px-[10px] py-[3px] rounded-[5px]">{selectedWLDetail.project.name}</span>
                     </div>
                   )}
                   {selectedWLDetail.taskTitle && (
                     <div>
-                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Task</div>
-                      <div style={{ fontSize:11, color:'#374151' }}>{selectedWLDetail.taskTitle}</div>
+                      <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Task</div>
+                      <div className="text-[11px] text-surface-600">{selectedWLDetail.taskTitle}</div>
                     </div>
                   )}
                   {selectedWLDetail.description && (
                     <div>
-                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Description</div>
-                      <div style={{ fontSize:11, color:'#374151', lineHeight:1.5, background:'#f9fafb', borderRadius:6, padding:'8px 10px' }}>{selectedWLDetail.description}</div>
+                      <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Description</div>
+                      <div className="text-[11px] text-surface-600 leading-relaxed bg-surface-50 rounded-lg px-[10px] py-[8px]">{selectedWLDetail.description}</div>
                     </div>
                   )}
                   {selectedWLDetail.notes && (
                     <div>
-                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Notes</div>
-                      <div style={{ fontSize:11, color:'#374151', lineHeight:1.5, background:'#f9fafb', borderRadius:6, padding:'8px 10px' }}>{selectedWLDetail.notes}</div>
+                      <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Notes</div>
+                      <div className="text-[11px] text-surface-600 leading-relaxed bg-surface-50 rounded-lg px-[10px] py-[8px]">{selectedWLDetail.notes}</div>
                     </div>
                   )}
-                  <div style={{ display:'flex', gap:16 }}>
+                  <div className="flex gap-4">
                     {selectedWLDetail.category && (
                       <div>
-                        <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Category</div>
-                        <span style={{ fontSize:10, fontWeight:500, background:'#f3f4f6', color:'#374151', padding:'2px 8px', borderRadius:4 }}>{selectedWLDetail.category}</span>
+                        <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Category</div>
+                        <span className="text-[10px] font-medium bg-surface-100 text-surface-600 px-[8px] py-[2px] rounded-[4px]">{selectedWLDetail.category}</span>
                       </div>
                     )}
                     {selectedWLDetail.mood && (
                       <div>
-                        <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Mood</div>
-                        <span style={{ fontSize:11 }}>{selectedWLDetail.mood === 'great' ? '😊' : selectedWLDetail.mood === 'good' ? '🙂' : selectedWLDetail.mood === 'okay' ? '😐' : '😓'} {selectedWLDetail.mood}</span>
+                        <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Mood</div>
+                        <span className="text-[11px]">{selectedWLDetail.mood === 'great' ? '😊' : selectedWLDetail.mood === 'good' ? '🙂' : selectedWLDetail.mood === 'okay' ? '😐' : '😓'} {selectedWLDetail.mood}</span>
                       </div>
                     )}
                   </div>
                   {selectedWLDetail.tags && selectedWLDetail.tags.length > 0 && (
                     <div>
-                      <div style={{ fontSize:9, fontWeight:600, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Tags</div>
-                      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                      <div className="text-[9px] font-semibold text-surface-400 uppercase tracking-wider mb-[3px]">Tags</div>
+                      <div className="flex gap-1 flex-wrap">
                         {selectedWLDetail.tags.map((tag, ti) => {
                           const s = getTagStyle(tag);
-                          return <span key={ti} style={{ fontSize:9, fontWeight:600, background:s.bg, color:s.clr, padding:'2px 8px', borderRadius:4 }}>{tag}</span>;
+                          return <span key={ti} className="text-[9px] font-semibold px-[8px] py-[2px] rounded-[4px]" style={{background:s.bg, color:s.clr}}>{tag}</span>;
                         })}
                       </div>
                     </div>
