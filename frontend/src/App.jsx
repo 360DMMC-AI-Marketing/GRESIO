@@ -20,6 +20,13 @@ import WorkLogs from './pages/WorkLogs';
 import TestCaseDashboard from './pages/TestCaseDashboard';
 import OnboardingGuide from './pages/OnboardingGuide';
 import Landing from './pages/Landing';
+import FeaturesPage from './pages/FeaturesPage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import PricingPage from './pages/PricingPage';
+import ContactPage from './pages/ContactPage';
+import NotificationsPage from './pages/NotificationsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import ScrollToTop from './components/ScrollToTop';
 
 
 export default function App() {
@@ -27,8 +34,15 @@ export default function App() {
     <AuthProvider>
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<Layout />}>

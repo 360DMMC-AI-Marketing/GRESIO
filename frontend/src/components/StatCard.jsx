@@ -8,14 +8,14 @@ export default function StatCard({ title, value, icon, color = 'brand', subtitle
     purple: 'bg-purple-50 text-purple-600',
   };
   return (
-    <div className="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-md transition-shadow">
+    <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-6 hover:shadow-hover-lift hover:-translate-y-0.5 transition-all duration-200">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-neutral-500 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-neutral-900 mt-1">{value}</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-1 tracking-tight">{value}</p>
           {subtitle && <p className="text-xs text-neutral-400 mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-11 h-11 rounded-lg flex items-center justify-center text-xl ${colors[color] || colors.brand}`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${colors[color] || colors.brand}`}>
           {icon}
         </div>
       </div>

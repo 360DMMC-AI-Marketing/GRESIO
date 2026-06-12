@@ -34,7 +34,7 @@ export default function Login() {
     <div className="min-h-screen bg-white">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-surface-200' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="text-lg font-bold text-surface-900 tracking-tight">CIOS</Link>
+          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">CIOS</span></Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-primary-600 px-3 py-1.5 transition-colors">Sign In</Link>
             <Link to="/register" className="text-sm font-medium bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm">Get Started</Link>
@@ -44,9 +44,6 @@ export default function Login() {
       <div className="pt-24 pb-16 px-5">
         <div className="w-full max-w-sm mx-auto">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <span className="text-white font-bold text-xl">C</span>
-            </div>
             <h1 className="text-2xl font-bold text-surface-900">Welcome back</h1>
             <p className="text-surface-500 text-sm mt-1">Sign in to your CIOS workspace</p>
           </div>

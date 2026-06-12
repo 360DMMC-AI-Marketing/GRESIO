@@ -145,38 +145,40 @@ export default function Topbar({ sidebarWidth }) {
   }, []);
 
   return (
-    <header style={{ left: sidebarWidth || 200 }} className="h-12 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-5 transition-all duration-300 ease-in-out">
+    <header style={{ left: sidebarWidth || 200 }} className="h-14 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-6 transition-all duration-300 ease-in-out shadow-sm">
       {toast && (
         <div style={{position:'fixed',top:12,left:'50%',transform:'translateX(-50%)',zIndex:10001,background:'#1f2937',color:'white',padding:'10px 18px',borderRadius:10,boxShadow:'0 8px 30px rgba(0,0,0,0.2)',fontSize:12,fontWeight:500,maxWidth:400,pointerEvents:'none',animation:'fadeSlideDown 0.3s ease'}}>
           🔔 {toast.title}
         </div>
       )}
       <div className="relative" ref={searchRef}>
-        <div className="flex items-center gap-1.5 bg-neutral-100 border border-neutral-200 rounded-lg px-2.5 py-1 w-[200px]">
-          <span className="text-neutral-400 text-[11px]">🔍</span>
-          <input type="text" placeholder="Search..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (!e.target.value.trim()) { setShowSearch(false); } }}
+        <div className="flex items-center gap-2 bg-neutral-100 border border-neutral-200 rounded-lg px-3 py-1.5 w-[240px] focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20 transition-all">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-400 shrink-0">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input type="text" placeholder="Search projects, tasks..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (!e.target.value.trim()) { setShowSearch(false); } }}
             onFocus={() => { if (searchResults.length > 0) setShowSearch(true); }}
-            className="bg-transparent border-none outline-none text-xs text-neutral-700 w-full" />
+            className="bg-transparent border-none outline-none text-xs text-neutral-700 w-full placeholder:text-neutral-400" />
         </div>
         {showSearch && (
-          <div className="absolute top-9 left-0 w-[300px] bg-white rounded-xl border border-neutral-200 shadow-modal z-50 max-h-72 overflow-y-auto">
+          <div className="absolute top-10 left-0 w-[320px] bg-white rounded-xl border border-neutral-200 shadow-modal z-50 max-h-72 overflow-y-auto animate-fade-in">
             {searchResults.map((r, i) => (
               <div key={i} onClick={() => { navigate(r.to); setShowSearch(false); setSearchQuery(''); }}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
-                <span className="text-[10px] font-semibold text-neutral-400 w-12 shrink-0">{r.type}</span>
+                className="flex items-center gap-2 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
+                <span className="text-[10px] font-semibold text-neutral-400 w-14 shrink-0">{r.type}</span>
                 <span className="text-xs text-neutral-800 truncate">{r.label}</span>
               </div>
             ))}
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <div className="relative" ref={panelRef}>
           <button onClick={() => setShowPanel(v => !v)}
-            className="relative w-7 h-7 flex items-center justify-center rounded-md bg-neutral-100 cursor-pointer text-[13px]">
+            className="relative w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm transition-colors">
             🔔
             {unread > 0 && (
-              <span className="absolute top-[2px] right-[2px] w-[14px] h-[14px] bg-danger-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-[1.5px] border-white">
+              <span className="absolute -top-0.5 -right-0.5 w-[16px] h-[16px] bg-danger-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-[2px] border-white">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
@@ -220,51 +222,56 @@ export default function Topbar({ sidebarWidth }) {
                   </div>
                 ))}
               </div>
+              <Link to="/notifications" onClick={() => setShowPanel(false)}
+                className="block text-center text-[11px] font-semibold text-brand-600 hover:text-brand-700 hover:bg-neutral-50 py-2.5 border-t border-neutral-100 transition-colors">
+                View all notifications
+              </Link>
             </div>
           )}
         </div>
-        <div className="w-px h-5 bg-neutral-200" />
+        <div className="w-px h-6 bg-neutral-200" />
         {(() => {
           const plan = company?.plan || 'starter';
           const info = PLAN_INFO[plan] || PLAN_INFO.starter;
           const usage = company?.usage || {};
           const userPct = info.limit === Infinity ? 0 : Math.round(((usage.userCount || 0) / info.limit) * 100);
           return (
-            <Link to="/admin" style={{display:'flex',alignItems:'center',gap:6,fontSize:10,fontWeight:600,color:info.color,background:info.bg,padding:'3px 10px',borderRadius:20,textDecoration:'none',cursor:'pointer',lineHeight:'18px'}}>
-              <span style={{fontSize:11}}>{PLAN_ICON[plan] || '📋'}</span>
-              <span style={{fontWeight:700}}>PLAN:</span>
-              <span>{info.label}</span>
+            <Link to="/admin" className="flex items-center gap-2 text-[11px] font-semibold rounded-full px-3.5 py-1.5 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all"
+              style={{color:info.color,background:info.bg}}>
+              <span style={{fontSize:12}}>{PLAN_ICON[plan] || '📋'}</span>
+              <span className="tracking-wider">PLAN</span>
+              <span className="font-bold">{info.label}</span>
               {info.limit !== Infinity && (
-                <span style={{display:'inline-flex',alignItems:'center',gap:3,marginLeft:2}}>
-                  <span style={{width:32,height:3,background:'rgba(0,0,0,0.08)',borderRadius:2,display:'inline-block',overflow:'hidden',verticalAlign:'middle'}}>
-                    <span style={{display:'block',height:'100%',width:`${Math.min(userPct,100)}%`,background:userPct >= 90 ? '#ef4444' : info.color,borderRadius:2}} />
+                <span className="flex items-center gap-1.5 ml-1">
+                  <span className="w-9 h-[3px] rounded-full overflow-hidden" style={{background:'rgba(0,0,0,0.08)'}}>
+                    <span className="block h-full rounded-full transition-all" style={{width:`${Math.min(userPct,100)}%`,background:userPct >= 90 ? '#ef4444' : info.color}} />
                   </span>
-                  <span style={{fontSize:8,opacity:0.7}}>{usage.userCount || 0}/{info.limit}</span>
+                  <span className="text-[9px] opacity-60 font-medium">{usage.userCount || 0}/{info.limit}</span>
                 </span>
               )}
             </Link>
           );
         })()}
-        <Link to="/profile" className="flex items-center gap-2">
+        <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="text-right">
             <p className="text-xs font-semibold text-neutral-900 leading-tight">{user?.name}</p>
             <p className="text-[10px] text-neutral-400 leading-tight capitalize">{user?.role?.replace(/_/g, ' ')}</p>
           </div>
           <div className="relative shrink-0">
-            <div className="w-7 h-7 bg-brand-600 rounded-full flex items-center justify-center text-white text-[11px] font-bold overflow-hidden">
+            <div className="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden">
               {user?.avatar ? (
                 <img src={user.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
                 user?.name?.charAt(0)?.toUpperCase() || 'U'
               )}
             </div>
-            <span className={`absolute -bottom-[1px] -right-[1px] w-[9px] h-[9px] border-[1.5px] border-white rounded-full ${STATUS_DOT[user?.status] || 'bg-neutral-300'}`} />
+            <span className={`absolute -bottom-[1px] -right-[1px] w-[10px] h-[10px] border-[2px] border-white rounded-full ${STATUS_DOT[user?.status] || 'bg-neutral-300'}`} />
           </div>
         </Link>
         <button onClick={logout}
-          className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
           title="Sign out">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>

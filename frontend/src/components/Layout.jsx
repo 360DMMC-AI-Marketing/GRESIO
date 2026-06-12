@@ -5,8 +5,8 @@ import { auth } from '../services/api';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
-const SIDEBAR_EXPANDED = 200;
-const SIDEBAR_COLLAPSED = 56;
+const SIDEBAR_EXPANDED = 260;
+const SIDEBAR_COLLAPSED = 64;
 const BREAKPOINT = 768;
 
 export default function Layout() {
@@ -82,23 +82,28 @@ export default function Layout() {
       )}
       <Sidebar user={user} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} />
       <Topbar sidebarWidth={sidebarWidth} />
-      <main style={{ paddingLeft: sidebarWidth }} className="pt-12 transition-all duration-300 ease-in-out pb-10">
+      <main style={{ paddingLeft: sidebarWidth }} className="pt-14 transition-all duration-300 ease-in-out pb-10">
         <div className="p-4 max-w-7xl mx-auto">
           <Outlet />
         </div>
       </main>
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-surface-200 z-20" style={{ paddingLeft: sidebarWidth }}>
-        <div className="flex items-center justify-center gap-4 px-5 py-2 max-w-7xl mx-auto text-[11px]">
-          <span className="text-surface-400">&copy; {new Date().getFullYear()} All rights reserved.</span>
-          <span className="w-px h-3 bg-surface-200"></span>
-          <a href="mailto:Consult@360DMMC.com" className="text-surface-400 hover:text-primary-600 transition-colors flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            Consult@360DMMC.com
-          </a>
-          <span className="w-px h-3 bg-surface-200"></span>
-          <a href="https://360dmmc.com/" target="_blank" rel="noopener noreferrer" className="text-surface-400 hover:text-primary-600 transition-colors">
-            Powered by 360 DMMC
-          </a>
+        <div className="flex items-center justify-between px-6 py-2.5 max-w-7xl mx-auto text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="font-semibold text-surface-600">CIOS</span>
+            <span className="text-surface-300">|</span>
+            <span className="text-surface-400">&copy; {new Date().getFullYear()} All rights reserved.</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="mailto:Consult@360DMMC.com" className="text-surface-400 hover:text-primary-600 transition-colors flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              Consult@360DMMC.com
+            </a>
+            <span className="w-px h-3.5 bg-surface-200"></span>
+            <a href="https://360dmmc.com/" target="_blank" rel="noopener noreferrer" className="text-surface-400 hover:text-primary-600 transition-colors font-medium">
+              Powered by 360 DMMC
+            </a>
+          </div>
         </div>
       </div>
     </div>
