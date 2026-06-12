@@ -9,7 +9,7 @@ const reportSchema = new mongoose.Schema({
   downloadCount: { type: Number, default: 0 },
 }, { timestamps: true });
 
-reportSchema.index({ project: 1, type: 1 });
+reportSchema.index({ project: 1, type: 1 }, { unique: true });
 reportSchema.index({ generatedAt: -1 });
 
 module.exports = mongoose.model('Report', reportSchema);

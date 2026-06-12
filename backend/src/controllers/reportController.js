@@ -265,6 +265,11 @@ exports.generateReport = async (req, res) => {
       return res.status(400).json({ error: 'Type must be "admin" or "client"' });
     }
     const data = await buildReportData(req.params.id, type);
+    const dups = await Report.find({ project: req.params.id, type }).sort({ generatedAt: -1 }).lean();
+    if (dups.length > 1) {
+      const removeIds = dups.slice(1).map(d => d._id);
+      await Report.deleteMany({ _id: { $in: removeIds } });
+    }
     const report = await Report.findOneAndUpdate(
       { project: req.params.id, type },
       {
