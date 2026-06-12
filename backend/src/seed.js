@@ -15,6 +15,7 @@ const ProjectMember = require('./models/ProjectMember');
 const Company = require('./models/Company');
 const TeamGroup = require('./models/TeamGroup');
 const Counter = require('./models/Counter');
+const TestCase = require('./models/TestCase');
 const { DEFAULT_GROUPS } = TeamGroup;
 
 async function seed() {
@@ -34,6 +35,7 @@ async function seed() {
       Company.deleteMany({}),
       TeamGroup.deleteMany({}),
       Counter.deleteMany({}),
+      TestCase.deleteMany({}),
     ]);
 
     await Company.create({ name: "Admin's Company", domain: 'admin@cios.com', plan: 'enterprise' });
@@ -150,7 +152,6 @@ async function seed() {
       { name: 'Sprint 1 — Campaign Foundation', project: projectMarketing._id, startDate: new Date(today - 10*86400000), endDate: new Date(today + 20*86400000), status: 'active', goal: 'Complete campaign strategy, content calendar, and begin email automation', tasks: marketingTasks, createdBy: pm._id },
     ]);
 
-    const TestCase = require('./models/TestCase');
     const sprintDocs = await Sprint.find({ project: { $in: allProjects.map(p => p._id) } });
     const completedSprints = sprintDocs.filter(s => s.status === 'completed');
     const testCaseData = [];

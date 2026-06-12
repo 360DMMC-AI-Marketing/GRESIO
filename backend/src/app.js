@@ -98,6 +98,7 @@ app.get('/api/seed', async (req, res) => {
     const Activity = require('./models/Activity');
     const Resource = require('./models/Resource');
     const Integration = require('./models/Integration');
+    const TestCase = require('./models/TestCase');
     const { DEFAULT_GROUPS } = TeamGroup;
 
     await Promise.all([
@@ -105,6 +106,7 @@ app.get('/api/seed', async (req, res) => {
       ProjectMember.deleteMany({}), Task.deleteMany({}), Sprint.deleteMany({}),
       TeamGroup.deleteMany({}), Activity.deleteMany({}), Resource.deleteMany({}),
       Integration.deleteMany({}),
+      TestCase.deleteMany({}),
     ]);
 
     await Company.create({ name: "Admin's Company", domain: 'admin@cios.com', plan: 'enterprise' });
@@ -258,7 +260,6 @@ app.get('/api/seed', async (req, res) => {
       await Activity.create({ ...activityData[i], createdAt: new Date(now - i * 3600000) });
     }
 
-    const TestCase = require('./models/TestCase');
     const sprintDocs = await Sprint.find({ project: { $in: projects.map(p => p._id) } });
     const completedSprints = sprintDocs.filter(s => s.status === 'completed');
     const testCaseData = [];
