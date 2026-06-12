@@ -235,9 +235,8 @@ export default function Topbar({ sidebarWidth }) {
           const info = PLAN_INFO[plan] || PLAN_INFO.starter;
           const usage = company?.usage || {};
           const userPct = info.limit === Infinity ? 0 : Math.round(((usage.userCount || 0) / info.limit) * 100);
-          return (
-            <Link to="/admin" className="flex items-center gap-2 text-[11px] font-semibold rounded-full px-3.5 py-1.5 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all"
-              style={{color:info.color,background:info.bg}}>
+          const badge = (
+            <>
               <span style={{fontSize:12}}>{PLAN_ICON[plan] || '📋'}</span>
               <span className="tracking-wider">PLAN</span>
               <span className="font-bold">{info.label}</span>
@@ -249,7 +248,18 @@ export default function Topbar({ sidebarWidth }) {
                   <span className="text-[9px] opacity-60 font-medium">{usage.userCount || 0}/{info.limit}</span>
                 </span>
               )}
+            </>
+          );
+          return user?.role === 'admin' ? (
+            <Link to="/admin" className="flex items-center gap-2 text-[11px] font-semibold rounded-full px-3.5 py-1.5 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all cursor-pointer"
+              style={{color:info.color,background:info.bg}}>
+              {badge}
             </Link>
+          ) : (
+            <div className="flex items-center gap-2 text-[11px] font-semibold rounded-full px-3.5 py-1.5 border border-neutral-200 cursor-default"
+              style={{color:info.color,background:info.bg}}>
+              {badge}
+            </div>
           );
         })()}
         <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
