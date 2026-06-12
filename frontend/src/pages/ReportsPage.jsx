@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsService } from '../services/reports';
 import toast from 'react-hot-toast';
+import { ConfirmModal } from '../components/Modal';
 
 export default function ReportsPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   useEffect(() => {
     reportsService.list()
@@ -15,13 +17,19 @@ export default function ReportsPage() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this report?')) return;
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await reportsService.delete(id);
-      setReports((prev) => prev.filter((r) => r._id !== id));
+      await reportsService.delete(deleteConfirmId);
+      setReports((prev) => prev.filter((r) => r._id !== deleteConfirmId));
       toast.success('Report deleted');
     } catch {
       toast.error('Failed to delete');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -93,6 +101,16 @@ export default function ReportsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Report"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        confirmText="Delete"
+        confirmColor="#ef4444"
+      />
     </div>
   );
 }
