@@ -163,6 +163,17 @@ exports.updateTestCase = async (req, res, next) => {
     const item = await TestCase.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, changes, { new: true, runValidators: true });
     const populated = await populate(TestCase.findById(item._id));
 
+    if (changes.assignee && String(changes.assignee) !== String(old.assignee || '')) {
+      await Notification.create({
+        user: changes.assignee,
+        domain: req.user.domain,
+        type: 'task_assigned',
+        title: `New test case assigned: ${populated.testCaseId} — ${populated.title}`,
+        message: `You have been assigned a test case of type ${populated.type}`,
+        link: `/projects/${populated.project?._id || populated.project}`,
+      });
+    }
+
     // Auto-create bug task on failure
     if (req.body.status === 'failed' && !populated.linkedBug) {
       const failedStep = (populated.steps || []).find(s => s.status === 'fail');

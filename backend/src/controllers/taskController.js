@@ -320,8 +320,21 @@ exports.updateTask = async (req, res, next) => {
         return res.status(403).json({ message: 'Only the assignee, creator, or manager can change task status' });
       }
     }
+    const oldAssignee = task.assignee;
     Object.assign(task, req.body);
     await task.save();
+
+    if (req.body.assignee && String(req.body.assignee) !== String(oldAssignee || '')) {
+      await Notification.create({
+        user: req.body.assignee,
+        domain: req.user.domain,
+        type: 'task_assigned',
+        title: `New task assigned: ${task.title}`,
+        message: `You have been assigned the task "${task.title}"`,
+        link: task.scope === 'project' ? `/tasks?tab=project&taskId=${task._id}` : `/tasks?tab=separate&taskId=${task._id}`,
+      });
+    }
+
     const statusChangedToDone = req.body.status === 'done' && task.status !== 'done';
     if (statusChangedToDone && task.scope === 'separate' && task.createdBy) {
       const isAssignee = task.assignee && String(task.assignee) === String(req.user._id);
