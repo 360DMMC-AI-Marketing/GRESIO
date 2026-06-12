@@ -6,7 +6,7 @@ Full-stack internal company dashboard connecting ClickUp, GitHub, Microsoft Team
 
 - **Frontend:** React 18 + Vite + TailwindCSS + Recharts
 - **Backend:** Node.js + Express + Socket.IO + MongoDB (Mongoose)
-- **Auth:** JWT + Role-Based Access Control (Admin, PM, Developer, Intern)
+- **Auth:** JWT + Role-Based Access Control (Admin, Project Manager, Team Lead, Manager, QA Tester, Developer, Intern)
 
 ## Quick Start
 
@@ -49,14 +49,31 @@ cd cios/frontend && npm run dev
 Frontend: http://localhost:3000
 Backend API: http://localhost:5000
 
-### Demo Accounts
+### 🌐 Live Demo
 
-| Email | Password | Role |
-|-------|----------|------|
-| admin@cios.com | password123 | Admin |
-| pm@cios.com | password123 | PM |
-| dev@cios.com | password123 | Developer |
-| intern@cios.com | password123 | Intern |
+| URL | Description |
+|-----|-------------|
+| https://cios.vercel.app | Frontend (Vercel) |
+| https://cios-api-lqmf.onrender.com | Backend API (Render) |
+
+> ⚠️ Backend may need a manual deploy on Render before seed works.  
+> After deploy, visit `GET /api/seed` to populate demo data.
+
+### Demo Accounts (Seeded Users)
+
+| Name | Email | Password | Role |
+|------|-------|----------|------|
+| Sarah Chen | admin@cios.com | password123 | Admin |
+| James Wilson | pm@cios.com | password123 | Project Manager |
+| Marcus Johnson | dev@cios.com | password123 | Developer |
+| Aisha Patel | qa@cios.com | password123 | QA Tester |
+| Ryan Kim | intern@cios.com | password123 | Intern |
+| Emily Rodriguez | manager@cios.com | password123 | Manager |
+| Olivia Tanaka | designer@cios.com | password123 | Designer (Developer) |
+| David Mohammed | analyst@cios.com | password123 | Analyst (Manager) |
+| Lisa Thompson | scrum@cios.com | password123 | Team Lead |
+| Alex Rivera | test@demo.com | password123 | Test Admin |
+| Demo User | demo@demo.com | demo1234 | Demo Admin |
 
 ## Features
 
@@ -64,7 +81,9 @@ Backend API: http://localhost:5000
 - **Activity Scoring** - Weighted score from all integrated tools
 - **Real-time Updates** - WebSocket for live notifications
 - **Dashboard** - Company health, activity feed, project status
-- **Project Management** - Tasks, progress, deadlines, risk detection
+- **Project Management** - Tasks, sprints, progress, deadlines, risk detection
+- **Test Case Management** - QA test cases with manual/e2e/integration types
+- **Report Generation** - Admin (full KPIs) & Client (summary) PDF reports
 - **GitHub Module** - Commits, PRs, issues tracking
 - **Teams Module** - Messages, meetings, attendance
 - **Outlook Module** - Emails, calendar, workload view
