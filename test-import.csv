@@ -1,0 +1,4 @@
+name,email,role
+Alice Test,alice@test.com,developer
+Bob Test,bob@test.com,qa_tester
+Charlie Test,charlie@test.com,project_manager

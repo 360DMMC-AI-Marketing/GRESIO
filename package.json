@@ -1,0 +1,8 @@
+{
+  "name": "cios-single-deploy",
+  "private": true,
+  "scripts": {
+    "start": "node backend/src/app.js",
+    "build": "cd backend && npm install"
+  }
+}
