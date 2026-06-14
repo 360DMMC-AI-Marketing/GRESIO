@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { auth } from '../services/api';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -23,15 +24,10 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Invalid credentials');
+      const res = await auth.login({ email, password });
+      const data = res.data;
 
-      if (data.type === 'super_admin') {
+      if (data.user?.role === 'super_admin') {
         localStorage.setItem('sa_token', data.token);
         localStorage.setItem('sa_user', JSON.stringify(data.user));
         const userEncoded = encodeURIComponent(JSON.stringify(data.user));
@@ -40,7 +36,7 @@ export default function Login() {
         await login(email, password);
       }
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.response?.data?.message || err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
