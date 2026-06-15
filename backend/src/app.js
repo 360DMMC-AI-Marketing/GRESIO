@@ -97,6 +97,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    superAdminUrl: process.env.SUPER_ADMIN_URL || 'https://superadmin-seven-gilt.vercel.app'
+  });
+});
+
 app.get('/api/seed', async (req, res) => {
   try {
     const User = require('./models/User');
