@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cross-env VITE_API_URL=https://cios-api-lqmf.onrender.com VITE_MAIN_APP_URL=https://gresio.vercel.app vite build",
+    "build": "cross-env VITE_API_URL=https://cios-api-lqmf.onrender.com VITE_MAIN_APP_URL=https://gresio-three.vercel.app vite build",
     "preview": "vite preview"
   },
   "dependencies": {

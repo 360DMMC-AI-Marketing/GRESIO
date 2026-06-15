@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cross-env VITE_API_URL=https://cios-api-lqmf.onrender.com/api VITE_SUPER_ADMIN_URL=https://cios-api-lqmf.onrender.com/super-admin vite build && node -e \"require('fs').copyFileSync('vercel.json','dist/vercel.json')\"",
+    "build": "cross-env VITE_API_URL=https://cios-api-lqmf.onrender.com/api VITE_SUPER_ADMIN_URL=https://superadmin-two-azure.vercel.app vite build && node -e \"require('fs').copyFileSync('vercel.json','dist/vercel.json')\"",
     "preview": "vite preview"
   },
   "dependencies": {
