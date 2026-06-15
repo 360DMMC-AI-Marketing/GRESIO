@@ -335,11 +335,10 @@ app.get('/api/seed', async (req, res) => {
   }
 });
 
-const superAdminBuild = path.join(__dirname, '..', 'public', 'super-admin');
-if (fs.existsSync(path.join(superAdminBuild, 'index.html'))) {
-  app.use('/super-admin', express.static(superAdminBuild));
-  app.get('/super-admin/*', (req, res) => res.sendFile(path.join(superAdminBuild, 'index.html')));
-}
+app.use('/super-admin', (req, res) => {
+  const baseUrl = process.env.SUPER_ADMIN_URL || 'https://superadmin-seven-gilt.vercel.app';
+  res.redirect(baseUrl + req.url);
+});
 
 app.use(errorHandler);
 setupSocket(io);

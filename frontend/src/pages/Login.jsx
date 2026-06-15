@@ -3,7 +3,9 @@ import { Navigate, Link } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const SUPER_ADMIN_URL = import.meta.env.VITE_SUPER_ADMIN_URL || '/super-admin';
+const API_URL = import.meta.env.VITE_API_URL;
+const API_BASE = API_URL ? API_URL.replace(/\/api\/?$/, '') : '';
+const SUPER_ADMIN_URL = import.meta.env.VITE_SUPER_ADMIN_URL || API_BASE + '/super-admin';
 
 export default function Login() {
   const { user, login } = useAuth();
