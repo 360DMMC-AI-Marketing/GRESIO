@@ -23,6 +23,7 @@ const CATEGORIES = [
       { title: 'Subtasks & Attachments', desc: 'Like ClickUp checklists — add subtasks under any task. Upload files and link PRs or commits.' },
       { title: 'Task Assignment', desc: 'Assign tasks to team members by name or Outlook email. Filter by assignee, sprint, or priority.' },
       { title: 'Sprint Burndown', desc: 'Visual progress bar showing completed vs total tasks per sprint. Track team velocity in real time.' },
+      { title: 'Team Calendar', desc: 'Month-view calendar with color-coded tasks, sprints, project deadlines, milestones, events, and reminders — everything in one view.' },
     ],
   },
   {
@@ -73,7 +74,8 @@ const CATEGORIES = [
       { title: 'Microsoft 365 / Azure AD', desc: 'One-click import of all company users. Auto-infer roles from job titles. Send welcome emails with temp passwords.' },
       { title: 'GitHub Integration', desc: 'Track commits, pull requests, and issues. Activity scoring: commits (10pts), PRs (8pts), issues (5pts).' },
       { title: 'Microsoft Teams', desc: 'Auto-create Teams channels per project. Sync messages, meetings, and attendance tracking.' },
-      { title: 'Outlook Sync', desc: 'Sync emails and calendar events. View email and calendar workload insights per team member.' },
+      { title: 'Outlook Sync', desc: 'Sync emails and calendar events. View email and calendar workload insights per team member. Calendar events from Outlook appear in your GRESIO Calendar.' },
+      { title: 'Calendar Integration', desc: 'Outlook calendar events are synced and displayed in the GRESIO Calendar alongside tasks, sprints, and project deadlines — one unified view.' },
       { title: 'ClickUp & Figma', desc: 'Map tasks by ClickUp ID. Link Figma design files with review and comment tracking in activity feed.' },
     ],
   },

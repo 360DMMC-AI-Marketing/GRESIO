@@ -19,10 +19,21 @@ exports.getProjects = async (req, res, next) => {
         { _id: { $in: taskProjectIds } },
       ];
     }
-    const projects = await Project.find(filter)
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
+    const hasPagination = !isNaN(page) && !isNaN(limit);
+
+    let projectsQuery = Project.find(filter)
       .populate('members', 'name email role avatar')
       .populate('tasks')
       .sort({ updatedAt: -1 });
+
+    if (hasPagination) {
+      projectsQuery = projectsQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const projects = await projectsQuery;
+
     const ops = [];
     for (const p of projects) {
       const correct = calcPhaseProgress(p.projectType, p.phase);
@@ -32,6 +43,12 @@ exports.getProjects = async (req, res, next) => {
       }
     }
     if (ops.length) await Promise.all(ops);
+
+    if (hasPagination) {
+      const total = await Project.countDocuments(filter);
+      return res.json({ data: projects, total, page, totalPages: Math.ceil(total / limit) });
+    }
+
     res.json(projects);
   } catch (error) {
     next(error);
@@ -209,6 +226,15 @@ exports.createTeamsChannel = async (req, res, next) => {
     const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain });
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
+    const Company = require('../models/Company');
+    const company = await Company.findOne({ domain: req.user.domain }).lean();
+
+    const creds = company?.outlookTenantId ? {
+      tenantId: company.outlookTenantId,
+      clientId: company.outlookClientId,
+      clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+    } : undefined;
+
     const integration = await Integration.findOne({ name: 'microsoft_graph' });
     const env = require('../config/env');
     const teamId = integration?.config?.teamsTeamId || env.DEFAULT_TEAMS_TEAM_ID;
@@ -216,7 +242,7 @@ exports.createTeamsChannel = async (req, res, next) => {
       return res.status(400).json({ message: 'No default Teams team configured. Set it in Admin > Integrations or add DEFAULT_TEAMS_TEAM_ID to .env' });
     }
 
-    const result = await microsoftGraphService.createChannel(teamId, project.name, project.description || `${project.name} channel`);
+    const result = await microsoftGraphService.createChannel(teamId, project.name, project.description || `${project.name} channel`, creds);
     if (result.error) {
       return res.status(500).json({ message: 'Failed to create Teams channel', error: result.error });
     }
@@ -278,8 +304,9 @@ exports.updateReviewCall = async (req, res, next) => {
           metadata: { projectId: project._id, reviewCall: project.reviewCall },
         }));
         const notifs = await Notification.insertMany(notifDocs);
-        const io = require('../app').io;
-        notifs.forEach(n => { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
+        const { getIO } = require('../socket/ioProvider');
+        const io = getIO();
+        notifs.forEach(n => { try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
       }
     }
 

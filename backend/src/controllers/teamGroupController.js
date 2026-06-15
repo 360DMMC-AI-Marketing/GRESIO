@@ -81,13 +81,15 @@ exports.getAllDomainGrouped = async (req, res, next) => {
 
     const allGroupIds = mergedGroups.flatMap(g => g.groupIds);
     const members = await ProjectMember.find({ teamGroup: { $in: allGroupIds } })
-      .populate('user', 'name email avatar role')
+      .populate('user', 'name email avatar role isActive')
       .populate('invitedBy', 'name email')
       .populate('project', 'name')
       .sort({ createdAt: -1 }).lean();
 
+    const activeMembers = members.filter(m => !m.user || m.user.isActive !== false);
+
     const grouped = mergedGroups.map(g => {
-      const groupMembers = members.filter(m => m.teamGroup && g.groupIds.some(gid => String(gid) === String(m.teamGroup._id || m.teamGroup)));
+      const groupMembers = activeMembers.filter(m => m.teamGroup && g.groupIds.some(gid => String(gid) === String(m.teamGroup._id || m.teamGroup)));
       const byUser = {};
       groupMembers.forEach(m => {
         const uid = m.user?._id ? String(m.user._id) : m.email;
@@ -116,7 +118,7 @@ exports.getAllDomainGrouped = async (req, res, next) => {
     });
 
     const usedIds = new Set(mergedGroups.flatMap(g => g.groupIds.map(id => String(id))));
-    const ungrouped = members.filter(m => !m.teamGroup || !usedIds.has(String(m.teamGroup._id || m.teamGroup)));
+    const ungrouped = activeMembers.filter(m => !m.teamGroup || !usedIds.has(String(m.teamGroup._id || m.teamGroup)));
     res.json({ groups: grouped, ungrouped });
   } catch (e) { next(e); }
 };

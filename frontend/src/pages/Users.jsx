@@ -119,6 +119,15 @@ export default function Users() {
     } catch (err) { alert(err.response?.data?.message || 'Failed to remove'); }
   };
 
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Delete "${userName}" permanently? They will lose access and be removed from all projects.`)) return;
+    try {
+      await api.delete(`/users/${userId}`);
+      setSelectedMember(null);
+      fetchData();
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete user'); }
+  };
+
   const totalMembers = groupedData.groups.reduce((s, g) => s + g.members.length, 0) + groupedData.ungrouped.length;
 
   function formatDateDisplay(dateStr) {
@@ -188,7 +197,15 @@ export default function Users() {
           <span style={{ width:7, height:7, borderRadius:'50%', background:allActive?'#22c55e':'#f59e0b', display:'inline-block' }}></span>
           <span style={{ fontSize:10, color:allActive?'#16a34a':'#d97706', fontWeight:500 }}>{allActive ? 'Active' : 'Mixed'}</span>
         </div>
-        <div></div>
+        <div style={{ display:'flex', justifyContent:'center' }}>
+          {canManage && member.user?._id && (
+            <button type="button" onClick={e => { e.stopPropagation(); handleDeleteUser(member.user._id, name); }}
+              style={{ background:'none', border:'none', color:'#fca5a5', fontSize:13, cursor:'pointer', padding:'2px 6px', borderRadius:4, lineHeight:1 }}
+              onMouseEnter={e => e.currentTarget.style.color='#ef4444'}
+              onMouseLeave={e => e.currentTarget.style.color='#fca5a5'}
+              title="Delete user">✕</button>
+          )}
+        </div>
       </div>
     );
   };
@@ -320,7 +337,15 @@ export default function Users() {
                       <span style={{ width:7, height:7, borderRadius:'50%', background:m.status==='active'?'#22c55e':'#f59e0b', display:'inline-block' }}></span>
                       <span style={{ fontSize:10, color:m.status==='active'?'#16a34a':'#d97706', fontWeight:500 }}>{m.status === 'active' ? 'Active' : 'Pending'}</span>
                     </div>
-                    <div></div>
+                    <div style={{ display:'flex', justifyContent:'center' }}>
+                      {canManage && m.user?._id && (
+                        <button type="button" onClick={e => { e.stopPropagation(); handleDeleteUser(m.user._id, m.user?.name || m.email); }}
+                          style={{ background:'none', border:'none', color:'#fca5a5', fontSize:13, cursor:'pointer', padding:'2px 6px', borderRadius:4, lineHeight:1 }}
+                          onMouseEnter={e => e.currentTarget.style.color='#ef4444'}
+                          onMouseLeave={e => e.currentTarget.style.color='#fca5a5'}
+                          title="Delete user">✕</button>
+                      )}
+                    </div>
                   </div>
                 );
               })}

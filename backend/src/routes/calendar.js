@@ -1,0 +1,10 @@
+const { Router } = require('express');
+const { getCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = require('../controllers/calendarController');
+const { auth } = require('../middleware/auth');
+const router = Router();
+router.use(auth);
+router.get('/', getCalendarEvents);
+router.post('/', createCalendarEvent);
+router.patch('/:id', updateCalendarEvent);
+router.delete('/:id', deleteCalendarEvent);
+module.exports = router;

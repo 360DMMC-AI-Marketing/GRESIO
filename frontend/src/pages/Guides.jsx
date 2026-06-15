@@ -109,6 +109,23 @@ const guides = [
     ],
   },
   {
+    id: 'calendar',
+    icon: '📅',
+    title: 'Calendar',
+    subtitle: 'Visual timeline of tasks, sprints, deadlines, and events.',
+    steps: [
+      { title: 'Open the Calendar', desc: 'Click Calendar in the sidebar. You\'ll see a month view of all your team\'s scheduled items.' },
+      { title: 'Understand the colors', desc: 'Tasks (green), Sprints (blue), Project Deadlines (red), Milestones (purple), Events (violet), and Reminders (amber) — each type has its own color.' },
+      { title: 'Navigate months', desc: 'Use the ← and → arrows to move between months. The calendar shows items from all your active projects.' },
+      { title: 'Add events & reminders', desc: 'Click the "Add Event" or "Add Reminder" button to create calendar items that aren\'t tied to a specific task or sprint.' },
+    ],
+    tips: [
+      'Outlook calendar events you sync will also appear here.',
+      'Project deadlines show in red when overdue.',
+      'The calendar pulls data from tasks, sprints, and projects automatically — no extra setup needed.',
+    ],
+  },
+  {
     id: 'tasks',
     icon: '✅',
     title: 'Tasks & Projects',

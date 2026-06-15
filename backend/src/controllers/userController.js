@@ -8,13 +8,28 @@ const { enforceUserLimit } = require('../config/planLimits');
 exports.getUsers = async (req, res, next) => {
   try {
     const { role, status, search, hasOutlook } = req.query;
-    const filter = { domain: req.user.domain };
+    const filter = { domain: req.user.domain, isActive: { $ne: false } };
     if (role) filter.role = role;
     if (status) filter.status = status;
     if (search) filter.name = { $regex: search, $options: 'i' };
     if (hasOutlook === 'true') filter.outlookEmail = { $ne: '' };
 
-    const users = await User.find(filter).populate('assignedProjects');
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
+    const hasPagination = !isNaN(page) && !isNaN(limit);
+
+    let usersQuery = User.find(filter).populate('assignedProjects');
+    if (hasPagination) {
+      usersQuery = usersQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const users = await usersQuery;
+
+    if (hasPagination) {
+      const total = await User.countDocuments(filter);
+      return res.json({ data: users, total, page, totalPages: Math.ceil(total / limit) });
+    }
+
     res.json(users);
   } catch (error) {
     next(error);

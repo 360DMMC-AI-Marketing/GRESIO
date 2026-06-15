@@ -8,6 +8,7 @@ const Activity = require('../models/Activity');
 const ProjectMember = require('../models/ProjectMember');
 const User = require('../models/User');
 const Report = require('../models/Report');
+const { getDomainProjectIds } = require('../config/planLimits');
 
 function computePhaseDuration(project, phaseList) {
   if (!project.launchedAt && !project.deliveredAt) return 0;
@@ -288,39 +289,37 @@ exports.generateReport = async (req, res) => {
   }
 };
 
-exports.listReports = async (req, res) => {
+exports.listReports = async (req, res, next) => {
   try {
-    const reports = await Report.find()
+    const projectIds = await getDomainProjectIds(req.user.domain);
+    const reports = await Report.find({ project: { $in: projectIds } })
       .populate('project', 'name projectType phase status')
       .populate('generatedBy', 'name email')
       .sort({ generatedAt: -1 })
       .lean();
     res.json(reports);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { next(e); }
 };
 
-exports.getReport = async (req, res) => {
+exports.getReport = async (req, res, next) => {
   try {
-    const report = await Report.findById(req.params.id)
+    const projectIds = await getDomainProjectIds(req.user.domain);
+    const report = await Report.findOne({ _id: req.params.id, project: { $in: projectIds } })
       .populate('project', 'name projectType phase status')
       .populate('generatedBy', 'name email')
       .lean();
     if (!report) return res.status(404).json({ error: 'Report not found' });
     res.json(report);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { next(e); }
 };
 
-exports.deleteReport = async (req, res) => {
+exports.deleteReport = async (req, res, next) => {
   try {
-    await Report.findByIdAndDelete(req.params.id);
+    const projectIds = await getDomainProjectIds(req.user.domain);
+    const report = await Report.findOneAndDelete({ _id: req.params.id, project: { $in: projectIds } });
+    if (!report) return res.status(404).json({ error: 'Report not found' });
     res.json({ message: 'Report deleted' });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { next(e); }
 };
 
 exports.countDownload = async (req, res) => {

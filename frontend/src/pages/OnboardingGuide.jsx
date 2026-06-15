@@ -9,7 +9,7 @@ export default function OnboardingGuide() {
   const [acknowledged, setAcknowledged] = useState(user?.onboardingCompleted || false);
   const [reachedBottom, setReachedBottom] = useState(false);
   const [checklist, setChecklist] = useState({
-    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, help: false,
+    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, calendar: false, help: false,
   });
   const footerRef = useRef(null);
   const allChecked = Object.values(checklist).every(Boolean);
@@ -58,6 +58,7 @@ export default function OnboardingGuide() {
             ['Task Tracking','Assign, track, and complete tasks'],
             ['Test Case Management','Create and execute QA tests linked to features'],
             ['Team Collaboration','Role-based access for secure teamwork'],
+            ['Calendar','Visual calendar showing tasks, sprints, project deadlines, milestones, events, and reminders — all color-coded'],
             ['Report Generation','Generate admin (full audit) and client (summary) PDF reports for completed/delivered projects'],
             ['Automated Status Flow','Smart phase transitions based on project data and type'],
             ['Manual Gates','Admin/PM/Team Lead approval for critical milestones'],
@@ -170,10 +171,10 @@ export default function OnboardingGuide() {
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Project Health (Right Sidebar)</h4>
           <InfoTable rows={[
             ['Metric','Good','Warning','Bad'],
-            ['Completion','100%','70-99%','&lt;70%'],
+            ['Completion','100%','70-99%','<70%'],
             ['Overdue Tasks','0','1-2','3+'],
             ['Risk Level','—','—','High'],
-            ['Days Left','On track','&lt;7 days','Overdue (red)'],
+            ['Days Left','On track','<7 days','Overdue (red)'],
           ]} />
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Navigation Tabs</h4>
           <InfoTable rows={[
@@ -182,6 +183,7 @@ export default function OnboardingGuide() {
             ['⚡ Sprints','Sprint list, burndown charts, velocity'],
             ['🧪 Test Cases','Test case management and execution'],
             ['🔍 Review','Schedule review calls, track phase changes'],
+            ['📅 Calendar','Task deadlines, sprint dates, project milestones, events, and reminders — month view with color-coded items'],
             ['👥 Team','Team members, roles, workload distribution'],
             ['🔗 Resources','Linked repositories, documentation, environments'],
             ['⚙️ Settings','Project configuration, notifications, integrations'],
@@ -342,6 +344,7 @@ export default function OnboardingGuide() {
               {k:'manual',l:'I know that Launch and Delivered require manual approval'},
               {k:'tasks',l:'I know how to create and update tasks'},
               {k:'qa',l:'I know how to run test cases (if I\'m QA)'},
+              {k:'calendar',l:'I know how to use the Calendar to track deadlines and events'},
               {k:'help',l:'I know where to find help if I\'m stuck'},
             ].map(({k,l}) => (
               <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
@@ -425,6 +428,7 @@ export default function OnboardingGuide() {
             ['1.2','June 2026','Added 5 project types with type-specific lifecycle phases'],
             ['1.3','June 2026','Added Report Generation feature (admin + client PDF reports)'],
             ['1.4','June 2026','Added Review tab with call scheduler; enhanced notifications with 3-tab layout; project phase change alerts'],
+            ['1.5','June 2026','Added Calendar page with color-coded tasks, sprints, deadlines, milestones, events, and reminders'],
           ]} />
         </Section>
       </div>

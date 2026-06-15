@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
-  Group, Clock, BarChart3, FileText,
+  Group, Clock, BarChart3, FileText, CalendarDays,
+  Building2, Bell as BellIcon, Activity,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -34,6 +35,7 @@ const sidebarGroups = [
     icon: Users,
     items: [
       { id: 'team', label: 'Team', icon: Group, path: '/users', roles: MANAGERS },
+      { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/calendar', roles: ALL },
       { id: 'worklog', label: 'Work Log', icon: Clock, path: '/work-logs', roles: ALL },
     ],
   },
@@ -50,11 +52,17 @@ const sidebarGroups = [
 
 const standaloneItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ALL },
+  { id: 'super-companies', label: 'Companies', icon: Building2, path: '/super/companies', roles: ['super_admin'] },
+  { id: 'super-admins', label: 'Admins', icon: Users, path: '/super/admins', roles: ['super_admin'] },
+  { id: 'super-notifications', label: 'Notifications', icon: BellIcon, path: '/super/notifications', roles: ['super_admin'] },
+  { id: 'super-analytics', label: 'Analytics', icon: Activity, path: '/super/analytics', roles: ['super_admin'] },
 ];
 
 const bottomItems = [
   { id: 'onboarding', label: 'Onboarding Guide', icon: BookOpen, path: '/onboarding-guide', roles: ALL },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/admin', roles: ['admin'] },
+  { id: 'super-settings', label: 'Super Settings', icon: Settings, path: '/super/settings', roles: ['super_admin'] },
+  { id: 'super-health', label: 'System Health', icon: Activity, path: '/super/health', roles: ['super_admin'] },
 ];
 
 function SidebarGroup({ group, isOpen, onToggle, user }) {

@@ -23,8 +23,8 @@ export default function PublicFooter() {
           <div>
             <h4 className="text-sm font-semibold text-surface-900 mb-4">Company</h4>
             <ul className="space-y-3">
-              <li><a href="https://360dmmc.com/" target="_blank" rel="noopener noreferrer" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">About</a></li>
-              <li><a href="https://360dmmc.com/blog" target="_blank" rel="noopener noreferrer" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Blog</a></li>
+              <li><a href="https://360dmmc.com/about" target="_blank" rel="noopener noreferrer" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">About</a></li>
+              <li><Link to="/blog" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Blog</Link></li>
               <li><a href="https://360dmmc.com/careers" target="_blank" rel="noopener noreferrer" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Careers</a></li>
               <li><Link to="/contact" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Contact</Link></li>
             </ul>
@@ -32,10 +32,8 @@ export default function PublicFooter() {
           <div>
             <h4 className="text-sm font-semibold text-surface-900 mb-4">Support</h4>
             <ul className="space-y-3">
-              <li><Link to="/how-it-works" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Help Center</Link></li>
-              <li><Link to="/" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Status</Link></li>
+              <li><Link to="/contact" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Help Center</Link></li>
               <li><Link to="/privacy" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Privacy</Link></li>
-              <li><Link to="/pricing" className="text-sm text-surface-400 hover:text-surface-900 transition-colors">Terms</Link></li>
             </ul>
           </div>
         </div>

@@ -10,6 +10,7 @@ const env = require('./config/env');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { auth, authorize } = require('./middleware/auth');
+const rateLimit = require('express-rate-limit');
 const { setupSocket } = require('./socket');
 const { runStatusEngine } = require('./services/statusEngine');
 const Integration = require('./models/Integration');
@@ -32,7 +33,8 @@ const bugRoutes = require('./routes/bugs');
 const myTasksRoutes = require('./routes/myTasks');
 const reportRoutes = require('./routes/reports');
 const reportDraftRoutes = require('./routes/reportDrafts');
-const { router: superAdminRoutes, seedSuperAdmin } = require('./routes/superAdmin');
+const searchRoutes = require('./routes/search');
+const { router: superAdminRoutes, seedSuperAdmin, startNotificationPolling } = require('./routes/superAdmin');
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +75,24 @@ app.post('/api/seed-demo', async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Try again in 15 minutes.' },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registration attempts. Try again later.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', registerLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
@@ -90,6 +110,9 @@ app.use('/api/bugs', bugRoutes);
 app.use('/api/my-tasks', myTasksRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/report-drafts', reportDraftRoutes);
+app.use('/api/calendar', require('./routes/calendar'));
+
+app.use('/api/search', searchRoutes);
 
 app.use('/super-api', superAdminRoutes);
 
@@ -350,6 +373,9 @@ app.use('/super-admin', (req, res) => {
 app.use(errorHandler);
 setupSocket(io);
 
+const { setIO } = require('./socket/ioProvider');
+setIO(io);
+
 cron.schedule('*/15 * * * *', () => { runStatusEngine().catch(console.error); });
 
 async function autoSyncIntegrations() {
@@ -399,15 +425,81 @@ async function checkOverdueDeadlines() {
       if (recipients.length) {
         const docs = recipients.map(user => ({ ...notifData, user }));
         const created = await Notification.insertMany(docs);
-        const io = require('../app').io;
+        const { getIO } = require('./socket/ioProvider');
+        const io = getIO();
         for (const n of created) {
-          try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
         }
       }
     }
   } catch (e) { console.error('Overdue check error:', e.message); }
 }
 cron.schedule('0 8 * * *', () => { checkOverdueDeadlines(); });
+
+async function checkUpcomingDeadlines() {
+  try {
+    const Task = require('./models/Task');
+    const Sprint = require('./models/Sprint');
+    const Project = require('./models/Project');
+    const Notification = require('./models/Notification');
+    const tomorrow = new Date(Date.now() + 86400000);
+    tomorrow.setHours(23, 59, 59, 999);
+    const dayAfter = new Date(Date.now() + 2 * 86400000);
+    dayAfter.setHours(0, 0, 0, 0);
+
+    const tasksDue = await Task.find({
+      deadline: { $gte: dayAfter, $lte: tomorrow },
+      status: { $ne: 'done' },
+      isActive: true,
+    }).populate('project', 'name domain members').lean();
+
+    for (const task of tasksDue) {
+      const existing = await Notification.countDocuments({ type: 'deadline_alert', 'metadata.taskId': String(task._id), 'metadata.subtype': 'upcoming' });
+      if (existing > 0) continue;
+      const recipients = task.assignee ? [task.assignee] : [];
+      if (task.project?.members) {
+        for (const m of task.project.members) {
+          if (!recipients.some(r => r.toString() === m.toString())) recipients.push(m);
+        }
+      }
+      if (recipients.length) {
+        const docs = recipients.map(user => ({
+          type: 'deadline_alert', title: `Due tomorrow: ${task.title}`,
+          message: `Task "${task.title}" is due tomorrow (${new Date(task.deadline).toLocaleDateString()})`,
+          link: `/tasks`, domain: task.project?.domain || '', user,
+          metadata: { taskId: String(task._id), subtype: 'upcoming' },
+        }));
+        const created = await Notification.insertMany(docs);
+        const { getIO } = require('./socket/ioProvider');
+        const io = getIO();
+        for (const n of created) { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} }
+      }
+    }
+
+    const sprintsEnding = await Sprint.find({
+      endDate: { $gte: dayAfter, $lte: tomorrow },
+    }).populate('project', 'name domain').lean();
+
+    for (const sprint of sprintsEnding) {
+      const existing = await Notification.countDocuments({ type: 'deadline_alert', 'metadata.sprintId': String(sprint._id), 'metadata.subtype': 'sprint_ending' });
+      if (existing > 0) continue;
+      const recipients = sprint.project ? await require('./models/User').find({ domain: sprint.project.domain }).select('_id').lean() : [];
+      if (recipients.length) {
+        const docs = recipients.map(u => ({
+          type: 'deadline_alert', title: `Sprint ending tomorrow: ${sprint.name}`,
+          message: `Sprint "${sprint.name}" (${sprint.project?.name}) ends tomorrow`,
+          link: `/sprints`, domain: sprint.project?.domain || '', user: u._id,
+          metadata: { sprintId: String(sprint._id), subtype: 'sprint_ending' },
+        }));
+        const created = await Notification.insertMany(docs);
+        const { getIO } = require('./socket/ioProvider');
+        const io = getIO();
+        for (const n of created) { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} }
+      }
+    }
+  } catch (e) { console.error('Upcoming deadline check error:', e.message); }
+}
+cron.schedule('0 7 * * *', () => { checkUpcomingDeadlines(); });
 
 async function checkOverdueProjects() {
   try {
@@ -471,9 +563,10 @@ async function checkOverdueProjects() {
       if (recipients.length) {
         const docs = recipients.map(user => ({ ...notifData, user }));
         const created = await Notification.insertMany(docs);
-        const io = require('../app').io;
+        const { getIO } = require('./socket/ioProvider');
+        const io = getIO();
         for (const n of created) {
-          try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
         }
       }
     }
@@ -508,8 +601,13 @@ connectDB().then(async () => {
   } catch (e) {
     if (e.code !== 27) console.warn('Index cleanup:', e.message);
   }
+  const migrateSuperAdmin = require('./scripts/migrateSuperAdmin');
+  await migrateSuperAdmin();
   await seedSuperAdmin();
-  server.listen(PORT, () => { console.log(`GRESIO backend running on port ${PORT}`); });
+  server.listen(PORT, () => {
+    console.log(`GRESIO backend running on port ${PORT}`);
+    startNotificationPolling();
+  });
 });
 
 module.exports = { app, server, io };

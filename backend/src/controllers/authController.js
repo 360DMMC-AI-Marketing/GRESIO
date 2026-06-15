@@ -91,7 +91,7 @@ exports.getMe = async (req, res) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    const allowed = ['name', 'githubUsername', 'clickupId', 'teamsId', 'outlookEmail', 'figmaUsername', 'lovableUsername', 'onboardingCompleted'];
+    const allowed = ['name', 'githubUsername', 'clickupId', 'teamsId', 'outlookEmail', 'figmaUsername', 'lovableUsername', 'onboardingCompleted', 'theme'];
     const updates = {};
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];

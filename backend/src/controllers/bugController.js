@@ -8,7 +8,8 @@ const Notification = require('../models/Notification');
 const { getDomainProjectIds } = require('../config/planLimits');
 
 function getIO() {
-  return require('../app').io;
+  const { getIO } = require('../socket/ioProvider');
+  return getIO();
 }
 
 const SEVERITY_MAP = { critical: 'critical', high: 'high', medium: 'medium', low: 'low' };

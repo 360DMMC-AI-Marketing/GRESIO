@@ -12,9 +12,10 @@ async function notifyAdmins(domain, type, title, message, link, metadata) {
 
     const created = await Notification.insertMany(docs);
 
-    const io = require('../app').io;
+    const { getIO } = require('../socket/ioProvider');
+    const io = getIO();
     for (const n of created) {
-      try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+      try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
     }
   } catch (e) {
     console.error('Failed to notify admins:', e.message);

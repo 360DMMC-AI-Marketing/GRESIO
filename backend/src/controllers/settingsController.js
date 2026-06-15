@@ -121,8 +121,9 @@ exports.updateSettings = async (req, res, next) => {
           metadata: { projectId: project._id },
         }));
         const notifs = await Notification.insertMany(notifDocs);
-        const io = require('../app').io;
-        notifs.forEach(n => { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
+        const { getIO } = require('../socket/ioProvider');
+        const io = getIO();
+        notifs.forEach(n => { try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
       }
     }
 

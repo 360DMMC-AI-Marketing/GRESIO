@@ -5,47 +5,59 @@ const User = require('../models/User');
 
 class MicrosoftGraphService {
   constructor() {
-    this.accessToken = null;
-    this.tokenExpiry = null;
+    this._tokenCache = new Map();
   }
 
-  async getAccessToken() {
-    if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
-      return this.accessToken;
+  _cacheKey(tenantId) {
+    return `ms_graph_${tenantId}`;
+  }
+
+  async getAccessToken(tenantId, clientId, clientSecret) {
+    const key = this._cacheKey(tenantId);
+    const cached = this._tokenCache.get(key);
+    if (cached && Date.now() < cached.expiry) {
+      return cached.token;
     }
+
+    tenantId = tenantId || env.MICROSOFT_TENANT_ID;
+    clientId = clientId || env.MICROSOFT_CLIENT_ID;
+    clientSecret = clientSecret || env.MICROSOFT_CLIENT_SECRET;
+
+    if (!tenantId || !clientId || !clientSecret) return null;
 
     try {
       const { data } = await axios.post(
-        `https://login.microsoftonline.com/${env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`,
+        `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
         new URLSearchParams({
-          client_id: env.MICROSOFT_CLIENT_ID,
-          client_secret: env.MICROSOFT_CLIENT_SECRET,
+          client_id: clientId,
+          client_secret: clientSecret,
           scope: 'https://graph.microsoft.com/.default',
           grant_type: 'client_credentials',
         }),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
-      this.accessToken = data.access_token;
-      this.tokenExpiry = Date.now() + data.expires_in * 1000;
-      return this.accessToken;
+      const token = data.access_token;
+      this._tokenCache.set(key, { token, expiry: Date.now() + data.expires_in * 1000 });
+      return token;
     } catch (error) {
       console.error('Microsoft Graph auth error:', error.message);
       return null;
     }
   }
 
-  async getClient() {
-    const token = await this.getAccessToken();
+  async getClient(tenantId, clientId, clientSecret) {
+    const token = await this.getAccessToken(tenantId, clientId, clientSecret);
+    if (!token) return null;
     return axios.create({
       baseURL: 'https://graph.microsoft.com/v1.0',
       headers: { Authorization: `Bearer ${token}` },
     });
   }
 
-  async syncOutlookEmails(userEmail, userId, domain) {
+  async syncOutlookEmails(userEmail, userId, domain, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return null;
 
       const { data } = await client.get(`/users/${userEmail}/messages`, {
@@ -71,9 +83,9 @@ class MicrosoftGraphService {
     }
   }
 
-  async syncCalendarEvents(userEmail, userId, domain) {
+  async syncCalendarEvents(userEmail, userId, domain, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return null;
 
       const { data } = await client.get(`/users/${userEmail}/calendar/events`, {
@@ -99,9 +111,9 @@ class MicrosoftGraphService {
     }
   }
 
-  async syncTeamsMessages(userId, domain) {
+  async syncTeamsMessages(userId, domain, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return null;
 
       const { data: chats } = await client.get('/me/chats', { params: { $top: 10 } });
@@ -127,9 +139,9 @@ class MicrosoftGraphService {
       return null;
     }
   }
-  async createChannel(teamId, displayName, description) {
+  async createChannel(teamId, displayName, description, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return { error: 'Microsoft Graph not configured' };
       const { data } = await client.post(`/teams/${teamId}/channels`, {
         displayName,
@@ -143,9 +155,9 @@ class MicrosoftGraphService {
     }
   }
 
-  async getChannel(teamId, channelId) {
+  async getChannel(teamId, channelId, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return null;
       const { data } = await client.get(`/teams/${teamId}/channels/${channelId}`);
       return { id: data.id, displayName: data.displayName, webUrl: data.webUrl };
@@ -155,9 +167,9 @@ class MicrosoftGraphService {
     }
   }
 
-  async sendChannelMessage(teamId, channelId, message) {
+  async sendChannelMessage(teamId, channelId, message, creds) {
     try {
-      const client = await this.getClient();
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
       if (!client) return null;
       const { data } = await client.post(`/teams/${teamId}/channels/${channelId}/messages`, {
         body: { content: message },
@@ -172,17 +184,32 @@ class MicrosoftGraphService {
   async sync(platform) {
     try {
       const User = require('../models/User');
+      const Company = require('../models/Company');
       const users = await User.find({ outlookEmail: { $ne: '' }, isActive: true });
       let total = { users: users.length };
+      const domainCreds = {};
       for (const u of users) {
+        if (!domainCreds[u.domain]) {
+          const company = await Company.findOne({ domain: u.domain }).lean();
+          if (company && company.outlookTenantId) {
+            domainCreds[u.domain] = {
+              tenantId: company.outlookTenantId,
+              clientId: company.outlookClientId,
+              clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+            };
+          } else {
+            domainCreds[u.domain] = null;
+          }
+        }
+        const creds = domainCreds[u.domain] || undefined;
         if (!platform || platform === 'outlook') {
-          const emails = await this.syncOutlookEmails(u.outlookEmail, u._id, u.domain);
-          const events = await this.syncCalendarEvents(u.outlookEmail, u._id, u.domain);
+          const emails = await this.syncOutlookEmails(u.outlookEmail, u._id, u.domain, creds);
+          const events = await this.syncCalendarEvents(u.outlookEmail, u._id, u.domain, creds);
           if (emails) { total.emails = (total.emails || 0) + emails.emails; }
           if (events) { total.events = (total.events || 0) + events.events; }
         }
         if (!platform || platform === 'teams') {
-          const chats = await this.syncTeamsMessages(u._id, u.domain);
+          const chats = await this.syncTeamsMessages(u._id, u.domain, creds);
           if (chats) { total.chats = (total.chats || 0) + chats.chats; }
         }
       }

@@ -11,7 +11,8 @@ const { evaluateProjectPhase } = require('../services/phaseService');
 const { notifyAdmins } = require('../services/notificationService');
 
 function getIO() {
-  return require('../app').io;
+  const { getIO } = require('../socket/ioProvider');
+  return getIO();
 }
 
 const MANAGER_ROLES = ['admin', 'project_manager', 'team_lead', 'qa_tester'];

@@ -41,6 +41,7 @@ export default function Layout() {
     );
   }
   if (!user) return <Navigate to="/" replace />;
+  if (user.role === 'super_admin') return <Navigate to="/super/dashboard" replace />;
 
   const sidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
 

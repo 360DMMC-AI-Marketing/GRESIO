@@ -11,7 +11,10 @@ const { getDomainProjectIds } = require('../config/planLimits');
 const { notifyAdmins } = require('../services/notificationService');
 
 function getIO() {
-  try { return require('../app').io; } catch (e) { return null; }
+  try {
+    const { getIO } = require('../socket/ioProvider');
+    return getIO();
+  } catch (e) { return null; }
 }
 
 const MANAGER_ROLES = ['admin', 'project_manager', 'team_lead', 'manager'];
@@ -44,12 +47,28 @@ exports.getTasks = async (req, res, next) => {
     if (!MANAGER_ROLES.includes(req.user.role) && !assignee) {
       filter.assignee = req.user._id;
     }
-    const tasks = await Task.find(filter)
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
+    const hasPagination = !isNaN(page) && !isNaN(limit);
+
+    let tasksQuery = Task.find(filter)
       .populate('assignee', 'name email avatar role outlookEmail')
       .populate('createdBy', 'name email avatar role')
       .populate('project', 'name')
       .populate('subtasks.assignee', 'name email')
       .sort({ createdAt: -1 });
+
+    if (hasPagination) {
+      tasksQuery = tasksQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const tasks = await tasksQuery;
+
+    if (hasPagination) {
+      const total = await Task.countDocuments(filter);
+      return res.json({ data: tasks, total, page, totalPages: Math.ceil(total / limit) });
+    }
+
     res.json(tasks);
   } catch (error) {
     next(error);

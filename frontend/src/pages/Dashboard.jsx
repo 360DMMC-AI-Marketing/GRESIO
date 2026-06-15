@@ -4,6 +4,12 @@ import { analytics, projects, companies } from '../services/api';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
 
+const PLAN_INFO = {
+  starter: { label: 'Starter', price: '$0', color: 'bg-neutral-200', textColor: 'text-neutral-600', users: 10, projects: 3 },
+  team: { label: 'Team', price: '$29/mo', color: 'bg-blue-500', textColor: 'text-blue-700', users: 50, projects: Infinity },
+  enterprise: { label: 'Enterprise', price: '$99/mo', color: 'bg-amber-500', textColor: 'text-amber-700', users: Infinity, projects: Infinity },
+};
+
 const STATUS_COLOR = {
   on_track: 'bg-success-50 text-success-700', at_risk: 'bg-warning-50 text-warning-700',
   delayed: 'bg-danger-50 text-danger-700', ready_to_test: 'bg-info-50 text-info-700',
@@ -22,26 +28,27 @@ function relativeTime(date) {
 const ICON_BG = { brand:'bg-brand-50 text-brand-600', green:'bg-success-50 text-success-600', yellow:'bg-warning-50 text-warning-600', blue:'bg-info-50 text-info-600' };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [predictions, setPredictions] = useState([]);
   const [projectList, setProjectList] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
     Promise.all([
       analytics.getDashboard(),
       projects.getAll(),
-      analytics.getPredictions().catch(() => []),
       companies.getAll().catch(() => []),
     ])
-      .then(([aRes, pRes, predRes, compRes]) => {
+      .then(([aRes, pRes, compRes]) => {
         setStats(aRes.data);
         setProjectList(pRes.data.slice(0, 6));
-        setPredictions(Array.isArray(predRes) ? predRes : predRes.data || []);
         const comps = Array.isArray(compRes) ? compRes : compRes.data || [];
         setCompany(comps[0] || null);
+        setTimeout(() => {
+          analytics.getPredictions().then(r => setPredictions(r.data || [])).catch(() => {});
+        }, 2000);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -140,6 +147,30 @@ export default function Dashboard() {
           })}
         </div>
 
+        {company && (
+          <div className="card">
+            <div className="card-header"><span className="card-title">Plan</span>
+              <Link to="/admin" className="card-link">Manage →</Link>
+            </div>
+            <div style={{padding:'8px 12px'}}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-neutral-500">Current plan</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PLAN_INFO[company.plan]?.textColor || 'text-neutral-600'} ${PLAN_INFO[company.plan]?.color || 'bg-neutral-200'}`}>
+                  {PLAN_INFO[company.plan]?.label || 'Starter'}
+                </span>
+              </div>
+              <div className="text-xs text-neutral-400 mb-1">{company.name}</div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-neutral-500">Users</span>
+                <span className="text-neutral-700 font-medium">{company.usage?.userCount || 0}{(PLAN_INFO[company.plan]?.users || 0) !== Infinity ? ` / ${PLAN_INFO[company.plan]?.users || 10}` : ''}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-neutral-500">Projects</span>
+                <span className="text-neutral-700 font-medium">{company.usage?.projectCount || 0}{(PLAN_INFO[company.plan]?.projects || 0) !== Infinity ? ` / ${PLAN_INFO[company.plan]?.projects || 3}` : ''}</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="card">
           <div className="card-header"><span className="card-title">Recent Activity</span></div>
           <div style={{padding:'8px 0'}}>

@@ -58,6 +58,7 @@ const FEATURE_SECTIONS = [
       { label: 'Sprint management with burndown charts', starter: true, team: true, enterprise: true },
       { label: 'Task tracking (Kanban board)', starter: true, team: true, enterprise: true },
       { label: '8-step project lifecycle phases', starter: true, team: true, enterprise: true },
+      { label: 'Calendar (tasks, sprints, deadlines, events)', starter: true, team: true, enterprise: true },
       { label: 'Work log tracking', starter: true, team: true, enterprise: true },
     ],
   },

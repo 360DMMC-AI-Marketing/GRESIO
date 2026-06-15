@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
   role: {
     type: String,
-    enum: ['admin', 'team_lead', 'project_manager', 'manager', 'qa_tester', 'developer', 'intern', 'other'],
+    enum: ['super_admin', 'admin', 'team_lead', 'project_manager', 'manager', 'qa_tester', 'developer', 'intern', 'other'],
     default: 'developer',
   },
   status: { type: String, enum: ['active', 'idle', 'in_meeting', 'inactive', 'offline'], default: 'offline' },
@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   lastActive: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true },
   onboardingCompleted: { type: Boolean, default: false },
+  theme: { type: String, enum: ['light', 'dark'], default: 'light' },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

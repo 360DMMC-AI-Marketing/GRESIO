@@ -1,9 +1,15 @@
 const Integration = require('../models/Integration');
+const { encrypt, decrypt } = require('../config/crypto');
 
 exports.getIntegrations = async (req, res, next) => {
   try {
     const integrations = await Integration.find();
-    res.json(integrations);
+    const result = integrations.map(i => {
+      const obj = i.toObject();
+      obj.credentials = i.getDecryptedCredentials();
+      return obj;
+    });
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -12,12 +18,18 @@ exports.getIntegrations = async (req, res, next) => {
 exports.updateIntegration = async (req, res, next) => {
   try {
     const { name, credentials, config, isConnected } = req.body;
+    const update = { config, isConnected, lastSync: isConnected ? new Date() : undefined };
+    if (credentials) {
+      update.credentials = encrypt(credentials);
+    }
     const integration = await Integration.findOneAndUpdate(
       { name },
-      { $set: { credentials, config, isConnected, lastSync: isConnected ? new Date() : undefined } },
+      { $set: update },
       { upsert: true, new: true }
     );
-    res.json(integration);
+    const obj = integration.toObject();
+    obj.credentials = integration.getDecryptedCredentials();
+    res.json(obj);
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { notifications, projects, tasks, sprints, users } from '../services/api';
+import api, { notifications } from '../services/api';
 
 const STATUS_DOT = {
   active: 'bg-success-500', idle: 'bg-warning-500',
@@ -33,6 +33,12 @@ export default function Topbar({ sidebarWidth }) {
     catch { return { sound: true, enabled: true }; }
   });
   const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     const h = e => { if (searchRef.current && !searchRef.current.contains(e.target)) setShowSearch(false); };
@@ -44,29 +50,17 @@ export default function Topbar({ sidebarWidth }) {
     if (!searchQuery.trim()) { setSearchResults([]); setShowSearch(false); return; }
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      if (!mountedRef.current) return;
       try {
         const q = searchQuery.trim();
-        const [projRes, taskRes, sprintRes, userRes] = await Promise.all([
-          projects.getAll(),
-          tasks.getAll(),
-          sprints.getAll(),
-          users.getAll({ search: q }),
-        ]);
-        const allProj = projRes.data || [];
-        const allTasks = taskRes.data || [];
-        const allSprints = sprintRes.data || [];
-        const allUsers = userRes.data || [];
-        const lq = q.toLowerCase();
-        const results = [
-          ...allProj.filter(p => p.name?.toLowerCase().includes(lq)).slice(0, 5).map(p => ({ type:'Project', label:p.name, to:`/projects/${p._id}` })),
-          ...allTasks.filter(t => t.title?.toLowerCase().includes(lq)).slice(0, 5).map(t => ({ type:'Task', label:t.title, to:`/tasks` })),
-          ...allSprints.filter(s => s.name?.toLowerCase().includes(lq)).slice(0, 5).map(s => ({ type:'Sprint', label:s.name, to:`/sprints` })),
-          ...allUsers.filter(u => u.name?.toLowerCase().includes(lq)).slice(0, 5).map(u => ({ type:'User', label:u.name, to:`/users` })),
-        ];
+        const res = await api.get('/search', { params: { q } });
+        if (!mountedRef.current) return;
+        const results = res.data.results || [];
         setSearchResults(results);
         setShowSearch(results.length > 0);
       } catch (e) { console.error(e); }
     }, 250);
+    return () => clearTimeout(debounceRef.current);
   }, [searchQuery]);
 
   const fetchNotifs = () => {

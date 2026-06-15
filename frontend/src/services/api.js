@@ -1,17 +1,35 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-});
+function createAxios(baseURL) {
+  const instance = axios.create({ baseURL });
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('gresio_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+  instance.interceptors.response.use(
+    (res) => res,
+    (err) => {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('gresio_token');
+        localStorage.removeItem('gresio_user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(err);
+    }
+  );
+  return instance;
+}
 
-api.interceptors.request.use((config) => {
+const api = createAxios(import.meta.env.VITE_API_URL || '/api');
+const superApi = axios.create({ baseURL: '' });
+superApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('gresio_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
-
-api.interceptors.response.use(
-  (res) => res,
+superApi.interceptors.response.use(
+  (res) => res.data,
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('gresio_token');
@@ -193,4 +211,33 @@ export const workLogs = {
   delete: (id) => api.delete(`/work-logs/${id}`),
 };
 
+export const calendarEvents = {
+  getAll: (params) => api.get('/calendar', { params }),
+  create: (data) => api.post('/calendar', data),
+  update: (id, data) => api.patch(`/calendar/${id}`, data),
+  delete: (id) => api.delete(`/calendar/${id}`),
+};
+
+// Super admin API — uses same token, no baseURL prefix
+export const superAdmin = {
+  login: (data) => superApi.post('/super-api/auth/login', data),
+  getMe: () => superApi.get('/super-api/auth/me'),
+  getCompanies: () => superApi.get('/super-api/companies'),
+  getCompany: (id) => superApi.get(`/super-api/companies/${id}`),
+  getCompanyProjects: (id) => superApi.get(`/super-api/companies/${id}/projects`),
+  createCompany: (data) => superApi.post('/super-api/companies', data),
+  updateCompany: (id, data) => superApi.patch(`/super-api/companies/${id}`, data),
+  deleteCompany: (id) => superApi.delete(`/super-api/companies/${id}`),
+  getUsers: () => superApi.get('/super-api/users'),
+  createUser: (data) => superApi.post('/super-api/users', data),
+  getNotifications: () => superApi.get('/super-api/notifications'),
+  markNotificationRead: (id) => superApi.patch(`/super-api/notifications/${id}/read`),
+  markAllNotificationsRead: () => superApi.patch('/super-api/notifications/read-all'),
+  deleteNotification: (id) => superApi.delete(`/super-api/notifications/${id}`),
+  getRevenue: (period) => superApi.get('/super-api/analytics/revenue', { params: { period } }),
+  getGrowth: (period) => superApi.get('/super-api/analytics/growth', { params: { period } }),
+  getHealth: () => superApi.get('/super-api/health'),
+};
+
+export { superAdmin as api };
 export default api;

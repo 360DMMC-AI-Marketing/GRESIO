@@ -77,8 +77,10 @@ exports.updateUserStatusAndScore = async (userId) => {
 };
 
 exports.runStatusEngine = async () => {
-  const users = await User.find({ isActive: true });
-  for (const user of users) {
-    await exports.updateUserStatusAndScore(user._id);
+  const users = await User.find({ isActive: true }).select('_id').lean();
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < users.length; i += BATCH_SIZE) {
+    const batch = users.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(u => exports.updateUserStatusAndScore(u._id)));
   }
 };

@@ -25,8 +25,9 @@ notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 
 notificationSchema.post('save', function (doc) {
   try {
-    const io = require('../app').io;
-    io.to(`user:${doc.user}`).emit('notification', doc.toObject());
+    const { getIO } = require('../socket/ioProvider');
+    const io = getIO();
+    if (io) io.to(`user:${doc.user}`).emit('notification', doc.toObject());
   } catch (e) { /* socket not ready */ }
 });
 

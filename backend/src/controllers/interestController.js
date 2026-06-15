@@ -5,7 +5,8 @@ const Notification = require('../models/Notification');
 const { getDomainProjectIds } = require('../config/planLimits');
 
 function getIO() {
-  return require('../app').io;
+  const { getIO } = require('../socket/ioProvider');
+  return getIO();
 }
 
 const MANAGER_ROLES = ['admin', 'project_manager', 'team_lead'];

@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
-const API_BASE = API_URL ? API_URL.replace(/\/api\/?$/, '') : '';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -13,17 +9,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  const [superAdminUrl, setSuperAdminUrl] = useState(API_BASE + '/super-admin/');
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  useEffect(() => {
-    fetch(API_URL + '/config')
-      .then(r => r.json())
-      .then(c => { if (c.superAdminUrl) setSuperAdminUrl(c.superAdminUrl); })
-      .catch(() => {});
   }, []);
 
   if (user) return <Navigate to="/dashboard" replace />;
@@ -84,9 +73,6 @@ export default function Login() {
               <Link to="/forgot-password" className="text-xs text-surface-400 hover:text-primary-600 transition-colors">Forgot password?</Link>
               <span className="text-xs text-surface-300">·</span>
               <Link to="/register" className="text-xs text-primary-600 hover:text-primary-700 font-medium">Create account</Link>
-              <a href={superAdminUrl} className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-amber-100 text-amber-700 hover:from-amber-100 hover:to-amber-200 transition-all shadow-sm text-[11px] font-semibold" title="Login as Super Admin">
-                <Crown size={14} strokeWidth={2.5} />SU
-              </a>
             </p>
           </div>
         </div>

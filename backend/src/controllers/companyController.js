@@ -24,7 +24,11 @@ exports.createCompany = async (req, res, next) => {
 
 exports.updateCompany = async (req, res, next) => {
   try {
-    const company = await Company.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const company = await Company.findOneAndUpdate(
+      { _id: req.params.id, domain: req.user.domain },
+      req.body,
+      { new: true }
+    );
     if (!company) return res.status(404).json({ message: 'Company not found' });
     res.json(company);
   } catch (e) { next(e); }
@@ -191,7 +195,7 @@ exports.updatePlan = async (req, res, next) => {
 
 exports.getCompanyById = async (req, res, next) => {
   try {
-    const company = await Company.findById(req.params.id).populate('createdBy', 'name');
+    const company = await Company.findOne({ _id: req.params.id, domain: req.user.domain }).populate('createdBy', 'name');
     if (!company) return res.status(404).json({ message: 'Company not found' });
     const usage = await getCompanyUsage(company.domain);
     res.json({ ...company.toObject(), usage });

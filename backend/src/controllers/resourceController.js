@@ -48,9 +48,10 @@ exports.addResource = async (req, res, next) => {
         .map(m => ({ ...notifData, user: m }));
       if (notifications.length) {
         const created = await Notification.insertMany(notifications);
-        const io = require('../app').io;
+        const { getIO } = require('../socket/ioProvider');
+        const io = getIO();
         for (const n of created) {
-          try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
         }
       }
     }
@@ -88,9 +89,10 @@ exports.updateResource = async (req, res, next) => {
         .map(m => ({ ...notifData, user: m }));
       if (notifications.length) {
         const created = await Notification.insertMany(notifications);
-        const io = require('../app').io;
+        const { getIO } = require('../socket/ioProvider');
+        const io = getIO();
         for (const n of created) {
-          try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
         }
       }
     }
@@ -117,9 +119,10 @@ exports.deleteResource = async (req, res, next) => {
         .map(m => ({ ...notifData, user: m }));
       if (notifications.length) {
         const created = await Notification.insertMany(notifications);
-        const io = require('../app').io;
+        const { getIO } = require('../socket/ioProvider');
+        const io = getIO();
         for (const n of created) {
-          try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
+          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
         }
       }
     }

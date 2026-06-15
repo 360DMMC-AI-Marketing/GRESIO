@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     q: 'What integrations are supported?',
-    a: 'GRESIO integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). Azure AD/Microsoft 365 import is available on paid plans.',
+    a: 'GRESIO integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). The dedicated Calendar page shows all tasks, sprints, deadlines, and events in one month view. Azure AD/Microsoft 365 import is available on paid plans.',
   },
   {
     q: 'How do notifications work?',

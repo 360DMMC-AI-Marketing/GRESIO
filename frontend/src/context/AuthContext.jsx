@@ -2,6 +2,13 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { auth, companies } from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 
+const getInitialTheme = () => {
+  const saved = localStorage.getItem('gresio_theme');
+  if (saved) return saved;
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+  return 'light';
+};
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -13,9 +20,15 @@ export function AuthProvider({ children }) {
     const saved = localStorage.getItem('gresio_company');
     return saved ? JSON.parse(saved) : null;
   });
+  const [theme, setTheme] = useState(getInitialTheme);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem('gresio_token');
   const { socket } = useSocket(token);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('gresio_theme', theme);
+  }, [theme]);
 
   const fetchCompany = useCallback(async (userData) => {
     try {
@@ -56,6 +69,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('gresio_token', res.data.token);
     localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    if (res.data.user?.theme) setTheme(res.data.user.theme);
     await fetchCompany(res.data.user);
     return res.data;
   }, [fetchCompany]);
@@ -78,8 +92,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem('gresio_company', JSON.stringify(updated));
   }, []);
 
+  const toggleTheme = useCallback(async () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    try {
+      await auth.updateProfile({ theme: next });
+    } catch (e) {}
+  }, [theme]);
+
   return (
-    <AuthContext.Provider value={{ user, company, login, logout, loading, socket, updateUser, updateCompany, fetchCompany }}>
+    <AuthContext.Provider value={{ user, company, login, logout, loading, socket, updateUser, updateCompany, fetchCompany, theme, toggleTheme }}>
       {children}
     </AuthContext.Provider>
   );

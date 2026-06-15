@@ -28,8 +28,8 @@ export default function Landing() {
             The Internal OS for<br />Modern Teams
           </h1>
           <p className="text-xl md:text-2xl text-surface-500 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Projects, sprints, tasks, and testing — unified in one platform. 
-            From discovery to delivery, GRESIO keeps your team aligned.
+             Projects, sprints, tasks, testing, and calendar — unified in one platform. 
+             From discovery to delivery, GRESIO keeps your team aligned.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
