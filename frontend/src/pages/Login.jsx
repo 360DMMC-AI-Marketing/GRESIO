@@ -3,7 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '';
 const API_BASE = API_URL ? API_URL.replace(/\/api\/?$/, '') : '';
 
 export default function Login() {
@@ -13,14 +13,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  const [superAdminUrl, setSuperAdminUrl] = useState(import.meta.env.VITE_SUPER_ADMIN_URL || API_BASE + '/super-admin');
+  const [superAdminUrl, setSuperAdminUrl] = useState(API_BASE + '/super-admin/');
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   useEffect(() => {
-    fetch((API_URL || '') + '/config')
+    fetch(API_URL + '/config')
       .then(r => r.json())
       .then(c => { if (c.superAdminUrl) setSuperAdminUrl(c.superAdminUrl); })
       .catch(() => {});

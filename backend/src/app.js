@@ -99,7 +99,7 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/config', (req, res) => {
   res.json({
-    superAdminUrl: process.env.SUPER_ADMIN_URL || 'https://superadmin-seven-gilt.vercel.app'
+    superAdminUrl: process.env.SUPER_ADMIN_URL || ''
   });
 });
 
@@ -342,8 +342,9 @@ app.get('/api/seed', async (req, res) => {
 });
 
 app.use('/super-admin', (req, res) => {
-  const baseUrl = process.env.SUPER_ADMIN_URL || 'https://superadmin-seven-gilt.vercel.app';
-  res.redirect(baseUrl + req.url);
+  const baseUrl = process.env.SUPER_ADMIN_URL || '';
+  if (baseUrl) return res.redirect(baseUrl + req.url);
+  res.status(404).json({ error: 'Super admin URL not configured' });
 });
 
 app.use(errorHandler);
