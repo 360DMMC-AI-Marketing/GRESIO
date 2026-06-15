@@ -37,9 +37,9 @@ const { router: superAdminRoutes, seedSuperAdmin } = require('./routes/superAdmi
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = env.FRONTEND_URL ? env.FRONTEND_URL.split(',') : ['http://localhost:5173'];
+const allowedOrigins = env.FRONTEND_URL ? env.FRONTEND_URL.split(',') : ['http://localhost:5173', 'http://localhost:3000'];
 const corsOrigin = (origin, cb) => {
-  if (!origin || allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app')) {
+  if (!origin || allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app') || origin.startsWith('https://gresio')) {
     cb(null, true);
   } else {
     cb(null, false);
