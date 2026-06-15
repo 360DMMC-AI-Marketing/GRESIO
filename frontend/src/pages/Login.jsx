@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../services/api';
+
+const SUPER_ADMIN_URL = import.meta.env.VITE_SUPER_ADMIN_URL || '/super-admin';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -24,17 +25,7 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const res = await auth.login({ email, password });
-      const data = res.data;
-
-      if (data.user?.role === 'super_admin') {
-        localStorage.setItem('sa_token', data.token);
-        localStorage.setItem('sa_user', JSON.stringify(data.user));
-        const userEncoded = encodeURIComponent(JSON.stringify(data.user));
-        window.location.href = `http://localhost:5000/super-admin/?token=${encodeURIComponent(data.token)}&user=${userEncoded}`;
-      } else {
-        await login(email, password);
-      }
+      await login(email, password);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Invalid credentials');
     } finally {
@@ -46,7 +37,7 @@ export default function Login() {
     <div className="min-h-screen bg-white">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-surface-200' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">CIOS</span></Link>
+          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">GRESIO</span></Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-primary-600 px-3 py-1.5 transition-colors">Sign In</Link>
             <Link to="/register" className="text-sm font-medium bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm">Get Started</Link>
@@ -85,7 +76,7 @@ export default function Login() {
               <Link to="/forgot-password" className="text-xs text-surface-400 hover:text-primary-600 transition-colors">Forgot password?</Link>
               <span className="text-xs text-surface-300">·</span>
               <Link to="/register" className="text-xs text-primary-600 hover:text-primary-700 font-medium">Create account</Link>
-              <a href="http://localhost:5000/super-admin/" className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-amber-100 text-amber-700 hover:from-amber-100 hover:to-amber-200 transition-all shadow-sm text-[11px] font-semibold" title="Login as Super Admin">
+              <a href={SUPER_ADMIN_URL} className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-amber-100 text-amber-700 hover:from-amber-100 hover:to-amber-200 transition-all shadow-sm text-[11px] font-semibold" title="Login as Super Admin">
                 <Crown size={14} strokeWidth={2.5} />SU
               </a>
             </p>

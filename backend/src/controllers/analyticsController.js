@@ -126,7 +126,7 @@ exports.getCompanyAnalytics = async (req, res, next) => {
     const activeProjects = activeOnly.filter(p => ['on_track','at_risk','ready_to_test'].includes(p.status)).length;
     const completedProjects = allProjects.filter(p => p.status === 'completed').length;
     const atRiskProjects = activeOnly.filter(p => p.status === 'at_risk').length;
-    const blockedProjects = activeOnly.filter(p => p.status === 'blocked').length;
+    const blockedProjects = activeOnly.filter(p => p.status === 'blocked' || p.status === 'delayed').length;
     const delayedProjects = activeOnly.filter(p => p.status === 'delayed').length;
     const archivedProjects = allProjects.filter(p => p.isActive === false).length;
     const completionRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;

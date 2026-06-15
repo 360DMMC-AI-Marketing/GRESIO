@@ -16,7 +16,7 @@ export default function Sidebar() {
   return (
     <aside className="w-60 h-screen flex flex-col overflow-y-auto fixed left-0 top-0 bg-[#0F172A] z-50">
       <div className="px-5 pt-6 pb-8">
-        <h1 className="text-white text-[20px] font-bold tracking-tight">CIOS</h1>
+        <h1 className="text-white text-[20px] font-bold tracking-tight">GRESIO</h1>
         <p className="text-surface-400 text-[10px] mt-0.5">Internal OS</p>
       </div>
 

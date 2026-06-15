@@ -106,7 +106,7 @@ export default function ReportPreviewPage() {
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl font-bold text-white tracking-tight">CIOS</span>
+                  <span className="text-2xl font-bold text-white tracking-tight">GRESIO</span>
                   <span className="text-white/40 text-sm">|</span>
                   <span className="text-white/70 text-sm font-medium">Certified by 360 DMMC</span>
                 </div>
@@ -188,7 +188,7 @@ export default function ReportPreviewPage() {
                     </div>
                   ) : (
                     <div className="space-y-3 text-sm text-surface-700">
-                      <p className="leading-relaxed"><strong>CIOS</strong> (Comprehensive Internal Operating System) is a full-featured project lifecycle management platform built with <strong>React</strong>, <strong>Node.js</strong>, and <strong>MongoDB</strong>. It delivers end-to-end project tracking with intelligent automation, role-based access, and real-time collaboration.</p>
+                      <p className="leading-relaxed"><strong>GRESIO</strong> (Comprehensive Internal Operating System) is a full-featured project lifecycle management platform built with <strong>React</strong>, <strong>Node.js</strong>, and <strong>MongoDB</strong>. It delivers end-to-end project tracking with intelligent automation, role-based access, and real-time collaboration.</p>
                       <p className="leading-relaxed">The platform follows a structured <strong>8-phase methodology</strong> — Discovery → Planning → Development → Testing → Review → Launch → Delivered → Report — with automated phase transitions and manual approval gates for critical milestones.</p>
                     </div>
                   )}
@@ -358,7 +358,7 @@ export default function ReportPreviewPage() {
               {/* METHODOLOGY (Client only) */}
               {!isAdmin && (
                 <section>
-                  <h3 className="text-sm font-bold text-primary-600 uppercase tracking-wider mb-3">CIOS Methodology</h3>
+                  <h3 className="text-sm font-bold text-primary-600 uppercase tracking-wider mb-3">GRESIO Methodology</h3>
                   <div className="bg-surface-50 rounded-xl p-5">
                     <div className="grid grid-cols-4 gap-3 mb-4">
                       {[
@@ -368,7 +368,7 @@ export default function ReportPreviewPage() {
                         { num: 4, name: 'Testing', color: 'bg-primary-600' },
                         { num: 5, name: 'Review', color: 'bg-amber-500' },
                         { num: 6, name: 'Launch', color: 'bg-surface-800' },
-                        { num: 7, name: 'Delivered', color: 'bg-surface-300' },
+                        { num: 7, name: 'Delivered', color: 'bg-emerald-500' },
                         { num: 8, name: 'Report', color: 'bg-surface-300' },
                       ].map((p, i) => (
                         <div key={i} className="flex flex-col items-center text-center">
@@ -462,7 +462,7 @@ export default function ReportPreviewPage() {
           <div className="border-t border-surface-100 px-10 py-5">
             <div className="flex items-center justify-between text-xs text-surface-400">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-surface-600">CIOS</span>
+                <span className="font-bold text-surface-600">GRESIO</span>
                 <span>·</span>
                 <span>Certified by <strong>360 DMMC</strong></span>
               </div>

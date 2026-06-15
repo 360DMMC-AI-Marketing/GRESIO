@@ -84,14 +84,14 @@ exports.addMember = async (req, res, next) => {
         const result = await sendEmail({
           to: user.email,
           senderEmail: req.user.email,
-          subject: `You've been invited to ${projectName} on CIOS`,
+          subject: `You've been invited to ${projectName} on GRESIO`,
           html: `<div style="max-width:560px;margin:0 auto;font-family:Arial,sans-serif;">
 <div style="text-align:center;padding:24px 0;border-bottom:1px solid #e5e7eb;">
-<img src="data:image/png;base64,${LOGO_BASE64}" alt="CIOS" style="height:40px;width:auto;" />
+<img src="data:image/png;base64,${LOGO_BASE64}" alt="GRESIO" style="height:40px;width:auto;" />
 </div>
 <div style="padding:24px 0;">
 <p style="color:#374151;font-size:14px;line-height:1.6;">Hi ${user.name},</p>
-<p style="color:#374151;font-size:14px;line-height:1.6;"><strong>${inviterName}</strong> has invited you to join the project <strong>${projectName}</strong> on CIOS.</p>
+<p style="color:#374151;font-size:14px;line-height:1.6;"><strong>${inviterName}</strong> has invited you to join the project <strong>${projectName}</strong> on GRESIO.</p>
 ${inviteMessage ? `<p style="color:#6b7280;font-size:13px;line-height:1.5;padding:12px 16px;background:#f9fafb;border-radius:8px;">Message: ${inviteMessage}</p>` : ''}
 <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:16px 0;">
 <p style="color:#374151;font-size:13px;line-height:1.5;margin:0 0 8px;"><strong>Login details:</strong></p>
@@ -104,7 +104,7 @@ ${inviteMessage ? `<p style="color:#6b7280;font-size:13px;line-height:1.5;paddin
 <p style="color:#6b7280;font-size:13px;line-height:1.5;">After logging in, you can accept the invitation from your notifications.</p>
 </div>
 <div style="text-align:center;padding:16px 0;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;">
-&copy; ${new Date().getFullYear()} CIOS &mdash; Company Internal Operating System
+&copy; ${new Date().getFullYear()} GRESIO &mdash; Company Internal Operating System
 </div>
 </div>`,
         });

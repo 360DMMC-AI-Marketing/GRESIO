@@ -13,7 +13,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:4000', cred
 app.use(express.json());
 
 const PORT = process.env.PORT || 5001;
-const JWT_SECRET = process.env.JWT_SECRET || 'super-admin-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 // === AUTH MIDDLEWARE ===
 const auth = async (req, res, next) => {
@@ -214,7 +214,7 @@ async function pollCompanyNotifications() {
 }
 
 // === START ===
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cios')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gresio')
   .then(async () => {
     await seedSuperAdmin();
     await pollCompanyNotifications();

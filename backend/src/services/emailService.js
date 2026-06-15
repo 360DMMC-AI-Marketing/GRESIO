@@ -20,7 +20,7 @@ async function sendViaSmtp({ to, subject, html }) {
   if (!t) return false;
   try {
     await t.sendMail({
-      from: env.SMTP_FROM || env.SMTP_USER || 'noreply@cios.app',
+      from: env.SMTP_FROM || env.SMTP_USER || 'noreply@gresio.app',
       to,
       subject,
       html,

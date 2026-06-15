@@ -20,7 +20,7 @@ const { DEFAULT_GROUPS } = TeamGroup;
 
 async function seed() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cios');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gresio');
     console.log('Connected to MongoDB');
 
     await Promise.all([
@@ -38,30 +38,30 @@ async function seed() {
       TestCase.deleteMany({}),
     ]);
 
-    await Company.create({ name: "Admin's Company", domain: 'admin@cios.com', plan: 'enterprise' });
+    await Company.create({ name: "Admin's Company", domain: 'admin@gresio.com', plan: 'enterprise' });
 
     const allUsers = await User.create([
-      { name: 'Sarah Chen', email: 'admin@cios.com', password: 'password123', role: 'admin', domain: 'admin@cios.com', status: 'active', activityScore: 92, isActive: true, githubUsername: 'sarahchen', clickupId: 'sarah-c', teamsId: 'sarah.chen', outlookEmail: 'sarah@company.com', figmaUsername: 'sarahchen', lastActive: new Date() },
-      { name: 'James Wilson', email: 'pm@cios.com', password: 'password123', role: 'project_manager', domain: 'admin@cios.com', status: 'in_meeting', activityScore: 85, isActive: true, githubUsername: 'jwilson', clickupId: 'james-w', teamsId: 'james.wilson', outlookEmail: 'james@company.com', lastActive: new Date(Date.now() - 3600000) },
-      { name: 'Marcus Johnson', email: 'dev@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com', status: 'active', activityScore: 78, isActive: true, githubUsername: 'marcusj', clickupId: 'marcus-j', teamsId: 'marcus.johnson', outlookEmail: 'marcus@company.com', figmaUsername: 'marcusj', lastActive: new Date(Date.now() - 1800000) },
-      { name: 'Aisha Patel', email: 'qa@cios.com', password: 'password123', role: 'qa_tester', domain: 'admin@cios.com', status: 'active', activityScore: 88, isActive: true, githubUsername: 'aishapatel', clickupId: 'aisha-p', teamsId: 'aisha.patel', outlookEmail: 'aisha@company.com', lastActive: new Date(Date.now() - 900000) },
-      { name: 'Ryan Kim', email: 'intern@cios.com', password: 'password123', role: 'intern', domain: 'admin@cios.com', status: 'idle', activityScore: 45, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
-      { name: 'Emily Rodriguez', email: 'manager@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com', status: 'active', activityScore: 90, isActive: true, githubUsername: 'emilyr', clickupId: 'emily-r', teamsId: 'emily.rodriguez', outlookEmail: 'emily@company.com', lastActive: new Date(Date.now() - 2700000) },
-      { name: 'Olivia Tanaka', email: 'designer@cios.com', password: 'password123', role: 'developer', domain: 'admin@cios.com', status: 'inactive', activityScore: 72, isActive: true, githubUsername: 'oliviatanaka', clickupId: 'olivia-t', teamsId: 'olivia.tanaka', outlookEmail: 'olivia@company.com', figmaUsername: 'oliviatanaka', lovableUsername: 'olivia_t', lastActive: new Date(Date.now() - 86400000) },
-      { name: 'David Mohammed', email: 'analyst@cios.com', password: 'password123', role: 'manager', domain: 'admin@cios.com', status: 'in_meeting', activityScore: 68, isActive: true, githubUsername: 'dmohammed', clickupId: 'david-m', teamsId: 'david.mohammed', outlookEmail: 'david@company.com', lastActive: new Date(Date.now() - 5400000) },
-      { name: 'Lisa Thompson', email: 'scrum@cios.com', password: 'password123', role: 'team_lead', domain: 'admin@cios.com', status: 'active', activityScore: 82, isActive: true, githubUsername: 'lthompson', clickupId: 'lisa-t', teamsId: 'lisa.thompson', outlookEmail: 'lisa@company.com', lastActive: new Date(Date.now() - 3600000) },
-      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@cios.com', status: 'offline', activityScore: 15, isActive: true, lastActive: new Date(Date.now() - 172800000) },
-      { name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@cios.com', status: 'active', activityScore: 95, isActive: true, githubUsername: 'demouser', clickupId: 'demo-user', teamsId: 'demo.user', outlookEmail: 'demo@company.com', lastActive: new Date() },
+      { name: 'Sarah Chen', email: 'admin@gresio.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'active', activityScore: 92, isActive: true, githubUsername: 'sarahchen', clickupId: 'sarah-c', teamsId: 'sarah.chen', outlookEmail: 'sarah@company.com', figmaUsername: 'sarahchen', lastActive: new Date() },
+      { name: 'James Wilson', email: 'pm@gresio.com', password: 'password123', role: 'project_manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 85, isActive: true, githubUsername: 'jwilson', clickupId: 'james-w', teamsId: 'james.wilson', outlookEmail: 'james@company.com', lastActive: new Date(Date.now() - 3600000) },
+      { name: 'Marcus Johnson', email: 'dev@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'active', activityScore: 78, isActive: true, githubUsername: 'marcusj', clickupId: 'marcus-j', teamsId: 'marcus.johnson', outlookEmail: 'marcus@company.com', figmaUsername: 'marcusj', lastActive: new Date(Date.now() - 1800000) },
+      { name: 'Aisha Patel', email: 'qa@gresio.com', password: 'password123', role: 'qa_tester', domain: 'admin@gresio.com', status: 'active', activityScore: 88, isActive: true, githubUsername: 'aishapatel', clickupId: 'aisha-p', teamsId: 'aisha.patel', outlookEmail: 'aisha@company.com', lastActive: new Date(Date.now() - 900000) },
+      { name: 'Ryan Kim', email: 'intern@gresio.com', password: 'password123', role: 'intern', domain: 'admin@gresio.com', status: 'idle', activityScore: 45, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
+      { name: 'Emily Rodriguez', email: 'manager@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'active', activityScore: 90, isActive: true, githubUsername: 'emilyr', clickupId: 'emily-r', teamsId: 'emily.rodriguez', outlookEmail: 'emily@company.com', lastActive: new Date(Date.now() - 2700000) },
+      { name: 'Olivia Tanaka', email: 'designer@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'inactive', activityScore: 72, isActive: true, githubUsername: 'oliviatanaka', clickupId: 'olivia-t', teamsId: 'olivia.tanaka', outlookEmail: 'olivia@company.com', figmaUsername: 'oliviatanaka', lovableUsername: 'olivia_t', lastActive: new Date(Date.now() - 86400000) },
+      { name: 'David Mohammed', email: 'analyst@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 68, isActive: true, githubUsername: 'dmohammed', clickupId: 'david-m', teamsId: 'david.mohammed', outlookEmail: 'david@company.com', lastActive: new Date(Date.now() - 5400000) },
+      { name: 'Lisa Thompson', email: 'scrum@gresio.com', password: 'password123', role: 'team_lead', domain: 'admin@gresio.com', status: 'active', activityScore: 82, isActive: true, githubUsername: 'lthompson', clickupId: 'lisa-t', teamsId: 'lisa.thompson', outlookEmail: 'lisa@company.com', lastActive: new Date(Date.now() - 3600000) },
+      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'offline', activityScore: 15, isActive: true, lastActive: new Date(Date.now() - 172800000) },
+      { name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@gresio.com', status: 'active', activityScore: 95, isActive: true, githubUsername: 'demouser', clickupId: 'demo-user', teamsId: 'demo.user', outlookEmail: 'demo@company.com', lastActive: new Date() },
     ]);
     const [admin, pm, dev, qa, intern, manager, designer, analyst, scrum] = allUsers;
 
     const allUserIds = [admin._id, pm._id, dev._id, qa._id, intern._id, manager._id, designer._id, analyst._id, scrum._id];
-    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@cios.com' });
-    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: allUserIds, domain: 'admin@cios.com' });
-    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@cios.com' });
-    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@cios.com' });
-    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@cios.com' });
-    const projectMarketing = await Project.create({ name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@cios.com' });
+    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectMarketing = await Project.create({ name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@gresio.com' });
 
     // Create default team groups for each project
     const allProjects = [projectWeb, projectMobile, projectApi, projectEcom, projectDashboard, projectMarketing];
@@ -280,15 +280,15 @@ async function seed() {
 
     console.log('Seed complete!');
     console.log('Demo accounts (all passwords: password123):');
-    console.log('  admin@cios.com     - Admin');
-    console.log('  pm@cios.com        - Project Manager');
-    console.log('  dev@cios.com       - Developer');
-    console.log('  qa@cios.com        - QA Tester');
-    console.log('  intern@cios.com    - Intern');
-    console.log('  manager@cios.com   - Manager');
-    console.log('  designer@cios.com  - UI/UX Designer (developer role)');
-    console.log('  analyst@cios.com   - Business Analyst (manager role)');
-    console.log('  scrum@cios.com     - Scrum Master (team_lead role)');
+    console.log('  admin@gresio.com     - Admin');
+    console.log('  pm@gresio.com        - Project Manager');
+    console.log('  dev@gresio.com       - Developer');
+    console.log('  qa@gresio.com        - QA Tester');
+    console.log('  intern@gresio.com    - Intern');
+    console.log('  manager@gresio.com   - Manager');
+    console.log('  designer@gresio.com  - UI/UX Designer (developer role)');
+    console.log('  analyst@gresio.com   - Business Analyst (manager role)');
+    console.log('  scrum@gresio.com     - Scrum Master (team_lead role)');
     console.log('  test@demo.com      - Admin (test domain)');
     console.log('  demo@demo.com      - Admin (password: demo1234)');
 

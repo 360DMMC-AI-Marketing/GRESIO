@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Loader } from 'lucide-react';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
@@ -7,6 +7,7 @@ import { api } from '../api';
 
 export default function Admins() {
   const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name:'', email:'', password:'', role:'admin', domain:'' });
@@ -14,7 +15,9 @@ export default function Admins() {
   const [error, setError] = useState('');
 
   const load = async () => {
+    setLoading(true);
     try { const data = await api.getUsers(); setAdmins(data); } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
 
@@ -80,7 +83,16 @@ export default function Admins() {
           className="w-full pl-9 pr-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg placeholder-surface-400 focus:outline-none" />
       </div>
 
-      <DataTable columns={columns} data={filtered} />
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="flex items-center gap-2 text-surface-400 text-sm">
+            <Loader size={16} className="animate-spin" />
+            Loading admins...
+          </div>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={filtered} />
+      )}
 
       {/* Invite Admin Modal */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Invite New Admin">

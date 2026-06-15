@@ -4,7 +4,7 @@ const projectSchema = new mongoose.Schema({
   domain: { type: String, lowercase: true, trim: true, default: '' },
   description: { type: String, default: '' },
   projectType: { type: String, enum: ['software', 'design', 'business', 'content', 'research'], default: 'software' },
-  status: { type: String, enum: ['on_track', 'at_risk', 'delayed', 'ready_to_test', 'completed'], default: 'on_track' },
+  status: { type: String, enum: ['on_track', 'at_risk', 'delayed', 'blocked', 'ready_to_test', 'completed'], default: 'on_track' },
   phase: { type: String, enum: ['discovery', 'planning', 'development', 'testing', 'review', 'launched', 'delivered', 'designing', 'prototyping', 'business_growth', 'validation', 'content_creation', 'editing', 'research', 'analysis'], default: 'planning' },
   progress: { type: Number, default: 0, min: 0, max: 100 },
   deadline: { type: Date },

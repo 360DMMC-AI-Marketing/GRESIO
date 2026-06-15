@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 async function main() {
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cios');
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gresio');
   const Project = require('../models/Project');
   const ProjectMember = require('../models/ProjectMember');
 

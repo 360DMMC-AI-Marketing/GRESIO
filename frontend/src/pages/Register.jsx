@@ -52,7 +52,7 @@ export default function Register() {
     <div className="min-h-screen bg-white">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-surface-200' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">CIOS</span></Link>
+          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">GRESIO</span></Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-surface-600 hover:text-surface-900 px-3 py-1.5 transition-colors">Sign In</Link>
             <Link to="/register" className="text-sm font-medium bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm">Get Started</Link>
@@ -66,7 +66,7 @@ export default function Register() {
             <p className="text-surface-500 text-sm mt-1">
               {selectedPlan !== 'starter'
                 ? <>Starting the <span className="font-semibold text-primary-600 capitalize">{selectedPlan}</span> plan</>
-                : 'Start your CIOS workspace'}
+                : 'Start your GRESIO workspace'}
             </p>
           </div>
           <div className="bg-white rounded-2xl border border-surface-200 p-6 shadow-sm">

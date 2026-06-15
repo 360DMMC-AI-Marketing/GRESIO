@@ -63,7 +63,7 @@ export default function Layout() {
             width:'90%',maxWidth:400,padding:24,textAlign:'center',
           }}>
             <div style={{fontSize:36,marginBottom:8}}>📖</div>
-            <h2 style={{fontSize:15,fontWeight:700,color:'#111827',margin:'0 0 6px'}}>Welcome to CIOS!</h2>
+            <h2 style={{fontSize:15,fontWeight:700,color:'#111827',margin:'0 0 6px'}}>Welcome to GRESIO!</h2>
             <p style={{fontSize:11,color:'#6b7280',margin:'0 0 16px',lineHeight:1.5}}>
               Please visit the <strong>User Onboarding & System Overview</strong> guide to understand how the platform works before you start.
             </p>
@@ -90,7 +90,7 @@ export default function Layout() {
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-surface-200 z-20" style={{ paddingLeft: sidebarWidth }}>
         <div className="flex items-center justify-between px-6 py-2.5 max-w-7xl mx-auto text-xs">
           <div className="flex items-center gap-2.5">
-            <span className="font-semibold text-surface-600">CIOS</span>
+            <span className="font-semibold text-surface-600">GRESIO</span>
             <span className="text-surface-300">|</span>
             <span className="text-surface-400">&copy; {new Date().getFullYear()} All rights reserved.</span>
           </div>

@@ -7,7 +7,7 @@ export default function PublicFooter() {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div>
             <div className="mb-3">
-              <Link to="/" className="text-3xl font-bold text-surface-900 tracking-tight">CIOS</Link>
+              <Link to="/" className="text-3xl font-bold text-surface-900 tracking-tight">GRESIO</Link>
             </div>
             <p className="text-base text-surface-400 leading-relaxed">The internal operating system for modern software teams.</p>
           </div>
@@ -40,7 +40,7 @@ export default function PublicFooter() {
           </div>
         </div>
         <div className="border-t border-surface-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-surface-400">&copy; {new Date().getFullYear()} CIOS. All rights reserved.</p>
+          <p className="text-sm text-surface-400">&copy; {new Date().getFullYear()} GRESIO. All rights reserved.</p>
           <div className="flex items-center gap-5 text-sm">
             <a href="mailto:Consult@360DMMC.com" className="text-surface-500 hover:text-primary-600 font-medium transition-colors">Consult@360DMMC.com</a>
             <span className="w-px h-4 bg-surface-200"></span>

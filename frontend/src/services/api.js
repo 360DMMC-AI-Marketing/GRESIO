@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('cios_token');
+  const token = localStorage.getItem('gresio_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -14,8 +14,8 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('cios_token');
-      localStorage.removeItem('cios_user');
+      localStorage.removeItem('gresio_token');
+      localStorage.removeItem('gresio_user');
       window.location.href = '/login';
     }
     return Promise.reject(err);

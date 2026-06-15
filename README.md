@@ -1,4 +1,4 @@
-# 🧠 CIOS - Company Internal Operating System
+# 🧠 GRESIO - Company Internal Operating System
 
 Full-stack internal company dashboard connecting ClickUp, GitHub, Microsoft Teams, and Outlook.
 
@@ -18,21 +18,21 @@ Full-stack internal company dashboard connecting ClickUp, GitHub, Microsoft Team
 ### 1. Clone & Install
 
 ```bash
-cd cios/backend && npm install
+cd gresio/backend && npm install
 cd ../frontend && npm install
 ```
 
 ### 2. Environment
 
 ```bash
-cp cios/backend/.env.example cios/backend/.env
+cp gresio/backend/.env.example gresio/backend/.env
 # Edit .env with your MongoDB URI and API keys
 ```
 
 ### 3. Seed Database
 
 ```bash
-cd cios/backend
+cd gresio/backend
 node src/seed.js
 ```
 
@@ -40,10 +40,10 @@ node src/seed.js
 
 ```bash
 # Terminal 1 - Backend
-cd cios/backend && npm run dev
+cd gresio/backend && npm run dev
 
 # Terminal 2 - Frontend
-cd cios/frontend && npm run dev
+cd gresio/frontend && npm run dev
 ```
 
 Frontend: http://localhost:3000
@@ -53,8 +53,8 @@ Backend API: http://localhost:5000
 
 | URL | Description |
 |-----|-------------|
-| https://cios.vercel.app | Frontend (Vercel) |
-| https://cios-api-lqmf.onrender.com | Backend API (Render) |
+| https://gresio.vercel.app | Frontend (Vercel) |
+| https://gresio-api-lqmf.onrender.com | Backend API (Render) |
 
 > ⚠️ Backend may need a manual deploy on Render before seed works.  
 > After deploy, visit `GET /api/seed` to populate demo data.
@@ -63,15 +63,15 @@ Backend API: http://localhost:5000
 
 | Name | Email | Password | Role |
 |------|-------|----------|------|
-| Sarah Chen | admin@cios.com | password123 | Admin |
-| James Wilson | pm@cios.com | password123 | Project Manager |
-| Marcus Johnson | dev@cios.com | password123 | Developer |
-| Aisha Patel | qa@cios.com | password123 | QA Tester |
-| Ryan Kim | intern@cios.com | password123 | Intern |
-| Emily Rodriguez | manager@cios.com | password123 | Manager |
-| Olivia Tanaka | designer@cios.com | password123 | Designer (Developer) |
-| David Mohammed | analyst@cios.com | password123 | Analyst (Manager) |
-| Lisa Thompson | scrum@cios.com | password123 | Team Lead |
+| Sarah Chen | admin@gresio.com | password123 | Admin |
+| James Wilson | pm@gresio.com | password123 | Project Manager |
+| Marcus Johnson | dev@gresio.com | password123 | Developer |
+| Aisha Patel | qa@gresio.com | password123 | QA Tester |
+| Ryan Kim | intern@gresio.com | password123 | Intern |
+| Emily Rodriguez | manager@gresio.com | password123 | Manager |
+| Olivia Tanaka | designer@gresio.com | password123 | Designer (Developer) |
+| David Mohammed | analyst@gresio.com | password123 | Analyst (Manager) |
+| Lisa Thompson | scrum@gresio.com | password123 | Team Lead |
 | Alex Rivera | test@demo.com | password123 | Test Admin |
 | Demo User | demo@demo.com | demo1234 | Demo Admin |
 
@@ -101,7 +101,7 @@ Set API keys in `.env`:
 ## Architecture
 
 ```
-cios/
+gresio/
 ├── backend/
 │   └── src/
 │       ├── config/        # DB & env config

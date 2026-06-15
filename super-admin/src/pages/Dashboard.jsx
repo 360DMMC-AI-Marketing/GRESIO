@@ -1,17 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, CheckCircle2, AlertTriangle, Users, Activity, ArrowRight } from 'lucide-react';
+import { Building2, AlertTriangle, Users, Activity, ArrowRight, Bell } from 'lucide-react';
 import DashboardCard from '../components/DashboardCard';
 import DataTable from '../components/DataTable';
 import HighRiskCard from '../components/HighRiskCard';
-import ActivityItem from '../components/ActivityItem';
 import PlanBadge from '../components/PlanBadge';
 import { api } from '../api';
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [admins, setAdmins] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dateTime, setDateTime] = useState({ date: '', time: '' });
 
   useEffect(() => {
@@ -26,14 +37,21 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    api.getCompanies().then(setCompanies).catch(console.error);
-    api.getUsers().then(setAdmins).catch(console.error);
+    Promise.all([
+      api.getCompanies(),
+      api.getUsers(),
+      api.getNotifications(),
+    ]).then(([c, u, n]) => {
+      setCompanies(c);
+      setAdmins(u);
+      setNotifications(n);
+    }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   const active = companies.filter(c => c.isActive !== false);
-  const completed = companies.filter(c => c.status === 'completed');
   const atRisk = companies.filter(c => c.status === 'at_risk' || c.status === 'delayed' || c.overdue > 0);
   const onlineAdmins = admins.filter(a => a.status === 'active');
+  const totalProjects = companies.reduce((sum, c) => sum + (c.projectCount || 0), 0);
 
   const highRiskCompanies = companies.filter(c => c.status === 'at_risk' || c.status === 'delayed' || (c.overdue || 0) > 0);
 
@@ -65,10 +83,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <DashboardCard icon={Building2} label="Active Companies" value={String(active.length)} subtext="monitored" color="blue" />
-        <DashboardCard icon={CheckCircle2} label="Completed" value={String(completed.length)} subtext={`out of ${active.length}`} color="green" />
-        <DashboardCard icon={AlertTriangle} label="At Risk" value={String(atRisk.length)} subtext="needs attention" color="red" />
+        <DashboardCard icon={Building2} label="Active Companies" value={String(active.length)} subtext={`${admins.length} total admins`} color="blue" />
         <DashboardCard icon={Users} label="Active Admins" value={String(onlineAdmins.length)} subtext={`${admins.length - onlineAdmins.length} offline`} color="purple" />
+        <DashboardCard icon={Activity} label="Total Projects" value={String(totalProjects)} subtext="across all companies" color="green" />
+        <DashboardCard icon={AlertTriangle} label="At Risk" value={String(atRisk.length)} subtext="needs attention" color="red" />
       </div>
 
       {highRiskCompanies.length > 0 && (
@@ -102,19 +120,35 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Activity size={14} className="text-surface-400" />
+            <Bell size={14} className="text-surface-400" />
             <h2 className="text-sm font-semibold text-surface-900">Recent Activity</h2>
           </div>
-          <div className="flex flex-col gap-1">
-            {admins.slice(0, 6).map((a) => (
-              <ActivityItem key={a._id} activity={{ user: a.name, action: `Last login: ${new Date(a.lastActive || a.createdAt).toLocaleDateString()}`, time: '—' }} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="py-8 text-center text-xs text-surface-400">Loading...</div>
+          ) : notifications.length === 0 ? (
+            <div className="py-8 text-center">
+              <Bell size={24} className="mx-auto mb-2 text-surface-300" />
+              <p className="text-xs text-surface-400">No recent activity</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {notifications.slice(0, 8).map((n) => (
+                <div key={n._id} className="flex items-start gap-3 py-2.5 border-b border-surface-50 last:border-0">
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0 bg-primary-500" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-surface-900 leading-snug">{n.title}</p>
+                    <p className="text-[11px] text-surface-500 mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
+                  </div>
+                  <p className="text-[10px] text-surface-400 shrink-0 whitespace-nowrap">{n.createdAt ? timeAgo(n.createdAt) : ''}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <footer className="border-t border-surface-200 pt-4 pb-2 text-center text-xs text-surface-400">
-        CIOS | &copy; 2026 All rights reserved. | Consult@360DMMC.com | Powered by 360 DMMC
+        GRESIO | &copy; 2026 All rights reserved. | Consult@360DMMC.com | Powered by 360 DMMC
       </footer>
     </div>
   );

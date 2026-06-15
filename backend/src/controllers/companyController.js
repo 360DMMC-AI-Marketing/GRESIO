@@ -165,8 +165,8 @@ exports.importCompanyUsers = async (req, res, next) => {
           await sendEmail({
             to: u.email,
             senderEmail: adminUser?.outlookEmail || req.user.email,
-            subject: 'You have been added to CIOS',
-            html: `<p>Hi ${u.name},</p><p>You have been added to CIOS for <strong>${company.name}</strong> in the <strong>${u.role}</strong> role.</p><p>Login: ${env.FRONTEND_URL}<br>Email: ${u.email}<br>Temporary password: <strong>${tempPassword}</strong></p>`,
+            subject: 'You have been added to GRESIO',
+            html: `<p>Hi ${u.name},</p><p>You have been added to GRESIO for <strong>${company.name}</strong> in the <strong>${u.role}</strong> role.</p><p>Login: ${env.FRONTEND_URL}<br>Email: ${u.email}<br>Temporary password: <strong>${tempPassword}</strong></p>`,
           });
         } catch (e) { console.error(`Email failed for ${u.email}:`, e.message); }
       }

@@ -3,8 +3,8 @@ import { api } from '../api';
 import Flash from '../components/Flash';
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('super@360dmmc.com');
-  const [password, setPassword] = useState('Admin@360dmmc2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [flash, setFlash] = useState(null);
 
@@ -29,7 +29,7 @@ export default function Login({ onLogin }) {
       {flash && <Flash message={flash.message} type={flash.type} onClose={clearFlash} />}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-surface-900">CIOS</h1>
+          <h1 className="text-2xl font-bold text-surface-900">GRESIO</h1>
           <p className="text-surface-500 text-sm mt-1">Super Admin Console</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,7 +52,7 @@ export default function Login({ onLogin }) {
           360DMMC Administration
         </p>
         <div className="text-center mt-4 pt-4 border-t border-surface-100">
-          <a href="http://localhost:3000" className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors">
+          <a href={import.meta.env.VITE_MAIN_APP_URL || '/'} className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Back to Admin Dashboard
           </a>

@@ -6,15 +6,15 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('cios_user');
+    const saved = localStorage.getItem('gresio_user');
     return saved ? JSON.parse(saved) : null;
   });
   const [company, setCompany] = useState(() => {
-    const saved = localStorage.getItem('cios_company');
+    const saved = localStorage.getItem('gresio_company');
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('cios_token');
+  const token = localStorage.getItem('gresio_token');
   const { socket } = useSocket(token);
 
   const fetchCompany = useCallback(async (userData) => {
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
       const match = res.data.find(c => c.domain === domain);
       if (match) {
         setCompany(match);
-        localStorage.setItem('cios_company', JSON.stringify(match));
+        localStorage.setItem('gresio_company', JSON.stringify(match));
       }
     } catch (e) {
       // company fetch is non-critical
@@ -37,12 +37,12 @@ export function AuthProvider({ children }) {
       auth.getMe()
         .then((res) => {
           setUser(res.data);
-          localStorage.setItem('cios_user', JSON.stringify(res.data));
+          localStorage.setItem('gresio_user', JSON.stringify(res.data));
           fetchCompany(res.data);
         })
         .catch(() => {
-          localStorage.removeItem('cios_token');
-          localStorage.removeItem('cios_user');
+          localStorage.removeItem('gresio_token');
+          localStorage.removeItem('gresio_user');
           setUser(null);
         })
         .finally(() => setLoading(false));
@@ -53,29 +53,29 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const res = await auth.login({ email, password });
-    localStorage.setItem('cios_token', res.data.token);
-    localStorage.setItem('cios_user', JSON.stringify(res.data.user));
+    localStorage.setItem('gresio_token', res.data.token);
+    localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
     await fetchCompany(res.data.user);
     return res.data;
   }, [fetchCompany]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('cios_token');
-    localStorage.removeItem('cios_user');
-    localStorage.removeItem('cios_company');
+    localStorage.removeItem('gresio_token');
+    localStorage.removeItem('gresio_user');
+    localStorage.removeItem('gresio_company');
     setUser(null);
     setCompany(null);
   }, []);
 
   const updateUser = useCallback((updated) => {
     setUser(updated);
-    localStorage.setItem('cios_user', JSON.stringify(updated));
+    localStorage.setItem('gresio_user', JSON.stringify(updated));
   }, []);
 
   const updateCompany = useCallback((updated) => {
     setCompany(updated);
-    localStorage.setItem('cios_company', JSON.stringify(updated));
+    localStorage.setItem('gresio_company', JSON.stringify(updated));
   }, []);
 
   return (

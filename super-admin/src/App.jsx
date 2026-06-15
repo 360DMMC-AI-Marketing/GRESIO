@@ -39,7 +39,7 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem('sa_token');
     localStorage.removeItem('sa_user');
-    window.location.href = 'http://localhost:3000';
+    window.location.href = import.meta.env.VITE_MAIN_APP_URL || '/';
   };
 
   useEffect(() => {

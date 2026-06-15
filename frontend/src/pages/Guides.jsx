@@ -8,7 +8,7 @@ const guides = [
     subtitle: 'Primary connection — emails, calendar, Teams, and user management.',
     primary: true,
     steps: [
-      { title: 'Register an app in Azure', desc: 'Go to portal.azure.com → Azure Active Directory → App registrations → New registration. Name it "CIOS", set redirect URI to http://localhost:5000/auth/callback. Save.' },
+      { title: 'Register an app in Azure', desc: 'Go to portal.azure.com → Azure Active Directory → App registrations → New registration. Name it "GRESIO", set redirect URI to http://localhost:5000/auth/callback. Save.' },
       { title: 'Get client credentials', desc: 'In your app → Certificates & secrets → New client secret. Copy the secret. Also copy the Application (client) ID and Directory (tenant) ID.' },
       { title: 'Set credentials in .env', desc: 'Open backend/.env. Set MICROSOFT_CLIENT_ID=your-client-id, MICROSOFT_CLIENT_SECRET=your-secret, MICROSOFT_TENANT_ID=your-tenant-id. Save and restart backend.' },
       { title: 'Set your Outlook email', desc: 'Go to Profile → set your Outlook email (e.g., you@company.com). This links your identity to the Microsoft Graph.' },
@@ -29,7 +29,7 @@ const guides = [
     subtitle: 'Add-on — track commits, PRs, and issues.',
     steps: [
       { title: 'Generate a GitHub token', desc: 'Go to GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Click "Generate new token", select repo and user scopes, copy the token.' },
-      { title: 'Set the token in CIOS', desc: 'Open backend/.env. Set GITHUB_TOKEN=your_token_here. Save and restart the backend server.' },
+      { title: 'Set the token in GRESIO', desc: 'Open backend/.env. Set GITHUB_TOKEN=your_token_here. Save and restart the backend server.' },
       { title: 'Link your GitHub username', desc: 'Go to Profile → set your GitHub username (e.g., octocat). Click Save.' },
       { title: 'Add a repo to a project', desc: 'When creating/editing a project, enter the repo name (e.g., yourname/repo).' },
       { title: 'Sync', desc: 'Go to Admin → GitHub → Sync Now.' },
@@ -83,7 +83,7 @@ const guides = [
       { title: 'Create a Lovable account', desc: 'Sign up at lovable.dev to build full-stack apps with AI.' },
       { title: 'Link your Lovable username', desc: 'Go to Profile → set your Lovable username.' },
       { title: 'Export code', desc: 'Export or clone the generated code to your local machine.' },
-      { title: 'Connect to CIOS', desc: 'Create a CIOS project and add the GitHub repo where your Lovable code lives.' },
+      { title: 'Connect to GRESIO', desc: 'Create a GRESIO project and add the GitHub repo where your Lovable code lives.' },
     ],
     tips: [
       'Lovable generates React/Node.js code.',
@@ -98,7 +98,7 @@ const guides = [
     subtitle: 'Set up your account and integrations.',
     steps: [
       { title: 'Create an account', desc: 'Go to /register and sign up with your email. Add your Outlook email for the main integration.' },
-      { title: 'Log in', desc: 'Use your credentials at /login. Demo: admin@cios.com / password123.' },
+      { title: 'Log in', desc: 'Use your credentials at /login. Demo: admin@gresio.com / password123.' },
       { title: 'Complete your profile', desc: 'Go to Profile and fill in your Outlook email first (main), then GitHub, ClickUp, Figma, Lovable as needed.' },
       { title: 'Set your role', desc: 'Admin, PM, Developer, or Intern — roles control what you can see and do.' },
     ],

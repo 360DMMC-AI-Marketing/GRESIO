@@ -1,7 +1,7 @@
 {
-  "name": "cios-backend",
+  "name": "gresio-backend",
   "version": "1.0.0",
-  "description": "Company Internal Operating System - Backend",
+  "description": "GRESIO - Project & Sprint Management Platform - Backend",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",

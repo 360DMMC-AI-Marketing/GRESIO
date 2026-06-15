@@ -5,11 +5,11 @@ import PublicFooter from '../components/PublicFooter';
 const SECTIONS = [
   {
     title: 'Information We Collect',
-    content: 'When you use CIOS, we collect information you provide directly: your name, email address, profile picture, and company details when you register. We also collect project data you create including tasks, sprints, test cases, work logs, and team member information. Usage data such as login times, feature interactions, and page views are collected to improve the platform experience.',
+    content: 'When you use GRESIO, we collect information you provide directly: your name, email address, profile picture, and company details when you register. We also collect project data you create including tasks, sprints, test cases, work logs, and team member information. Usage data such as login times, feature interactions, and page views are collected to improve the platform experience.',
   },
   {
     title: 'How We Use Your Information',
-    content: 'We use your information to operate and maintain your CIOS workspace, provide technical support, send important notifications about your account (sprint updates, task assignments, deadline reminders), improve and develop new features, and ensure platform security. We never sell your personal data to third parties.',
+    content: 'We use your information to operate and maintain your GRESIO workspace, provide technical support, send important notifications about your account (sprint updates, task assignments, deadline reminders), improve and develop new features, and ensure platform security. We never sell your personal data to third parties.',
   },
   {
     title: 'Data Storage & Security',
@@ -17,7 +17,7 @@ const SECTIONS = [
   },
   {
     title: 'Third-Party Integrations',
-    content: 'CIOS integrates with third-party services you choose to connect: GitHub, Microsoft 365 / Azure AD, Microsoft Teams, Outlook, ClickUp, and Figma. When you connect these services, we access only the data necessary for the integration to function (e.g., commit data from GitHub, user directory from Azure AD). You can disconnect any integration at any time from your Admin panel.',
+    content: 'GRESIO integrates with third-party services you choose to connect: GitHub, Microsoft 365 / Azure AD, Microsoft Teams, Outlook, ClickUp, and Figma. When you connect these services, we access only the data necessary for the integration to function (e.g., commit data from GitHub, user directory from Azure AD). You can disconnect any integration at any time from your Admin panel.',
   },
   {
     title: 'Data Retention',
@@ -29,11 +29,11 @@ const SECTIONS = [
   },
   {
     title: 'Cookies',
-    content: 'CIOS uses essential cookies for authentication and session management. These are required for the platform to function. We also use analytics cookies to understand usage patterns and improve the product — these are optional and can be disabled. We do not use tracking cookies for advertising purposes.',
+    content: 'GRESIO uses essential cookies for authentication and session management. These are required for the platform to function. We also use analytics cookies to understand usage patterns and improve the product — these are optional and can be disabled. We do not use tracking cookies for advertising purposes.',
   },
   {
     title: 'Changes to This Policy',
-    content: 'We may update this privacy policy from time to time. Material changes will be communicated via email and in-app notification. Continued use of CIOS after changes constitutes acceptance of the updated policy.',
+    content: 'We may update this privacy policy from time to time. Material changes will be communicated via email and in-app notification. Continued use of GRESIO after changes constitutes acceptance of the updated policy.',
   },
   {
     title: 'Contact Us',
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">Privacy Policy</h1>
           <p className="text-surface-500 mb-2">Last updated: June 2026</p>
-          <p className="text-sm text-surface-500 mb-10">This Privacy Policy explains how CIOS ("we", "our", "us") collects, uses, and protects your information when you use our project management platform.</p>
+          <p className="text-sm text-surface-500 mb-10">This Privacy Policy explains how GRESIO ("we", "our", "us") collects, uses, and protects your information when you use our project management platform.</p>
 
           <div className="space-y-8">
             {SECTIONS.map((s, i) => (

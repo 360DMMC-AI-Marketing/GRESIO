@@ -4,32 +4,32 @@ import PublicFooter from '../components/PublicFooter';
 const PHASES = ['Discovery', 'Planning', 'Development', 'Testing', 'Review', 'Launch', 'Delivered', 'Report'];
 
 const PHASE_DETAILS = [
-  { num: 1, name: 'Discovery', auto: true, desc: 'Define project scope, collect requirements, and identify stakeholders. CIOS auto-generates a project brief from initial inputs.' },
+  { num: 1, name: 'Discovery', auto: true, desc: 'Define project scope, collect requirements, and identify stakeholders. GRESIO auto-generates a project brief from initial inputs.' },
   { num: 2, name: 'Planning', auto: true, desc: 'Break down work into sprints, assign tasks, set milestones, and allocate resources. Burndown charts are auto-created.' },
   { num: 3, name: 'Development', auto: true, desc: 'Teams execute tasks in Kanban-style boards. Progress is tracked in real-time with status updates (To Do → In Progress → Done).' },
   { num: 4, name: 'Testing', auto: true, desc: 'QA teams create and run test cases linked to features. Failed tests can auto-create bug tasks for the development team.' },
   { num: 5, name: 'Review', auto: false, desc: 'Code reviews, QA sign-offs, and stakeholder demonstrations. The project lead manually approves the review phase.' },
   { num: 6, name: 'Launch', auto: false, desc: 'Deploy to production. Only Admin, PM, or Team Lead can approve the launch phase manually.' },
   { num: 7, name: 'Delivered', auto: false, desc: 'Project is completed and handed over. Final documentation is archived and team velocity metrics are recorded.' },
-  { num: 8, name: 'Report', auto: false, desc: 'Generate professional project reports — Admin (full audit with KPIs, tasks, sprints, testing) or Client (stakeholder summary). Both export as PDF with CIOS + 360 DMMC branding.' },
+  { num: 8, name: 'Report', auto: false, desc: 'Generate professional project reports — Admin (full audit with KPIs, tasks, sprints, testing) or Client (stakeholder summary). Both export as PDF with GRESIO + 360 DMMC branding.' },
 ];
 
 const FAQS = [
   {
     q: 'Is there a free tier?',
-    a: 'Yes! Our Starter plan is free forever for up to 10 users and 3 projects. No credit card required — just sign up and start using CIOS immediately.',
+    a: 'Yes! Our Starter plan is free forever for up to 10 users and 3 projects. No credit card required — just sign up and start using GRESIO immediately.',
   },
   {
     q: 'How does the auto status flow work?',
-    a: 'CIOS automatically advances projects through their lifecycle phases when predefined conditions are met. Each of the 5 project types (Software, Design, Business, Content, Research) has its own adapted phase sequence. For example, when all tasks in the Development phase of a Software project are marked Done, the project automatically moves to Testing. Manual approval is only needed for Launch and Delivered phases across all project types.',
+    a: 'GRESIO automatically advances projects through their lifecycle phases when predefined conditions are met. Each of the 5 project types (Software, Design, Business, Content, Research) has its own adapted phase sequence. For example, when all tasks in the Development phase of a Software project are marked Done, the project automatically moves to Testing. Manual approval is only needed for Launch and Delivered phases across all project types.',
   },
   {
     q: 'What happens when all tasks in a phase are completed?',
-    a: 'For auto phases (Discovery through Testing), CIOS automatically transitions the project to the next phase. For manual phases (Review, Launch, Delivered), an authorized user (Admin, PM, or Team Lead) must manually approve the transition.',
+    a: 'For auto phases (Discovery through Testing), GRESIO automatically transitions the project to the next phase. For manual phases (Review, Launch, Delivered), an authorized user (Admin, PM, or Team Lead) must manually approve the transition.',
   },
   {
     q: 'Can I customize the project phases?',
-    a: 'Absolutely. CIOS comes with 5 pre-defined project types (Software, Design, Business, Content, Research), each with its own adapted phase sequence. Enterprise plans include custom fields, custom workflows, and the ability to define your own project types with tailored phase sequences.',
+    a: 'Absolutely. GRESIO comes with 5 pre-defined project types (Software, Design, Business, Content, Research), each with its own adapted phase sequence. Enterprise plans include custom fields, custom workflows, and the ability to define your own project types with tailored phase sequences.',
   },
   {
     q: 'How does the Kanban board work?',
@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     q: 'What integrations are supported?',
-    a: 'CIOS integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). Azure AD/Microsoft 365 import is available on paid plans.',
+    a: 'GRESIO integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). Azure AD/Microsoft 365 import is available on paid plans.',
   },
   {
     q: 'How do notifications work?',
@@ -57,7 +57,7 @@ const FAQS = [
   },
   {
     q: 'Can I track time spent on tasks?',
-    a: 'Yes — CIOS includes work log tracking. Team members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and team members.',
+    a: 'Yes — GRESIO includes work log tracking. Team members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and team members.',
   },
   {
     q: 'What analytics are available?',
@@ -65,7 +65,7 @@ const FAQS = [
   },
   {
     q: 'Is there a mobile app?',
-    a: 'Not yet, but we are planning to create a mobile app linked to this web app. Currently, CIOS is fully responsive and works on all devices through the web browser. You can access your projects, tasks, and notifications on mobile without installing anything.',
+    a: 'Not yet, but we are planning to create a mobile app linked to this web app. Currently, GRESIO is fully responsive and works on all devices through the web browser. You can access your projects, tasks, and notifications on mobile without installing anything.',
   },
   {
     q: 'How do I get started?',
@@ -87,14 +87,14 @@ export default function HowItWorksPage() {
             <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-0">
               {PHASES.map((phase, i) => (
                 <div key={i} className="flex flex-col items-center relative z-10">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-surface-800 text-white border-surface-800' : 'bg-surface-100 text-surface-400 border-surface-200'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-surface-800 text-white border-surface-800' : i === 6 ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-surface-100 text-surface-400 border-surface-200'}`}>
                     {i + 1}
                   </div>
-                  <span className={`text-[10px] font-medium text-center leading-tight ${i < 4 ? 'text-primary-700' : i === 4 ? 'text-amber-600' : i === 5 ? 'text-surface-700' : 'text-surface-400'}`}>
+                  <span className={`text-[10px] font-medium text-center leading-tight ${i < 4 ? 'text-primary-700' : i === 4 ? 'text-amber-600' : i === 5 ? 'text-surface-700' : i === 6 ? 'text-emerald-600' : 'text-surface-400'}`}>
                     {phase}
                   </span>
-                  <span className={`text-[9px] mt-0.5 ${i < 4 ? 'text-primary-400' : i === 4 ? 'text-amber-400' : i === 5 ? 'text-surface-400' : 'text-surface-300'}`}>
-                    {i < 4 ? 'Auto' : i < 6 ? 'Manual' : ''}
+                  <span className={`text-[9px] mt-0.5 ${i < 4 ? 'text-primary-400' : i === 4 ? 'text-amber-400' : i === 5 ? 'text-surface-400' : i === 6 ? 'text-emerald-400' : 'text-surface-300'}`}>
+                    {i < 4 ? 'Auto' : i < 6 ? 'Manual' : i === 6 ? 'Done' : ''}
                   </span>
                 </div>
               ))}
@@ -107,10 +107,10 @@ export default function HowItWorksPage() {
             {PHASE_DETAILS.map((d) => (
               <div key={d.num} className="bg-white rounded-xl border border-surface-200 p-4 hover:shadow-md hover:border-surface-300 transition-all">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${d.num <= 4 ? 'bg-primary-600 text-white' : d.num === 5 ? 'bg-amber-500 text-white' : d.num === 6 ? 'bg-surface-800 text-white' : 'bg-surface-100 text-surface-400'}`}>{d.num}</span>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${d.num <= 4 ? 'bg-primary-600 text-white' : d.num === 5 ? 'bg-amber-500 text-white' : d.num === 6 ? 'bg-surface-800 text-white' : d.num === 7 ? 'bg-emerald-500 text-white' : 'bg-surface-100 text-surface-400'}`}>{d.num}</span>
                   <span className="text-sm font-semibold text-surface-900">{d.name}</span>
-                  <span className={`text-[9px] ml-auto px-1.5 py-0.5 rounded font-medium ${d.auto ? 'bg-primary-50 text-primary-600' : 'bg-amber-50 text-amber-600'}`}>
-                    {d.auto ? 'Auto' : 'Manual'}
+                  <span className={`text-[9px] ml-auto px-1.5 py-0.5 rounded font-medium ${d.auto ? 'bg-primary-50 text-primary-600' : d.num === 7 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                    {d.auto ? 'Auto' : d.num === 7 ? 'Done' : 'Manual'}
                   </span>
                 </div>
                 <p className="text-xs text-surface-500 leading-relaxed">{d.desc}</p>
@@ -124,7 +124,7 @@ export default function HowItWorksPage() {
         <div className="max-w-5xl mx-auto mb-16 pt-8">
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold text-surface-900 mb-3">5 project types, each with adapted phases</h2>
-            <p className="text-sm text-surface-500 max-w-2xl mx-auto">Depending on what your team is building, CIOS adjusts the lifecycle phases automatically. The first two phases (Discovery, Planning) and the last four (Testing, Review, Launch, Delivered) are shared — the middle phases adapt to your project type.</p>
+            <p className="text-sm text-surface-500 max-w-2xl mx-auto">Depending on what your team is building, GRESIO adjusts the lifecycle phases automatically. The first two phases (Discovery, Planning) and the last four (Testing, Review, Launch, Delivered) are shared — the middle phases adapt to your project type.</p>
           </div>
           <div className="grid md:grid-cols-5 gap-3">
             {[

@@ -8,6 +8,7 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': { target: 'http://localhost:5000', changeOrigin: true },
+      '/super-admin': { target: 'http://localhost:5000', changeOrigin: true },
       '/super-api': { target: 'http://localhost:5000', changeOrigin: true },
       '/uploads': { target: 'http://localhost:5000', changeOrigin: true },
       '/socket.io': { target: 'http://localhost:5000', ws: true },

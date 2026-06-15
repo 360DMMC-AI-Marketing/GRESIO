@@ -131,7 +131,7 @@ export default function Sidebar({ user, collapsed, onToggle }) {
       <aside className="bg-[#0F172A] h-screen fixed top-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out w-[64px]">
         <div className="flex items-center justify-center px-0 py-4 border-b border-white/[0.06]">
           <NavLink to="/dashboard" className="flex items-center justify-center hover:opacity-90 transition-opacity">
-            <span className="text-white font-bold text-lg tracking-tight">CIOS</span>
+            <span className="text-white font-bold text-lg tracking-tight">GRESIO</span>
           </NavLink>
         </div>
         <nav className="flex-1 px-2 py-3 flex flex-col gap-1 overflow-y-auto">
@@ -180,7 +180,7 @@ export default function Sidebar({ user, collapsed, onToggle }) {
       {/* Logo */}
       <div className="px-5 py-6 border-b border-white/[0.08]">
         <NavLink to="/dashboard" className="flex flex-col items-center hover:opacity-90 transition-all duration-200 cursor-pointer">
-          <span className="text-white font-bold text-2xl tracking-tight">CIOS</span>
+          <span className="text-white font-bold text-2xl tracking-tight">GRESIO</span>
           <span className="text-slate-500 text-xs font-medium mt-0.5">Internal OS</span>
         </NavLink>
         <button onClick={onToggle}

@@ -4,19 +4,19 @@ import PublicFooter from '../components/PublicFooter';
 const FAQS = [
   {
     q: 'Is there a free tier?',
-    a: 'Yes! Our Starter plan is free forever for up to 10 users and 3 projects. No credit card required — just sign up and start using CIOS immediately.',
+    a: 'Yes! Our Starter plan is free forever for up to 10 users and 3 projects. No credit card required — just sign up and start using GRESIO immediately.',
   },
   {
     q: 'How does the auto status flow work?',
-    a: 'CIOS automatically advances projects through their lifecycle phases when predefined conditions are met. Each of the 5 project types (Software, Design, Business, Content, Research) has its own adapted phase sequence. For example, when all tasks in the Development phase of a Software project are marked Done, the project automatically moves to Testing. Manual approval is only needed for Launch and Delivered phases across all project types.',
+    a: 'GRESIO automatically advances projects through their lifecycle phases when predefined conditions are met. Each of the 5 project types (Software, Design, Business, Content, Research) has its own adapted phase sequence. For example, when all tasks in the Development phase of a Software project are marked Done, the project automatically moves to Testing. Manual approval is only needed for Launch and Delivered phases across all project types.',
   },
   {
     q: 'What happens when all tasks in a phase are completed?',
-    a: 'For auto phases (Discovery through Testing), CIOS automatically transitions the project to the next phase. For manual phases (Review, Launch, Delivered), an authorized user (Admin, PM, or Team Lead) must manually approve the transition.',
+    a: 'For auto phases (Discovery through Testing), GRESIO automatically transitions the project to the next phase. For manual phases (Review, Launch, Delivered), an authorized user (Admin, PM, or Team Lead) must manually approve the transition.',
   },
   {
     q: 'Can I customize the project phases?',
-    a: 'Absolutely. CIOS comes with 5 pre-defined project types (Software, Design, Business, Content, Research), each with its own adapted phase sequence. Enterprise plans include custom fields, custom workflows, and the ability to define your own project types with tailored phase sequences.',
+    a: 'Absolutely. GRESIO comes with 5 pre-defined project types (Software, Design, Business, Content, Research), each with its own adapted phase sequence. Enterprise plans include custom fields, custom workflows, and the ability to define your own project types with tailored phase sequences.',
   },
   {
     q: 'How does the Kanban board work?',
@@ -28,7 +28,7 @@ const FAQS = [
   },
   {
     q: 'What integrations are supported?',
-    a: 'CIOS integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). Azure AD/Microsoft 365 import is available on paid plans.',
+    a: 'GRESIO integrates with GitHub (sync commits and PRs), Microsoft Teams (receive notifications), and Outlook (sync calendar and tasks). Azure AD/Microsoft 365 import is available on paid plans.',
   },
   {
     q: 'How do notifications work?',
@@ -44,7 +44,7 @@ const FAQS = [
   },
   {
     q: 'Can I track time spent on tasks?',
-    a: 'Yes — CIOS includes work log tracking. Team members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and team members.',
+    a: 'Yes — GRESIO includes work log tracking. Team members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and team members.',
   },
   {
     q: 'What analytics are available?',
@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: 'Is there a mobile app?',
-    a: 'Not yet, but we are planning to create a mobile app linked to this web app. Currently, CIOS is fully responsive and works on all devices through the web browser. You can access your projects, tasks, and notifications on mobile without installing anything.',
+    a: 'Not yet, but we are planning to create a mobile app linked to this web app. Currently, GRESIO is fully responsive and works on all devices through the web browser. You can access your projects, tasks, and notifications on mobile without installing anything.',
   },
   {
     q: 'How do I get started?',

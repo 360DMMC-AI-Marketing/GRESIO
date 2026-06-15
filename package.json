@@ -1,5 +1,5 @@
 {
-  "name": "cios-single-deploy",
+  "name": "gresio-single-deploy",
   "private": true,
   "scripts": {
     "start": "node backend/src/app.js",

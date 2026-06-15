@@ -29,7 +29,7 @@ export default function Landing() {
           </h1>
           <p className="text-xl md:text-2xl text-surface-500 max-w-3xl mx-auto mb-10 leading-relaxed">
             Projects, sprints, tasks, and testing — unified in one platform. 
-            From discovery to delivery, CIOS keeps your team aligned.
+            From discovery to delivery, GRESIO keeps your team aligned.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
@@ -47,22 +47,22 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* WHAT IS CIOS */}
+      {/* WHAT IS GRESIO */}
       <section className="py-24 px-5 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Overview</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-6">What is CIOS?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-6">What is GRESIO?</h2>
           <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto">
-            CIOS is a complete internal operating system built for teams that need more than just task management. 
+            GRESIO is a complete internal operating system built for teams that need more than just task management. 
             It combines project lifecycle management, sprint planning, task tracking, test case management, 
             team collaboration, and analytics — all in one place.
           </p>
           <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto mt-4">
             Whether you build software, run marketing campaigns, design products, manage business operations, 
-            or conduct research, CIOS adapts to your workflow with tailored lifecycle phases for each project type.
+            or conduct research, GRESIO adapts to your workflow with tailored lifecycle phases for each project type.
           </p>
           <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto mt-4">
-            When projects are delivered, CIOS generates professional audit-ready reports — 
+            When projects are delivered, GRESIO generates professional audit-ready reports — 
             one for your internal team and one for your clients — both branded and exportable as PDF.
           </p>
           <div className="mt-10 flex items-center justify-center gap-6 flex-wrap">
@@ -82,7 +82,7 @@ export default function Landing() {
           <div className="text-center mb-14">
             <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Who it's for</span>
             <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-4">Built for every role in your organization</h2>
-            <p className="text-surface-500 max-w-2xl mx-auto">From executives to developers, CIOS gives everyone the right view of the work.</p>
+            <p className="text-surface-500 max-w-2xl mx-auto">From executives to developers, GRESIO gives everyone the right view of the work.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -107,7 +107,7 @@ export default function Landing() {
           <div className="text-center mb-14">
             <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Flexible by design</span>
             <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-4">A methodology for every project type</h2>
-            <p className="text-surface-500 max-w-2xl mx-auto">Not every project follows the same lifecycle. CIOS adapts its phases to how your team actually delivers — whether that's software, design, business, content, or research.</p>
+            <p className="text-surface-500 max-w-2xl mx-auto">Not every project follows the same lifecycle. GRESIO adapts its phases to how your team actually delivers — whether that's software, design, business, content, or research.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
@@ -154,10 +154,10 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Trusted by teams</span>
           <h2 className="text-3xl font-bold text-surface-900 mt-3 mb-3">What our users say</h2>
-          <p className="text-surface-500 max-w-xl mx-auto mb-12">From startups to enterprises, CIOS helps teams ship faster and stay organized.</p>
+          <p className="text-surface-500 max-w-xl mx-auto mb-12">From startups to enterprises, GRESIO helps teams ship faster and stay organized.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { quote: 'CIOS replaced Jira, Trello, and our QA tool. One platform for everything.', author: 'Ahmed R.', role: 'CTO, SaaS Startup' },
+              { quote: 'GRESIO replaced Jira, Trello, and our QA tool. One platform for everything.', author: 'Ahmed R.', role: 'CTO, SaaS Startup' },
               { quote: 'The auto status flow is a game-changer. Projects advance without micromanagement.', author: 'Sara L.', role: 'Engineering Manager' },
               { quote: 'We onboarded 30 team members in minutes with the Azure AD import.', author: 'Mohammed K.', role: 'IT Director, 360DMMC' },
             ].map((t, i) => (
@@ -192,7 +192,7 @@ export default function Landing() {
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
           <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to streamline your projects?</h2>
-          <p className="text-primary-200 mb-8 max-w-lg mx-auto relative">Join teams that use CIOS to ship faster, stay organized, and never miss a deadline.</p>
+          <p className="text-primary-200 mb-8 max-w-lg mx-auto relative">Join teams that use GRESIO to ship faster, stay organized, and never miss a deadline.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
             <Link to="/pricing" className="px-10 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 hover:scale-105 transition-all shadow-md hover:shadow-lg text-base">
               Choose Your Plan

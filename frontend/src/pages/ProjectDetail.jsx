@@ -17,7 +17,7 @@ const CAN_MANAGE = ['admin','project_manager','team_lead','manager'];
 const STATUS_META = {
   on_track:{label:'On track',cls:'status-on'}, at_risk:{label:'At risk',cls:'status-ar'},
   ready_to_test:{label:'Ready to test',cls:'status-tt'}, delayed:{label:'Delayed',cls:'status-dl'},
-  completed:{label:'Completed',cls:'status-cp'},
+  blocked:{label:'Blocked',cls:'status-dl'}, completed:{label:'Completed',cls:'status-cp'},
 };
 const PRIORITY_MAP = {
   urgent:{icon:'⚑',label:'Urgent',cls:'tp-u'}, high:{icon:'▲',label:'High',cls:'tp-h'},
@@ -224,7 +224,7 @@ export default function ProjectDetail() {
     if (!uid) return;
     setLoadingWorkLogs(true);
     setMemberWorkLogs([]);
-    const token = localStorage.getItem('cios_token');
+    const token = localStorage.getItem('gresio_token');
     fetch('/api/work-logs/history/' + uid, { headers: { Authorization: 'Bearer ' + token } })
       .then(r => {
         window.__wl_status = r.status;
@@ -741,8 +741,8 @@ export default function ProjectDetail() {
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
                     <span style={{color:'#6b7280'}}>Risk level</span>
-                    <span style={{fontWeight:600,color:project.status === 'at_risk' ? '#f59e0b' : project.status === 'delayed' ? '#ef4444' : '#22c55e'}}>
-                      {project.status === 'on_track' ? 'Low' : project.status === 'at_risk' ? 'Medium' : project.status === 'delayed' ? 'High' : '—'}
+                    <span style={{fontWeight:600,color:project.status === 'at_risk' ? '#f59e0b' : project.status === 'delayed' ? '#ef4444' : project.status === 'blocked' ? '#8b5cf6' : '#22c55e'}}>
+                      {project.status === 'on_track' ? 'Low' : project.status === 'at_risk' ? 'Medium' : project.status === 'delayed' ? 'High' : project.status === 'blocked' ? 'Blocked' : '—'}
                     </span>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>

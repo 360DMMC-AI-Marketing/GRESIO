@@ -8,7 +8,7 @@ export default function ReportPreview({ projectName, type, sections, pdfRef }) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl font-bold text-white tracking-tight">CIOS</span>
+              <span className="text-2xl font-bold text-white tracking-tight">GRESIO</span>
               <span className="text-white/40 text-sm">|</span>
               <span className="text-white/70 text-sm font-medium">Certified by 360 DMMC</span>
             </div>
@@ -44,7 +44,7 @@ export default function ReportPreview({ projectName, type, sections, pdfRef }) {
       <div className="border-t border-[#f1f5f9] px-10 py-5">
         <div className="flex items-center justify-between text-xs text-[#9ca3af]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#4b5563]">CIOS</span>
+            <span className="font-bold text-[#4b5563]">GRESIO</span>
             <span>·</span>
             <span>Certified by <strong>360 DMMC</strong></span>
           </div>

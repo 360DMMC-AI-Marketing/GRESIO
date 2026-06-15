@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, Loader } from 'lucide-react';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 import PlanBadge from '../components/PlanBadge';
@@ -11,16 +11,18 @@ export default function Companies() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [planFilter, setPlanFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name:'', domain:'', plan:'starter', adminName:'', adminEmail:'', adminPassword:'' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const load = async () => {
+    setLoading(true);
     try { const data = await api.getCompanies(); setCompanies(data); } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
   useEffect(() => {
@@ -29,12 +31,10 @@ export default function Companies() {
   }, [searchParams]);
 
   const plans = [...new Set(companies.map(c => c.plan))];
-  const types = [...new Set(companies.map(c => c.type))];
 
   const filtered = companies.filter(c => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (planFilter !== 'all' && c.plan !== planFilter) return false;
-    if (typeFilter !== 'all' && c.type !== typeFilter) return false;
     return true;
   });
 
@@ -89,14 +89,18 @@ export default function Companies() {
           <option value="all">All Plans</option>
           {plans.map(p => <option key={p} value={p} className="capitalize">{p}</option>)}
         </select>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg text-surface-600 focus:outline-none">
-          <option value="all">All Types</option>
-          {types.map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
-        </select>
       </div>
 
-      <DataTable columns={columns} data={filtered} onRowClick={(row) => navigate(`/companies/${row._id}`)} />
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="flex items-center gap-2 text-surface-400 text-sm">
+            <Loader size={16} className="animate-spin" />
+            Loading companies...
+          </div>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={filtered} onRowClick={(row) => navigate(`/companies/${row._id}`)} />
+      )}
 
       {/* Add Company Modal */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Create New Company">

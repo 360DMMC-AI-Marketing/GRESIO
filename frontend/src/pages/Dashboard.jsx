@@ -82,7 +82,7 @@ export default function Dashboard() {
           subtitle={`${stats?.inProgressProjects || 0} in progress`} />
         <StatCard title="Completed Projects" value={stats?.completedProjects || 0} icon="✅" color="blue"
           subtitle={`out of ${stats?.totalProjects || 0} total projects`} />
-        <StatCard title="Blocked Projects" value={(stats?.atRiskProjects || 0) + (stats?.delayedProjects || 0)} icon="⚠️" color="red"
+        <StatCard title="Blocked Projects" value={stats?.blockedProjects || 0} icon="⚠️" color="red"
           subtitle={`${stats?.atRiskProjects || 0} at risk · ${stats?.delayedProjects || 0} delayed`} />
         <StatCard title="Team Online" value={stats?.activeUsers || 0} icon="👥" color="green"
           subtitle={`${stats?.idleUsers || 0} idle · ${stats?.inactiveUsers || 0} offline`} />
@@ -120,11 +120,13 @@ export default function Dashboard() {
               <Link to={`/projects/${p._id}`} key={p._id} className="proj-row">
                 <div style={{flex:1}}>
                   <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                    {pred && ['high','medium'].includes(pred.risk) && (
+                    {p.status === 'blocked' ? (
+                      <span style={{fontSize:12}} title="Blocked">⚠️</span>
+                    ) : pred && ['high','medium'].includes(pred.risk) ? (
                       <span style={{fontSize:10}} title={`${pred.risk} risk`}>
                         {pred.risk === 'high' ? '🔴' : '🟡'}
                       </span>
-                    )}
+                    ) : null}
                     <span className="proj-name">{p.name}</span>
                     <span className={`status-badge ${STATUS_COLOR[p.status] || 'bg-neutral-100 text-neutral-600'}`}
                       style={{textTransform:'capitalize'}}>{(p.phase || 'planning').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>

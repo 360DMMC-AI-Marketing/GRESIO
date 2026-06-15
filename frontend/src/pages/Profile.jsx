@@ -42,7 +42,7 @@ export default function Profile() {
       if (avatarFile) fd.append('avatar', avatarFile);
 
       const res = await auth.updateProfile(fd);
-      localStorage.setItem('cios_user', JSON.stringify(res.data));
+      localStorage.setItem('gresio_user', JSON.stringify(res.data));
       setAvatarFile(null);
       setAvatarPreview(null);
       toast.success('Profile updated');
