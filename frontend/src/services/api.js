@@ -117,6 +117,7 @@ export const integrations = {
   update: (name, data) => api.patch(`/integrations/${name}`, data),
   sync: (name) => api.post(`/integrations/${name}/sync`),
   syncPlatform: (name, platform) => api.post(`/integrations/${name}/sync?platform=${platform}`),
+  createMeeting: (data) => api.post('/integrations/create-meeting', data),
 };
 
 export const sprints = {

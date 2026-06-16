@@ -219,6 +219,35 @@ class MicrosoftGraphService {
       return null;
     }
   }
+
+  async createOnlineMeeting(subject, startDateTime, endDateTime, userEmail, creds) {
+    try {
+      if (!userEmail) {
+        return { error: 'No user email provided for meeting creation' };
+      }
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+      if (!client) {
+        return { error: 'Microsoft Graph not configured — check tenant ID, client ID, and client secret' };
+      }
+      const { data } = await client.post(`/users/${userEmail}/onlineMeetings`, {
+        subject,
+        startDateTime,
+        endDateTime,
+      });
+      return {
+        joinUrl: data.joinUrl || data.joinWebUrl || '',
+        meetingId: data.id || '',
+        conferenceId: data.conferenceId || '',
+        subject: data.subject || subject,
+        startDateTime: data.startDateTime || startDateTime,
+        endDateTime: data.endDateTime || endDateTime,
+      };
+    } catch (error) {
+      const msg = error.response?.data?.error?.message || error.message;
+      console.error('Microsoft Graph create meeting error:', msg);
+      return { error: msg };
+    }
+  }
 }
 
 module.exports = new MicrosoftGraphService();

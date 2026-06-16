@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi } from '../services/api';
+import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
@@ -847,6 +847,27 @@ export default function ProjectDetail() {
                         {project.reviewCall.link && (
                           <a href={project.reviewCall.link} target="_blank" style={{color:'#2563eb'}}>🔗 Meeting Link</a>
                         )}
+                        {canManage && project.reviewCall.date && !project.reviewCall.link && (
+                          <button onClick={async () => {
+                            try {
+                              const startISO = new Date(project.reviewCall.date + (project.reviewCall.time ? 'T' + project.reviewCall.time : 'T12:00')).toISOString();
+                              const res = await integrations.createMeeting({
+                                subject: `${project.name} Review Call`,
+                                startDateTime: startISO,
+                                endDateTime: new Date(Date.parse(startISO) + 3600000).toISOString(),
+                                userEmail: user?.email,
+                              });
+                              if (res.data?.joinUrl) {
+                                const updateRes = await projects.updateReviewCall(id, { ...project.reviewCall, link: res.data.joinUrl });
+                                setProject(prev => ({...prev, reviewCall: updateRes.data.reviewCall}));
+                                toast.success('Teams meeting generated');
+                              }
+                            } catch (e) { toast.error('Failed to generate meeting'); }
+                          }}
+                            style={{fontSize:8,fontWeight:600,color:'#fff',background:'#6366F1',border:'none',borderRadius:3,padding:'3px 8px',cursor:'pointer',marginTop:4,fontFamily:'inherit',alignSelf:'flex-start'}}>
+                            🎥 Generate Teams meeting
+                          </button>
+                        )}
                         {project.reviewCall.notes && <span style={{color:'#6B7280'}}>📝 {project.reviewCall.notes}</span>}
                         {project.reviewCall.discussion && <span style={{color:'#374151'}}>💬 {project.reviewCall.discussion}</span>}
                         {!project.reviewCall.completed && canManage && (
@@ -1576,10 +1597,30 @@ export default function ProjectDetail() {
                     </div>
                     <div style={{marginBottom:8}}>
                       <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Meeting Link</label>
-                      <input type="text" className="finput" style={{fontSize:9,padding:'5px 8px',width:'100%'}}
-                        placeholder="https://meet.google.com/..."
-                        value={project.reviewCall.link || ''}
-                        onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), link: e.target.value}}))} />
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <input type="text" className="finput" style={{fontSize:9,padding:'5px 8px',flex:1}}
+                          placeholder="https://meet.google.com/..."
+                          value={project.reviewCall.link || ''}
+                          onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), link: e.target.value}}))} />
+                        <button onClick={async () => {
+                          try {
+                            const startISO = new Date(project.reviewCall.date + (project.reviewCall.time ? 'T' + project.reviewCall.time : 'T12:00')).toISOString();
+                            const res = await integrations.createMeeting({
+                              subject: `${project.name} Review Call`,
+                              startDateTime: startISO,
+                              endDateTime: new Date(Date.parse(startISO) + 3600000).toISOString(),
+                              userEmail: user?.email,
+                            });
+                            if (res.data?.joinUrl) {
+                              setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), link: res.data.joinUrl}}));
+                              toast.success('Teams meeting generated');
+                            }
+                          } catch (e) { toast.error('Failed to generate meeting'); }
+                        }}
+                          style={{fontSize:9,fontWeight:600,color:'#fff',background:'#6366F1',border:'none',borderRadius:4,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                          🎥 Generate
+                        </button>
+                      </div>
                     </div>
                     <div style={{marginBottom:10}}>
                       <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Notes (Agenda)</label>

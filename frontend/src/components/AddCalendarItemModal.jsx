@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { calendarEvents, projects } from '../services/api';
+import { calendarEvents, projects, integrations } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const TYPES = [
   { value: 'event', label: 'Event', icon: '\u25CF' },
@@ -8,6 +9,7 @@ const TYPES = [
 ];
 
 export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }) {
+  const { user } = useAuth();
   const [type, setType] = useState('event');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(defaultDate ? defaultDate.toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16));
@@ -18,12 +20,38 @@ export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }
   const [projectList, setProjectList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     projects.getAll()
       .then(r => setProjectList(r.data || []))
       .catch(() => {});
   }, []);
+
+  const handleGenerate = async () => {
+    if (!title.trim()) { setError('Enter a title first'); return; }
+    setGenerating(true);
+    setError('');
+    try {
+      const startISO = new Date(date).toISOString();
+      const endISO = endDate ? new Date(endDate).toISOString() : new Date(Date.parse(startISO) + 3600000).toISOString();
+      const res = await integrations.createMeeting({
+        subject: title.trim(),
+        startDateTime: startISO,
+        endDateTime: endISO,
+        userEmail: user?.email,
+      });
+      if (res.data?.joinUrl) {
+        setLink(res.data.joinUrl);
+      } else {
+        setError('Failed to generate meeting — no join URL returned');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to generate meeting');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,9 +140,15 @@ export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }
           {(type === 'event' || type === 'milestone') && (
             <div>
               <label className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">Meeting link</label>
-              <input type="text" value={link} onChange={e => setLink(e.target.value)}
-                placeholder="https://meet.google.com/... or https://teams.microsoft.com/..."
-                className="w-full text-xs px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-colors" />
+              <div className="flex gap-2">
+                <input type="text" value={link} onChange={e => setLink(e.target.value)}
+                  placeholder="https://meet.google.com/... or https://teams.microsoft.com/..."
+                  className="flex-1 text-xs px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-colors" />
+                <button type="button" onClick={handleGenerate} disabled={generating}
+                  className="text-xs font-semibold px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors cursor-pointer border-none whitespace-nowrap">
+                  {generating ? '...' : '🎥 Generate'}
+                </button>
+              </div>
             </div>
           )}
 

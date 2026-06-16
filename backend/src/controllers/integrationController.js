@@ -51,6 +51,25 @@ exports.syncIntegration = async (req, res, next) => {
   }
 };
 
+exports.createMeeting = async (req, res, next) => {
+  try {
+    const { subject, startDateTime, endDateTime, userEmail } = req.body;
+    if (!subject || !startDateTime || !endDateTime) {
+      return res.status(400).json({ message: 'subject, startDateTime, and endDateTime are required' });
+    }
+    const integration = await Integration.findOne({ name: 'microsoft_graph' });
+    const creds = integration ? integration.getDecryptedCredentials() : {};
+    const msGraph = require('../services/microsoftGraphService');
+    const result = await msGraph.createOnlineMeeting(subject, startDateTime, endDateTime, userEmail, creds);
+    if (result.error) {
+      return res.status(500).json({ message: result.error });
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 function getSyncService(name) {
   const services = {
     github: require('../services/githubService'),
