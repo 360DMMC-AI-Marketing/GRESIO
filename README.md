@@ -1,12 +1,12 @@
-# 🧠 GRESIO - Company Internal Operating System
+# 🧠 GRESIO — Company Internal Operating System
 
-Full-stack internal company dashboard connecting ClickUp, GitHub, Microsoft Teams, and Outlook.
+Full-stack internal platform connecting project management, sprints, tasks, QA testing, team analytics, and external integrations — all in one place.
 
 ## Tech Stack
 
-- **Frontend:** React 18 + Vite + TailwindCSS + Recharts
+- **Frontend:** React 18 + Vite + TailwindCSS + Recharts + Lucide Icons
 - **Backend:** Node.js + Express + Socket.IO + MongoDB (Mongoose)
-- **Auth:** JWT + Role-Based Access Control (Admin, Project Manager, Team Lead, Manager, QA Tester, Developer, Intern)
+- **Auth:** JWT + Role-Based Access Control (8 roles: Admin, PM, Team Lead, Manager, QA Tester, Developer, Intern, Other)
 
 ## Quick Start
 
@@ -18,35 +18,35 @@ Full-stack internal company dashboard connecting ClickUp, GitHub, Microsoft Team
 ### 1. Clone & Install
 
 ```bash
-cd gresio/backend && npm install
+cd backend && npm install
 cd ../frontend && npm install
 ```
 
 ### 2. Environment
 
 ```bash
-cp gresio/backend/.env.example gresio/backend/.env
+cp backend/.env.example backend/.env
 # Edit .env with your MongoDB URI and API keys
 ```
 
 ### 3. Seed Database
 
 ```bash
-cd gresio/backend
+cd backend
 node src/seed.js
 ```
 
 ### 4. Run
 
 ```bash
-# Terminal 1 - Backend
-cd gresio/backend && npm run dev
+# Terminal 1 — Backend
+cd backend && npm run dev
 
-# Terminal 2 - Frontend
-cd gresio/frontend && npm run dev
+# Terminal 2 — Frontend
+cd frontend && npm run dev
 ```
 
-Frontend: http://localhost:3000
+Frontend: http://localhost:3000  
 Backend API: http://localhost:5000
 
 ### 🌐 Live Demo
@@ -63,40 +63,119 @@ Backend API: http://localhost:5000
 
 | Name | Email | Password | Role |
 |------|-------|----------|------|
+| Super Admin | superadmin@gresio.com | superadmin123 | Super Admin |
 | Sarah Chen | admin@gresio.com | password123 | Admin |
 | James Wilson | pm@gresio.com | password123 | Project Manager |
+| Lisa Thompson | scrum@gresio.com | password123 | Team Lead |
+| Emily Rodriguez | manager@gresio.com | password123 | Manager |
 | Marcus Johnson | dev@gresio.com | password123 | Developer |
 | Aisha Patel | qa@gresio.com | password123 | QA Tester |
-| Ryan Kim | intern@gresio.com | password123 | Intern |
-| Emily Rodriguez | manager@gresio.com | password123 | Manager |
 | Olivia Tanaka | designer@gresio.com | password123 | Designer (Developer) |
 | David Mohammed | analyst@gresio.com | password123 | Analyst (Manager) |
-| Lisa Thompson | scrum@gresio.com | password123 | Team Lead |
+| Ryan Kim | intern@gresio.com | password123 | Intern |
 | Alex Rivera | test@demo.com | password123 | Test Admin |
-| Demo User | demo@demo.com | demo1234 | Demo Admin |
 
-## Features
+---
 
-- **Smart Status Engine** - Auto-detects Active/Idle/In Meeting/Inactive/Offline
-- **Activity Scoring** - Weighted score from all integrated tools
-- **Real-time Updates** - WebSocket for live notifications
-- **Dashboard** - Company health, activity feed, project status
-- **Project Management** - Tasks, sprints, progress, deadlines, risk detection
-- **Test Case Management** - QA test cases with manual/e2e/integration types
-- **Report Generation** - Admin (full KPIs) & Client (summary) PDF reports
-- **GitHub Module** - Commits, PRs, issues tracking
-- **Teams Module** - Messages, meetings, attendance
-- **Outlook Module** - Emails, calendar, workload view
-- **Analytics** - Productivity trends, predictions, workload balance
-- **Admin Panel** - User/project management, integration config
+## Key Features
 
-## Integrations
+### 📊 Project Management
+- **5 Project Types** — Software, Design, Business, Content, Research — each with adapted lifecycle phases
+- **7-Phase Lifecycle** — Discovery → Planning → Development/Type-specific → Testing → Review → Launch → Delivered
+- **Auto Status Flow** — Projects auto-advance when conditions are met (tasks done, tests passed, etc.)
+- **Manual Gates** — Launch, Delivered, and Report require explicit approval by Admin/PM/Team Lead
+- **Progress Tracking** — Visual phase bar with completion %, risk levels, and overdue detection
+
+### ⚡ Sprints & Tasks
+- **Sprint Planning** — Time-boxed iterations with goals, start/end dates, burndown charts
+- **Kanban Board** — To Do / In Progress / Done with drag-and-drop
+- **Task Management** — Priorities, deadlines, subtasks, attachments, assignments
+- **Team Calendar** — Month view with color-coded tasks, sprints, deadlines, milestones, events, and reminders
+
+### 🧪 Testing & QA
+- **Test Case Management** — Full CRUD with Draft → Ready → In Progress → Passed/Failed/Blocked/Skipped
+- **Auto-Create Bug** — Failed tests automatically create Bug tasks linked to the feature
+- **Auto-Generate from Sprints** — Generate test cases from completed sprint tasks
+- **Interest-Based Generation** — Configure topics and GRESIO auto-generates relevant test cases
+
+### ⛓️ Project Relay
+- **Chain Projects Together** — Link multiple projects into ordered pipelines with delivery notifications
+- **Linear & Branching** — A → B → C or A → [B, C] branching chains
+- **Completion Tracking** — Visual cards with completion count (e.g. 3/5 done) and green ✓ Completed badge
+- **Auto-Notify** — When a project is Delivered, the next team is notified automatically
+
+### 🔔 Notifications
+- **Real-Time** — WebSocket delivery for task assignments, phase changes, sprint events
+- **3-Tab Layout** — Projects / Tasks & Tests / Other with read/unread/delete
+- **Review Call Reminders** — Schedule review calls with automated meeting reminders
+- **Stale Detection** — Deleted review calls retroactively mark notifications as stale (strikethrough)
+
+### 📈 Analytics & Reports
+- **Company Dashboard** — Health score, active/blocked/completed projects, team online status
+- **Velocity Tracking** — Sprint-over-sprint velocity metrics
+- **Workload Analysis** — Low / Medium / High / Critical workload per user
+- **Admin Reports** — Full KPIs: tasks, sprints, testing, team performance, effort hours (PDF)
+- **Client Reports** — Clean stakeholder summaries with branding "Generated by GRESIO · Certified by 360 DMMC"
+
+### 👥 Team Management
+- **8 Roles** — Admin, PM, Team Lead, Manager, QA, Developer, Intern, Other with 27+ granular permissions
+- **Auto Team Groups** — Development, QA, Design, PM, Business, Admin, Interns — color-coded
+- **Smart Invite** — Invite by email with role and group assignment
+- **Work Logs** — Track hours against tasks and sprints with department-level breakdowns
+
+### 🔗 Integrations
+- **Microsoft 365 / Azure AD** — One-click user import with welcome emails
+- **GitHub** — Commits, PRs, issues tracking with activity scoring
+- **Microsoft Teams** — Auto-create channels, sync messages, meeting attendance
+- **Outlook Sync** — Email and calendar sync; events appear in GRESIO Calendar
+
+### 🔒 Security & Enterprise
+- **JWT Authentication** — Token-based auth with role-based access control
+- **SAML SSO** — Enterprise single sign-on
+- **On-Premise Deployment** — Full data control on your infrastructure
+- **Custom Fields & Workflows** — Tailor to your processes (enterprise)
+
+---
+
+## Super Admin Panel
+
+Super admins have a dedicated interface at `/super/*` for managing all companies:
+
+- **Super Dashboard** — Cross-company metrics: active companies, admins, total projects, MRR
+- **Companies** — View/edit all registered companies, their plans (Starter/Team/Enterprise), usage stats
+- **Admins** — Manage company-level admins across all tenants
+- **Analytics** — Growth charts (6-month), plan distribution, revenue tracking
+- **System Health** — Service status monitoring (MongoDB, Redis, GitHub API, Teams, Outlook, etc.)
+- **Settings** — Global platform settings
+
+## Public Site
+
+GRESIO includes a full marketing website:
+
+| Route | Page |
+|-------|------|
+| `/` | Landing page |
+| `/features` | All 180+ features organized by category |
+| `/how-it-works` | 8-phase lifecycle explained with project types |
+| `/pricing` | Starter (free), Team ($29/mo), Enterprise ($99/mo) |
+| `/contact` | Contact and support |
+| `/faq` | Frequently asked questions |
+| `/about` | Company info |
+| `/blog` | Articles and updates |
+| `/guides` | Tutorials and documentation |
+| `/privacy` | Privacy policy |
+
+## Integrations Setup
 
 Set API keys in `.env`:
 
-- `GITHUB_TOKEN` - GitHub personal access token
-- `CLICKUP_API_KEY` - ClickUp API key
-- `MICROSOFT_CLIENT_ID/SECRET/TENANT_ID` - Microsoft Graph API
+| Variable | Description |
+|----------|-------------|
+| `GITHUB_TOKEN` | GitHub personal access token |
+| `CLICKUP_API_KEY` | ClickUp API key |
+| `MICROSOFT_CLIENT_ID` | Microsoft Graph API client ID |
+| `MICROSOFT_CLIENT_SECRET` | Microsoft Graph API client secret |
+| `MICROSOFT_TENANT_ID` | Microsoft 365 tenant ID |
 
 ## Architecture
 
@@ -105,18 +184,22 @@ gresio/
 ├── backend/
 │   └── src/
 │       ├── config/        # DB & env config
-│       ├── models/        # Mongoose schemas
+│       ├── models/        # Mongoose schemas (Project, User, Task, Sprint, Notification, etc.)
 │       ├── controllers/   # Route handlers
 │       ├── routes/        # Express routes
 │       ├── middleware/     # Auth & error handling
-│       ├── services/      # Business logic & integrations
+│       ├── services/      # Business logic, phase evaluation, integrations
 │       └── socket/        # WebSocket handlers
 ├── frontend/
 │   └── src/
-│       ├── components/    # Shared UI (Sidebar, Topbar, etc.)
-│       ├── pages/         # Route pages
+│       ├── components/    # Shared UI (Sidebar, Topbar, Navbar, Modals, Cards)
+│       ├── pages/         # Route pages (including super-admin/ subdirectory)
 │       ├── context/       # Auth context
 │       ├── hooks/         # Custom hooks (useSocket)
-│       └── services/      # API client
+│       └── services/      # API client (axios)
 └── README.md
 ```
+
+## License
+
+© 2026 360 DMMC — All rights reserved.
