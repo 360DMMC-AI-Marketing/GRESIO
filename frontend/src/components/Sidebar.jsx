@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
-  Building2, Bell as BellIcon, Activity, Workflow, ClipboardList,
+  Building2, Bell as BellIcon, Activity, Workflow, ClipboardList, MessageSquare,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -42,6 +42,7 @@ const sidebarGroups = [
     items: [
       { id: 'team', label: 'Team', icon: Group, path: '/users', roles: MANAGERS },
       { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/calendar', roles: ALL },
+      { id: 'msteams', label: 'Microsoft Teams', icon: MessageSquare, path: '/teams', roles: ALL },
       { id: 'worklog', label: 'Work Log', icon: Clock, path: '/work-logs', roles: ALL },
     ],
   },

@@ -81,24 +81,6 @@ exports.autoCreateBugFromTestFailure = async (testCaseId, executedBy, popupData 
     tc.bugCount = (tc.bugCount || 0) + 1;
     await tc.save();
 
-    // Save execution history
-    const executionNumber = (tc.executionCount || 0) + 1;
-    tc.executionHistory.push({
-      executionNumber,
-      status: 'failed',
-      executedBy,
-      executedAt: new Date(),
-      steps: tc.steps.map(s => ({
-        order: s.order, description: s.description, expectedResult: s.expectedResult,
-        actualResult: s.actualResult, status: s.status, evidence: s.evidence,
-      })),
-      failureReason: popupData.bugDescription || tc.failureReason || '',
-      screenshot: popupData.screenshot || '',
-      linkedBug: bug._id,
-    });
-    tc.executionCount = executionNumber;
-    await tc.save();
-
     // Notifications
     const recipients = [];
     if (task?.assignee) recipients.push(task.assignee);
@@ -312,39 +294,44 @@ exports.createBug = async (req, res, next) => {
       .populate('assignee', 'name email avatar')
       .populate('reporter', 'name email avatar');
 
-    // Notify project members
-    const proj = await Project.findById(bug.project).select('members');
-    if (proj) {
-      const recipients = [];
-      if (bug.assignee) recipients.push(bug.assignee);
-      const otherMembers = proj.members.filter(m =>
-        !recipients.some(r => r.toString() === m.toString())
-      );
-      otherMembers.forEach(m => recipients.push(m));
-      if (recipients.length) {
-        const notifDocs = recipients.map(user => ({
-          user, domain: req.user.domain,
-          type: 'task_assigned',
-          title: `🐛 Bug Reported: ${bug.title}`,
-          message: `Severity: ${bug.severity} — ${bug.description || 'Bug reported'}`,
-          link: `/projects/${bug.project}?tab=bugs`,
-          metadata: { bugId: bug._id, projectId: bug.project },
-        }));
-        const notifs = await Notification.insertMany(notifDocs);
-        const io = getIO();
-        notifs.forEach(n => { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
-      }
-    }
-
-    await Activity.create({
-      user: req.user._id, domain: req.user.domain, type: 'task_update', source: 'internal',
-      description: `Bug reported: ${bug.title}`,
-      metadata: { bugId: bug._id, projectId: bug.project },
-    });
-
-    const io = getIO();
-    if (io) io.to(`project:${bug.project}`).emit('bug:created', { bug: populated, testCaseId: req.body.testCase ? null : undefined });
     res.status(201).json(populated);
+
+    // Non-blocking post-creation tasks
+    try {
+      const proj = await Project.findById(bug.project).select('members');
+      if (proj) {
+        const recipients = [];
+        if (bug.assignee) recipients.push(bug.assignee);
+        const otherMembers = proj.members.filter(m =>
+          !recipients.some(r => r.toString() === m.toString())
+        );
+        otherMembers.forEach(m => recipients.push(m));
+        if (recipients.length) {
+          const notifDocs = recipients.map(user => ({
+            user, domain: req.user.domain,
+            type: 'task_assigned',
+            title: `🐛 Bug Reported: ${bug.title}`,
+            message: `Severity: ${bug.severity} — ${bug.description || 'Bug reported'}`,
+            link: `/projects/${bug.project}?tab=bugs`,
+            metadata: { bugId: bug._id, projectId: bug.project },
+          }));
+          const notifs = await Notification.insertMany(notifDocs);
+          const io = getIO();
+          notifs.forEach(n => { try { io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
+        }
+      }
+
+      await Activity.create({
+        user: req.user._id, domain: req.user.domain, type: 'task_update', source: 'internal',
+        description: `Bug reported: ${bug.title}`,
+        metadata: { bugId: bug._id, projectId: bug.project },
+      });
+
+      const io = getIO();
+      if (io) io.to(`project:${bug.project}`).emit('bug:created', { bug: populated, testCaseId: req.body.testCase ? null : undefined });
+    } catch (e) {
+      console.error('Post-bug-creation tasks failed:', e.message);
+    }
   } catch (e) { next(e); }
 };
 

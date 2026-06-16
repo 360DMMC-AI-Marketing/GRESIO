@@ -112,7 +112,6 @@ exports.createTestCase = async (req, res, next) => {
       });
     }
 
-    await evaluateProjectPhase(project);
     const { updateProjectProgress } = require('./taskController');
     await updateProjectProgress(project);
 
@@ -175,16 +174,24 @@ exports.updateTestCase = async (req, res, next) => {
       });
     }
 
-    // Auto-create bug task on failure
+    // Auto-create Bug document on failure
     if (req.body.status === 'failed' && !populated.linkedBug) {
       const failedStep = (populated.steps || []).find(s => s.status === 'fail');
-      const bug = await Task.create({
+      const Bug = require('../models/Bug');
+      const bug = await Bug.create({
         title: `[From ${populated.testCaseId}] ${populated.title}${failedStep ? ` - Step ${failedStep.order} Failed` : ''}`,
         description: failedStep
           ? `Expected: ${failedStep.expectedResult}\nActual: ${failedStep.actualResult}`
           : `Test case ${populated.testCaseId} failed`,
-        type: 'bug', status: 'todo', priority: populated.priority,
-        project: populated.project, assignee: populated.assignee,
+        severity: populated.priority === 'critical' ? 'critical' : populated.priority === 'high' ? 'high' : populated.priority === 'medium' ? 'medium' : 'low',
+        status: 'open',
+        testCase: populated._id,
+        project: populated.project,
+        assignee: populated.assignee,
+        reporter: req.user._id,
+        stepsToReproduce: populated.steps?.map(s => `Step ${s.order}: ${s.description}`) || [],
+        expectedBehavior: failedStep?.expectedResult || '',
+        actualBehavior: failedStep?.actualResult || '',
       });
       populated.linkedBug = bug._id;
       await populated.save();
@@ -196,10 +203,21 @@ exports.updateTestCase = async (req, res, next) => {
         metadata: { testCaseId: repopulated._id, projectId: repopulated.project?._id, bugId: bug._id },
       });
 
+      // Notify assignee
+      if (bug.assignee) {
+        const Notification = require('../models/Notification');
+        await Notification.create({
+          user: bug.assignee, domain: req.user.domain,
+          type: 'task_assigned',
+          title: `🐛 Bug: ${bug.title}`,
+          message: `Severity: ${bug.severity} — test case ${populated.testCaseId} failed`,
+          link: `/projects/${populated.project?._id || populated.project}?tab=bugs`,
+        });
+      }
+
       return res.json(repopulated);
     }
 
-    await evaluateProjectPhase(populated.project?._id || populated.project);
     const { updateProjectProgress } = require('./taskController');
     await updateProjectProgress(populated.project?._id || populated.project);
     try { getIO().to(`project:${populated.project?._id || populated.project}`).emit('test_case_updated', populated); } catch (e) {}
@@ -220,7 +238,6 @@ exports.deleteTestCase = async (req, res, next) => {
     const projectIds = await getDomainProjectIds(req.user.domain);
     const item = await TestCase.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { isActive: false }, { new: true });
     if (!item) return res.status(404).json({ message: 'Test case not found' });
-    await evaluateProjectPhase(item.project);
     const { updateProjectProgress } = require('./taskController');
     await updateProjectProgress(item.project);
     try { getIO().to(`project:${item.project}`).emit('test_case_deleted', { id: req.params.id, project: item.project }); } catch (e) {}
@@ -375,6 +392,8 @@ async function generateTestsFromTasks(project, sprint, tasks, userId, domain) {
       description: `Auto-generated ${created.length} test cases from tasks`,
       metadata: { projectId: project, sprintId: sprint, count: created.length },
     });
+    // Trigger phase re-evaluation — e.g., if project is in REVIEW, new test cases move it back to TESTING
+    await evaluateProjectPhase(project);
     try {
       const Project = require('../models/Project');
       const Notification = require('../models/Notification');
@@ -426,7 +445,19 @@ exports.executeTest = async (req, res, next) => {
     const tc = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!tc) return res.status(404).json({ message: 'Test case not found' });
     if (!['ready', 'in_progress', 'retesting'].includes(tc.status)) {
-      return res.status(400).json({ message: `Cannot execute test in status ${tc.status}` });
+      if (tc.status === 'failed') {
+        // Auto-retest: reset steps and proceed
+        for (const step of tc.steps) {
+          step.status = 'pending';
+          step.actualResult = undefined;
+          step.evidence = undefined;
+        }
+        tc.status = 'in_progress';
+        tc.failureReason = '';
+        tc.retestRequired = false;
+      } else {
+        return res.status(400).json({ message: `Cannot execute test in status ${tc.status}` });
+      }
     }
 
     if (stepResults) {
@@ -470,11 +501,12 @@ exports.executeTest = async (req, res, next) => {
       const bugController = require('./bugController');
       const bug = await bugController.autoCreateBugFromTestFailure(tc._id, req.user._id, bugReport || {});
       if (bug) {
-        const execIdx = tc.executionHistory.length - 1;
-        if (execIdx >= 0) {
-          tc.executionHistory[execIdx].linkedBug = bug._id;
-          await tc.save();
-        }
+        // Use direct updateOne to avoid version conflict (autoCreateBugFromTestFailure
+        // modifies the same document, bumping __v — use $set with positional operator)
+        await TestCase.updateOne(
+          { _id: tc._id, 'executionHistory.executionNumber': executionNumber },
+          { $set: { 'executionHistory.$.linkedBug': bug._id } }
+        );
       }
     }
 

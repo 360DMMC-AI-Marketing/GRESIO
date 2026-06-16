@@ -112,6 +112,7 @@ app.use('/api/my-tasks', myTasksRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/report-drafts', reportDraftRoutes);
 app.use('/api/calendar', require('./routes/calendar'));
+app.use('/api/timeline', require('./routes/timeline'));
 
 app.use('/api/search', searchRoutes);
 app.use('/api/chains', chainRoutes);

@@ -98,7 +98,9 @@ export default function TestRunner({ testCase, onClose, onComplete }) {
       onComplete();
       onClose();
     } catch (e) {
-      toast.error('Failed to submit test results');
+      const msg = e.response?.data?.message || e.message || 'Failed to submit test results';
+      toast.error(msg);
+      console.error('Execute error:', msg);
     }
     setRunning(false);
   };

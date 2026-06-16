@@ -87,11 +87,45 @@ exports.createProject = async (req, res, next) => {
     if (req.body.members && req.body.members.length > 0) {
       await updateUserProjects(req.body.members, project._id);
     }
+
+    autoCreateTeamsChannel(project, req.user).catch(() => {});
+
     res.status(201).json(project);
   } catch (error) {
     next(error);
   }
 };
+
+async function autoCreateTeamsChannel(project, user) {
+  try {
+    const company = await Company.findOne({ domain: user.domain }).lean();
+    const creds = company?.outlookTenantId ? {
+      tenantId: company.outlookTenantId,
+      clientId: company.outlookClientId,
+      clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+    } : undefined;
+
+    const integration = await Integration.findOne({ name: 'microsoft_graph' });
+    const env = require('../config/env');
+    const teamId = integration?.config?.teamsTeamId || env.DEFAULT_TEAMS_TEAM_ID;
+    if (!teamId) return;
+
+    const result = await microsoftGraphService.createChannel(teamId, project.name, project.description || `${project.name} channel`, creds);
+    if (result.error) return;
+
+    await Project.updateOne(
+      { _id: project._id },
+      { teamChannel: result.displayName, teamsTeamId: teamId, teamsChannelId: result.id }
+    );
+
+    await Activity.create({
+      user: user._id, domain: user.domain,
+      type: 'project_update', source: 'internal',
+      description: `Auto-created Teams channel "${result.displayName}" for project ${project.name}`,
+      metadata: { projectId: project._id, projectName: project.name, teamsChannelId: result.id, teamsChannelUrl: result.webUrl },
+    });
+  } catch {}
+}
 
 exports.updateProject = async (req, res, next) => {
   try {

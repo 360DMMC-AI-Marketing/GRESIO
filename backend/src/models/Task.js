@@ -27,6 +27,7 @@ const taskSchema = new mongoose.Schema({
   domain: { type: String, default: '' },
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
   sprint: { type: mongoose.Schema.Types.ObjectId, ref: 'Sprint' },
+  startDate: { type: Date },
   deadline: { type: Date },
   clickupTaskId: { type: String, default: '' },
   linkedPRs: [{ type: String }],

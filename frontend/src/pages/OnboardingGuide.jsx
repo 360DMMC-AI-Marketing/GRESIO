@@ -13,6 +13,7 @@ export default function OnboardingGuide() {
   });
   const footerRef = useRef(null);
   const allChecked = Object.values(checklist).every(Boolean);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
 
   useEffect(() => {
     if (acknowledged) return;
@@ -45,6 +46,19 @@ export default function OnboardingGuide() {
           {acknowledged ? '✅ Acknowledged' : '⏳ Not Acknowledged'}
         </span>
       </div>
+
+      {showWelcomeBanner && !acknowledged && (
+        <div style={{background:'#f0f4ff',borderRadius:9,border:'0.5px solid #dce6ff',padding:'12px 16px',marginBottom:4}}>
+          <p style={{fontSize:13,fontWeight:600,color:'#1a35c4',margin:'0 0 2px'}}>{'\u{1F44B}'} Welcome to GRESIO!</p>
+          <p style={{fontSize:11,color:'#4b5563',margin:0}}>
+            You've completed the quick setup. Review the full guide below, then check all items in the checklist and acknowledge at the bottom.
+          </p>
+          <button onClick={() => setShowWelcomeBanner(false)}
+            style={{fontSize:10,color:'#6b7280',background:'none',border:'none',cursor:'pointer',padding:0,marginTop:6,textDecoration:'underline'}}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div style={{display:'flex',flexDirection:'column',gap:24,fontSize:12,color:'#374151',lineHeight:1.6}}>
 

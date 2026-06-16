@@ -8,12 +8,12 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const COLORS = {
-  task: '#22c55e',
-  sprint: '#3b82f6',
-  project_deadline: '#ef4444',
-  milestone: '#a855f7',
-  event: '#8b5cf6',
-  reminder: '#f59e0b',
+  task: '#86efac',
+  sprint: '#93c5fd',
+  project_deadline: '#fca5a5',
+  milestone: '#c4b5fd',
+  event: '#a78bfa',
+  reminder: '#fcd34d',
 };
 
 const LABELS = {
@@ -183,7 +183,7 @@ export default function Calendar() {
                 </div>
               ))}
               {monthDays.map((day, i) => {
-                if (!day) return <div key={`e${i}`} className="bg-white dark:bg-neutral-900 min-h-[105px] border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0" />;
+                if (!day) return <div key={`e${i}`} className="bg-neutral-50/40 dark:bg-neutral-900 min-h-[105px] border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0" />;
                 const dayEvts = eventsForDay(filteredEvents, day);
                 const isSel = isSameDay(selectedDay, day);
                 const rowNum = Math.floor(i / 7);
@@ -191,24 +191,33 @@ export default function Calendar() {
                 const isLastRow = rowNum === totalRows - 1;
                 return (
                   <div key={i} onClick={() => handleDayClick(day)}
-                    className={`min-h-[105px] p-2 cursor-pointer transition-colors relative border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
+                    className={`min-h-[110px] p-3 cursor-pointer transition-all duration-150 relative border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
                       isSel
-                        ? 'bg-brand-50/60 dark:bg-brand-900/20'
+                        ? 'bg-brand-50/70 dark:bg-brand-900/25 ring-1 ring-inset ring-brand-200 dark:ring-brand-700'
                         : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800'
                     }`}>
-                    <div className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${
-                      isToday(day) ? 'bg-brand-600 dark:bg-brand-500 text-white' : 'text-neutral-700 dark:text-neutral-300'
+                    <div className={`text-xs font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1.5 transition-colors ${
+                      isToday(day)
+                        ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-sm'
+                        : isSel
+                          ? 'text-brand-700 dark:text-brand-300'
+                          : 'text-neutral-600 dark:text-neutral-300'
                     }`}>
                       {day.getDate()}
                     </div>
-                    <div className="flex flex-wrap gap-0.5">
-                      {dayEvts.slice(0, 5).map((e, j) => (
-                        <span key={j} className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: COLORS[e.type] || '#6b7280' }} title={e.title || e.name || ''} />
+                    <div className="flex flex-col gap-0.5">
+                      {dayEvts.slice(0, 4).map((e, j) => (
+                        <span key={j}
+                          className="text-[9px] font-medium truncate rounded px-1 py-0.5 leading-none inline-block"
+                          style={{ background: `${COLORS[e.type] || '#6b7280'}22`, color: COLORS[e.type]?.replace('8', '7') || '#6b7280' }}
+                          title={e.title || e.name || ''}>
+                          {e.title || e.name || ''}
+                        </span>
                       ))}
-                      {dayEvts.length > 5 && <span className="text-[8px] text-neutral-400 dark:text-neutral-500 font-medium">+{dayEvts.length - 5}</span>}
+                      {dayEvts.length > 4 && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium mt-0.5">+{dayEvts.length - 4} more</span>}
                     </div>
                     <button onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
-                      className="absolute bottom-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[10px] leading-none cursor-pointer border-none opacity-0 hover:opacity-100 transition-opacity">
+                      className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
                       +
                     </button>
                   </div>
@@ -216,11 +225,11 @@ export default function Calendar() {
               })}
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-3 text-[10px] text-neutral-400 dark:text-neutral-500">
+          <div className="flex items-center gap-3 mt-3 text-[10px] text-neutral-400 dark:text-neutral-500 flex-wrap">
             {Object.entries(COLORS).map(([key, color]) => (
               <div key={key} className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                {LABELS[key]}
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                <span className="text-neutral-500 dark:text-neutral-400">{LABELS[key]}</span>
               </div>
             ))}
           </div>
@@ -283,7 +292,7 @@ export default function Calendar() {
       )}
 
       {activeTab === 'agenda' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {agendaGroups.today.length === 0 && agendaGroups.thisWeek.length === 0 && agendaGroups.nextWeek.length === 0 && agendaGroups.later.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-sm text-neutral-400 dark:text-neutral-500">No upcoming events</p>
@@ -326,19 +335,19 @@ export default function Calendar() {
 function AgendaSection({ title, events, colors, labels, icons, onAdd, navigate }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">{title}</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{title}</h3>
         {onAdd && (
           <button onClick={onAdd}
-            className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer bg-transparent border-none">
+            className="text-[10px] font-semibold text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer bg-transparent border-none transition-colors">
             + Add
           </button>
         )}
       </div>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {events.map(e => (
           <div key={e._id} onClick={() => { if (e.projectId) navigate(`/projects/${e.projectId}`); }}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 ${e.projectId ? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700/50' : ''}`}>
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm ${e.projectId ? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700/50' : ''}`}>
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colors[e.type] || '#6b7280' }} />
             <span className="text-[10px] text-neutral-400 dark:text-neutral-500 w-14 shrink-0">
               {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

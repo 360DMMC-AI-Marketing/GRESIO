@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../services/api';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
@@ -12,10 +11,6 @@ const BREAKPOINT = 768;
 export default function Layout() {
   const { user, loading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${BREAKPOINT}px)`);
     setSidebarCollapsed(mq.matches);
@@ -23,12 +18,6 @@ export default function Layout() {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
-
-  useEffect(() => {
-    if (!user || user.onboardingCompleted) return;
-    if (location.pathname === '/onboarding-guide') return;
-    setShowOnboarding(true);
-  }, [user, location.pathname]);
 
   if (loading) {
     return (
@@ -45,42 +34,8 @@ export default function Layout() {
 
   const sidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
 
-  const dismissOnboarding = () => {
-    setShowOnboarding(false);
-    auth.updateProfile({ onboardingCompleted: true }).catch(() => {});
-    navigate('/dashboard');
-  };
-
   return (
     <div className="min-h-screen bg-[#f9fafb]">
-      {showOnboarding && (
-        <div style={{
-          position:'fixed',top:0,left:0,width:'100vw',height:'100vh',
-          background:'rgba(0,0,0,0.45)',zIndex:10000,
-          display:'flex',alignItems:'center',justifyContent:'center',
-        }}>
-          <div style={{
-            background:'white',borderRadius:12,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',
-            width:'90%',maxWidth:400,padding:24,textAlign:'center',
-          }}>
-            <div style={{fontSize:36,marginBottom:8}}>📖</div>
-            <h2 style={{fontSize:15,fontWeight:700,color:'#111827',margin:'0 0 6px'}}>Welcome to GRESIO!</h2>
-            <p style={{fontSize:11,color:'#6b7280',margin:'0 0 16px',lineHeight:1.5}}>
-              Please visit the <strong>User Onboarding & System Overview</strong> guide to understand how the platform works before you start.
-            </p>
-            <div style={{display:'flex',gap:8,justifyContent:'center'}}>
-              <button onClick={dismissOnboarding}
-                style={{fontSize:10,padding:'6px 12px',background:'#f3f4f6',color:'#374151',border:'none',borderRadius:6,cursor:'pointer'}}>
-                Later
-              </button>
-              <button onClick={() => { setShowOnboarding(false); auth.updateProfile({ onboardingCompleted: true }).catch(() => {}); navigate('/onboarding-guide'); }}
-                className="btn btn-blue" style={{fontSize:10,padding:'6px 12px'}}>
-                📖 Open Guide
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       <Sidebar user={user} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} />
       <Topbar sidebarWidth={sidebarWidth} />
       <main style={{ paddingLeft: sidebarWidth }} className="pt-14 transition-all duration-300 ease-in-out pb-10">

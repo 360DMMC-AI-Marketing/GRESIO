@@ -124,6 +124,9 @@ exports.addTaskToSprint = async (req, res, next) => {
         generateTestsFromTasks(sprint.project, sprint._id, [task], req.user._id, req.user.domain).catch(() => {});
       }
     }
+    if (sprint.project) {
+      await evaluateProjectPhase(sprint.project);
+    }
     res.json(sprint);
   } catch (e) { next(e); }
 };

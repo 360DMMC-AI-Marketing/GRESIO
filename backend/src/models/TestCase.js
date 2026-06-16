@@ -54,7 +54,7 @@ const testCaseSchema = new mongoose.Schema({
   sprint: { type: mongoose.Schema.Types.ObjectId, ref: 'Sprint' },
   assignee: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   linkedTask: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
-  linkedBug: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
+  linkedBug: { type: mongoose.Schema.Types.ObjectId, ref: 'Bug' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   executedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   executedAt: { type: Date },

@@ -21,7 +21,7 @@ export default function Projects() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', projectType: 'software' });
+  const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', projectType: 'software', createTeamsChannel: false });
   const [confirmState, setConfirmState] = useState(null);
   const [reportProject, setReportProject] = useState(null);
   const { user } = useAuth();
@@ -36,10 +36,14 @@ export default function Projects() {
 
   const handleCreate = async () => {
     try {
-      const res = await projects.create({ ...form, members: [user._id] });
+      const { createTeamsChannel: shouldCreate, ...projectData } = form;
+      const res = await projects.create({ ...projectData, members: [user._id] });
+      if (shouldCreate) {
+        projects.createTeamsChannel(res.data._id).catch(() => {});
+      }
       setList((prev) => [res.data, ...prev]);
       setShowForm(false);
-      setForm({ name: '', description: '', client: '', deadline: '', projectType: 'software' });
+      setForm({ name: '', description: '', client: '', deadline: '', projectType: 'software', createTeamsChannel: false });
     } catch (err) { console.error(err); }
   };
 
@@ -98,6 +102,11 @@ export default function Projects() {
                 {value:'content', label:'Content / Writing'},
                 {value:'research', label:'Research / Analysis'},
               ]} style={{width:'100%'}} /></div>
+          <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:6}}>
+            <input type="checkbox" id="createTeamsChannel" checked={form.createTeamsChannel}
+              onChange={e => setForm({ ...form, createTeamsChannel: e.target.checked })} />
+            <label htmlFor="createTeamsChannel" style={{fontSize:10,color:'#374151',cursor:'pointer'}}>Create Microsoft Teams channel for this project</label>
+          </div>
         </div>
       </Modal>
 

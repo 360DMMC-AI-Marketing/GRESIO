@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { testCases, interests, bugs, projects } from '../services/api';
@@ -46,6 +46,7 @@ const BUG_STATUS_CLS = {
 export default function TestCaseDashboard() {
   const { projectId: urlProjectId } = useParams();
   const { user, socket } = useAuth();
+  const navigate = useNavigate();
   const isManager = ['admin', 'project_manager', 'team_lead', 'qa_tester'].includes(user?.role);
   const isAdmin = user?.role === 'admin';
   const canEdit = ['admin', 'project_manager', 'team_lead', 'manager', 'qa_tester'].includes(user?.role);
@@ -589,7 +590,7 @@ export default function TestCaseDashboard() {
                 </div>
                 <div style={{display:'flex',gap:4,flexShrink:0}}>
                   {bug.status === 'open' && canEdit && (
-                    <button className="btn btn-green" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleResolveBug(bug._id)}>✅ Resolve</button>
+                    <button className="btn btn-green" style={{fontSize:9,padding:'3px 8px'}} onClick={() => navigate(`/projects/${bug.project}?tab=test-cases`)}>✅ Resolve</button>
                   )}
                   {bug.status === 'closed' && isManager && (
                     <button className="btn btn-amber" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleReopenBug(bug._id)}>🔄 Reopen</button>

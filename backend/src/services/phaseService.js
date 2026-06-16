@@ -3,6 +3,14 @@ const Sprint = require('../models/Sprint');
 const Task = require('../models/Task');
 const TestingItem = require('../models/TestingItem');
 const TestCase = require('../models/TestCase');
+const Activity = require('../models/Activity');
+
+function getIO() {
+  try {
+    const { getIO } = require('../socket/ioProvider');
+    return getIO();
+  } catch (e) { return null; }
+}
 
 const TYPE_CONFIGS = {
   software: {
@@ -41,6 +49,21 @@ function expandLabel(phase) {
   return phase.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// In-memory transition cache — prevents circular transitions (2s cooldown)
+// Stores { timestamp, fromPhase, toPhase } per project
+const phaseTransitionCache = new Map();
+
+function getExecutionPhase(type) {
+  const map = {
+    software: 'development',
+    design: 'designing',
+    business: 'business_growth',
+    content: 'content_creation',
+    research: 'research',
+  };
+  return map[type] || 'development';
+}
+
 async function evaluateProjectPhase(projectId) {
   const project = await Project.findById(projectId);
   if (!project) return;
@@ -56,7 +79,13 @@ async function evaluateProjectPhase(projectId) {
 
   const currentIdx = PHASES.indexOf(project.phase);
   if (currentIdx === -1) return;
-  if (!AUTO_PHASES.has(project.phase)) return;
+
+  // Debounce: prevent rapid RE-EVALUATION (2s cooldown)
+  const cacheKey = projectId.toString();
+  const cached = phaseTransitionCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 2000) {
+    return project.phase;
+  }
 
   const sprints = await Sprint.find({ project: projectId });
   const tasks = await Task.find({ project: projectId, isActive: true, scope: 'project' });
@@ -89,83 +118,159 @@ async function evaluateProjectPhase(projectId) {
 
   const testingReady = allTestCasesPassed || (allTestingPassed && noFailedTesting);
 
-  let targetPhase = PHASES[0];
+  let targetPhase;
 
-  // Type-specific evaluation
-  switch (type) {
-    case 'software':
-      if (allTasksDone && noCriticalTasksRemain && testingReady) {
-        targetPhase = 'review';
-      } else if (allTasksDone && noCriticalTasksRemain) {
-        targetPhase = 'testing';
-      } else if (hasSprints || hasTasks) {
-        targetPhase = 'development';
-      } else if (hasProjectInfo || hasRepos) {
-        targetPhase = 'planning';
-      }
-      break;
+  // ===== BACKWARD TRANSITION DETECTION =====
+  // Handles cases where new work is added after forward progression
+  // (must run before forward logic to override)
+  // These check for REGRESSION: tasks reopened, new test cases added, etc.
 
-    case 'design':
-      if (allTasksDone && noCriticalTasksRemain) {
-        targetPhase = 'review';
-      } else if (testingReady) {
-        targetPhase = 'testing';
-      } else if (testingItems.length > 0 || (testCases.length > 0 && allTestCasesPassed)) {
-        targetPhase = 'prototyping';
-      } else if (hasTasks || hasSprints) {
-        targetPhase = 'designing';
-      } else if (hasProjectInfo || hasRepos) {
-        targetPhase = 'planning';
-      }
-      break;
+  // Rule 1: Tasks reopened → back to execution phase
+  if (totalTasks > 0 && doneTasks < totalTasks) {
+    if (project.phase === 'review' || project.phase === 'testing') {
+      targetPhase = getExecutionPhase(type);
+    }
+  }
 
-    case 'business':
-      if (allTasksDone && noCriticalTasksRemain) {
-        targetPhase = 'review';
-      } else if (testingReady) {
-        targetPhase = 'testing';
-      } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.7) {
-        targetPhase = 'validation';
-      } else if (hasTasks || hasSprints) {
-        targetPhase = 'business_growth';
-      } else if (hasProjectInfo) {
-        targetPhase = 'planning';
-      }
-      break;
+  // Rule 2: Test cases or testing items not all passed → back to testing
+  if (!targetPhase && project.phase === 'review') {
+    if ((totalTC > 0 && !allTestCasesPassed) || (totalTesting > 0 && !allTestingPassed)) {
+      targetPhase = 'testing';
+    }
+  }
 
-    case 'content':
-      if (allTasksDone && noCriticalTasksRemain) {
-        targetPhase = 'review';
-      } else if (testingReady) {
-        targetPhase = 'testing';
-      } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.5) {
-        targetPhase = 'editing';
-      } else if (hasTasks) {
-        targetPhase = 'content_creation';
-      } else if (hasProjectInfo) {
-        targetPhase = 'planning';
-      }
-      break;
+  // Rule 3: New task added while in review → back to execution
+  if (!targetPhase && project.phase === 'review') {
+    if (hasTasks && allTasksDone === false) {
+      targetPhase = getExecutionPhase(type);
+    }
+  }
 
-    case 'research':
-      if (allTasksDone && noCriticalTasksRemain) {
-        targetPhase = 'review';
-      } else if (testingReady) {
-        targetPhase = 'testing';
-      } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.5) {
-        targetPhase = 'analysis';
-      } else if (hasTasks) {
-        targetPhase = 'research';
-      } else if (hasProjectInfo) {
-        targetPhase = 'planning';
-      }
-      break;
+  // Rule 4: In COMPLETE/launched/delivered — tasks or tests added → move back to testing or execution
+  if (!targetPhase && !AUTO_PHASES.has(project.phase)) {
+    if (totalTasks > 0 && doneTasks < totalTasks) {
+      targetPhase = getExecutionPhase(type);
+    } else if (totalTC > 0 && !allTestCasesPassed) {
+      targetPhase = 'testing';
+    }
+  }
+
+  // ===== FORWARD TRANSITION DETECTION =====
+  // Only runs if no backward transition was triggered AND phase is auto
+  if (!targetPhase && AUTO_PHASES.has(project.phase)) {
+    // Type-specific evaluation
+    switch (type) {
+      case 'software':
+        if (allTasksDone && noCriticalTasksRemain && testingReady) {
+          targetPhase = 'review';
+        } else if (allTasksDone && noCriticalTasksRemain) {
+          targetPhase = 'testing';
+        } else if (hasSprints || hasTasks) {
+          targetPhase = 'development';
+        } else if (hasProjectInfo || hasRepos) {
+          targetPhase = 'planning';
+        }
+        break;
+
+      case 'design':
+        if (allTasksDone && noCriticalTasksRemain && testingReady) {
+          targetPhase = 'review';
+        } else if (allTasksDone && noCriticalTasksRemain) {
+          targetPhase = 'testing';
+        } else if (testingReady) {
+          targetPhase = 'testing';
+        } else if ((totalTesting > 0 && allTestingPassed) || (testCases.length > 0 && allTestCasesPassed)) {
+          targetPhase = 'prototyping';
+        } else if (hasTasks || hasSprints) {
+          targetPhase = 'designing';
+        } else if (hasProjectInfo || hasRepos) {
+          targetPhase = 'planning';
+        }
+        break;
+
+      case 'business':
+        if (allTasksDone && noCriticalTasksRemain && testingReady) {
+          targetPhase = 'review';
+        } else if (allTasksDone && noCriticalTasksRemain) {
+          targetPhase = 'testing';
+        } else if (testingReady) {
+          targetPhase = 'testing';
+        } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.7) {
+          targetPhase = 'validation';
+        } else if (hasTasks || hasSprints) {
+          targetPhase = 'business_growth';
+        } else if (hasProjectInfo) {
+          targetPhase = 'planning';
+        }
+        break;
+
+      case 'content':
+        if (allTasksDone && noCriticalTasksRemain && testingReady) {
+          targetPhase = 'review';
+        } else if (allTasksDone && noCriticalTasksRemain) {
+          targetPhase = 'testing';
+        } else if (testingReady) {
+          targetPhase = 'testing';
+        } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.5) {
+          targetPhase = 'editing';
+        } else if (hasTasks) {
+          targetPhase = 'content_creation';
+        } else if (hasProjectInfo) {
+          targetPhase = 'planning';
+        }
+        break;
+
+      case 'research':
+        if (allTasksDone && noCriticalTasksRemain && testingReady) {
+          targetPhase = 'review';
+        } else if (allTasksDone && noCriticalTasksRemain) {
+          targetPhase = 'testing';
+        } else if (testingReady) {
+          targetPhase = 'testing';
+        } else if (totalTasks > 0 && doneTasks >= totalTasks * 0.5) {
+          targetPhase = 'analysis';
+        } else if (hasTasks) {
+          targetPhase = 'research';
+        } else if (hasProjectInfo) {
+          targetPhase = 'planning';
+        }
+        break;
+    }
+  }
+
+  // Stay in current phase if no transition condition matched
+  if (!targetPhase) {
+    return project.phase;
   }
 
   const targetIdx = PHASES.indexOf(targetPhase);
   if (targetPhase !== project.phase) {
+    const fromPhase = project.phase;
+    phaseTransitionCache.set(cacheKey, { timestamp: Date.now(), fromPhase, toPhase: targetPhase });
     const progress = calcPhaseProgress(project.projectType, targetPhase);
     await Project.findByIdAndUpdate(projectId, { phase: targetPhase, progress }, { new: true });
+    if (project.domain) {
+      await Activity.create({
+        user: null,
+        domain: project.domain,
+        type: 'project_update',
+        source: 'internal',
+        description: `Phase auto-transition: ${fromPhase} → ${targetPhase}`,
+        metadata: { projectId, fromPhase, toPhase: targetPhase, reason: 'auto' },
+      }).catch(() => {});
+    }
+    // Emit socket event for real-time UI updates
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(`project:${projectId}`).emit('phase_changed', {
+          projectId,
+          fromPhase,
+          toPhase: targetPhase,
+          progress,
+        });
+      }
+    } catch (e) {}
     return targetPhase;
   }
 

@@ -45,6 +45,7 @@ import SuperAdminNotifications from './pages/super-admin/Notifications';
 import SuperAdminProfile from './pages/super-admin/Profile';
 import SuperAdminSettings from './pages/super-admin/Settings';
 import ScrollToTop from './components/ScrollToTop';
+import WelcomeWizard from './components/WelcomeWizard';
 
 export default function App() {
   return (
@@ -102,6 +103,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        <WelcomeWizard />
       </BrowserRouter>
     </AuthProvider>
   );

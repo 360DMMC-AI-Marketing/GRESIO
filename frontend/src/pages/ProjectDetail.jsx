@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
+import { Workflow } from 'lucide-react';
 
 const TYPE_CONFIGS = {
   software: { label:'Software / Development', phases:['discovery','planning','development','testing','review','launched','delivered'], autoPhases:['discovery','planning','development','testing','review'] },
@@ -55,11 +56,12 @@ function fmtDate(d, full) {
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, socket } = useAuth();
   const [project, setProject] = useState(null);
   const [projectSprints, setProjectSprints] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [expandedSprints, setExpandedSprints] = useState(new Set());
   const [expandedTasks, setExpandedTasks] = useState(new Set());
   const [showSprintForm, setShowSprintForm] = useState(false);
@@ -571,7 +573,6 @@ export default function ProjectDetail() {
     { key:'review', label:'🔍 Review' },
     { key:'team', label:'👥 Team' },
     { key:'resources', label:'🔗 Resources' },
-    { key:'relay', label:'⚡ Relay' },
     ...(['admin','project_manager','team_lead'].includes(user?.role) ? [{ key:'settings', label:'⚙️ Settings' }] : []),
   ];
 
@@ -846,50 +847,56 @@ export default function ProjectDetail() {
                       )}
                     </>
                   ) : (
-                    <span style={{fontSize:9,color:'#9ca3af'}}>Not configured</span>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:9,color:'#9ca3af'}}>Not configured</span>
+                      <button onClick={async (e) => { e.stopPropagation(); try { const r = await projects.createTeamsChannel(id); setProject(p => ({...p, teamChannel: r.data.displayName, teamsChannelId: r.data.channelId})); } catch(e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); } }}
+                        style={{fontSize:8,padding:'3px 8px',background:'#2563eb',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>
+                        + Create in Teams
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* ===== Overview: Project Relay Widget ===== */}
-              {relayPosition && (
-                <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                  <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>
-                    ⚡ Project Relay
-                    <span style={{fontSize:8,fontWeight:400,color:'#9ca3af',marginLeft:4}}>
-                      · {relayPosition.chainName}
-                    </span>
-                  </div>
-                  <div style={{fontSize:9,color:'#6b7280',marginBottom:6}}>
-                    Step {relayPosition.currentIdx} of {relayPosition.total}
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:4,fontSize:9}}>
-                    {relayPosition.prev ? (
-                      <div style={{padding:'4px 8px',background:'#f0fdf4',borderRadius:6,border:'0.5px solid #86efac',flex:1,minWidth:0}}>
-                        <div style={{fontSize:8,color:'#6b7280'}}>← Prev</div>
-                        <div style={{fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{relayPosition.prev.name}</div>
-                        <div style={{fontSize:7,color:'#22c55e'}}>✓ {relayPosition.prev.phase}</div>
+      {/* ===== Overview: Project Relay Widget ===== */}
+      {relayChains.length > 0 && (
+        <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><Workflow size={14} /> Project Relay</div>
+          {relayChains.map(chain => {
+            const projects = chain.projects || [];
+            const currentIdx = projects.findIndex(p => p._id === id);
+            return (
+              <div key={chain._id} style={{marginBottom: relayChains.length > 1 ? 8 : 0}}>
+                <div style={{fontSize:8,fontWeight:600,color:'#9ca3af',marginBottom:4}}>{chain.name}</div>
+                <div style={{display:'flex',gap:3,overflowX:'auto',paddingBottom:2}}>
+                  {projects.map((p, i) => (
+                    <div key={p._id} style={{display:'flex',alignItems:'center',flexShrink:0}}>
+                      <div
+                        onClick={() => navigate(`/projects/${p._id}`)}
+                        style={{
+                          padding:'5px 7px',borderRadius:6,cursor:'pointer',minWidth:80,
+                          border: p._id === id ? '1px solid #2347e8' : '0.5px solid #e5e7eb',
+                          background: p._id === id ? '#eff6ff' : p.phase === 'delivered' ? '#f0fdf4' : 'white',
+                        }}
+                      >
+                        <div style={{fontSize:9,fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                        <div style={{display:'flex',alignItems:'center',gap:3,marginTop:1}}>
+                          <span style={{fontSize:7,padding:'1px 4px',borderRadius:6,fontWeight:600,
+                            background: p.phase === 'delivered' ? '#22c55e' : p.phase === 'launched' ? '#eab308' : '#f3f4f6',
+                            color: p.phase === 'delivered' ? 'white' : p.phase === 'launched' ? '#854d0e' : '#6b7280',
+                          }}>{p.phase?.replace(/_/g,' ')}</span>
+                          {i === currentIdx && <span style={{fontSize:7,color:'#2347e8'}}>★</span>}
+                        </div>
                       </div>
-                    ) : <div style={{flex:1}} />}
-                    <div style={{padding:'4px 8px',background:'#eff6ff',borderRadius:6,border:'0.5px solid #93c5fd',flex:1,minWidth:0}}>
-                      <div style={{fontSize:8,color:'#6b7280'}}>★ You are here</div>
-                      <div style={{fontWeight:700,color:'#1d4ed8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{project.name}</div>
+                      {i < projects.length - 1 && <span style={{color:'#d1d5db',fontSize:14,margin:'0 1px'}}>→</span>}
                     </div>
-                    {relayPosition.next ? (
-                      <div style={{padding:'4px 8px',background:'#f9fafb',borderRadius:6,border:'0.5px solid #e5e7eb',flex:1,minWidth:0}}>
-                        <div style={{fontSize:8,color:'#6b7280'}}>Next →</div>
-                        <div style={{fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{relayPosition.next.name}</div>
-                        <div style={{fontSize:7,color:'#9ca3af'}}>⏳ {relayPosition.next.phase}</div>
-                      </div>
-                    ) : <div style={{flex:1}} />}
-                  </div>
-                  {relayChains.length > 1 && (
-                    <div style={{marginTop:6,fontSize:8,color:'#9ca3af'}}>
-                      Part of {relayChains.length} chain{relayChains.length > 1 ? 's' : ''}
-                    </div>
-                  )}
+                  ))}
                 </div>
-              )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
               {/* ===== Overview: Review Call Widget ===== */}
               <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
@@ -1595,63 +1602,6 @@ export default function ProjectDetail() {
               });
             })()}
           </div>
-        </div>
-      )}
-
-      {/* ===== RELAY TAB ===== */}
-      {activeTab === 'relay' && (
-        <div className="tab-content" style={{display:'block'}}>
-          {relayChains.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}>
-              <p style={{fontSize:28,marginBottom:8}}>⚡</p>
-              <p style={{fontSize:13,fontWeight:500}}>Not part of any relay chain</p>
-              <p style={{fontSize:10,marginTop:4}}>Go to Settings → Project Relay to link this project into a chain.</p>
-            </div>
-          ) : (
-            <div style={{display:'flex',flexDirection:'column',gap:14}}>
-              {relayChains.map(chain => {
-                const projects = chain.projects || [];
-                const currentIdx = projects.findIndex(p => p._id === id);
-                return (
-                  <div key={chain._id} style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:14}}>
-                    <div style={{fontSize:12,fontWeight:700,color:'#111827',marginBottom:8}}>⚡ {chain.name}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:0,overflowX:'auto',paddingBottom:4}}>
-                      {projects.map((p, i) => (
-                        <div key={p._id} style={{display:'flex',alignItems:'center',flexShrink:0}}>
-                          <div
-                            onClick={() => navigate(`/projects/${p._id}`)}
-                            style={{
-                              padding:'10px 14px',borderRadius:8,cursor:'pointer',minWidth:130,
-                              border: p._id === id ? '1.5px solid #2347e8' : '0.5px solid #e5e7eb',
-                              background: p._id === id ? '#eff6ff' : p.phase === 'delivered' ? '#f0fdf4' : 'white',
-                              boxShadow: p._id === id ? '0 0 0 2px rgba(35,71,232,0.15)' : 'none',
-                            }}
-                          >
-                            <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
-                              <span style={{fontSize:12}}>{p.projectType === 'design' ? '🎨' : p.projectType === 'software' ? '💻' : p.projectType === 'business' ? '📊' : p.projectType === 'content' ? '📝' : '🔬'}</span>
-                              <span style={{fontSize:11,fontWeight:600,color:'#111827',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:90}}>{p.name}</span>
-                              {i === currentIdx && <span style={{fontSize:8,color:'#2347e8',fontWeight:700,marginLeft:'auto'}}>★</span>}
-                            </div>
-                            <div style={{display:'flex',alignItems:'center',gap:4}}>
-                              <span style={{
-                                fontSize:8,padding:'2px 6px',borderRadius:10,fontWeight:600,
-                                background: p.phase === 'delivered' ? '#22c55e' : p.phase === 'launched' ? '#eab308' : '#f3f4f6',
-                                color: p.phase === 'delivered' ? 'white' : p.phase === 'launched' ? '#854d0e' : '#6b7280',
-                              }}>{p.phase?.replace(/_/g,' ')}</span>
-                              <span style={{fontSize:8,color:'#9ca3af'}}>{p.progress}%</span>
-                            </div>
-                          </div>
-                          {i < projects.length - 1 && (
-                            <div style={{display:'flex',alignItems:'center',margin:'0 8px',color:'#d1d5db',fontSize:18}}>→</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
 

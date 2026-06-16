@@ -4,6 +4,7 @@ const Sprint = require('../models/Sprint');
 const Activity = require('../models/Activity');
 const Notification = require('../models/Notification');
 const { getDomainProjectIds } = require('../config/planLimits');
+const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 
 const QA_STATUSES = ['todo', 'in_progress', 'in_review', 'passed', 'failed', 'blocked', 'on_hold', 'completed'];
 const MANAGER_ROLES = ['admin', 'project_manager', 'team_lead'];
@@ -102,6 +103,7 @@ exports.createTestingItem = async (req, res, next) => {
       metadata: { testingItemId: populated._id, projectId: req.body.project },
     });
 
+    await evaluateProjectPhase(req.body.project);
     res.status(201).json(populated);
   } catch (error) {
     next(error);
@@ -166,6 +168,7 @@ exports.updateTestingItem = async (req, res, next) => {
       }
     }
 
+    await evaluateProjectPhase(populated.project?._id || populated.project);
     res.json(populated);
   } catch (error) {
     next(error);
@@ -183,6 +186,7 @@ exports.deleteTestingItem = async (req, res, next) => {
     if (item.sprint) {
       await Sprint.findByIdAndUpdate(item.sprint, { $pull: { testingItems: item._id } });
     }
+    await evaluateProjectPhase(item.project);
     res.json({ message: 'Testing item deactivated' });
   } catch (error) {
     next(error);
