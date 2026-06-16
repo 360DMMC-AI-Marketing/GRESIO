@@ -675,7 +675,7 @@ export default function ProjectDetail() {
                       const prio = PRIORITY_MAP[t.priority];
                       const overdue = t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done';
                       return (
-                        <tr key={t._id} style={{borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}
+                        <tr key={`${t._id}-${t.sprintId}`} style={{borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}
                           onMouseEnter={e => e.currentTarget.style.background='#f9fafb'}
                           onMouseLeave={e => e.currentTarget.style.background=''}>
                           <td style={{padding:'7px 12px'}}>

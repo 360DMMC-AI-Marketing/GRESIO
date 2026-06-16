@@ -590,7 +590,7 @@ export default function TestCaseDashboard() {
                 </div>
                 <div style={{display:'flex',gap:4,flexShrink:0}}>
                   {bug.status === 'open' && canEdit && (
-                    <button className="btn btn-green" style={{fontSize:9,padding:'3px 8px'}} onClick={() => navigate(`/projects/${bug.project}?tab=test-cases`)}>✅ Resolve</button>
+                    <button className="btn btn-green" style={{fontSize:9,padding:'3px 8px'}} onClick={() => { const pid = bug.project?._id || bug.project; if (pid) navigate(`/projects/${pid}?tab=test-cases`); }}>✅ Resolve</button>
                   )}
                   {bug.status === 'closed' && isManager && (
                     <button className="btn btn-amber" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleReopenBug(bug._id)}>🔄 Reopen</button>
