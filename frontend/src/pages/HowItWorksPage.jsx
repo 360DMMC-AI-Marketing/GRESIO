@@ -153,6 +153,7 @@ export default function HowItWorksPage() {
           <p className="text-xs text-surface-400 text-center mt-6">All project types share the same auto-flow logic. The system advances phases automatically when conditions are met, with manual gates only for Launch, Delivered, and Report.</p>
         </div>
 
+
         <div className="max-w-3xl mx-auto border-t border-surface-200 pt-16">
           <h2 className="text-2xl font-bold text-surface-900 text-center mb-10">Frequently asked questions</h2>
           <div className="space-y-3">

@@ -78,7 +78,7 @@ exports.cleanupStale = async (req, res, next) => {
     const projects = await Project.find({ _id: { $in: projectIds } }).select('reviewCall').lean();
     const activeIds = new Set(projects.filter(p => p.reviewCall?.date).map(p => p._id.toString()));
 
-    const staleIds = notifs.filter(n => !activeIds.has(n.metadata.projectId.toString())).map(n => n._id);
+    const staleIds = notifs.filter(n => n.metadata?.projectId && !activeIds.has(n.metadata.projectId.toString())).map(n => n._id);
     if (!staleIds.length) return res.json({ modified: 0 });
 
     await Notification.updateMany(

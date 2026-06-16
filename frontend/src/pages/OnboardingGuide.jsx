@@ -9,7 +9,7 @@ export default function OnboardingGuide() {
   const [acknowledged, setAcknowledged] = useState(user?.onboardingCompleted || false);
   const [reachedBottom, setReachedBottom] = useState(false);
   const [checklist, setChecklist] = useState({
-    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, calendar: false, help: false,
+    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, calendar: false, relay: false, help: false,
   });
   const footerRef = useRef(null);
   const allChecked = Object.values(checklist).every(Boolean);
@@ -59,6 +59,7 @@ export default function OnboardingGuide() {
             ['Test Case Management','Create and execute QA tests linked to features'],
             ['Team Collaboration','Role-based access for secure teamwork'],
             ['Calendar','Visual calendar showing tasks, sprints, project deadlines, milestones, events, and reminders — all color-coded'],
+            ['Project Relay','Chain multiple projects in an ordered pipeline with automatic notifications on delivery — supports branching workflows'],
             ['Report Generation','Generate admin (full audit) and client (summary) PDF reports for completed/delivered projects'],
             ['Automated Status Flow','Smart phase transitions based on project data and type'],
             ['Manual Gates','Admin/PM/Team Lead approval for critical milestones'],
@@ -184,6 +185,7 @@ export default function OnboardingGuide() {
             ['🧪 Test Cases','Test case management and execution'],
             ['🔍 Review','Schedule review calls, track phase changes'],
             ['📅 Calendar','Task deadlines, sprint dates, project milestones, events, and reminders — month view with color-coded items'],
+            ['🔗 Relay','Chain projects in an ordered pipeline with completion tracking and auto-notifications'],
             ['👥 Team','Team members, roles, workload distribution'],
             ['🔗 Resources','Linked repositories, documentation, environments'],
             ['⚙️ Settings','Project configuration, notifications, integrations'],
@@ -345,6 +347,7 @@ export default function OnboardingGuide() {
               {k:'tasks',l:'I know how to create and update tasks'},
               {k:'qa',l:'I know how to run test cases (if I\'m QA)'},
               {k:'calendar',l:'I know how to use the Calendar to track deadlines and events'},
+              {k:'relay',l:'I understand how Project Relay chains work'},
               {k:'help',l:'I know where to find help if I\'m stuck'},
             ].map(({k,l}) => (
               <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
@@ -399,7 +402,7 @@ export default function OnboardingGuide() {
         </Section>
         )}
 
-        <Section title="12. FAQ & Troubleshooting">
+        <Section title="14. FAQ & Troubleshooting">
           <div style={{display:'flex',flexDirection:'column',gap:12,fontSize:11}}>
             <Qa q="Why can't I click 'Launch'?" a={"Only Admin, PM, or Team Lead can launch a project. If you don't see the button or it's grayed out, your role doesn't have permission. Contact your PM."} />
             <Qa q="The project is stuck in Development. Why won't it move to Testing?" a={"Check that: All tasks are marked \"Done\" (not \"In Review\" or \"In Progress\"), All sprints are marked \"Completed\", There are no open blockers."} />
@@ -410,6 +413,67 @@ export default function OnboardingGuide() {
             <Qa q="How do I change my role?" a="You cannot. Only an Admin can change user roles. Contact your system administrator." />
             <Qa q="What does &quot;6d overdue&quot; mean?" a="The project deadline has passed by 6 days. The PM and Team Lead are notified. Work should be prioritized to close the project." />
           </div>
+        </Section>
+
+        <Section title="11. Calendar">
+          <p style={{fontSize:11}}>The Calendar page gives you a month-view of all your team's important dates — tasks, sprints, project deadlines, milestones, events, and reminders — all in one place.</p>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What You See</h4>
+          <InfoTable rows={[
+            ['Item','Color','Description'],
+            ['Tasks','🟡 Yellow','Task deadlines pulled from all projects'],
+            ['Sprints','🟢 Green','Sprint start and end dates'],
+            ['Deadlines','🔴 Red','Project final delivery deadlines'],
+            ['Milestones','🔵 Blue','Key project milestones'],
+            ['Events','🟣 Purple','Custom events added via the calendar'],
+            ['Reminders','🟠 Orange','Manual reminders for reviews & meetings'],
+          ]} />
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>How to Use</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li>Navigate between months using the ← → arrows</li>
+            <li>Each day shows dots or indicators for items due that day</li>
+            <li>Click <strong>"Add Event"</strong> to create a custom calendar event or reminder</li>
+            <li>Events can optionally create a <strong>Microsoft Teams meeting</strong> — toggle "Create Teams Meeting" and enter the meeting link</li>
+            <li>Reminders can be set for review calls directly from the <strong>Review</strong> tab in a project's detail page</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Access</h4>
+          <p style={{fontSize:11}}>The Calendar is available from the sidebar under <strong>Workspace → Execution → Calendar</strong>. It is visible to all roles.</p>
+        </Section>
+
+        <Section title="12. Project Relay">
+          <p style={{fontSize:11}}>Project Relay lets you chain projects in ordered pipelines. When one project is delivered, the next project's team is automatically notified — perfect for workflows where projects depend on each other.</p>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Concepts</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li>A <strong>Chain</strong> is a named sequence of projects in a specific order</li>
+            <li>Chains are standalone entities — they don't modify the original projects</li>
+            <li>Both <strong>linear</strong> (1→2→3) and <strong>branching</strong> (1→[2,3]) chains are supported</li>
+            <li>When a project's phase changes to <strong>Delivered</strong>, the system sends a notification to members of the next project in the chain</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Create & Manage Chains</h4>
+          <InfoTable rows={[
+            ['Role','Create','Edit','Delete'],
+            ['Admin','✅','✅','✅'],
+            ['Project Manager','✅','✅','✅'],
+            ['Team Lead','✅','✅','❌'],
+            ['Manager','✅','✅','❌'],
+            ['Others','❌','❌','❌'],
+          ]} />
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Chain Status & Visuals</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li>Each project in the chain shows its current phase (e.g., Development, Delivered)</li>
+            <li>Delivered projects appear with a <strong>green background</strong></li>
+            <li>When <strong>all</strong> projects in a chain are delivered, the chain card shows a green left border and a <strong>✓ Completed</strong> badge</li>
+            <li>The completion count (e.g., <strong>3/3 projects done</strong>) is shown on every chain card</li>
+            <li>Edit/Delete buttons are hidden once the chain is fully completed</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Accessing Project Relay</h4>
+          <p style={{fontSize:11}}>Go to <strong>Workspace → Project Relay</strong> from the sidebar. From there you can view all chains, create new ones, and click into any chain to see its pipeline visualization. Each chain is also visible from its member projects' <strong>Relay</strong> tab in the project detail page.</p>
         </Section>
 
         <Section title="System Administrator Contact">
@@ -429,6 +493,8 @@ export default function OnboardingGuide() {
             ['1.3','June 2026','Added Report Generation feature (admin + client PDF reports)'],
             ['1.4','June 2026','Added Review tab with call scheduler; enhanced notifications with 3-tab layout; project phase change alerts'],
             ['1.5','June 2026','Added Calendar page with color-coded tasks, sprints, deadlines, milestones, events, and reminders'],
+            ['1.6','June 2026','Added Project Relay — chain projects in ordered pipelines with delivery notifications'],
+            ['1.7','June 2026','Added dedicated Calendar (11) and Project Relay (12) sections to the guide; updated checklist with relay item'],
           ]} />
         </Section>
       </div>

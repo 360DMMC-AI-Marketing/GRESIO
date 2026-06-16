@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
-  Building2, Bell as BellIcon, Activity, Workflow,
+  Building2, Bell as BellIcon, Activity, Workflow, ClipboardList,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -25,9 +25,14 @@ const sidebarGroups = [
     items: [
       { id: 'projects', label: 'Projects List', icon: FolderOpen, path: '/projects', roles: ALL },
       { id: 'relay', label: 'Project Relay', icon: Workflow, path: '/relay', roles: ALL },
-      { id: 'sprints', label: 'Sprints', icon: Zap, path: '/sprints', roles: ALL },
-      { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/tasks', roles: ALL },
-      { id: 'tests', label: 'Tests', icon: FlaskConical, path: '/test-cases', roles: ALL },
+      {
+        id: 'execution', label: 'Execution', icon: ClipboardList, type: 'subgroup', roles: ALL,
+        items: [
+          { id: 'sprints', label: 'Sprints', icon: Zap, path: '/sprints', roles: ALL },
+          { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/tasks', roles: ALL },
+          { id: 'tests', label: 'Tests', icon: FlaskConical, path: '/test-cases', roles: ALL },
+        ],
+      },
     ],
   },
   {
@@ -68,16 +73,17 @@ const bottomItems = [
 
 function SidebarGroup({ group, isOpen, onToggle, user }) {
   const location = useLocation();
+  const [openSubgroup, setOpenSubgroup] = useState('');
   const filteredItems = group.items.filter(i => i.roles?.includes(user?.role));
   if (filteredItems.length === 0) return null;
-  const active = filteredItems.some(i => location.pathname === i.path);
+  const active = filteredItems.some(i => i.path && location.pathname === i.path);
 
   return (
     <div>
       <button
         onClick={() => onToggle(group.id)}
         aria-expanded={isOpen}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg cursor-pointer bg-transparent border-none ${
+        className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all rounded-lg cursor-pointer bg-transparent border-none ${
           isOpen ? 'text-white bg-white/[0.06]' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
         }`}
       >
@@ -90,27 +96,63 @@ function SidebarGroup({ group, isOpen, onToggle, user }) {
           } ${active ? 'text-blue-400' : 'text-slate-500'}`}
         />
       </button>
-      <div
-        className="overflow-hidden transition-all duration-200 ease-in-out"
-        style={{ maxHeight: isOpen ? 400 : 0, opacity: isOpen ? 1 : 0 }}
-      >
-        <div className="pb-1 pt-1 pl-2">
-          {filteredItems.map(item => (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all rounded-lg ml-5 ${
-                  isActive
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {item.label}
-            </NavLink>
-          ))}
+          <div
+            className="transition-all duration-200 ease-in-out"
+            style={{ maxHeight: isOpen ? 400 : 0, opacity: isOpen ? 1 : 0, overflow: 'hidden' }}
+          >
+        <div className="pb-1 pt-1 pl-7">
+          {filteredItems.map(item => {
+            if (item.type === 'subgroup') {
+              const subItems = item.items.filter(i => i.roles?.includes(user?.role));
+              if (subItems.length === 0) return null;
+              const subActive = subItems.some(i => location.pathname === i.path);
+              const subOpen = openSubgroup === item.id;
+              return (
+                <div key={item.id}>
+                  <button
+                    onClick={() => setOpenSubgroup(prev => prev === item.id ? '' : item.id)}
+                    aria-expanded={subOpen}
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg cursor-pointer bg-transparent border-none w-full ${
+                      subOpen ? 'text-white bg-white/[0.06]' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <ClipboardList className="w-5 h-5 shrink-0" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronDown className={`shrink-0 w-4 h-4 transition-transform duration-200 ${
+                      subOpen ? 'rotate-180' : ''
+                    } ${subActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                  </button>
+                  <div className="transition-all duration-200 ease-in-out"
+                    style={{ maxHeight: subOpen ? 200 : 0, opacity: subOpen ? 1 : 0, overflow: 'hidden' }}>
+                    <div className="pb-1 pt-0.5 pl-7">
+                      {subItems.map(sub => (
+                        <NavLink key={sub.id} to={sub.path}
+                          className={({ isActive }) =>
+                   `w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${
+                     isActive ? 'bg-blue-600/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                   }`
+                          }>
+                          <sub.icon className="w-5 h-5 shrink-0" />
+                          {sub.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <NavLink key={item.id} to={item.path}
+                className={({ isActive }) =>
+                             `w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${
+                    isActive ? 'bg-blue-600/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  }`
+                }>
+                <item.icon className="w-5 h-5 shrink-0" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -185,7 +227,7 @@ export default function Sidebar({ user, collapsed, onToggle }) {
   }
 
   return (
-    <aside className="bg-[#0F172A] h-screen fixed top-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out w-[260px]">
+    <aside className="bg-[#0F172A] h-screen fixed top-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out w-[280px]">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-white/[0.08]">
         <NavLink to="/dashboard" className="flex flex-col items-center hover:opacity-90 transition-all duration-200 cursor-pointer">
@@ -206,19 +248,19 @@ export default function Sidebar({ user, collapsed, onToggle }) {
         {filteredStandalone.map(item => (
           <NavLink key={item.id} to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${
-                isActive
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-              }`
-            }>
-            <item.icon className="w-[26px] h-[26px] shrink-0" />
-            {item.label}
-          </NavLink>
-        ))}
+               `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all rounded-lg ${
+                 isActive
+                   ? 'bg-blue-600/20 text-blue-400'
+                   : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+               }`
+             }>
+             <item.icon className="w-[26px] h-[26px] shrink-0" />
+             {item.label}
+           </NavLink>
+         ))}
 
-        {/* Divider */}
-        <div className="mx-1 my-3 border-b border-white/[0.06]" />
+         {/* Divider */}
+         <div className="mx-1 my-3 border-b border-white/[0.06]" />
 
         {/* Groups */}
         {sidebarGroups.map(group => (
@@ -240,7 +282,7 @@ export default function Sidebar({ user, collapsed, onToggle }) {
         {filteredBottom.map(item => (
           <NavLink key={item.id} to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${
+              `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all rounded-lg ${
                 isActive
                   ? 'bg-blue-600/20 text-blue-400'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'

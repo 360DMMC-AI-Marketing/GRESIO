@@ -12,6 +12,7 @@ const CATEGORIES = [
       { title: 'Project Health Dashboard', desc: 'Completion %, overdue tasks, risk level, and days remaining — all visible at a glance.' },
       { title: 'Client & Tech Stack Mgmt', desc: 'Client name, tech stack tags, repos, staging/production URLs — everything in one place.' },
       { title: 'Archive & Restore', desc: 'Archive completed projects and restore them when needed. Full project history preserved.' },
+      { title: 'Project Relay — Chain Projects', desc: 'Link multiple projects into ordered pipelines. When one project is delivered, the next team is auto-notified. Tracks completion (3/5 done) with visual pipeline cards, green completion badges, and branching support (A → [B, C]).' },
     ],
   },
   {

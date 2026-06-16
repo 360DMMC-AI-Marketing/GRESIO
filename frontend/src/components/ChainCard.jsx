@@ -13,6 +13,7 @@ export default function ChainCard({ chain, onEdit, onDelete, onProjectClick }) {
   const navigate = useNavigate();
   const projects = chain.projects || [];
   const allDelivered = projects.length > 0 && projects.every(p => p.phase === 'delivered');
+  const deliveredCount = projects.filter(p => p.phase === 'delivered').length;
 
   return (
     <div style={{
@@ -29,7 +30,7 @@ export default function ChainCard({ chain, onEdit, onDelete, onProjectClick }) {
               ✓ Completed
             </span>
           )}
-          <span style={{fontSize:9,color:'#9ca3af'}}>{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+          <span style={{fontSize:9,color:'#9ca3af'}}>{deliveredCount}/{projects.length} projects done</span>
         </div>
         {!allDelivered && (
         <div style={{display:'flex',gap:4}}>
