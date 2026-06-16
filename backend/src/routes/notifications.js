@@ -1,9 +1,10 @@
 const { Router } = require('express');
-const { getNotifications, markRead, markUnread, markAllRead, deleteNotification, handleAction } = require('../controllers/notificationController');
+const { getNotifications, markRead, markUnread, markAllRead, deleteNotification, handleAction, cleanupStale } = require('../controllers/notificationController');
 const { auth } = require('../middleware/auth');
 const router = Router();
 router.use(auth);
 router.get('/', getNotifications);
+router.post('/cleanup-stale', cleanupStale);
 router.patch('/:id/read', markRead);
 router.patch('/:id/unread', markUnread);
 router.post('/read-all', markAllRead);

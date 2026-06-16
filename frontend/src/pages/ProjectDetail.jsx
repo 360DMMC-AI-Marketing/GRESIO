@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations } from '../services/api';
+import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
+import Dropdown from '../components/Dropdown';
 
 const TYPE_CONFIGS = {
   software: { label:'Software / Development', phases:['discovery','planning','development','testing','review','launched','delivered'], autoPhases:['discovery','planning','development','testing','review'] },
@@ -105,6 +106,8 @@ export default function ProjectDetail() {
   const [bugSeverityFilter, setBugSeverityFilter] = useState('all');
   const [selectedBug, setSelectedBug] = useState(null);
   const [confirmResolveBug, setConfirmResolveBug] = useState(null);
+  const [relayChains, setRelayChains] = useState([]);
+  const [relayPosition, setRelayPosition] = useState(null); // { chainName, prev, next }
   const [showReviewOverview, setShowReviewOverview] = useState(false);
   const [editingReviewCall, setEditingReviewCall] = useState(false);
   const [completeReviewModal, setCompleteReviewModal] = useState(null);
@@ -156,6 +159,27 @@ export default function ProjectDetail() {
       const active = new Set(sRes.data.filter(sp => sp.status === 'active').map(sp => sp._id));
       setExpandedSprints(active);
     }).catch(() => navigate('/projects'));
+
+    // Fetch relay chain info
+    chains.getAll().then(r => {
+      const all = r.data || [];
+      const relevant = all.filter(c => (c.projects || []).some(p => p._id === id));
+      setRelayChains(relevant);
+      if (relevant.length > 0) {
+        const chain = relevant[0];
+        const idx = (chain.projects || []).findIndex(p => p._id === id);
+        if (idx !== -1) {
+          setRelayPosition({
+            chainName: chain.name,
+            prev: idx > 0 ? chain.projects[idx - 1] : null,
+            next: idx < chain.projects.length - 1 ? chain.projects[idx + 1] : null,
+            total: chain.projects.length,
+            currentIdx: idx + 1,
+            chainId: chain._id,
+          });
+        }
+      }
+    }).catch(() => {});
   }, [id]);
 
   // Socket: join project room & listen for test case events
@@ -547,6 +571,7 @@ export default function ProjectDetail() {
     { key:'review', label:'🔍 Review' },
     { key:'team', label:'👥 Team' },
     { key:'resources', label:'🔗 Resources' },
+    { key:'relay', label:'⚡ Relay' },
     ...(['admin','project_manager','team_lead'].includes(user?.role) ? [{ key:'settings', label:'⚙️ Settings' }] : []),
   ];
 
@@ -826,6 +851,46 @@ export default function ProjectDetail() {
                 </div>
               </div>
 
+              {/* ===== Overview: Project Relay Widget ===== */}
+              {relayPosition && (
+                <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
+                  <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>
+                    ⚡ Project Relay
+                    <span style={{fontSize:8,fontWeight:400,color:'#9ca3af',marginLeft:4}}>
+                      · {relayPosition.chainName}
+                    </span>
+                  </div>
+                  <div style={{fontSize:9,color:'#6b7280',marginBottom:6}}>
+                    Step {relayPosition.currentIdx} of {relayPosition.total}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:4,fontSize:9}}>
+                    {relayPosition.prev ? (
+                      <div style={{padding:'4px 8px',background:'#f0fdf4',borderRadius:6,border:'0.5px solid #86efac',flex:1,minWidth:0}}>
+                        <div style={{fontSize:8,color:'#6b7280'}}>← Prev</div>
+                        <div style={{fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{relayPosition.prev.name}</div>
+                        <div style={{fontSize:7,color:'#22c55e'}}>✓ {relayPosition.prev.phase}</div>
+                      </div>
+                    ) : <div style={{flex:1}} />}
+                    <div style={{padding:'4px 8px',background:'#eff6ff',borderRadius:6,border:'0.5px solid #93c5fd',flex:1,minWidth:0}}>
+                      <div style={{fontSize:8,color:'#6b7280'}}>★ You are here</div>
+                      <div style={{fontWeight:700,color:'#1d4ed8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{project.name}</div>
+                    </div>
+                    {relayPosition.next ? (
+                      <div style={{padding:'4px 8px',background:'#f9fafb',borderRadius:6,border:'0.5px solid #e5e7eb',flex:1,minWidth:0}}>
+                        <div style={{fontSize:8,color:'#6b7280'}}>Next →</div>
+                        <div style={{fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{relayPosition.next.name}</div>
+                        <div style={{fontSize:7,color:'#9ca3af'}}>⏳ {relayPosition.next.phase}</div>
+                      </div>
+                    ) : <div style={{flex:1}} />}
+                  </div>
+                  {relayChains.length > 1 && (
+                    <div style={{marginTop:6,fontSize:8,color:'#9ca3af'}}>
+                      Part of {relayChains.length} chain{relayChains.length > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ===== Overview: Review Call Widget ===== */}
               <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
                 <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>📅 Review Call</div>
@@ -911,22 +976,20 @@ export default function ProjectDetail() {
             <form onSubmit={handleCreateSprint} style={{background:'white',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
               <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>New Sprint</div>
               <div className="form-row">
-                <input className="finput" value={sprintForm.name} onChange={e => setSprintForm({...sprintForm,name:e.target.value})} placeholder="Sprint name *" required style={{flex:1,minWidth:120}} />
-                <input className="finput" value={sprintForm.goal} onChange={e => setSprintForm({...sprintForm,goal:e.target.value})} placeholder="Goal (optional)" style={{flex:2,minWidth:160}} />
+                <input className="select" value={sprintForm.name} onChange={e => setSprintForm({...sprintForm,name:e.target.value})} placeholder="Sprint name *" required style={{flex:1,minWidth:120}} />
+                <input className="select" value={sprintForm.goal} onChange={e => setSprintForm({...sprintForm,goal:e.target.value})} placeholder="Goal (optional)" style={{flex:2,minWidth:160}} />
               </div>
               <div className="form-row">
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
                   <span style={{fontSize:9,color:'#6b7280'}}>Start date</span>
-                  <input type="date" className="finput" value={sprintForm.startDate} onChange={e => setSprintForm({...sprintForm,startDate:e.target.value})} required />
+                  <input type="date" className="select" value={sprintForm.startDate} onChange={e => setSprintForm({...sprintForm,startDate:e.target.value})} required />
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
                   <span style={{fontSize:9,color:'#6b7280'}}>End date</span>
-                  <input type="date" className="finput" value={sprintForm.endDate} onChange={e => setSprintForm({...sprintForm,endDate:e.target.value})} required />
+                  <input type="date" className="select" value={sprintForm.endDate} onChange={e => setSprintForm({...sprintForm,endDate:e.target.value})} required />
                 </div>
-                <select className="finput" value={sprintForm.status} onChange={e => setSprintForm({...sprintForm,status:e.target.value})}>
-                  <option value="planning">Planning</option>
-                  <option value="active">Active</option>
-                </select>
+                <Dropdown value={sprintForm.status} onChange={v => setSprintForm({...sprintForm,status:v})}
+                  options={[{value:'planning', label:'Planning'}, {value:'active', label:'Active'}]} />
               </div>
               <div style={{display:'flex',gap:6,marginTop:2}}>
                 <button type="submit" className="btn btn-blue" disabled={saving}>{saving ? 'Creating…' : 'Create Sprint'}</button>
@@ -983,13 +1046,13 @@ export default function ProjectDetail() {
                       <div style={{padding:'8px 11px',background:'#f9fafb',borderBottom:'0.5px solid #e5e7eb'}}>
                         <div style={{fontSize:10,fontWeight:600,color:'#111827',marginBottom:6}}>Edit sprint</div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
-                          <input className="finput" placeholder="Name" value={editSprintForm.name}
+                          <input className="select" placeholder="Name" value={editSprintForm.name}
                             onChange={e => setEditSprintForm({...editSprintForm,name:e.target.value})} />
-                          <input className="finput" placeholder="Goal" value={editSprintForm.goal}
+                          <input className="select" placeholder="Goal" value={editSprintForm.goal}
                             onChange={e => setEditSprintForm({...editSprintForm,goal:e.target.value})} />
-                          <input type="date" className="finput" value={editSprintForm.startDate}
+                          <input type="date" className="select" value={editSprintForm.startDate}
                             onChange={e => setEditSprintForm({...editSprintForm,startDate:e.target.value})} />
-                          <input type="date" className="finput" value={editSprintForm.endDate}
+                          <input type="date" className="select" value={editSprintForm.endDate}
                             onChange={e => setEditSprintForm({...editSprintForm,endDate:e.target.value})} />
                         </div>
                         <div style={{display:'flex',gap:6}}>
@@ -1047,7 +1110,7 @@ export default function ProjectDetail() {
                               </div>
                             ))}
                             <div className="add-sub-row">
-                              <input className="finput" placeholder="+ Add subtask" style={{flex:1,fontSize:10}}
+                              <input className="select" placeholder="+ Add subtask" style={{flex:1,fontSize:10}}
                                 value={subtaskInput}
                                 onChange={e => setSubtaskInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(t._id); } }} />
@@ -1063,24 +1126,17 @@ export default function ProjectDetail() {
                       <div className={`add-task-form ${openTaskForm === s._id ? 'open' : ''}`}>
                         <div style={{fontSize:10,fontWeight:600,color:'#374151',marginBottom:6}}>Add task to {s.name}</div>
                         <div className="form-row">
-                          <input className="finput" value={taskForm.title} onChange={e => setTaskForm({...taskForm,title:e.target.value})}
+                          <input className="select" value={taskForm.title} onChange={e => setTaskForm({...taskForm,title:e.target.value})}
                             placeholder="Task title *" style={{flex:2,minWidth:140}} />
-                          <select className="finput" value={taskGroupFilter} onChange={e => setTaskGroupFilter(e.target.value)} style={{fontSize:9,width:'auto'}}>
-                            <option value="">All groups</option>
-                            {groupedData.groups.map(g => <option key={g._id} value={g._id}>{g.icon} {g.name}</option>)}
-                          </select>
-                          <select className="finput" value={taskForm.assignee} onChange={e => setTaskForm({...taskForm,assignee:e.target.value})}>
-                            <option value="">Assign to…</option>
-                            {projectMembers
-                              .filter(u => !taskGroupFilter || (u.teamGroup && (u.teamGroup._id || u.teamGroup) === taskGroupFilter))
-                              .map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
-                          </select>
-                          <select className="finput" value={taskForm.priority} onChange={e => setTaskForm({...taskForm,priority:e.target.value})}>
-                            <option value="urgent">⚑ Urgent</option>
-                            <option value="high">▲ High</option>
-                            <option value="medium">◈ Medium</option>
-                            <option value="low">▽ Low</option>
-                          </select>
+                          <Dropdown value={taskGroupFilter} onChange={v => setTaskGroupFilter(v)}
+                            options={[{value:'', label:'All groups'}, ...groupedData.groups.map(g => ({value:g._id, label:`${g.icon} ${g.name}`}))]} />
+                          <Dropdown value={taskForm.assignee} onChange={v => setTaskForm({...taskForm,assignee:v})}
+                            options={[{value:'', label:'Assign to…'},
+                              ...projectMembers
+                                .filter(u => !taskGroupFilter || (u.teamGroup && (u.teamGroup._id || u.teamGroup) === taskGroupFilter))
+                                .map(u => ({value:u._id, label:u.name}))]} />
+                          <Dropdown value={taskForm.priority} onChange={v => setTaskForm({...taskForm,priority:v})}
+                            options={[{value:'urgent', label:'⚑ Urgent'}, {value:'high', label:'▲ High'}, {value:'medium', label:'◈ Medium'}, {value:'low', label:'▽ Low'}]} />
                         </div>
                         <div style={{display:'flex',gap:6}}>
                           <button className="btn btn-blue" onClick={() => handleCreateTask(s._id)} disabled={saving || !taskForm.title.trim()}>
@@ -1244,25 +1300,21 @@ export default function ProjectDetail() {
             <form onSubmit={handleResourceSubmit} style={{background:'white',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
               <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>{editingResource ? 'Edit Resource' : 'Add Resource'}</div>
               <div className="form-row">
-                <input className="finput" value={resourceForm.title} onChange={e => setResourceForm({...resourceForm,title:e.target.value})}
+                <input className="select" value={resourceForm.title} onChange={e => setResourceForm({...resourceForm,title:e.target.value})}
                   placeholder="Title *" required style={{flex:2,minWidth:160}} />
-                <select className="finput" value={resourceForm.category} onChange={e => setResourceForm({...resourceForm,category:e.target.value})}
-                  style={{flex:1,minWidth:100}}>
-                  {RESOURCE_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
-                </select>
-                <select className="finput" value={resourceForm.type} onChange={e => setResourceForm({...resourceForm,type:e.target.value})}
-                  style={{flex:1,minWidth:100}}>
-                  {RESOURCE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
+                <Dropdown value={resourceForm.category} onChange={v => setResourceForm({...resourceForm,category:v})}
+                  options={RESOURCE_CATEGORIES.map(c => ({value:c.key, label:c.label}))} />
+                <Dropdown value={resourceForm.type} onChange={v => setResourceForm({...resourceForm,type:v})}
+                  options={RESOURCE_TYPES.map(t => ({value:t.value, label:t.label}))} />
               </div>
               <div className="form-row">
-                <input className="finput" value={resourceForm.url} onChange={e => setResourceForm({...resourceForm,url:e.target.value})}
+                <input className="select" value={resourceForm.url} onChange={e => setResourceForm({...resourceForm,url:e.target.value})}
                   placeholder="URL (for links, repos, etc.)" style={{flex:3,minWidth:200}} />
-                <input type="file" className="finput" onChange={e => setResourceForm({...resourceForm,file:e.target.files[0]})}
+                <input type="file" className="select" onChange={e => setResourceForm({...resourceForm,file:e.target.files[0]})}
                   style={{flex:2,minWidth:140,padding:4}} />
               </div>
               <div className="form-row">
-                <input className="finput" value={resourceForm.description} onChange={e => setResourceForm({...resourceForm,description:e.target.value})}
+                <input className="select" value={resourceForm.description} onChange={e => setResourceForm({...resourceForm,description:e.target.value})}
                   placeholder="Description (optional)" style={{flex:1}} />
               </div>
               <div style={{display:'flex',gap:6}}>
@@ -1479,20 +1531,10 @@ export default function ProjectDetail() {
                 )}
               </div>
               <div style={{display:'flex',gap:4}}>
-                <select className="finput" style={{fontSize:9,width:'auto',padding:'3px 8px'}} value={bugFilter} onChange={e => setBugFilter(e.target.value)}>
-                  <option value="all">All Bugs</option>
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="fixed">Fixed</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <select className="finput" style={{fontSize:9,width:'auto',padding:'3px 8px'}} value={bugSeverityFilter} onChange={e => setBugSeverityFilter(e.target.value)}>
-                  <option value="all">All Severity</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                <Dropdown value={bugFilter} onChange={v => setBugFilter(v)}
+                  options={[{value:'all', label:'All Bugs'}, {value:'open', label:'Open'}, {value:'in_progress', label:'In Progress'}, {value:'fixed', label:'Fixed'}, {value:'closed', label:'Closed'}]} />
+                <Dropdown value={bugSeverityFilter} onChange={v => setBugSeverityFilter(v)}
+                  options={[{value:'all', label:'All Severity'}, {value:'critical', label:'Critical'}, {value:'high', label:'High'}, {value:'medium', label:'Medium'}, {value:'low', label:'Low'}]} />
               </div>
             </div>
             {(() => {
@@ -1556,6 +1598,63 @@ export default function ProjectDetail() {
         </div>
       )}
 
+      {/* ===== RELAY TAB ===== */}
+      {activeTab === 'relay' && (
+        <div className="tab-content" style={{display:'block'}}>
+          {relayChains.length === 0 ? (
+            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}>
+              <p style={{fontSize:28,marginBottom:8}}>⚡</p>
+              <p style={{fontSize:13,fontWeight:500}}>Not part of any relay chain</p>
+              <p style={{fontSize:10,marginTop:4}}>Go to Settings → Project Relay to link this project into a chain.</p>
+            </div>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              {relayChains.map(chain => {
+                const projects = chain.projects || [];
+                const currentIdx = projects.findIndex(p => p._id === id);
+                return (
+                  <div key={chain._id} style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:14}}>
+                    <div style={{fontSize:12,fontWeight:700,color:'#111827',marginBottom:8}}>⚡ {chain.name}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:0,overflowX:'auto',paddingBottom:4}}>
+                      {projects.map((p, i) => (
+                        <div key={p._id} style={{display:'flex',alignItems:'center',flexShrink:0}}>
+                          <div
+                            onClick={() => navigate(`/projects/${p._id}`)}
+                            style={{
+                              padding:'10px 14px',borderRadius:8,cursor:'pointer',minWidth:130,
+                              border: p._id === id ? '1.5px solid #2347e8' : '0.5px solid #e5e7eb',
+                              background: p._id === id ? '#eff6ff' : p.phase === 'delivered' ? '#f0fdf4' : 'white',
+                              boxShadow: p._id === id ? '0 0 0 2px rgba(35,71,232,0.15)' : 'none',
+                            }}
+                          >
+                            <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
+                              <span style={{fontSize:12}}>{p.projectType === 'design' ? '🎨' : p.projectType === 'software' ? '💻' : p.projectType === 'business' ? '📊' : p.projectType === 'content' ? '📝' : '🔬'}</span>
+                              <span style={{fontSize:11,fontWeight:600,color:'#111827',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:90}}>{p.name}</span>
+                              {i === currentIdx && <span style={{fontSize:8,color:'#2347e8',fontWeight:700,marginLeft:'auto'}}>★</span>}
+                            </div>
+                            <div style={{display:'flex',alignItems:'center',gap:4}}>
+                              <span style={{
+                                fontSize:8,padding:'2px 6px',borderRadius:10,fontWeight:600,
+                                background: p.phase === 'delivered' ? '#22c55e' : p.phase === 'launched' ? '#eab308' : '#f3f4f6',
+                                color: p.phase === 'delivered' ? 'white' : p.phase === 'launched' ? '#854d0e' : '#6b7280',
+                              }}>{p.phase?.replace(/_/g,' ')}</span>
+                              <span style={{fontSize:8,color:'#9ca3af'}}>{p.progress}%</span>
+                            </div>
+                          </div>
+                          {i < projects.length - 1 && (
+                            <div style={{display:'flex',alignItems:'center',margin:'0 8px',color:'#d1d5db',fontSize:18}}>→</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ===== REVIEW TAB ===== */}
       {activeTab === 'review' && (
         <div className="tab-content" style={{display:'block'}}>
@@ -1584,21 +1683,19 @@ export default function ProjectDetail() {
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
                       <div>
                         <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Date</label>
-                        <input type="date" className="finput" style={{fontSize:9,padding:'5px 8px',width:'100%'}}
-                          value={project.reviewCall.date.split('T')[0]}
+                          <input type="date" className="select" value={project.reviewCall.date.split('T')[0]}
                           onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), date: e.target.value}}))} />
                       </div>
                       <div>
                         <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Time</label>
-                        <input type="time" className="finput" style={{fontSize:9,padding:'5px 8px',width:'100%'}}
-                          value={project.reviewCall.time || ''}
+                          <input type="time" className="select" value={project.reviewCall.time || ''}
                           onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), time: e.target.value}}))} />
                       </div>
                     </div>
                     <div style={{marginBottom:8}}>
                       <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Meeting Link</label>
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        <input type="text" className="finput" style={{fontSize:9,padding:'5px 8px',flex:1}}
+                        <input type="text" className="select" style={{fontSize:9,padding:'5px 8px',flex:1}}
                           placeholder="https://meet.google.com/..."
                           value={project.reviewCall.link || ''}
                           onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), link: e.target.value}}))} />
@@ -1624,14 +1721,14 @@ export default function ProjectDetail() {
                     </div>
                     <div style={{marginBottom:10}}>
                       <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Notes (Agenda)</label>
-                      <textarea className="finput" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
+                      <textarea className="select" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
                         placeholder="Agenda items, things to discuss..."
                         value={project.reviewCall.notes || ''}
                         onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), notes: e.target.value}}))} />
                     </div>
                     <div style={{marginBottom:10}}>
                       <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Discussion Notes (Minutes)</label>
-                      <textarea className="finput" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
+                      <textarea className="select" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
                         placeholder="What was discussed during the call..."
                         value={project.reviewCall.discussion || ''}
                         onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), discussion: e.target.value}}))} />
@@ -1733,36 +1830,33 @@ export default function ProjectDetail() {
             <div className="settings-grid">
               <div className="s-field">
                 <label className="s-label">Project name</label>
-                <input className="s-input" value={project.name || ''}
+                <input className="select" value={project.name || ''}
                   onChange={e => updateProjectField('name', e.target.value)} disabled={!canManage} />
               </div>
               <div className="s-field">
                 <label className="s-label">Deadline</label>
-                <input type="date" className="s-input" value={project.deadline ? project.deadline.split('T')[0] : ''}
+                <input type="date" className="select" value={project.deadline ? project.deadline.split('T')[0] : ''}
                   onChange={e => updateProjectField('deadline', e.target.value)} disabled={!canManage} />
               </div>
               <div className="s-field">
                 <label className="s-label">Client name</label>
-                <input className="s-input" value={settingsForm.clientName || ''}
+                <input className="select" value={settingsForm.clientName || ''}
                   onChange={e => setSettingsForm({...settingsForm, clientName: e.target.value})} disabled={!canManage}
                   placeholder="Acme Corp" />
               </div>
               {canManage && (
               <div className="s-field">
                 <label className="s-label">Phase</label>
-                <select className="s-input" value={settingsForm.manualPhase || project.phase || ''}
-                  onChange={e => setSettingsForm({...settingsForm, manualPhase: e.target.value})}>
-                  {(TYPE_CONFIGS[project.projectType]?.phases || []).map(p => (
-                    <option key={p} value={p}>{p.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>
-                  ))}
-                </select>
+                <Dropdown value={settingsForm.manualPhase || project.phase || ''}
+                  onChange={v => setSettingsForm({...settingsForm, manualPhase:v})}
+                  options={(TYPE_CONFIGS[project.projectType]?.phases || []).map(p => ({value:p, label:p.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}))} />
               </div>
               )}
               {canManage && (
               <div className="s-field">
                 <label className="s-label">Progress</label>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <input type="range" min="0" max="100" className="s-input" style={{flex:1,padding:0,accentColor:'#2347e8'}}
+                  <input type="range" min="0" max="100" className="select" style={{flex:1,padding:0,accentColor:'#2347e8'}}
                     value={settingsForm.manualProgress !== undefined ? settingsForm.manualProgress : project.progress || 0}
                     onChange={e => setSettingsForm({...settingsForm, manualProgress: Number(e.target.value)})} />
                   <span style={{fontSize:11,fontWeight:600,color:'#111827',minWidth:28,textAlign:'right'}}>
@@ -1773,7 +1867,7 @@ export default function ProjectDetail() {
               )}
               <div className="s-field" style={{gridColumn:'1/-1'}}>
                 <label className="s-label">Description</label>
-                <textarea className="s-input" rows={2} style={{resize:'none'}} value={project.description || ''}
+                <textarea className="select" rows={2} style={{resize:'none'}} value={project.description || ''}
                   onChange={e => updateProjectField('description', e.target.value)} disabled={!canManage} />
               </div>
             </div>
@@ -1782,37 +1876,37 @@ export default function ProjectDetail() {
             <div className="settings-grid" style={{marginBottom:10}}>
               <div className="s-field">
                 <label className="s-label">Frontend repo</label>
-                <input className="s-input" value={settingsForm.frontendRepo || ''}
+                <input className="select" value={settingsForm.frontendRepo || ''}
                   onChange={e => setSettingsForm({...settingsForm, frontendRepo: e.target.value})} disabled={!canManage}
                   placeholder="e.g. 360dmmc/frontend" />
               </div>
               <div className="s-field">
                 <label className="s-label">Backend repo</label>
-                <input className="s-input" value={settingsForm.backendRepo || ''}
+                <input className="select" value={settingsForm.backendRepo || ''}
                   onChange={e => setSettingsForm({...settingsForm, backendRepo: e.target.value})} disabled={!canManage}
                   placeholder="e.g. 360dmmc/backend" />
               </div>
               <div className="s-field">
                 <label className="s-label">API Docs URL</label>
-                <input className="s-input" value={settingsForm.apiDocsUrl || ''}
+                <input className="select" value={settingsForm.apiDocsUrl || ''}
                   onChange={e => setSettingsForm({...settingsForm, apiDocsUrl: e.target.value})} disabled={!canManage}
                   placeholder="https://docs.example.com" />
               </div>
               <div className="s-field">
                 <label className="s-label">Staging URL</label>
-                <input className="s-input" value={settingsForm.stagingUrl || ''}
+                <input className="select" value={settingsForm.stagingUrl || ''}
                   onChange={e => setSettingsForm({...settingsForm, stagingUrl: e.target.value})} disabled={!canManage}
                   placeholder="https://staging.example.com" />
               </div>
               <div className="s-field">
                 <label className="s-label">Production URL</label>
-                <input className="s-input" value={settingsForm.productionUrl || ''}
+                <input className="select" value={settingsForm.productionUrl || ''}
                   onChange={e => setSettingsForm({...settingsForm, productionUrl: e.target.value})} disabled={!canManage}
                   placeholder="https://example.com" />
               </div>
               <div className="s-field" style={{gridColumn:'1/-1'}}>
                 <label className="s-label">Tech stack (comma-separated)</label>
-                <input className="s-input" value={techStackInput}
+                <input className="select" value={techStackInput}
                   onChange={e => setTechStackInput(e.target.value)} disabled={!canManage}
                   placeholder="Node.js, Express, MongoDB" />
               </div>
@@ -1836,6 +1930,39 @@ export default function ProjectDetail() {
           </div>
 
           <div className="settings-section">
+            <div className="settings-title">⚡ Project Relay</div>
+            <div style={{fontSize:10,color:'#6b7280',marginBottom:8}}>
+              Link this project into a pipeline chain. When delivered, the next project's team gets notified.
+            </div>
+            {relayChains.length === 0 ? (
+              <div style={{fontSize:10,color:'#9ca3af',marginBottom:8}}>Not linked to any relay chain.</div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:8}}>
+                {relayChains.map(chain => {
+                  const projects = chain.projects || [];
+                  const idx = projects.findIndex(p => p._id === id);
+                  return (
+                    <div key={chain._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#f9fafb',borderRadius:6,padding:'6px 10px',fontSize:10}}>
+                      <div>
+                        <span style={{fontWeight:600,color:'#111827'}}>{chain.name}</span>
+                        <span style={{color:'#6b7280',marginLeft:6}}>— Position {idx + 1} of {projects.length}</span>
+                      </div>
+                      <button onClick={() => navigate(`/relay`)}
+                        style={{padding:'2px 8px',background:'#2347e8',color:'white',borderRadius:4,fontSize:9,border:'none',cursor:'pointer'}}>
+                        View Chain
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <button onClick={() => navigate('/relay')}
+              style={{padding:'5px 12px',background:'#f3f4f6',color:'#374151',borderRadius:6,fontSize:10,border:'none',cursor:'pointer',fontWeight:500}}>
+              Manage Chains ↗
+            </button>
+          </div>
+
+          <div className="settings-section">
             <div className="settings-title">💬 Microsoft Teams Channel</div>
             <div className="settings-grid">
               <div className="s-field" style={{gridColumn:'1/-1'}}>
@@ -1851,7 +1978,7 @@ export default function ProjectDetail() {
                   </div>
                 ) : null}
                 <label className="s-label">Channel name</label>
-                <input className="s-input" value={settingsForm.teamsChannel || ''}
+                <input className="select" value={settingsForm.teamsChannel || ''}
                   onChange={e => setSettingsForm({...settingsForm, teamsChannel: e.target.value})} disabled={!canManage}
                   placeholder="e.g. Project Alpha" />
               </div>

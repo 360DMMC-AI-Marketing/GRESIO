@@ -146,6 +146,7 @@ export const notifications = {
   markAllRead: () => api.post('/notifications/read-all'),
   delete: (id) => api.delete(`/notifications/${id}`),
   handleAction: (id, action) => api.post(`/notifications/${id}/action`, { action }),
+  cleanupStale: () => api.post('/notifications/cleanup-stale'),
 };
 
 export const testing = {
@@ -184,6 +185,14 @@ export const interests = {
   restoreFlagged: (id) => api.post(`/interests/flagged/${id}/restore`),
   restoreAllFlagged: () => api.post('/interests/flagged/restore-all'),
   deleteAllFlagged: () => api.delete('/interests/flagged'),
+};
+
+export const chains = {
+  getAll: () => api.get('/chains'),
+  getById: (id) => api.get(`/chains/${id}`),
+  create: (data) => api.post('/chains', data),
+  update: (id, data) => api.put(`/chains/${id}`, data),
+  remove: (id) => api.delete(`/chains/${id}`),
 };
 
 export const bugs = {

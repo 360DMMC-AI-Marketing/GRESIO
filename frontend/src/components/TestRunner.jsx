@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { testCases } from '../services/api';
+import Dropdown from './Dropdown';
 
 export default function TestRunner({ testCase, onClose, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -299,14 +300,9 @@ export default function TestRunner({ testCase, onClose, onComplete }) {
                   </div>
                   <div style={{marginBottom:12}}>
                     <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Severity <span style={{color:'#ef4444'}}>*</span></label>
-                    <select value={bugReport.severity}
-                      onChange={e => setBugReport({...bugReport, severity: e.target.value})}
-                      style={{width:'100%',padding:'7px 10px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'white',outline:'none'}}>
-                      <option value="critical">Critical</option>
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
+                    <Dropdown value={bugReport.severity}
+                      onChange={v => setBugReport({...bugReport, severity: v})}
+                      options={[{value:'critical', label:'Critical'}, {value:'high', label:'High'}, {value:'medium', label:'Medium'}, {value:'low', label:'Low'}]} />
                   </div>
                   <div style={{marginBottom:12}}>
                     <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Screenshot</label>

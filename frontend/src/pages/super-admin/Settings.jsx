@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Save } from 'lucide-react';
+import Dropdown from '../../components/Dropdown';
 
 export default function SettingsPage() {
   const [form, setForm] = useState({
@@ -38,7 +39,7 @@ export default function SettingsPage() {
           <div className="s-field">
             <label className="s-label">Company Name</label>
             <input
-              className="s-input"
+              className="select"
               value={form.companyName}
               onChange={(e) => setForm({ ...form, companyName: e.target.value })}
             />
@@ -46,7 +47,7 @@ export default function SettingsPage() {
           <div className="s-field">
             <label className="s-label">Support Email</label>
             <input
-              className="s-input"
+              className="select"
               value={form.supportEmail}
               onChange={(e) => setForm({ ...form, supportEmail: e.target.value })}
             />
@@ -54,16 +55,8 @@ export default function SettingsPage() {
         </div>
         <div className="s-field">
           <label className="s-label">Default Plan for New Companies</label>
-          <select
-            className="s-input"
-            value={form.defaultPlan}
-            onChange={(e) => setForm({ ...form, defaultPlan: e.target.value })}
-          >
-            <option value="trial">Trial</option>
-            <option value="starter">Starter</option>
-            <option value="pro">Pro</option>
-            <option value="enterprise">Enterprise</option>
-          </select>
+          <Dropdown value={form.defaultPlan} onChange={v => setForm({ ...form, defaultPlan:v })}
+            options={[{value:'trial', label:'Trial'}, {value:'starter', label:'Starter'}, {value:'pro', label:'Pro'}, {value:'enterprise', label:'Enterprise'}]} />
         </div>
       </div>
 
@@ -122,17 +115,8 @@ export default function SettingsPage() {
           </div>
           <div className="s-field">
             <label className="s-label">Session Timeout (minutes)</label>
-            <select
-              className="s-input"
-              value={form.sessionTimeout}
-              onChange={(e) => setForm({ ...form, sessionTimeout: e.target.value })}
-            >
-              <option value="15">15 minutes</option>
-              <option value="30">30 minutes</option>
-              <option value="60">60 minutes</option>
-              <option value="120">2 hours</option>
-              <option value="240">4 hours</option>
-            </select>
+            <Dropdown value={form.sessionTimeout} onChange={v => setForm({ ...form, sessionTimeout:v })}
+              options={[{value:'15', label:'15 minutes'}, {value:'30', label:'30 minutes'}, {value:'60', label:'60 minutes'}, {value:'120', label:'2 hours'}, {value:'240', label:'4 hours'}]} />
           </div>
         </div>
       </div>
@@ -143,7 +127,7 @@ export default function SettingsPage() {
           <label className="s-label">Stripe Secret Key</label>
           <input
             type="password"
-            className="s-input"
+            className="select"
             value={form.stripeKey}
             onChange={(e) => setForm({ ...form, stripeKey: e.target.value })}
             placeholder="sk_live_..."

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api, { workLogs } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Dropdown from '../components/Dropdown';
 
 const ROLE_STYLES = {
   admin: { bg:'#eef2ff', clr:'#4338ca' },
@@ -233,26 +234,14 @@ export default function Users() {
             <input type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email:e.target.value })}
               placeholder="Email address *" required
               style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none' }} />
-            <select value={addForm.projectRole} onChange={e => setAddForm({ ...addForm, projectRole:e.target.value })}
-              style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, background:'white', outline:'none' }}>
-              {ROLE_CATEGORIES.map(c => (
-                <optgroup key={c.label} label={c.label}>
-                  {c.roles.map(r => <option key={r} value={r}>{r.replace(/_/g,' ')}</option>)}
-                </optgroup>
-              ))}
-            </select>
+            <Dropdown value={addForm.projectRole} onChange={v => setAddForm({ ...addForm, projectRole:v })}
+              options={ROLE_CATEGORIES.flatMap(c => c.roles.map(r => ({value:r, label:`${c.label} > ${r.replace(/_/g,' ')}`})))} style={{width:'100%'}} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
-            <select value={addForm.project} onChange={e => setAddForm({ ...addForm, project:e.target.value, teamGroup:'' })}
-              style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, background:'white', outline:'none' }}>
-              <option value="">— Select project —</option>
-              {projects.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-            </select>
-            <select value={addForm.teamGroup} onChange={e => setAddForm({ ...addForm, teamGroup:e.target.value })}
-              style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, background:'white', outline:'none' }}>
-              <option value="">— No group —</option>
-              {projectGroups.map(g => <option key={g._id} value={g._id}>{g.icon} {g.name}</option>)}
-            </select>
+            <Dropdown value={addForm.project} onChange={v => setAddForm({ ...addForm, project:v, teamGroup:'' })}
+              options={[{value:'', label:'— Select project —'}, ...projects.map(p => ({value:p._id, label:p.name}))]} style={{width:'100%'}} />
+            <Dropdown value={addForm.teamGroup} onChange={v => setAddForm({ ...addForm, teamGroup:v })}
+              options={[{value:'', label:'— No group —'}, ...projectGroups.map(g => ({value:g._id, label:`${g.icon} ${g.name}`}))]} style={{width:'100%'}} />
           </div>
           <div style={{ display:'flex', gap:6 }}>
             <button type="submit"
@@ -602,8 +591,7 @@ export default function Users() {
 
                 <div className="mb-[10px]">
                   <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Date</label>
-                  <input type="date" value={wlForm.date} onChange={e => setWlForm({ ...wlForm, date:e.target.value })}
-                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border" />
+                   <input type="date" className="select" value={wlForm.date} onChange={e => setWlForm({ ...wlForm, date:e.target.value })} />
                 </div>
 
                 <div className="mb-[10px]">
@@ -615,15 +603,8 @@ export default function Users() {
 
                 <div className="mb-[10px]">
                   <label className="block text-[10px] font-medium text-surface-700 mb-[3px]">Project</label>
-                  <select value={wlForm.project} onChange={e => setWlForm({ ...wlForm, project:e.target.value })}
-                    className="w-full px-[10px] py-[7px] text-[11px] border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 box-border">
-                    <option value="">— Select project —</option>
-                    {(selectedMember.memberships || []).map(ms => (
-                      <option key={ms.project?._id || ms.project} value={ms.project?._id || ms.project}>
-                        {ms.project?.name || 'Unknown'}
-                      </option>
-                    ))}
-                  </select>
+                   <Dropdown value={wlForm.project} onChange={v => setWlForm({ ...wlForm, project:v })}
+                     options={[{value:'', label:'— Select project —'}, ...(selectedMember.memberships || []).map(ms => ({value:ms.project?._id || ms.project, label:ms.project?.name || 'Unknown'}))]} />
                 </div>
 
                 <div className="mb-[10px]">

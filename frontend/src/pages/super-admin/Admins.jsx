@@ -3,6 +3,7 @@ import { Search, Plus, Loader } from 'lucide-react';
 import DataTable from '../../components/super-admin/DataTable';
 import StatusBadge from '../../components/super-admin/StatusBadge';
 import Modal from '../../components/super-admin/Modal';
+import Dropdown from '../../components/Dropdown';
 import { api } from '../../services/api';
 
 export default function Admins() {
@@ -101,22 +102,20 @@ export default function Admins() {
         <div className="space-y-3">
           <div>
             <label className="s-label">Name</label>
-            <input className="s-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="John Doe" />
+            <input className="select" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="John Doe" />
           </div>
           <div>
             <label className="s-label">Email</label>
-            <input className="s-input" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="john@360dmmc.com" />
+            <input className="select" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="john@360dmmc.com" />
           </div>
           <div>
             <label className="s-label">Password</label>
-            <input className="s-input" type="text" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Min 6 characters" />
+            <input className="select" type="text" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Min 6 characters" />
           </div>
           <div>
             <label className="s-label">Role</label>
-            <select className="s-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
-              <option value="admin">Admin</option>
-              <option value="support">Support</option>
-            </select>
+            <Dropdown value={form.role} onChange={v => setForm({...form, role:v})}
+              options={[{value:'admin', label:'Admin'}, {value:'support', label:'Support'}]} />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">

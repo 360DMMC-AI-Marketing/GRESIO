@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import Dropdown from '../components/Dropdown';
 
 const MOOD_EMOJI = { great:'😊', good:'🙂', okay:'😐', difficult:'😓' };
 const CATEGORIES = ['development', 'meeting', 'review', 'testing', 'deployment', 'other'];
@@ -265,25 +266,17 @@ export default function WorkLogs() {
               <>
                 <div className="mb-3">
                   <label className="block text-xs font-medium text-surface-700 mb-1.5">1. Select Project</label>
-                  <select value={selectedProject} onChange={e => { setSelectedProject(e.target.value); setSelectedTask(''); }}
-                    className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">— Select project —</option>
-                    {userData.projects.map(p => (
-                      <option key={p._id} value={p._id}>{p.name}</option>
-                    ))}
-                  </select>
+                   <Dropdown value={selectedProject} onChange={v => { setSelectedProject(v); setSelectedTask(''); }}
+                     options={[{value:'', label:'— Select project —'}, ...userData.projects.map(p => ({value:p._id, label:p.name}))]} style={{width:'100%'}} />
                 </div>
 
                 <div className="mb-4">
                   <label className="block text-xs font-medium text-surface-700 mb-1.5">2. Select Task</label>
-                  <select value={selectedTask} onChange={e => setSelectedTask(e.target.value)}
-                    disabled={!selectedProject}
-                    className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-surface-100 disabled:text-surface-400 disabled:cursor-not-allowed">
-                    <option value="">{selectedProject ? '— Select task —' : '— Select a project first —'}</option>
-                    {projectTasks.map(t => (
-                      <option key={t._id} value={t._id}>{t.title}</option>
-                    ))}
-                  </select>
+                   <Dropdown value={selectedTask} onChange={v => setSelectedTask(v)}
+                     options={selectedProject
+                       ? [{value:'', label:'— Select task —'}, ...projectTasks.map(t => ({value:t._id, label:t.title}))]
+                       : [{value:'', label:'— Select a project first —'}]
+                     } style={{width:'100%'}} />
                 </div>
 
                 <button onClick={() => {
@@ -312,10 +305,8 @@ export default function WorkLogs() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-surface-700 mb-1.5">Category</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary-500">
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                     <Dropdown value={category} onChange={v => setCategory(v)}
+                       options={CATEGORIES.map(c => ({value:c, label:c}))} style={{width:'100%'}} />
                   </div>
                 </div>
 

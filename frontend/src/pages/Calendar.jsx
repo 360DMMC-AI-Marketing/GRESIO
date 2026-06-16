@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calendarEvents, projects } from '../services/api';
 import AddCalendarItemModal from '../components/AddCalendarItemModal';
+import Dropdown from '../components/Dropdown';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -164,13 +165,11 @@ export default function Calendar() {
         </div>
 
         <div className="px-5 py-2.5 border-b border-neutral-100 dark:border-neutral-700 flex items-center gap-3 flex-wrap">
-          <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
-            className="text-[10px] font-medium px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 outline-none cursor-pointer">
-            <option value="">All projects</option>
-            {allProjects.map(p => (
-              <option key={p._id} value={p._id}>{p.name}</option>
-            ))}
-          </select>
+          <Dropdown
+            value={selectedProjectId}
+            onChange={v => setSelectedProjectId(v)}
+            options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]}
+          />
         </div>
 
         <div className="p-5">

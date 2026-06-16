@@ -8,6 +8,7 @@ const Company = require('../models/Company');
 const microsoftGraphService = require('../services/microsoftGraphService');
 const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { enforceProjectLimit } = require('../config/planLimits');
+const ProjectChain = require('../models/ProjectChain');
 
 exports.getProjects = async (req, res, next) => {
   try {
@@ -217,6 +218,32 @@ exports.markDelivered = async (req, res, next) => {
         link: `/projects/${project._id}`,
       });
     }
+    // Project Relay: notify next projects in any chains containing this project
+    try {
+      const chains = await ProjectChain.find({ domain: req.user.domain, projects: project._id, isActive: true });
+      for (const chain of chains) {
+        const idx = chain.projects.indexOf(project._id);
+        if (idx !== -1 && idx < chain.projects.length - 1) {
+          const nextProjectId = chain.projects[idx + 1];
+          const nextProject = await Project.findById(nextProjectId).select('name members');
+          if (nextProject) {
+            const notifiedNext = new Set();
+            for (const m of nextProject.members || []) {
+              if (notifiedNext.has(m.toString())) continue;
+              notifiedNext.add(m.toString());
+              await Notification.create({
+                user: m,
+                domain: req.user.domain,
+                type: 'project_relay',
+                title: `🎯 Relay: ${project.name} is delivered!`,
+                message: `Chain "${chain.name}": "${project.name}" is complete. Your project "${nextProject.name}" is next — ready to start?`,
+                link: `/projects/${nextProjectId}`,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) { console.error('Project Relay notification error:', e); }
     res.json(project);
   } catch (e) { next(e); }
 };
@@ -320,6 +347,10 @@ exports.deleteReviewCall = async (req, res, next) => {
     if (!project) return res.status(404).json({ message: 'Project not found' });
     project.reviewCall = undefined;
     await project.save();
+    await Notification.updateMany(
+      { domain: req.user.domain, type: 'meeting_reminder', 'metadata.projectId': project._id, 'metadata.stale': { $ne: true } },
+      { $set: { 'metadata.stale': true } }
+    );
     res.json({ message: 'Review call deleted' });
   } catch (e) { next(e); }
 };

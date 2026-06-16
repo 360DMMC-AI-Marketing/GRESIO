@@ -63,6 +63,33 @@ exports.deleteNotification = async (req, res, next) => {
   }
 };
 
+exports.cleanupStale = async (req, res, next) => {
+  try {
+    const notifs = await Notification.find({
+      user: req.user._id,
+      domain: req.user.domain,
+      type: 'meeting_reminder',
+      'metadata.stale': { $ne: true },
+    }).select('metadata').lean();
+
+    const projectIds = [...new Set(notifs.map(n => n.metadata?.projectId?.toString()).filter(Boolean))];
+    if (!projectIds.length) return res.json({ modified: 0 });
+
+    const projects = await Project.find({ _id: { $in: projectIds } }).select('reviewCall').lean();
+    const activeIds = new Set(projects.filter(p => p.reviewCall?.date).map(p => p._id.toString()));
+
+    const staleIds = notifs.filter(n => !activeIds.has(n.metadata.projectId.toString())).map(n => n._id);
+    if (!staleIds.length) return res.json({ modified: 0 });
+
+    await Notification.updateMany(
+      { _id: { $in: staleIds } },
+      { $set: { 'metadata.stale': true } }
+    );
+
+    res.json({ modified: staleIds.length });
+  } catch (e) { next(e); }
+};
+
 exports.handleAction = async (req, res, next) => {
   try {
     const notif = await Notification.findOne({ _id: req.params.id, user: req.user._id, domain: req.user.domain });

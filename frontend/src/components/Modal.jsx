@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import Dropdown from './Dropdown';
 
 export default function Modal({ open, onClose, title, icon, children, footer, style }) {
   useEffect(() => {
@@ -82,9 +83,8 @@ export function InputModal({ open, onClose, onSubmit, title, icon, fields, submi
         <label key={f.key} className="block text-xs font-medium text-surface-700 mt-3 first:mt-0">
           {f.label}
           {f.type === 'select' ? (
-            <select className="w-full px-2.5 py-1.5 text-xs border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 mt-1" value={f.value} onChange={f.onChange}>
-              {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <Dropdown className="mt-1" value={f.value} onChange={f.onChange}
+              options={f.options} />
           ) : f.type === 'textarea' ? (
             <textarea className="w-full px-2.5 py-1.5 text-xs border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 mt-1 resize-vertical min-h-[60px]" value={f.value} onChange={f.onChange} placeholder={f.placeholder} />
           ) : (

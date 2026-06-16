@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sprints as sprintsApi, projects, tasks as tasksApi, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Dropdown from '../components/Dropdown';
 
 const STATUS_META = {
   planning: { label:'Planning', cls:'bg-neutral-100 text-neutral-600' },
@@ -85,16 +86,10 @@ export default function Sprints() {
       </div>
 
       <div className="card" style={{padding:'8px 12px',marginBottom:12,display:'flex',gap:8}}>
-        <select value={filterProject} onChange={e => setFilterProject(e.target.value)}
-          style={{padding:'5px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-          <option value="">All projects</option>
-          {allProjects.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{padding:'5px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-          <option value="">All statuses</option>
-          {Object.entries(STATUS_META).map(([v,m]) => <option key={v} value={v}>{m.label}</option>)}
-        </select>
+        <Dropdown value={filterProject} onChange={v => setFilterProject(v)}
+          options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]} style={{width:200}} />
+        <Dropdown value={filterStatus} onChange={v => setFilterStatus(v)}
+          options={[{value:'', label:'All statuses'}, ...Object.entries(STATUS_META).map(([v,m]) => ({value:v, label:m.label}))]} style={{width:160}} />
       </div>
 
       {list.length === 0 ? (
@@ -152,18 +147,12 @@ export default function Sprints() {
                         <input value={taskForm.title} onChange={e => setTaskForm({...taskForm, title:e.target.value})} placeholder="Task title *" autoFocus
                           style={{width:'100%',padding:'4px 6px',border:'0.5px solid #e5e7eb',borderRadius:4,fontSize:9,background:'#f9fafb',outline:'none',boxSizing:'border-box'}} />
                         <div style={{display:'flex',gap:4}}>
-                          <select value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority:e.target.value})}
-                            style={{flex:1,padding:'4px 6px',border:'0.5px solid #e5e7eb',borderRadius:4,fontSize:9,background:'#f9fafb',outline:'none'}}>
-                            <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option><option value="blocker">Blocker</option><option value="critical">Critical</option>
-                          </select>
-                          <select value={taskForm.assignee} onChange={e => setTaskForm({...taskForm, assignee:e.target.value})}
-                            style={{flex:1,padding:'4px 6px',border:'0.5px solid #e5e7eb',borderRadius:4,fontSize:9,background:'#f9fafb',outline:'none'}}>
-                            <option value="">Unassigned</option>
-                            {allUsers.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
-                          </select>
+                          <Dropdown value={taskForm.priority} onChange={v => setTaskForm({...taskForm, priority:v})}
+                            options={['low','medium','high','urgent','blocker','critical'].map(p => ({value:p, label:p.charAt(0).toUpperCase() + p.slice(1)}))} style={{flex:1}} />
+                          <Dropdown value={taskForm.assignee} onChange={v => setTaskForm({...taskForm, assignee:v})}
+                            options={[{value:'', label:'Unassigned'}, ...allUsers.map(u => ({value:u._id, label:u.name}))]} style={{flex:1}} />
                         </div>
-                        <input type="date" value={taskForm.deadline} onChange={e => setTaskForm({...taskForm, deadline:e.target.value})}
-                          style={{width:'100%',padding:'4px 6px',border:'0.5px solid #e5e7eb',borderRadius:4,fontSize:9,background:'#f9fafb',outline:'none',boxSizing:'border-box'}} />
+                        <input type="date" className="select" value={taskForm.deadline} onChange={e => setTaskForm({...taskForm, deadline:e.target.value})} />
                         <div style={{display:'flex',gap:4}}>
                           <button onClick={() => handleCreateTaskInSprint(s._id)} disabled={creatingTask === s._id || !taskForm.title.trim()}
                             style={{flex:1,padding:'4px 6px',background:'#2347e8',color:'white',border:'none',borderRadius:4,fontSize:9,fontWeight:600,cursor:creatingTask === s._id || !taskForm.title.trim()?'not-allowed':'pointer',opacity:creatingTask === s._id || !taskForm.title.trim()?0.6:1}}>

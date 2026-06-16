@@ -18,7 +18,7 @@ const timeAgo = (date) => {
 const getColumn = (n) => {
   if (['project_update', 'project_invite'].includes(n.type)) return 'projects';
   if (['task_assigned', 'task_updated'].includes(n.type)) return 'tasks';
-  if (['mention', 'system', 'meeting_reminder', 'deadline_alert', 'warning', 'worklog_added'].includes(n.type)) return 'other';
+  if (['mention', 'system', 'meeting_reminder', 'deadline_alert', 'warning', 'worklog_added', 'project_relay'].includes(n.type)) return 'other';
   if (n.type === 'status_change') {
     if (/project/i.test(n.title)) return 'projects';
     return 'tasks';
@@ -46,6 +46,7 @@ const getOtherIcon = (n) => {
   if (n.type === 'mention' || /mentioned/.test(n.message)) return '💬';
   if (n.type === 'meeting_reminder') return '📅';
   if (n.type === 'deadline_alert' || /overdue/.test(n.title)) return '⏰';
+  if (n.type === 'project_relay') return '🎯';
   return '🔔';
 };
 
@@ -70,9 +71,13 @@ export default function NotificationsPage() {
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
-    notifications.getAll()
-      .then(r => setNotifs(r.data))
-      .catch(() => {});
+    notifications.cleanupStale()
+      .catch(() => {})
+      .finally(() => {
+        notifications.getAll()
+          .then(r => setNotifs(r.data))
+          .catch(() => {});
+      });
   }, []);
 
   const handleAction = async (n, actionName) => {
@@ -201,7 +206,7 @@ export default function NotificationsPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm ${n.read ? 'text-neutral-500' : 'font-semibold text-neutral-900'}`}>{n.title}</p>
+                        <p className={`text-sm ${n.read ? 'text-neutral-500' : 'font-semibold text-neutral-900'}`} style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.title}</p>
                         <div className="flex items-center gap-1 shrink-0">
                           <button onClick={() => toggleRead(n)}
                             className={`w-2.5 h-2.5 rounded-full border-2 transition-all bg-transparent cursor-pointer ${n.read ? 'border-neutral-300 hover:border-brand-500' : 'border-brand-500 bg-brand-500'}`}
@@ -211,7 +216,7 @@ export default function NotificationsPage() {
                             title="Delete">&times;</button>
                         </div>
                       </div>
-                      <p className="text-sm text-neutral-500 mt-0.5">{n.message}</p>
+                      <p className="text-sm text-neutral-500 mt-0.5" style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.message}</p>
                       <p className="text-xs text-neutral-300 mt-1.5">{timeAgo(n.createdAt)}</p>
                       {n.actions && n.actions.length > 0 && !n.read && (
                         <div className="flex gap-2 mt-2">
@@ -224,7 +229,7 @@ export default function NotificationsPage() {
                           ))}
                         </div>
                       )}
-                      {n.link && (
+                      {n.link && !n.metadata?.stale && (
                         <button onClick={() => navigate(n.link)}
                           className="text-xs font-medium mt-2 bg-transparent border-none cursor-pointer p-0 transition-colors"
                           style={{color:cfg.color}}>

@@ -4,6 +4,7 @@ import { projects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
 import ReportChoiceModal from '../components/ReportChoiceModal';
+import Dropdown from '../components/Dropdown';
 import FEATURES from '../config/featureFlags';
 
 const STATUS_CLASS = {
@@ -86,17 +87,17 @@ export default function Projects() {
             <input value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name"
               style={inputStyle} /></div>
           <div><label style={labelStyle}>Deadline</label>
-            <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+            <input type="date" className="select" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
               style={inputStyle} /></div>
           <div style={{gridColumn:'1/-1'}}><label style={labelStyle}>Project type</label>
-            <select value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })}
-              style={{...inputStyle,appearance:'auto'}}>
-              <option value="software">Software / Development</option>
-              <option value="design">Design / Creative</option>
-              <option value="business">Business / Marketing / Growth</option>
-              <option value="content">Content / Writing</option>
-              <option value="research">Research / Analysis</option>
-            </select></div>
+            <Dropdown value={form.projectType} onChange={v => setForm({ ...form, projectType:v })}
+              options={[
+                {value:'software', label:'Software / Development'},
+                {value:'design', label:'Design / Creative'},
+                {value:'business', label:'Business / Marketing / Growth'},
+                {value:'content', label:'Content / Writing'},
+                {value:'research', label:'Research / Analysis'},
+              ]} style={{width:'100%'}} /></div>
         </div>
       </Modal>
 

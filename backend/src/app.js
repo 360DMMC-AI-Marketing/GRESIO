@@ -34,6 +34,7 @@ const myTasksRoutes = require('./routes/myTasks');
 const reportRoutes = require('./routes/reports');
 const reportDraftRoutes = require('./routes/reportDrafts');
 const searchRoutes = require('./routes/search');
+const chainRoutes = require('./routes/chains');
 const { router: superAdminRoutes, seedSuperAdmin, startNotificationPolling } = require('./routes/superAdmin');
 
 const app = express();
@@ -113,6 +114,7 @@ app.use('/api/report-drafts', reportDraftRoutes);
 app.use('/api/calendar', require('./routes/calendar'));
 
 app.use('/api/search', searchRoutes);
+app.use('/api/chains', chainRoutes);
 
 app.use('/super-api', superAdminRoutes);
 

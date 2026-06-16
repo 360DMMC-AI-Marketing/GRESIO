@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { testCases, interests, bugs, projects } from '../services/api';
 import TestRunner from '../components/TestRunner';
+import Dropdown from '../components/Dropdown';
 
 const ALL_STATUSES = ['draft', 'auto-draft', 'ready', 'in_progress', 'passed', 'failed', 'blocked', 'skipped', 'retesting'];
 
@@ -296,11 +297,8 @@ export default function TestCaseDashboard() {
           <div style={{fontSize:18,fontWeight:700,color:'#111827'}}>🧪 Test Case Dashboard</div>
           <div style={{fontSize:11,color:'#9ca3af',marginTop:1}}>{testList.length} test cases</div>
         </div>
-        <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
-          style={{padding:'5px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none',minWidth:180}}>
-          <option value="">Select a project...</option>
-          {projectList.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-        </select>
+        <Dropdown value={selectedProject} onChange={v => setSelectedProject(v)}
+          options={[{value:'', label:'Select a project...'}, ...projectList.map(p => ({value:p._id, label:p.name}))]} style={{minWidth:180}} />
       </div>
 
       {!selectedProject ? (
@@ -376,17 +374,13 @@ export default function TestCaseDashboard() {
               <div style={{display:'flex',gap:10}}>
                 <div style={{flex:1}}>
                   <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Type</label>
-                  <select value={newForm.type} onChange={e => setNewForm({...newForm, type: e.target.value})}
-                    style={{width:'100%',padding:'6px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-                    {['manual','integration','unit','e2e','security','performance'].map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <Dropdown value={newForm.type} onChange={v => setNewForm({...newForm, type:v})}
+                    options={['manual','integration','unit','e2e','security','performance'].map(t => ({value:t, label:t}))} style={{width:'100%'}} />
                 </div>
                 <div style={{flex:1}}>
                   <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Priority</label>
-                  <select value={newForm.priority} onChange={e => setNewForm({...newForm, priority: e.target.value})}
-                    style={{width:'100%',padding:'6px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-                    {['low','medium','high','urgent','critical'].map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <Dropdown value={newForm.priority} onChange={v => setNewForm({...newForm, priority:v})}
+                    options={['low','medium','high','urgent','critical'].map(p => ({value:p, label:p}))} style={{width:'100%'}} />
                 </div>
               </div>
             </div>
@@ -406,22 +400,13 @@ export default function TestCaseDashboard() {
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <div>
                 <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Status</label>
-                <select value={editStatus} onChange={e => setEditStatus(e.target.value)}
-                  style={{width:'100%',padding:'6px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-                  {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <Dropdown value={editStatus} onChange={v => setEditStatus(v)}
+                  options={ALL_STATUSES.map(s => ({value:s, label:s}))} style={{width:'100%'}} />
               </div>
               <div>
                 <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Assign to QA Tester</label>
-                <select value={editAssignee} onChange={e => setEditAssignee(e.target.value)}
-                  style={{width:'100%',padding:'6px 8px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'#f9fafb',outline:'none'}}>
-                  <option value="">Unassigned</option>
-                  {qaMembers.map(m => (
-                    <option key={m.user?._id} value={m.user?._id}>
-                      {m.user?.name || m.user?.email}
-                    </option>
-                  ))}
-                </select>
+                <Dropdown value={editAssignee} onChange={v => setEditAssignee(v)}
+                  options={[{value:'', label:'Unassigned'}, ...qaMembers.map(m => ({value:m.user?._id, label:m.user?.name || m.user?.email}))]} style={{width:'100%'}} />
               </div>
             </div>
             <div style={{display:'flex',gap:6,justifyContent:'flex-end',marginTop:14}}>

@@ -171,23 +171,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        <div className="card">
-          <div className="card-header"><span className="card-title">Recent Activity</span></div>
-          <div style={{padding:'8px 0'}}>
-            {(stats?.recentActivity || []).length === 0 && <p className="text-center text-neutral-400 text-sm py-6">No activity yet</p>}
-            {(stats?.recentActivity || []).slice(0, 8).map((a, i) => (
-              <div key={i} style={{display:'flex',gap:8,padding:'6px 12px'}}>
-                <div style={{width:24,height:24,background:'#f0f4ff',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:'#2347e8',flexShrink:0}}>
-                  {a.user?.name?.charAt(0) || '?'}
-                </div>
-                <div>
-                  <div style={{fontSize:10,color:'#374151'}}>{a.description}</div>
-                  <div style={{fontSize:9,color:'#9ca3af',marginTop:1}}>{relativeTime(a.createdAt)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

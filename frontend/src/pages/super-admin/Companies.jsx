@@ -5,6 +5,7 @@ import DataTable from '../../components/super-admin/DataTable';
 import StatusBadge from '../../components/super-admin/StatusBadge';
 import PlanBadge from '../../components/super-admin/PlanBadge';
 import Modal from '../../components/super-admin/Modal';
+import Dropdown from '../../components/Dropdown';
 import { api } from '../../services/api';
 
 export default function Companies() {
@@ -84,11 +85,8 @@ export default function Companies() {
           <input type="text" placeholder="Search companies..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
         </div>
-        <select value={planFilter} onChange={e => setPlanFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg text-surface-600 focus:outline-none">
-          <option value="all">All Plans</option>
-          {plans.map(p => <option key={p} value={p} className="capitalize">{p}</option>)}
-        </select>
+        <Dropdown value={planFilter} onChange={v => setPlanFilter(v)}
+          options={[{value:'all', label:'All Plans'}, ...plans.map(p => ({value:p, label:p}))]} />
       </div>
 
       {loading ? (
@@ -109,34 +107,31 @@ export default function Companies() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="s-label">Company Name</label>
-              <input className="s-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Acme Corp" />
+              <input className="select" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Acme Corp" />
             </div>
             <div>
               <label className="s-label">Domain</label>
-              <input className="s-input" value={form.domain} onChange={e => setForm({...form, domain: e.target.value})} placeholder="acme.com" />
+              <input className="select" value={form.domain} onChange={e => setForm({...form, domain: e.target.value})} placeholder="acme.com" />
             </div>
           </div>
           <div>
             <label className="s-label">Plan</label>
-            <select className="s-input" value={form.plan} onChange={e => setForm({...form, plan: e.target.value})}>
-              <option value="starter">Starter</option>
-              <option value="team">Team</option>
-              <option value="enterprise">Enterprise</option>
-            </select>
+            <Dropdown value={form.plan} onChange={v => setForm({...form, plan:v})}
+              options={[{value:'starter', label:'Starter'}, {value:'team', label:'Team'}, {value:'enterprise', label:'Enterprise'}]} />
           </div>
           <hr className="border-surface-200" />
           <p className="text-xs font-semibold text-surface-700">Company Admin Account</p>
           <div>
             <label className="s-label">Admin Name</label>
-            <input className="s-input" value={form.adminName} onChange={e => setForm({...form, adminName: e.target.value})} placeholder="John Doe" />
+            <input className="select" value={form.adminName} onChange={e => setForm({...form, adminName: e.target.value})} placeholder="John Doe" />
           </div>
           <div>
             <label className="s-label">Admin Email</label>
-            <input className="s-input" type="email" value={form.adminEmail} onChange={e => setForm({...form, adminEmail: e.target.value})} placeholder="john@acme.com" />
+            <input className="select" type="email" value={form.adminEmail} onChange={e => setForm({...form, adminEmail: e.target.value})} placeholder="john@acme.com" />
           </div>
           <div>
             <label className="s-label">Admin Password</label>
-            <input className="s-input" type="text" value={form.adminPassword} onChange={e => setForm({...form, adminPassword: e.target.value})} placeholder="Min 6 characters" />
+            <input className="select" type="text" value={form.adminPassword} onChange={e => setForm({...form, adminPassword: e.target.value})} placeholder="Min 6 characters" />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">

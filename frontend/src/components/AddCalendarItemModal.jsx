@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { calendarEvents, projects, integrations } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Dropdown from '../components/Dropdown';
 
 const TYPES = [
   { value: 'event', label: 'Event', icon: '\u25CF' },
@@ -116,25 +117,18 @@ export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">Start *</label>
-              <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-colors" />
+              <input type="datetime-local" className="select" value={date} onChange={e => setDate(e.target.value)} />
             </div>
             <div>
               <label className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">End</label>
-              <input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-colors" />
+              <input type="datetime-local" className="select" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           </div>
 
           <div>
             <label className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">Project</label>
-            <select value={project} onChange={e => setProject(e.target.value)}
-              className="w-full text-xs px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-colors">
-              <option value="">No project</option>
-              {projectList.map(p => (
-                <option key={p._id} value={p._id}>{p.name}</option>
-              ))}
-            </select>
+            <Dropdown value={project} onChange={v => setProject(v)}
+              options={[{value:'', label:'No project'}, ...projectList.map(p => ({value:p._id, label:p.name}))]} style={{width:'100%'}} />
           </div>
 
           {(type === 'event' || type === 'milestone') && (

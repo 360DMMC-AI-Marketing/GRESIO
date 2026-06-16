@@ -19,6 +19,7 @@ import Teams from './pages/Teams';
 import Outlook from './pages/Outlook';
 import WorkLogs from './pages/WorkLogs';
 import TestCaseDashboard from './pages/TestCaseDashboard';
+import ProjectRelay from './pages/ProjectRelay';
 import OnboardingGuide from './pages/OnboardingGuide';
 import About from './pages/About';
 import Blog from './pages/Blog';
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="/work-logs" element={<WorkLogs />} />
             <Route path="/test-cases" element={<TestCaseDashboard />} />
             <Route path="/test-cases/:projectId" element={<TestCaseDashboard />} />
+            <Route path="/relay" element={<ProjectRelay />} />
             <Route path="/onboarding-guide" element={<OnboardingGuide />} />
             <Route path="/users" element={<Users />} />
             <Route path="/analytics" element={<Analytics />} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { analytics, projects } from '../services/api';
 import StatCard from '../components/StatCard';
+import Dropdown from '../components/Dropdown';
 
 const secTitle = { fontSize:15,fontWeight:600,color:'#111827',marginBottom:12,display:'flex',alignItems:'center',gap:8 };
 const card = { background:'white',borderRadius:10,border:'0.5px solid #e5e7eb',padding:14 };
@@ -531,23 +532,23 @@ export default function AnalyticsPage() {
 
             {/* Project selector */}
             <div style={{marginBottom:12}}>
-              <select
+              <Dropdown
                 value={selectedDeptProject?.projectId || ''}
-                onChange={e => {
-                  if (!e.target.value) { setSelectedDeptProject(null); setExpandedDept(null); return; }
-                  const proj = projectParticipation.find(p => p.projectId === e.target.value);
+                onChange={v => {
+                  if (!v) { setSelectedDeptProject(null); setExpandedDept(null); return; }
+                  const proj = projectParticipation.find(p => p.projectId === v);
                   setSelectedDeptProject(proj || null);
                   setExpandedDept(null);
                 }}
-                style={{width:'100%',padding:'7px 10px',borderRadius:8,border:'0.5px solid #d1d5db',fontSize:11,color:'#111827',background:'white',cursor:'pointer'}}
-              >
-                <option value="">Select a project to analyze...</option>
-                {projectParticipation.map(p => (
-                  <option key={p.projectId} value={p.projectId}>
-                    {p.name} · {p.taskCompletionRate}% {p.taskCompletionRate > 70 ? '🟢' : p.taskCompletionRate > 40 ? '🟡' : '🔴'}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  {value:'', label:'Select a project to analyze...'},
+                  ...projectParticipation.map(p => ({
+                    value:p.projectId,
+                    label:`${p.name} · ${p.taskCompletionRate}% ${p.taskCompletionRate > 70 ? '🟢' : p.taskCompletionRate > 40 ? '🟡' : '🔴'}`
+                  }))
+                ]}
+                style={{width:'100%'}}
+              />
             </div>
 
             {!selectedDeptProject && (
@@ -707,22 +708,18 @@ export default function AnalyticsPage() {
               <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· select a department to analyze</span>
             </div>
             <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-              <select
+              <Dropdown
                 value={selectedDept || ''}
-                onChange={e => { setSelectedDept(e.target.value || null); setDeptPage(0); setDeptSearchQ(''); setDeptExpandedMember(null); }}
-                style={{flex:1,minWidth:220,padding:'7px 10px',borderRadius:8,border:'0.5px solid #d1d5db',fontSize:11,color:'#111827',background:'white',cursor:'pointer'}}
-              >
-                <option value="">Select a department...</option>
-                {(domainGroups?.groups || []).map(g => {
-                  const bc = (DEPT_BRAND[g.name]?.color) || '#6b7280';
-                  const cnt = g.members?.length || 0;
-                  return (
-                    <option key={g.name} value={g.name}>
-                      {g.icon || '👥'} {DEPT_BRAND[g.name]?.short || g.name} · {cnt} member{cnt!==1?'s':''}
-                    </option>
-                  );
-                })}
-              </select>
+                onChange={v => { setSelectedDept(v || null); setDeptPage(0); setDeptSearchQ(''); setDeptExpandedMember(null); }}
+                options={[
+                  {value:'', label:'Select a department...'},
+                  ...(domainGroups?.groups || []).map(g => {
+                    const cnt = g.members?.length || 0;
+                    return {value:g.name, label:`${g.icon || '👥'} ${DEPT_BRAND[g.name]?.short || g.name} · ${cnt} member${cnt!==1?'s':''}`};
+                  })
+                ]}
+                style={{flex:1,minWidth:220}}
+              />
               {selectedDept && (() => {
                 const bc = (DEPT_BRAND[selectedDept]?.color) || '#6b7280';
                 return (

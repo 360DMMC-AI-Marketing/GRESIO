@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { tasks, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
+import Dropdown from '../components/Dropdown';
 
 const STATUS_CLASS = { todo:'t-todo', in_progress:'t-inprog', review:'t-review', done:'t-done', delayed:'t-todo' };
 const PRIORITY_CLASS = { blocker:'priority-blocker', critical:'priority-critical', urgent:'priority-urgent', high:'priority-high', medium:'priority-medium', low:'text-neutral-400' };
@@ -362,30 +363,20 @@ function CreateSeparateTaskModal({ allUsers, onClose, onCreated }) {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
           <div>
             <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Type</label>
-            <select value={separateType} onChange={e => setSeparateType(e.target.value)}
-              style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box'}}>
-              {SEPARATE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Dropdown value={separateType} onChange={v => setSeparateType(v)}
+              options={SEPARATE_TYPES.map(t => ({value:t, label:t}))} style={{width:'100%'}} />
           </div>
           <div>
             <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Priority</label>
-            <select value={priority} onChange={e => setPriority(e.target.value)}
-              style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box'}}>
-              {['low','medium','high','critical'].map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-            </select>
+            <Dropdown value={priority} onChange={v => setPriority(v)}
+              options={['low','medium','high','critical'].map(p => ({value:p, label:p.charAt(0).toUpperCase() + p.slice(1)}))} style={{width:'100%'}} />
           </div>
         </div>
         <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Assignee</label>
-        <select value={assigneeId} onChange={e => setAssigneeId(e.target.value)}
-          style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box',marginBottom:10}}>
-          <option value="">Unassigned</option>
-          {allUsers.filter(u => u.isActive).map(u => (
-            <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
-          ))}
-        </select>
+        <Dropdown value={assigneeId} onChange={v => setAssigneeId(v)}
+          options={[{value:'', label:'Unassigned'}, ...allUsers.filter(u => u.isActive).map(u => ({value:u._id, label:`${u.name} (${u.email})`}))]} style={{width:'100%',marginBottom:10}} />
         <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Deadline</label>
-        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
-          style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',boxSizing:'border-box'}} />
+        <input type="date" className="select" value={deadline} onChange={e => setDeadline(e.target.value)} />
       </div>
     </Modal>
   );
@@ -466,40 +457,28 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
               <div>
                 <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Type</label>
-                <select value={editType} onChange={e => setEditType(e.target.value)}
-                  style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box'}}>
-                  {SEPARATE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <Dropdown value={editType} onChange={v => setEditType(v)}
+                  options={SEPARATE_TYPES.map(t => ({value:t, label:t}))} style={{width:'100%'}} />
               </div>
               <div>
                 <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Priority</label>
-                <select value={editPriority} onChange={e => setEditPriority(e.target.value)}
-                  style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box'}}>
-                  {['low','medium','high','critical'].map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                </select>
+                <Dropdown value={editPriority} onChange={v => setEditPriority(v)}
+                  options={['low','medium','high','critical'].map(p => ({value:p, label:p.charAt(0).toUpperCase() + p.slice(1)}))} style={{width:'100%'}} />
               </div>
             </div>
           )}
           <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Assignee</label>
-          <select value={editAssignee} onChange={e => setEditAssignee(e.target.value)}
-            style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box',marginBottom:10}}>
-            <option value="">Unassigned</option>
-            {allUsers.filter(u => u.isActive).map(u => (
-              <option key={u._id} value={u._id}>{u.name}</option>
-            ))}
-          </select>
+          <Dropdown value={editAssignee} onChange={v => setEditAssignee(v)}
+            options={[{value:'', label:'Unassigned'}, ...allUsers.filter(u => u.isActive).map(u => ({value:u._id, label:u.name}))]} style={{width:'100%',marginBottom:10}} />
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
               <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Status</label>
-              <select value={editStatus} onChange={e => setEditStatus(e.target.value)}
-                style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',background:'white',boxSizing:'border-box'}}>
-                {['todo','in_progress','review','done','delayed'].map(s => <option key={s} value={s}>{s.replace('_',' ')}</option>)}
-              </select>
+              <Dropdown value={editStatus} onChange={v => setEditStatus(v)}
+                options={['todo','in_progress','review','done','delayed'].map(s => ({value:s, label:s.replace('_',' ')}))} style={{width:'100%'}} />
             </div>
             <div>
               <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Deadline</label>
-              <input type="date" value={editDeadline} onChange={e => setEditDeadline(e.target.value)}
-                style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',boxSizing:'border-box'}} />
+              <input type="date" className="select" value={editDeadline} onChange={e => setEditDeadline(e.target.value)} />
             </div>
           </div>
           <div style={{display:'flex',gap:6,justifyContent:'flex-end',marginTop:10}}>
