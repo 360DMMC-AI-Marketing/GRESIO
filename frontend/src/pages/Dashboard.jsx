@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { analytics, projects, companies, tasks } from '../services/api';
+import { analytics, projects, companies } from '../services/api';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
 
@@ -34,7 +34,6 @@ export default function Dashboard() {
   const [projectList, setProjectList] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [riskData, setRiskData] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -50,7 +49,6 @@ export default function Dashboard() {
         setTimeout(() => {
           analytics.getPredictions().then(r => setPredictions(r.data || [])).catch(() => {});
         }, 2000);
-        tasks.getRiskForecast().then(r => setRiskData(r.data)).catch(() => {});
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -119,40 +117,44 @@ export default function Dashboard() {
         </div>
       )}
 
-      {riskData && (
-        <div className="card" style={{marginBottom:12,padding:14,borderLeft:'3px solid #f59e0b'}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-            <span style={{fontSize:14}}>🔮</span>
-            <span style={{fontSize:12,fontWeight:600,color:'#111827'}}>Risk Forecast</span>
-            {riskData.atRisk?.length > 0 ? (
-              <span className="status-badge bg-warning-50 text-warning-700">{riskData.atRisk.length} at-risk task{riskData.atRisk.length > 1 ? 's' : ''}</span>
-            ) : (
-              <span className="status-badge bg-success-50 text-success-700" style={{fontSize:9}}>All clear</span>
-            )}
-            <span style={{fontSize:10,color:'#9ca3af',marginLeft:'auto'}}>Analyzed {riskData.total} tasks</span>
+      {predictions.length > 0 && (
+        <div className="card" style={{marginBottom:12,padding:14,borderLeft:'3px solid #ef4444'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <span style={{fontSize:16}}>🚨</span>
+            <span style={{fontSize:13,fontWeight:700,color:'#111827'}}>Projects at Risk</span>
+            <span className="status-badge bg-danger-50 text-danger-700" style={{fontSize:10}}>{highRisk.length} high · {mediumRisk.length} medium</span>
+            <span style={{fontSize:10,color:'#9ca3af',marginLeft:'auto'}}>{predictions.length} projects monitored</span>
           </div>
-          {riskData.atRisk?.length > 0 ? (
-            <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
-              {riskData.atRisk.slice(0, 10).map(t => (
-              <Link key={t._id} to={`/projects/${t.project?._id || '#'}`} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:6,background:t.risk === 'critical' ? '#fef2f2' : '#fffbeb',border:'0.5px solid',borderColor:t.risk === 'critical' ? '#fecaca' : '#fde68a'}}>
-                <span style={{fontSize:12}}>{t.risk === 'critical' ? '🔴' : '🟡'}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:10,fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.title}</div>
-                  <div style={{fontSize:8,color:'#6b7280',marginTop:1}}>
-                    {t.project?.name}{t.sprint?.name ? ` · ${t.sprint.name}` : ''}{t.assignee ? ` · ${t.assignee.name}` : ''}
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {predictions.sort((a,b) => {
+              const order = { high:0, medium:1, low:2 };
+              return (order[a.risk] || 3) - (order[b.risk] || 3);
+            }).map(p => {
+              const isBad = p.risk === 'high' || p.risk === 'medium';
+              const barColor = p.completionRate >= 70 ? '#22c55e' : p.completionRate >= 40 ? '#f59e0b' : '#ef4444';
+              return (
+                <Link key={p.projectId} to={`/projects/${p.projectId}`} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,background:isBad ? '#fef2f2' : '#f9fafb',border:'0.5px solid',borderColor:isBad ? '#fecaca' : '#e5e7eb'}}>
+                  <span style={{fontSize:18}}>{p.risk === 'high' ? '🔴' : p.risk === 'medium' ? '🟡' : '🟢'}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:11,fontWeight:600,color:'#111827'}}>{p.name}</span>
+                      <span style={{fontSize:8,color:'#6b7280',background:'#f3f4f6',padding:'1px 5px',borderRadius:3,textTransform:'capitalize'}}>{p.status}</span>
+                    </div>
+                    <div style={{display:'flex',gap:12,marginTop:4,fontSize:9,color:'#6b7280'}}>
+                      <span>{p.done}/{p.total} tasks</span>
+                      {p.overdue > 0 && <span style={{color:'#ef4444',fontWeight:600}}>{p.overdue} overdue</span>}
+                      {p.daysUntilDeadline !== null && <span style={{color:p.daysUntilDeadline <= 7 ? '#ef4444' : '#6b7280'}}>{p.daysUntilDeadline}d left</span>}
+                      {p.completionRate !== undefined && <span>{Math.round(p.completionRate)}% complete</span>}
+                    </div>
+                    <div className="prog-bar" style={{marginTop:4,height:4}}><div className="prog-fill" style={{width:`${Math.round(p.completionRate)}%`,background:barColor}} /></div>
                   </div>
-                </div>
-                <div style={{fontSize:8,textAlign:'right',flexShrink:0}}>
-                  {t.reasons.slice(0,2).map((r,i) => <div key={i} style={{color:'#b45309'}}>{r}</div>)}
-                </div>
-              </Link>
-            ))}
-            </div>
-          ) : (
-            <div style={{fontSize:10,color:'#6b7280',textAlign:'center',padding:'8px 0'}}>
-              All tasks on track ✓
-            </div>
-          )}
+                  {p.daysUntilDeadline !== null && p.daysUntilDeadline <= 3 && (
+                    <span style={{fontSize:9,color:'white',background:'#ef4444',padding:'2px 6px',borderRadius:4,fontWeight:600,flexShrink:0}}>CRITICAL</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
 
