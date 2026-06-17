@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { analytics, projects, companies } from '../services/api';
+import { analytics, projects, companies, tasks } from '../services/api';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
 
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [projectList, setProjectList] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [riskData, setRiskData] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -49,6 +50,7 @@ export default function Dashboard() {
         setTimeout(() => {
           analytics.getPredictions().then(r => setPredictions(r.data || [])).catch(() => {});
         }, 2000);
+        tasks.getRiskForecast().then(r => setRiskData(r.data)).catch(() => {});
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -111,6 +113,33 @@ export default function Dashboard() {
                   {p.daysUntilDeadline !== null ? `${p.daysUntilDeadline}d remaining` : 'No deadline'}
                 </div>
                 <div style={{fontSize:10,color:'#b91c1c',marginTop:1}}>{p.completionRate}% complete</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {riskData && riskData.atRisk?.length > 0 && (
+        <div className="card" style={{marginBottom:12,padding:14,borderLeft:'3px solid #f59e0b'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <span style={{fontSize:14}}>🔮</span>
+            <span style={{fontSize:12,fontWeight:600,color:'#111827'}}>Risk Forecast</span>
+            <span className="status-badge bg-warning-50 text-warning-700">{riskData.atRisk.length} at-risk task{riskData.atRisk.length > 1 ? 's' : ''}</span>
+            <span style={{fontSize:10,color:'#9ca3af',marginLeft:'auto'}}>Analyzed {riskData.total} tasks</span>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
+            {riskData.atRisk.slice(0, 10).map(t => (
+              <Link key={t._id} to={`/projects/${t.project?._id || '#'}`} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:6,background:t.risk === 'critical' ? '#fef2f2' : '#fffbeb',border:'0.5px solid',borderColor:t.risk === 'critical' ? '#fecaca' : '#fde68a'}}>
+                <span style={{fontSize:12}}>{t.risk === 'critical' ? '🔴' : '🟡'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:10,fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.title}</div>
+                  <div style={{fontSize:8,color:'#6b7280',marginTop:1}}>
+                    {t.project?.name}{t.sprint?.name ? ` · ${t.sprint.name}` : ''}{t.assignee ? ` · ${t.assignee.name}` : ''}
+                  </div>
+                </div>
+                <div style={{fontSize:8,textAlign:'right',flexShrink:0}}>
+                  {t.reasons.slice(0,2).map((r,i) => <div key={i} style={{color:'#b45309'}}>{r}</div>)}
+                </div>
               </Link>
             ))}
           </div>

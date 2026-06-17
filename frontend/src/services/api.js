@@ -104,6 +104,7 @@ export const tasks = {
   updateSubtask: (id, subtaskId, data) => api.patch(`/tasks/${id}/subtasks/${subtaskId}`, data),
   deleteSubtask: (id, subtaskId) => api.delete(`/tasks/${id}/subtasks/${subtaskId}`),
   autoPrioritize: (id) => api.get(`/tasks/auto-prioritize/${id}`),
+  getRiskForecast: () => api.get('/tasks/risk-forecast'),
 };
 
 export const analytics = {

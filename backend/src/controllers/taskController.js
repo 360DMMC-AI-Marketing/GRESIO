@@ -647,3 +647,71 @@ exports.autoPrioritize = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getRiskForecast = async (req, res, next) => {
+  try {
+    const projectIds = await getDomainProjectIds(req.user.domain);
+    const tasks = await Task.find({
+      project: { $in: projectIds },
+      isActive: true,
+      status: { $ne: 'done' },
+    }).populate('project', 'name status deadline')
+      .populate('assignee', 'name role')
+      .populate('sprint', 'name endDate')
+      .sort({ deadline: 1 });
+
+    const now = new Date();
+    const atRisk = [];
+    const soon = [];
+
+    for (const t of tasks) {
+      let risk = 'low';
+      let reasons = [];
+      let score = 0;
+
+      if (t.deadline) {
+        const daysLeft = (t.deadline - now) / 86400000;
+        if (daysLeft < 0) { risk = 'critical'; reasons.push(`Overdue by ${Math.abs(Math.round(daysLeft))}d`); score += 5; }
+        else if (daysLeft <= 3) { risk = 'high'; reasons.push(`${Math.round(daysLeft)}d until deadline`); score += 4; }
+        else if (daysLeft <= 7) { risk = 'medium'; reasons.push(`${Math.round(daysLeft)}d until deadline`); score += 2; }
+        else { reasons.push(`${Math.round(daysLeft)}d until deadline`); score += 0; }
+      }
+
+      if (t.status === 'delayed') { score += 2; reasons.push('Status: delayed'); }
+      if (t.subtasks && t.subtasks.length > 0) {
+        const doneSubs = t.subtasks.filter(st => st.completed).length;
+        if (doneSubs === 0 && t.subtasks.length > 2) { score += 2; reasons.push(`${t.subtasks.length} subtasks, none done`); }
+      }
+      if (t.sprint && t.sprint.endDate && !t.deadline) {
+        const sprintDaysLeft = (new Date(t.sprint.endDate) - now) / 86400000;
+        if (sprintDaysLeft <= 3) { score += 3; reasons.push(`Sprint ends in ${Math.round(sprintDaysLeft)}d`); }
+      }
+      if (t.project && t.project.status === 'at_risk') { score += 2; reasons.push('Project at risk'); }
+
+      if (score >= 5) risk = 'critical';
+      else if (score >= 3) risk = 'high';
+      else if (score >= 1) risk = 'medium';
+
+      const entry = {
+        _id: t._id,
+        title: t.title,
+        status: t.status,
+        deadline: t.deadline,
+        priority: t.priority,
+        assignee: t.assignee,
+        project: t.project ? { _id: t.project._id, name: t.project.name } : null,
+        sprint: t.sprint ? { _id: t.sprint._id, name: t.sprint.name } : null,
+        risk,
+        score,
+        reasons,
+      };
+
+      if (risk === 'critical' || risk === 'high') atRisk.push(entry);
+      else soon.push(entry);
+    }
+
+    res.json({ atRisk: atRisk.slice(0, 30), monitored: soon.slice(0, 10), total: tasks.length });
+  } catch (error) {
+    next(error);
+  }
+};
