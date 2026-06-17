@@ -1,11 +1,12 @@
 const { Router } = require('express');
-const { getTasks, getSeparateTasks, getTaskById, createTask, createSeparateTask, updateTask, deleteTask, addSubtask, updateSubtask, deleteSubtask, bulkUpdateTasks } = require('../controllers/taskController');
+const { getTasks, getSeparateTasks, getTaskById, createTask, createSeparateTask, updateTask, deleteTask, addSubtask, updateSubtask, deleteSubtask, bulkUpdateTasks, autoPrioritize } = require('../controllers/taskController');
 const { auth, authorize } = require('../middleware/auth');
 const { task: taskValidation } = require('../middleware/validate');
 const router = Router();
 router.use(auth);
 router.get('/', getTasks);
 router.get('/separate', getSeparateTasks);
+router.get('/auto-prioritize/:id', autoPrioritize);
 router.get('/:id', getTaskById);
 router.post('/', authorize('admin', 'project_manager', 'team_lead', 'manager', 'qa_tester'), taskValidation.create, createTask);
 router.post('/separate', authorize('admin', 'project_manager', 'team_lead', 'manager'), createSeparateTask);

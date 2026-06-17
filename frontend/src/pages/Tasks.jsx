@@ -488,6 +488,8 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activityLog, setActivityLog] = useState([]);
+  const [aiPriority, setAiPriority] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const isCreator = task.createdBy?._id === user?._id;
   const isAdmin = user?.role === 'admin';
@@ -538,6 +540,15 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
     } catch (e) { alert(e.response?.data?.message || 'Failed to update status'); }
   };
 
+  const handleAutoPrioritize = async () => {
+    setAiLoading(true);
+    try {
+      const res = await tasks.autoPrioritize(task._id);
+      setAiPriority(res.data);
+    } catch (e) { console.error(e); }
+    finally { setAiLoading(false); }
+  };
+
   return (
     <Modal open onClose={onClose} title={editing ? 'Edit Task' : 'Task Details'} icon="📝" style={{maxWidth:520}}>
       {editing ? (
@@ -548,20 +559,34 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
           <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Description</label>
           <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={2}
             style={{width:'100%',padding:'6px 10px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:11,outline:'none',resize:'vertical',boxSizing:'border-box',marginBottom:10}} />
-          {task.scope === 'separate' && (
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+            <div>
+              <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Priority</label>
+              <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                <Dropdown value={editPriority} onChange={v => { setEditPriority(v); setAiPriority(null); }}
+                  options={['low','medium','high','urgent','critical','blocker'].map(p => ({value:p, label:p.charAt(0).toUpperCase() + p.slice(1)}))} style={{flex:1}} />
+                <button onClick={handleAutoPrioritize} disabled={aiLoading} title="Suggest priority"
+                  style={{padding:'3px 6px',background:'linear-gradient(135deg,#667eea,#764ba2)',color:'white',border:'none',borderRadius:4,fontSize:9,cursor:'pointer',opacity:aiLoading?0.6:1,whiteSpace:'nowrap'}}>
+                  ✨ {aiLoading ? '…' : 'Auto'}
+                </button>
+              </div>
+              {aiPriority && (
+                <div style={{fontSize:9,marginTop:3,color:'#6b7280',background:'#f3f4f6',padding:'3px 6px',borderRadius:4}}>
+                  Suggest <strong style={{color:'#2347e8',textTransform:'capitalize'}}>{aiPriority.suggested}</strong>
+                  {aiPriority.reasons?.length > 0 && ` (${aiPriority.reasons.join(', ')})`}
+                  <span onClick={() => { setEditPriority(aiPriority.suggested); setAiPriority(null); }}
+                    style={{marginLeft:6,color:'#2347e8',cursor:'pointer',fontWeight:600}}>Apply</span>
+                </div>
+              )}
+            </div>
+            {task.scope === 'separate' && (
               <div>
                 <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Type</label>
                 <Dropdown value={editType} onChange={v => setEditType(v)}
                   options={SEPARATE_TYPES.map(t => ({value:t, label:t}))} style={{width:'100%'}} />
               </div>
-              <div>
-                <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Priority</label>
-                <Dropdown value={editPriority} onChange={v => setEditPriority(v)}
-                  options={['low','medium','high','critical'].map(p => ({value:p, label:p.charAt(0).toUpperCase() + p.slice(1)}))} style={{width:'100%'}} />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
           <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginBottom:3}}>Assignee</label>
           <Dropdown value={editAssignee} onChange={v => setEditAssignee(v)}
             options={[{value:'', label:'Unassigned'}, ...allUsers.filter(u => u.isActive).map(u => ({value:u._id, label:u.name}))]} style={{width:'100%',marginBottom:10}} />
@@ -602,7 +627,24 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
           </div>
 
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16,padding:10,background:'#f9fafb',borderRadius:10}}>
-            <div><div style={{fontSize:9,color:'#9ca3af',marginBottom:1}}>Priority</div><div style={{fontSize:11,fontWeight:600,color:'#374151'}}>{task.priority}</div></div>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:4}}>
+                <div style={{fontSize:9,color:'#9ca3af',marginBottom:1}}>Priority</div>
+                <button onClick={handleAutoPrioritize} disabled={aiLoading}
+                  style={{padding:'1px 5px',background:'linear-gradient(135deg,#667eea,#764ba2)',color:'white',border:'none',borderRadius:3,fontSize:7,cursor:'pointer',opacity:aiLoading?0.6:1}}>
+                  ✨ {aiLoading ? '…' : 'AI'}
+                </button>
+              </div>
+              <div style={{fontSize:11,fontWeight:600,color:'#374151'}}>
+                {task.priority}
+                {aiPriority && (
+                  <span style={{marginLeft:6,fontSize:9,color:'#6b7280',fontWeight:400}}>
+                    → <strong style={{color:'#2347e8'}}>{aiPriority.suggested}</strong>
+                    <span onClick={() => setEditing(true)} style={{marginLeft:4,color:'#2347e8',cursor:'pointer',fontWeight:600,textDecoration:'underline'}}>Edit</span>
+                  </span>
+                )}
+              </div>
+            </div>
             <div><div style={{fontSize:9,color:'#9ca3af',marginBottom:1}}>Deadline</div><div style={{fontSize:11,fontWeight:600,color: task.deadline && new Date(task.deadline) < new Date() && task.status !== 'done' ? '#ef4444' : '#374151'}}>{task.deadline ? new Date(task.deadline).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '—'}</div></div>
             <div><div style={{fontSize:9,color:'#9ca3af',marginBottom:1}}>Assignee</div><div>{task.assignee ? <div className="assignee-chip"><Avatar name={task.assignee.name} role={task.assignee.role} /><span style={{fontSize:11}}>{task.assignee.name}</span></div> : <span style={{fontSize:11,color:'#9ca3af'}}>Unassigned</span>}</div></div>
             <div><div style={{fontSize:9,color:'#9ca3af',marginBottom:1}}>Created By</div><div>{task.createdBy ? <div className="assignee-chip"><Avatar name={task.createdBy.name} role={task.createdBy.role} /><span style={{fontSize:11}}>{task.createdBy.name}</span></div> : <span style={{fontSize:11,color:'#9ca3af'}}>—</span>}</div></div>

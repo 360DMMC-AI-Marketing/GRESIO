@@ -592,3 +592,58 @@ exports.bulkUpdateTasks = async (req, res, next) => {
     next(error);
   }
 };
+
+const PRIORITY_LEVELS = ['low', 'medium', 'high', 'urgent', 'critical', 'blocker'];
+
+function bumpPriority(current, steps = 1) {
+  const idx = PRIORITY_LEVELS.indexOf(current);
+  if (idx === -1) return current;
+  return PRIORITY_LEVELS[Math.min(idx + steps, PRIORITY_LEVELS.length - 1)];
+}
+
+exports.autoPrioritize = async (req, res, next) => {
+  try {
+    const task = await Task.findById(req.params.id).populate('project');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+
+    let suggested = 'medium';
+    let reasons = [];
+
+    // Deadline proximity
+    if (task.deadline) {
+      const daysLeft = (new Date(task.deadline) - new Date()) / 86400000;
+      if (daysLeft < 0) { suggested = 'critical'; reasons.push('Overdue deadline'); }
+      else if (daysLeft <= 3) { suggested = 'urgent'; reasons.push('Due within 3 days'); }
+      else if (daysLeft <= 7) { suggested = 'high'; reasons.push('Due within 7 days'); }
+      else if (daysLeft <= 14) { suggested = bumpPriority(suggested, 1); reasons.push('Due within 14 days'); }
+    }
+
+    // Bug type gets higher priority
+    if (task.type === 'bug') {
+      suggested = bumpPriority(suggested, 1);
+      reasons.push('Bug report');
+    }
+
+    // Many subtasks → higher priority (more work involved)
+    if (task.subtasks && task.subtasks.length >= 3) {
+      suggested = bumpPriority(suggested, 1);
+      reasons.push(`${task.subtasks.length} subtasks`);
+    }
+
+    // Current status
+    if (task.status === 'delayed') {
+      suggested = bumpPriority(suggested, 1);
+      reasons.push('Delayed');
+    }
+
+    // Project at risk
+    if (task.project && task.project.status === 'at_risk') {
+      suggested = bumpPriority(suggested, 1);
+      reasons.push('Project at risk');
+    }
+
+    res.json({ taskId: task._id, current: task.priority, suggested, reasons });
+  } catch (error) {
+    next(error);
+  }
+};
