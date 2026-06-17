@@ -537,3 +537,57 @@ exports.deleteSubtask = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bulkUpdateTasks = async (req, res, next) => {
+  try {
+    const { taskIds, updates } = req.body;
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({ message: 'taskIds must be a non-empty array' });
+    }
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'updates must contain at least one field' });
+    }
+    const allowedFields = ['status', 'priority', 'assignee', 'sprint', 'deadline'];
+    const invalidFields = Object.keys(updates).filter(k => !allowedFields.includes(k));
+    if (invalidFields.length > 0) {
+      return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+    }
+    const domain = req.user.domain;
+    const projectIds = await getDomainProjectIds(domain);
+    const tasks = await Task.find({ _id: { $in: taskIds }, project: { $in: projectIds }, isActive: true });
+    if (tasks.length === 0) {
+      return res.status(404).json({ message: 'No tasks found' });
+    }
+    const foundIds = tasks.map(t => String(t._id));
+    const missing = taskIds.filter(id => !foundIds.includes(String(id)));
+    const results = { updated: 0, skipped: 0, errors: [] };
+    for (const task of tasks) {
+      try {
+        if (updates.assignee) {
+          const isMember = await isUserProjectMember(task.project, updates.assignee);
+          if (!isMember) {
+            results.skipped++;
+            results.errors.push({ id: task._id, message: 'Assignee not a project member' });
+            continue;
+          }
+        }
+        if (updates.sprint !== undefined) {
+          if (task.sprint && String(task.sprint) !== String(updates.sprint)) {
+            await Sprint.findByIdAndUpdate(task.sprint, { $pull: { tasks: task._id } });
+          }
+          if (updates.sprint) {
+            await Sprint.findByIdAndUpdate(updates.sprint, { $addToSet: { tasks: task._id } });
+          }
+        }
+        Object.assign(task, updates);
+        await task.save();
+        results.updated++;
+      } catch (err) {
+        results.errors.push({ id: task._id, message: err.message });
+      }
+    }
+    res.json({ results, missing });
+  } catch (error) {
+    next(error);
+  }
+};

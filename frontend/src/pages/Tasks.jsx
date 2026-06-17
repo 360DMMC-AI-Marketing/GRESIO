@@ -3,6 +3,7 @@ import { tasks, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import Dropdown from '../components/Dropdown';
+import toast from 'react-hot-toast';
 
 const STATUS_CLASS = { todo:'t-todo', in_progress:'t-inprog', review:'t-review', done:'t-done', delayed:'t-todo' };
 const PRIORITY_CLASS = { blocker:'priority-blocker', critical:'priority-critical', urgent:'priority-urgent', high:'priority-high', medium:'priority-medium', low:'text-neutral-400' };
@@ -22,6 +23,7 @@ export default function Tasks() {
   const [subOpen, setSubOpen] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
   const [allUsers, setAllUsers] = useState([]);
 
   const canCreateSeparate = ['admin', 'project_manager', 'team_lead', 'manager'].includes(user?.role);
@@ -97,6 +99,27 @@ export default function Tasks() {
     } catch (e) { alert(e.response?.data?.message || 'Failed to update status'); }
   };
 
+  const toggleBulkSelect = (id) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkAction = async (updates) => {
+    const ids = [...selectedTaskIds];
+    if (ids.length === 0) return;
+    try {
+      const res = await tasks.bulkUpdate({ taskIds: ids, updates });
+      const msg = res.data?.results;
+      if (msg) toast.success(`${msg.updated} task(s) updated${msg.skipped > 0 ? `, ${msg.skipped} skipped` : ''}`);
+      setSelectedTaskIds(new Set());
+      if (tab === 'project') fetchProjectTasks(filter);
+      else fetchSeparateTasks(filter);
+    } catch (e) { toast.error(e.response?.data?.message || 'Bulk update failed'); }
+  };
+
   if (loading && currentList.length === 0) {
     return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
   }
@@ -143,8 +166,12 @@ export default function Tasks() {
         </div>
       </div>
 
+      {selectedTaskIds.size > 0 && (
+        <BulkActionBar count={selectedTaskIds.size} allUsers={allUsers} onAction={handleBulkAction} onClear={() => setSelectedTaskIds(new Set())} />
+      )}
+
       {tab === 'project' ? (
-        <ProjectTaskTable tasks={filtered} subOpen={subOpen} setSubOpen={setSubOpen} onSelect={setSelectedTask} onStatusChange={handleStatusChange} />
+        <ProjectTaskTable tasks={filtered} subOpen={subOpen} setSubOpen={setSubOpen} onSelect={setSelectedTask} onStatusChange={handleStatusChange} selectedIds={selectedTaskIds} onToggleSelect={toggleBulkSelect} />
       ) : (
         <SeparateTaskTable tasks={filtered} onSelect={setSelectedTask} onStatusChange={handleStatusChange} isManager={isManager} user={user} />
       )}
@@ -173,20 +200,35 @@ export default function Tasks() {
   );
 }
 
-function ProjectTaskTable({ tasks: list, subOpen, setSubOpen, onSelect, onStatusChange }) {
+function ProjectTaskTable({ tasks: list, subOpen, setSubOpen, onSelect, onStatusChange, selectedIds, onToggleSelect }) {
+  const allSelected = list.length > 0 && list.every(t => selectedIds.has(t._id));
+  const toggleAll = () => {
+    if (allSelected) {
+      list.forEach(t => { if (selectedIds.has(t._id)) onToggleSelect(t._id); });
+    } else {
+      list.forEach(t => { if (!selectedIds.has(t._id)) onToggleSelect(t._id); });
+    }
+  };
   return (
     <div className="card">
       <table className="task-table">
-        <thead><tr><th>Task</th><th>Project</th><th>Status</th><th>Subtask</th><th>Priority</th><th>Assignee</th><th>Deadline</th></tr></thead>
+        <thead><tr><th style={{width:28}}>
+          <input type="checkbox" checked={allSelected} onChange={toggleAll}
+            style={{accentColor:'#2347e8',cursor:'pointer'}} />
+        </th><th>Task</th><th>Project</th><th>Status</th><th>Subtask</th><th>Priority</th><th>Assignee</th><th>Deadline</th></tr></thead>
         <tbody>
           {list.length === 0 ? (
-            <tr><td colSpan={7} style={{textAlign:'center',padding:20,fontSize:11,color:'#9ca3af'}}>No project tasks found</td></tr>
+            <tr><td colSpan={8} style={{textAlign:'center',padding:20,fontSize:11,color:'#9ca3af'}}>No project tasks found</td></tr>
             ) : list.map((t) => {
             const isOverdue = t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done';
             const subDone = t.subtasks?.filter(st => st.completed).length || 0;
             const subTotal = t.subtasks?.length || 0;
             return (
-              <tr key={t._id} onClick={() => onSelect(t)} style={{cursor:'pointer'}}>
+              <tr key={t._id} onClick={() => { if (!selectedIds?.has(t._id)) onSelect(t); }} style={{cursor:'pointer'}}>
+                <td onClick={e => e.stopPropagation()} style={{width:28}}>
+                  <input type="checkbox" checked={selectedIds?.has(t._id)} onChange={() => onToggleSelect?.(t._id)}
+                    style={{accentColor:'#2347e8',cursor:'pointer'}} />
+                </td>
                 <td style={{fontWeight:500,color:'#111827'}}>
                   {t.title}
                   {t.description && <div style={{fontSize:10,color:'#9ca3af'}}>{t.description}</div>}
@@ -289,6 +331,59 @@ function SeparateTaskTable({ tasks: list, onSelect, onStatusChange, isManager, u
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function BulkActionBar({ count, allUsers, onAction, onClear }) {
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkPriority, setBulkPriority] = useState('');
+  const [bulkAssignee, setBulkAssignee] = useState('');
+  const hasChanges = bulkStatus || bulkPriority || bulkAssignee;
+  return (
+    <div className="card" style={{marginBottom:10,border:'1px solid #2347e8',background:'#f0f4ff'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',flexWrap:'wrap'}}>
+        <span style={{fontSize:11,fontWeight:600,color:'#2347e8'}}>{count} selected</span>
+        <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}
+          style={{padding:'4px 8px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:10,background:'white'}}>
+          <option value="">Status…</option>
+          <option value="todo">To Do</option>
+          <option value="in_progress">In Progress</option>
+          <option value="review">Review</option>
+          <option value="done">Done</option>
+          <option value="delayed">Delayed</option>
+        </select>
+        <select value={bulkPriority} onChange={e => setBulkPriority(e.target.value)}
+          style={{padding:'4px 8px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:10,background:'white'}}>
+          <option value="">Priority…</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+        <select value={bulkAssignee} onChange={e => setBulkAssignee(e.target.value)}
+          style={{padding:'4px 8px',border:'0.5px solid #d1d5db',borderRadius:6,fontSize:10,background:'white'}}>
+          <option value="">Assignee…</option>
+          {allUsers.filter(u => u.isActive).map(u => (
+            <option key={u._id} value={u._id}>{u.name}</option>
+          ))}
+        </select>
+        <button onClick={() => {
+          const updates = {};
+          if (bulkStatus) updates.status = bulkStatus;
+          if (bulkPriority) updates.priority = bulkPriority;
+          if (bulkAssignee) updates.assignee = bulkAssignee;
+          if (Object.keys(updates).length > 0) onAction(updates);
+          setBulkStatus(''); setBulkPriority(''); setBulkAssignee('');
+        }} disabled={!hasChanges}
+          style={{padding:'4px 12px',background:hasChanges?'#2347e8':'#9ca3af',color:'white',border:'none',borderRadius:6,fontSize:10,fontWeight:600,cursor:hasChanges?'pointer':'default',opacity:hasChanges?1:0.5}}>
+          Apply
+        </button>
+        <button onClick={onClear}
+          style={{padding:'4px 8px',background:'transparent',color:'#6b7280',border:'none',borderRadius:6,fontSize:10,cursor:'pointer'}}>
+          Clear
+        </button>
+      </div>
     </div>
   );
 }

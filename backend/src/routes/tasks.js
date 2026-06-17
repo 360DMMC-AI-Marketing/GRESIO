@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getTasks, getSeparateTasks, getTaskById, createTask, createSeparateTask, updateTask, deleteTask, addSubtask, updateSubtask, deleteSubtask } = require('../controllers/taskController');
+const { getTasks, getSeparateTasks, getTaskById, createTask, createSeparateTask, updateTask, deleteTask, addSubtask, updateSubtask, deleteSubtask, bulkUpdateTasks } = require('../controllers/taskController');
 const { auth, authorize } = require('../middleware/auth');
 const { task: taskValidation } = require('../middleware/validate');
 const router = Router();
@@ -9,6 +9,7 @@ router.get('/separate', getSeparateTasks);
 router.get('/:id', getTaskById);
 router.post('/', authorize('admin', 'project_manager', 'team_lead', 'manager', 'qa_tester'), taskValidation.create, createTask);
 router.post('/separate', authorize('admin', 'project_manager', 'team_lead', 'manager'), createSeparateTask);
+router.patch('/bulk', bulkUpdateTasks);
 router.patch('/:id', updateTask);
 router.delete('/:id', deleteTask);
 router.post('/:id/subtasks', authorize('admin', 'project_manager', 'team_lead'), addSubtask);

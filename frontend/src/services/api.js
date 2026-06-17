@@ -98,6 +98,7 @@ export const tasks = {
   create: (data) => api.post('/tasks', data),
   createSeparate: (data) => api.post('/tasks/separate', data),
   update: (id, data) => api.patch(`/tasks/${id}`, data),
+  bulkUpdate: (data) => api.patch('/tasks/bulk', data),
   delete: (id) => api.delete(`/tasks/${id}`),
   addSubtask: (id, data) => api.post(`/tasks/${id}/subtasks`, data),
   updateSubtask: (id, subtaskId, data) => api.patch(`/tasks/${id}/subtasks/${subtaskId}`, data),
