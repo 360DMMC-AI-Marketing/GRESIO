@@ -139,20 +139,20 @@ export default function NotificationsPage() {
               <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full">{unread} unread</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {unread > 0 && (
-              <button onClick={handleMarkAllRead}
-                className="text-sm font-semibold text-brand-600 hover:text-brand-700 bg-white border border-neutral-200 px-4 py-2 rounded-lg transition-colors">
-                Mark all as read
-              </button>
-            )}
-            <button onClick={() => navigate(-1)}
-              className="text-sm text-neutral-500 hover:text-neutral-700 bg-white border border-neutral-200 px-4 py-2 rounded-lg transition-colors">
-              Back
-            </button>
-          </div>
+          <button onClick={() => navigate(-1)}
+            className="text-sm text-neutral-500 hover:text-neutral-700 bg-white border border-neutral-200 px-4 py-2 rounded-lg transition-colors">
+            Back
+          </button>
         </div>
         <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+          {unread > 0 && (
+            <div className="flex justify-end px-5 pt-3 pb-0">
+              <button onClick={handleMarkAllRead}
+                className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer transition-colors">
+                <span>✓✓</span> Mark all as read <span className="text-neutral-400 font-normal">({unread})</span>
+              </button>
+            </div>
+          )}
           <div className="flex border-b border-neutral-100">
             {TABS.map(tab => {
               const count = notifs.filter(n => getColumn(n) === tab.key && !n.read).length;
@@ -208,9 +208,12 @@ export default function NotificationsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <p className={`text-sm ${n.read ? 'text-neutral-500' : 'font-semibold text-neutral-900'}`} style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.title}</p>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => toggleRead(n)}
-                            className={`w-2.5 h-2.5 rounded-full border-2 transition-all bg-transparent cursor-pointer ${n.read ? 'border-neutral-300 hover:border-brand-500' : 'border-brand-500 bg-brand-500'}`}
-                            title={n.read ? 'Mark as unread' : 'Mark as read'} />
+                          <span onClick={() => toggleRead(n)}
+                            className="cursor-pointer text-xs select-none transition-colors hover:opacity-70"
+                            title={n.read ? 'Mark as unread' : 'Mark as read'}
+                            style={{ color: n.read ? '#2563EB' : '#9CA3AF' }}>
+                            {n.read ? '✓✓' : '✓'}
+                          </span>
                           <button onClick={() => handleDelete(n._id)}
                             className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-danger-500 bg-transparent border-none cursor-pointer text-sm p-0.5 transition-all"
                             title="Delete">&times;</button>
