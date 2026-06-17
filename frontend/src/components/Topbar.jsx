@@ -257,9 +257,12 @@ export default function Topbar({ sidebarWidth }) {
                     </div>
                   )}
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); toggleRead(n); }}
-                  className="opacity-0 group-hover:opacity-100 shrink-0 w-2 h-2 rounded-full border-2 border-neutral-300 hover:border-brand-500 mt-1 transition-all bg-transparent cursor-pointer"
-                  title={n.read ? 'Mark as unread' : 'Mark as read'} />
+                <span onClick={(e) => { e.stopPropagation(); toggleRead(n); }}
+                  className="cursor-pointer text-xs select-none transition-colors hover:opacity-70"
+                  title={n.read ? 'Mark as unread' : 'Mark as read'}
+                  style={{ color: n.read ? '#2563EB' : '#9CA3AF' }}>
+                  {n.read ? '✓✓' : '✓'}
+                </span>
               </div>
             </div>
           ))}
@@ -318,12 +321,20 @@ export default function Topbar({ sidebarWidth }) {
             <div className="absolute right-0 top-10 w-[380px] bg-white rounded-xl border border-neutral-200 shadow-modal z-50 overflow-hidden" style={{boxShadow:'0 10px 40px rgba(0,0,0,0.15)'}}>
               <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
                 <span className="text-sm font-semibold text-neutral-900">Notifications</span>
-                <button onClick={() => setShowPanel(false)}
-                  className="text-neutral-400 hover:text-neutral-600 bg-transparent border-none cursor-pointer p-0.5 transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
+                <div className="flex items-center gap-2">
+                  {unread > 0 && (
+                    <button onClick={handleMarkAllRead}
+                      className="flex items-center gap-1 text-[10px] font-semibold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer transition-colors">
+                      <span>✓✓</span> Mark all as read <span className="text-neutral-400 font-normal">({unread})</span>
+                    </button>
+                  )}
+                  <button onClick={() => setShowPanel(false)}
+                    className="text-neutral-400 hover:text-neutral-600 bg-transparent border-none cursor-pointer p-0.5 transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div className="flex border-b border-neutral-100">
                 {TABS.map(tab => {
@@ -393,21 +404,19 @@ export default function Topbar({ sidebarWidth }) {
                             </div>
                           )}
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); toggleRead(n); }}
-                          className="opacity-0 group-hover:opacity-100 shrink-0 w-2 h-2 rounded-full border-2 border-neutral-300 hover:border-brand-500 mt-1 transition-all bg-transparent cursor-pointer"
-                          title={n.read ? 'Mark as unread' : 'Mark as read'} />
+                        <span onClick={(e) => { e.stopPropagation(); toggleRead(n); }}
+                          className="cursor-pointer text-xs select-none transition-colors hover:opacity-70"
+                          title={n.read ? 'Mark as unread' : 'Mark as read'}
+                          style={{ color: n.read ? '#2563EB' : '#9CA3AF' }}>
+                          {n.read ? '✓✓' : '✓'}
+                        </span>
                       </div>
                     </div>
                   ));
                 })()}
               </div>
               <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100">
-                {unread > 0 ? (
-                  <button onClick={handleMarkAllRead}
-                    className="text-[10px] font-semibold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer transition-colors">
-                    Mark all as read
-                  </button>
-                ) : <span />}
+                <span />
                 <button onClick={() => { setShowPanel(false); setShowNotifSettings(true); }}
                   className="text-neutral-400 hover:text-neutral-600 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-neutral-100"
                   title="Notification settings">
