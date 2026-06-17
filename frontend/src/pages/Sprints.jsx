@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { sprints as sprintsApi, projects, tasks as tasksApi, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Dropdown from '../components/Dropdown';
-import { Link } from 'react-router-dom';
 
 const STATUS_META = {
   planning: { label:'Planning', cls:'bg-neutral-100 text-neutral-600' },
@@ -28,9 +27,6 @@ export default function Sprints() {
   const [taskForm, setTaskForm] = useState({ title:'', priority:'medium', assignee:'', deadline:'' });
   const [creatingTask, setCreatingTask] = useState(null);
   const [highlightId, setHighlightId] = useState(null);
-  const [backlog, setBacklog] = useState([]);
-  const [backlogLoading, setBacklogLoading] = useState(false);
-  const [assigningSprint, setAssigningSprint] = useState(null);
   const canManage = CAN_MANAGE.includes(user?.role);
 
   const fetch = () => {
@@ -40,15 +36,7 @@ export default function Sprints() {
     sprintsApi.getAll(params).then(r => setList(r.data)).catch(console.error).finally(() => setLoading(false));
   };
 
-  const fetchBacklog = () => {
-    setBacklogLoading(true);
-    const params = { sprint: 'null' };
-    if (filterProject) params.project = filterProject;
-    tasksApi.getAll(params).then(r => setBacklog(r.data)).catch(() => {}).finally(() => setBacklogLoading(false));
-  };
-
   useEffect(() => { fetch(); }, [filterProject, filterStatus]);
-  useEffect(() => { fetchBacklog(); }, [filterProject]);
   useEffect(() => { projects.getAll().then(r => setAllProjects(r.data)).catch(() => {}); }, []);
   useEffect(() => { usersApi.getAll().then(r => setAllUsers(r.data)).catch(() => {}); }, []);
   useEffect(() => {
@@ -67,16 +55,6 @@ export default function Sprints() {
 
   const handleRemoveTask = async (sprintId, taskId) => {
     try { await sprintsApi.removeTask(sprintId, taskId); fetch(); } catch (e) { console.error(e); }
-  };
-
-  const handleAssignToSprint = async (taskId, sprintId) => {
-    setAssigningSprint(taskId);
-    try {
-      await tasksApi.update(taskId, { sprint: sprintId });
-      fetchBacklog();
-      fetch();
-    } catch (e) { console.error(e); }
-    finally { setAssigningSprint(null); }
   };
 
   const handleCreateTaskInSprint = async (sprintId) => {
@@ -112,60 +90,6 @@ export default function Sprints() {
           options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]} style={{width:200}} />
         <Dropdown value={filterStatus} onChange={v => setFilterStatus(v)}
           options={[{value:'', label:'All statuses'}, ...Object.entries(STATUS_META).map(([v,m]) => ({value:v, label:m.label}))]} style={{width:160}} />
-      </div>
-
-      {/* BACKLOG */}
-      <div className="card" style={{marginBottom:10,padding:'10px 12px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-          <div style={{fontSize:12,fontWeight:600,color:'#111827'}}>📋 Backlog <span style={{fontWeight:400,color:'#9ca3af',fontSize:10}}>({backlog.length} tasks not in a sprint)</span></div>
-          {backlog.length > 0 && canManage && (
-            <div style={{display:'flex',gap:4}}>
-              {list.filter(s => s.status === 'planning' || s.status === 'active').slice(0,4).map(s => (
-                <span key={s._id} onClick={() => {
-                  backlog.forEach(t => { handleAssignToSprint(t._id, s._id); });
-                }} style={{fontSize:9,color:'#2347e8',background:'#f0f4ff',padding:'2px 8px',borderRadius:12,cursor:'pointer'}}>
-                  + All to {s.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        {backlogLoading ? (
-          <div style={{fontSize:10,color:'#9ca3af',padding:'8px 0'}}>Loading…</div>
-        ) : backlog.length === 0 ? (
-          <div style={{fontSize:10,color:'#9ca3af',padding:'8px 0'}}>All tasks are assigned to a sprint ✓</div>
-        ) : (
-          <div style={{display:'flex',flexDirection:'column',gap:3,maxHeight:200,overflowY:'auto'}}>
-            {backlog.map(t => (
-              <div key={t._id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
-                <div className="t-dot" style={{background:t.status === 'done' ? '#22c55e' : t.status === 'in_progress' ? '#3b82f6' : '#e5e7eb',flexShrink:0}} />
-                <span style={{flex:1,fontSize:10,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                  <Link to={`/projects/${t.project?._id || t.project}`} style={{color:'#6b7280',textDecoration:'none'}}>{t.project?.name || 'Project'}</Link>
-                  {' · '}{t.title}
-                </span>
-                {t.priority && <span className={PRIORITY_CLS[t.priority] || 'priority-medium'} style={{fontSize:7}}>{t.priority}</span>}
-                {t.deadline && <span style={{fontSize:8,color:new Date(t.deadline)<new Date()&&t.status!=='done'?'#ef4444':'#9ca3af',flexShrink:0}}>{new Date(t.deadline).toLocaleDateString('en',{month:'short',day:'numeric'})}</span>}
-                {t.assignee && (
-                  <div className="a-av" style={{width:14,height:14,fontSize:6,flexShrink:0,
-                    background:t.assignee.role === 'developer' ? '#f0fdf4' : t.assignee.role === 'intern' ? '#fff7ed' : '#dce6ff',
-                    color:t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : '#1a35c4'}}>
-                    {t.assignee.name?.charAt(0)}
-                  </div>
-                )}
-                {canManage && (
-                  <select value="" onChange={e => { if (e.target.value) { handleAssignToSprint(t._id, e.target.value); e.target.value = ''; } }}
-                    style={{fontSize:8,padding:'2px 4px',border:'0.5px solid #d1d5db',borderRadius:3,color:'#2347e8',background:'white',cursor:'pointer'}}>
-                    <option value="">Sprint…</option>
-                    {list.filter(s => s.status === 'planning' || s.status === 'active').map(s => (
-                      <option key={s._id} value={s._id}>{s.name}</option>
-                    ))}
-                  </select>
-                )}
-                {assigningSprint === t._id && <span style={{fontSize:8,color:'#9ca3af'}}>…</span>}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {list.length === 0 ? (

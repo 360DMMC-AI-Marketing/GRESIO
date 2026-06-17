@@ -119,16 +119,21 @@ export default function Dashboard() {
         </div>
       )}
 
-      {riskData && riskData.atRisk?.length > 0 && (
+      {riskData && (
         <div className="card" style={{marginBottom:12,padding:14,borderLeft:'3px solid #f59e0b'}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
             <span style={{fontSize:14}}>🔮</span>
             <span style={{fontSize:12,fontWeight:600,color:'#111827'}}>Risk Forecast</span>
-            <span className="status-badge bg-warning-50 text-warning-700">{riskData.atRisk.length} at-risk task{riskData.atRisk.length > 1 ? 's' : ''}</span>
+            {riskData.atRisk?.length > 0 ? (
+              <span className="status-badge bg-warning-50 text-warning-700">{riskData.atRisk.length} at-risk task{riskData.atRisk.length > 1 ? 's' : ''}</span>
+            ) : (
+              <span className="status-badge bg-success-50 text-success-700" style={{fontSize:9}}>All clear</span>
+            )}
             <span style={{fontSize:10,color:'#9ca3af',marginLeft:'auto'}}>Analyzed {riskData.total} tasks</span>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
-            {riskData.atRisk.slice(0, 10).map(t => (
+          {riskData.atRisk?.length > 0 ? (
+            <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
+              {riskData.atRisk.slice(0, 10).map(t => (
               <Link key={t._id} to={`/projects/${t.project?._id || '#'}`} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:6,background:t.risk === 'critical' ? '#fef2f2' : '#fffbeb',border:'0.5px solid',borderColor:t.risk === 'critical' ? '#fecaca' : '#fde68a'}}>
                 <span style={{fontSize:12}}>{t.risk === 'critical' ? '🔴' : '🟡'}</span>
                 <div style={{flex:1,minWidth:0}}>
@@ -142,7 +147,12 @@ export default function Dashboard() {
                 </div>
               </Link>
             ))}
-          </div>
+            </div>
+          ) : (
+            <div style={{fontSize:10,color:'#6b7280',textAlign:'center',padding:'8px 0'}}>
+              All tasks on track ✓
+            </div>
+          )}
         </div>
       )}
 
@@ -196,10 +206,11 @@ export default function Dashboard() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-neutral-500">Projects</span>
                 <span className="text-neutral-700 font-medium">{company.usage?.projectCount || 0}{(PLAN_INFO[company.plan]?.projects || 0) !== Infinity ? ` / ${PLAN_INFO[company.plan]?.projects || 3}` : ''}</span>
-              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
       </div>
     </div>
   );

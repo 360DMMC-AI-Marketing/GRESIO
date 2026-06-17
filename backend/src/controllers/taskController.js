@@ -43,8 +43,7 @@ exports.getTasks = async (req, res, next) => {
     if (project) filter.project = project;
     if (priority) filter.priority = priority;
     if (assignee) filter.assignee = assignee;
-    if (sprint === 'null') filter.sprint = null;
-    else if (sprint) filter.sprint = sprint;
+    if (sprint) filter.sprint = sprint;
     if (!MANAGER_ROLES.includes(req.user.role) && !assignee) {
       filter.assignee = req.user._id;
     }
