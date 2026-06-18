@@ -95,7 +95,7 @@ export default function OnboardingGuide() {
           ]} />
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Detailed Permission Matrix</h4>
           <InfoTable rows={[
-            ['Action','Admin','PM','Team Lead','Manager','QA Tester','Developer','Intern'],
+            ['Action','Admin','PM','Manager','Team Lead','QA Tester','Developer','Intern'],
             ['Create Project','✅','✅','✅','❌','❌','❌','❌'],
             ['Delete Project','✅','✅','✅','❌','❌','❌','❌'],
             ['Edit Project','✅','✅','✅','✅','❌','❌','❌'],
@@ -125,6 +125,8 @@ export default function OnboardingGuide() {
             ['Manage Integrations','✅','❌','❌','❌','❌','❌','❌'],
             ['Customize Dashboard','✅','❌','❌','❌','❌','❌','❌'],
             ['Microsoft Teams Settings','✅','✅','❌','❌','❌','❌','❌'],
+            ['Browse & Use Templates','✅','✅','✅','✅','✅','✅','✅'],
+            ['Save Project as Template','✅','✅','✅','❌','❌','❌','❌'],
           ]} />
           <p style={{fontSize:10,color:'#6b7280',marginTop:6}}>🔒 = Manual gate — requires explicit action by permitted role. System will not auto-transition.</p>
         </Section>
@@ -657,3 +659,4 @@ function Qa({ q, a }) {
     </div>
   );
 }
+

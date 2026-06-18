@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { analytics, projects, companies } from '../services/api';
 import StatCard from '../components/StatCard';
+import Skeleton from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
 
@@ -184,7 +185,19 @@ export default function Dashboard() {
     });
   }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return (
+    <div className="space-y-6">
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Skeleton.Chart />
+        <Skeleton.Chart />
+      </div>
+      <Skeleton.Table rows={4} />
+    </div>
+  );
 
   const healthScore = stats?.healthScore || 0;
   const healthColor = healthScore >= 70 ? '#22c55e' : healthScore >= 40 ? '#f59e0b' : '#ef4444';

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../services/api';
 import toast from 'react-hot-toast';
+import { AlertModal } from '../components/Modal';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -12,6 +13,7 @@ export default function Profile() {
   const [passForm, setPassForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [saving, setSaving] = useState(false);
   const [showPassForm, setShowPassForm] = useState(false);
+  const [twoFactor, setTwoFactor] = useState({ loading: false, qrCode: null, secret: '', code: '', backupCodes: null, showBackup: false });
 
   useEffect(() => {
     if (user) {
@@ -196,6 +198,100 @@ export default function Profile() {
           </form>
         </div>
       )}
+
+      <div className="bg-white rounded-xl border border-surface-200 overflow-hidden">
+        <div className="px-6 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-surface-900">Two-factor authentication</h2>
+              <p className="text-sm text-surface-500 mt-0.5">Add an extra layer of security to your account</p>
+            </div>
+            {user?.twoFactorEnabled ? (
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200">Enabled</span>
+            ) : (
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-surface-100 text-surface-500">Disabled</span>
+            )}
+          </div>
+
+          {!user?.twoFactorEnabled && !twoFactor.qrCode && (
+            <button type="button" onClick={async () => {
+              setTwoFactor({ ...twoFactor, loading: true });
+              try {
+                const res = await auth.setup2fa();
+                setTwoFactor({ ...twoFactor, loading: false, qrCode: res.data.qrCode, secret: res.data.secret });
+              } catch (err) {
+                setTwoFactor({ ...twoFactor, loading: false });
+                toast.error('Failed to setup 2FA');
+              }
+            }} disabled={twoFactor.loading}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors">
+              {twoFactor.loading ? 'Loading…' : 'Enable two-factor authentication'}
+            </button>
+          )}
+
+          {twoFactor.qrCode && (
+            <div className="space-y-4">
+              <p className="text-sm text-surface-600">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+              <div className="bg-white border border-surface-200 rounded-xl p-4 inline-block">
+                <img src={twoFactor.qrCode} alt="2FA QR Code" className="w-48 h-48" />
+              </div>
+              <p className="text-xs text-surface-400">Or enter this key manually: <code className="text-surface-700 font-mono bg-surface-100 px-2 py-0.5 rounded">{twoFactor.secret}</code></p>
+              <div className="flex items-center gap-2 max-w-xs">
+                <input type="text" value={twoFactor.code} onChange={e => setTwoFactor({ ...twoFactor, code: e.target.value.replace(/[^0-9]/g, '').slice(0, 6) })}
+                  placeholder="000 000" maxLength={6}
+                  className="flex-1 px-3 py-2 border border-surface-300 rounded-lg text-sm text-center tracking-widest outline-none focus:ring-2 focus:ring-primary-500" />
+                <button type="button" onClick={async () => {
+                  setTwoFactor({ ...twoFactor, loading: true });
+                  try {
+                    const res = await auth.enable2fa({ secret: twoFactor.secret, code: twoFactor.code });
+                    setTwoFactor({ ...twoFactor, loading: false, backupCodes: res.data.backupCodes, showBackup: true });
+                    localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
+                  } catch (err) {
+                    setTwoFactor({ ...twoFactor, loading: false });
+                    toast.error(err.response?.data?.message || 'Failed to verify code');
+                  }
+                }} disabled={twoFactor.loading || twoFactor.code.length < 6}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors">
+                  {twoFactor.loading ? 'Verifying…' : 'Verify & enable'}
+                </button>
+              </div>
+              <button type="button" onClick={() => setTwoFactor({ ...twoFactor, qrCode: null, secret: '', code: '' })}
+                className="text-xs text-surface-400 hover:text-primary-600 transition-colors bg-transparent border-none cursor-pointer">
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {user?.twoFactorEnabled && (
+            <button type="button" onClick={async () => {
+              const pwd = prompt('Enter your password to disable two-factor authentication:');
+              if (!pwd) return;
+              try {
+                const res = await auth.disable2fa({ password: pwd });
+                localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
+                toast.success('Two-factor authentication disabled');
+              } catch (err) {
+                toast.error(err.response?.data?.message || 'Failed to disable 2FA');
+              }
+            }}
+              className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+              Disable two-factor authentication
+            </button>
+          )}
+        </div>
+      </div>
+
+      <AlertModal open={twoFactor.showBackup} onClose={() => setTwoFactor({ ...twoFactor, showBackup: false })}
+        title="Save your backup codes" message={
+          <div>
+            <p className="text-xs text-surface-500 mb-3">Each code can only be used once. Store these somewhere safe.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {twoFactor.backupCodes?.map((code, i) => (
+                <code key={i} className="text-xs font-mono bg-surface-100 px-2 py-1.5 rounded text-surface-700 text-center">{code}</code>
+              ))}
+            </div>
+          </div>
+        } type="success" />
 
       <div className="bg-white rounded-xl border border-surface-200 p-6">
         <h2 className="text-lg font-semibold text-surface-900 mb-2">Account info</h2>

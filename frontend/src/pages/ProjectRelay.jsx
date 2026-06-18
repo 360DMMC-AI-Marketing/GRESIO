@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
 import { projects, chains } from '../services/api';
 import ChainCard from '../components/ChainCard';
 import CreateChainModal from '../components/CreateChainModal';
@@ -51,8 +52,11 @@ export default function ProjectRelay() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
+      <div>
+        <Skeleton.PageHeader />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="bg-white rounded-xl border border-surface-200 p-5 space-y-4"><Skeleton.Box w="70%" h={18} /><Skeleton.Text lines={3} /></div>)}
+        </div>
       </div>
     );
   }

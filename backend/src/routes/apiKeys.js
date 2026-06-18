@@ -19,10 +19,12 @@ router.post('/', auth, async (req, res) => {
     if (!name) return res.status(400).json({ error: 'name required' });
     const rawKey = ApiKey.generateKey();
     const hashed = ApiKey.hashKey(rawKey);
+    const prefix = rawKey.split('_')[0] + '_' + rawKey.split('_')[1].substring(0, 4);
     const keyDoc = await ApiKey.create({
       user: req.user._id,
       name,
       key: hashed,
+      prefix,
       scopes: scopes || ['projects:read', 'tasks:read'],
       domain: req.user.domain,
     });

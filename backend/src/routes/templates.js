@@ -9,7 +9,9 @@ router.get('/:id', c.getById);
 router.post('/', auth, c.create);
 router.patch('/:id', auth, c.update);
 router.delete('/:id', auth, c.remove);
+router.post('/from-project/:projectId', auth, c.fromProject);
 router.post('/:id/download', auth, c.download);
+router.post('/:id/apply', auth, c.apply);
 router.post('/:id/rate', auth, c.rate);
 
 module.exports = router;

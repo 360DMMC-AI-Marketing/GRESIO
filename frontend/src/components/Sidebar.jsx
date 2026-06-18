@@ -55,7 +55,6 @@ const sidebarGroups = [
       { id: 'reports', label: 'Reports', icon: FileText, path: '/reports', roles: MANAGERS },
       { id: 'workdna', label: 'WorkDNA', icon: BrainCircuit, path: '/work-dna', roles: ALL },
       { id: 'templates', label: 'Templates', icon: ClipboardList, path: '/templates', roles: ALL },
-      { id: 'referrals', label: 'Referrals', icon: Users, path: '/referrals', roles: ALL },
     ],
   },
 ];
@@ -163,7 +162,7 @@ function SidebarGroup({ group, isOpen, onToggle, user }) {
   );
 }
 
-export default function Sidebar({ user, collapsed, onToggle }) {
+export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpen, onMobileClose }) {
   const [openGroup, setOpenGroup] = useState(() => {
     try {
       return localStorage.getItem('sidebarOpenGroup') || '';
@@ -180,6 +179,59 @@ export default function Sidebar({ user, collapsed, onToggle }) {
 
   const filteredStandalone = standaloneItems.filter(i => i.roles?.includes(user?.role));
   const filteredBottom = bottomItems.filter(i => i.roles?.includes(user?.role));
+
+  if (isMobile) {
+    if (!mobileOpen) return null;
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={onMobileClose} />
+        <aside className="bg-[#0F172A] h-screen fixed top-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out w-[280px] shadow-2xl">
+          {/* Logo */}
+          <div className="px-5 py-6 border-b border-white/[0.08] flex items-center justify-between">
+            <NavLink to="/dashboard" className="flex flex-col items-center hover:opacity-90 transition-all duration-200 cursor-pointer" onClick={onMobileClose}>
+              <span className="text-white font-bold text-2xl tracking-tight">GRESIO</span>
+              <span className="text-slate-500 text-xs font-medium mt-0.5">Internal OS</span>
+            </NavLink>
+            <button onClick={onMobileClose}
+              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/[0.08] text-slate-500 hover:text-white transition-colors cursor-pointer bg-transparent border-none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <nav className="flex-1 py-3 overflow-y-auto px-3">
+            {filteredStandalone.map(item => (
+              <NavLink key={item.id} to={item.path} onClick={onMobileClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all rounded-lg ${
+                    isActive ? 'bg-blue-600/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  }`
+                }>
+                <item.icon className="w-[26px] h-[26px] shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+            <div className="mx-1 my-3 border-b border-white/[0.06]" />
+            {sidebarGroups.map(group => (
+              <SidebarGroup key={group.id} group={group} isOpen={openGroup === group.id} onToggle={handleToggle} user={user} />
+            ))}
+            {filteredBottom.length > 0 && <div className="mx-1 my-3 border-t border-white/[0.06]" />}
+            {filteredBottom.map(item => (
+              <NavLink key={item.id} to={item.path} onClick={onMobileClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all rounded-lg ${
+                    isActive ? 'bg-blue-600/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  }`
+                }>
+                <item.icon className="w-[26px] h-[26px] shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+      </>
+    );
+  }
 
   if (collapsed) {
     return (

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Eye, Loader } from 'lucide-react';
+import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { reportsService } from '../services/reports';
 import { reportDraftsService } from '../services/reportDrafts';
+import Skeleton from '../components/Skeleton';
 import SectionSelector from '../components/reports/SectionSelector';
 import ReportEditor from '../components/reports/ReportEditor';
 import ReportPreview from '../components/reports/ReportPreview';
@@ -139,9 +140,9 @@ export default function ReportEditPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader size={20} className="animate-spin text-surface-400" />
-        <span className="ml-3 text-xs text-surface-400">Loading editor...</span>
+      <div className="p-6 space-y-6">
+        <Skeleton.PageHeader />
+        <Skeleton.Box w="100%" h={400} />
       </div>
     );
   }

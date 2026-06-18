@@ -102,7 +102,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <DashboardCard icon={Building2} label="Active Companies" value={String(active.length)} subtext={`${companies.length} total registered`} color="blue" />
         <DashboardCard icon={Users} label="Active Admins" value={String(onlineAdmins.length)} subtext={`${adminsOnly.length - onlineAdmins.length} offline`} color="purple" />
         <DashboardCard icon={Activity} label="Total Projects" value={String(totalProjects)} subtext="across all companies" color="green" />
@@ -111,7 +111,7 @@ export default function Dashboard() {
 
 
 
-      <div className="grid grid-cols-[1fr_280px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
         <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_280px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
         <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

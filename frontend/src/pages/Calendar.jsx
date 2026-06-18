@@ -67,6 +67,7 @@ export default function Calendar() {
   const [addDate, setAddDate] = useState(null);
   const [allProjects, setAllProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [syncToOutlook, setSyncToOutlook] = useState(() => localStorage.getItem('calendar_sync_outlook') === 'true');
 
   const monthDays = useMemo(() => getMonthDays(currentYear, currentMonth), [currentYear, currentMonth]);
 
@@ -136,9 +137,9 @@ export default function Calendar() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
+        <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 flex-wrap gap-3">
           <h1 className="text-lg font-bold text-neutral-900 dark:text-white">Calendar</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button onClick={goToday} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors cursor-pointer border-none dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600">
               Today
             </button>
@@ -173,19 +174,34 @@ export default function Calendar() {
             onChange={v => setSelectedProjectId(v)}
             options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]}
           />
+          <button onClick={() => { const v = !syncToOutlook; setSyncToOutlook(v); localStorage.setItem('calendar_sync_outlook', v); }}
+            className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              syncToOutlook
+                ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+                : 'bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100'
+            }`}>
+            <span className={`w-3 h-3 rounded-full border flex items-center justify-center text-[7px] font-bold ${
+              syncToOutlook ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-neutral-300 text-neutral-400'
+            }`}>
+              {syncToOutlook ? '\u2713' : ''}
+            </span>
+            Sync to Outlook Calendar
+          </button>
         </div>
 
         <div className="p-5">
       {activeTab === 'month' && (
         <>
           <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
-            <div className="grid grid-cols-7">
-              {DAYS.map(d => (
-                <div key={d} className="bg-neutral-50 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 text-[10px] font-semibold text-center py-2.5 uppercase tracking-wider border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0">
-                  {d}
-                </div>
-              ))}
-              {monthDays.map((day, i) => {
+            <div className="overflow-x-auto">
+              <div className="min-w-[560px]">
+                <div className="grid grid-cols-7">
+                  {DAYS.map(d => (
+                    <div key={d} className="bg-neutral-50 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 text-[10px] font-semibold text-center py-2.5 uppercase tracking-wider border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0">
+                      {d}
+                    </div>
+                  ))}
+                  {monthDays.map((day, i) => {
                 if (!day) return <div key={`e${i}`} className="bg-neutral-50/40 dark:bg-neutral-900 min-h-[105px] border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0" />;
                 const dayEvts = eventsForDay(filteredEvents, day);
                 const isSel = isSameDay(selectedDay, day);
@@ -194,7 +210,7 @@ export default function Calendar() {
                 const isLastRow = rowNum === totalRows - 1;
                 return (
                   <div key={i} onClick={() => handleDayClick(day)}
-                    className={`min-h-[110px] p-3 cursor-pointer transition-all duration-150 relative border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
+                    className={`min-h-[80px] sm:min-h-[110px] p-1.5 sm:p-3 cursor-pointer transition-all duration-150 relative border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
                       isSel
                         ? 'bg-brand-50/70 dark:bg-brand-900/25 ring-1 ring-inset ring-brand-200 dark:ring-brand-700'
                         : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800'
@@ -227,7 +243,9 @@ export default function Calendar() {
                     )}
                   </div>
                 );
-              })}
+                  })}
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3 mt-3 text-[10px] text-neutral-400 dark:text-neutral-500 flex-wrap">
@@ -329,13 +347,13 @@ export default function Calendar() {
 
       {canAdd && (
         <button onClick={() => openAddModal(new Date())}
-          className="fixed bottom-6 right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-colors cursor-pointer border-none z-40">
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-colors cursor-pointer border-none z-40">
           +
         </button>
       )}
 
       {showAddModal && (
-        <AddCalendarItemModal defaultDate={addDate} onClose={() => setShowAddModal(false)} onCreated={handleEventCreated} />
+        <AddCalendarItemModal defaultDate={addDate} onClose={() => setShowAddModal(false)} onCreated={handleEventCreated} syncToOutlook={syncToOutlook} />
       )}
         </div>
       </div>

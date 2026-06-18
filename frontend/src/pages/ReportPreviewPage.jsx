@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import Skeleton from '../components/Skeleton';
 import { reportsService } from '../services/reports';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -62,8 +63,10 @@ export default function ReportPreviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-white p-8 space-y-6">
+        <Skeleton.PageHeader />
+        <Skeleton.Chart />
+        <Skeleton.Text lines={8} />
       </div>
     );
   }

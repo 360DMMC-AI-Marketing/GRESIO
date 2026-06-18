@@ -15,7 +15,7 @@ const PLAN_INFO = {
 };
 const PLAN_ICON = { starter: '🌱', team: '🚀', enterprise: '🏢' };
 
-export default function Topbar({ sidebarWidth }) {
+export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }) {
   const { user, company, logout, socket } = useAuth();
   const navigate = useNavigate();
   const [notifs, setNotifs] = useState([]);
@@ -279,7 +279,15 @@ export default function Topbar({ sidebarWidth }) {
   };
 
   return (
-    <header style={{ left: sidebarWidth || 200 }} className="h-14 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-6 transition-all duration-300 ease-in-out shadow-sm">
+    <header style={{ left: sidebarWidth }} className="h-14 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out shadow-sm">
+      {showHamburger && (
+        <button onClick={onHamburgerClick}
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 mr-2 cursor-pointer bg-transparent border-none transition-colors shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      )}
       {toast && (
         <div style={{position:'fixed',top:12,left:'50%',transform:'translateX(-50%)',zIndex:10001,background:'#1f2937',color:'white',padding:'10px 18px',borderRadius:10,boxShadow:'0 8px 30px rgba(0,0,0,0.2)',fontSize:12,fontWeight:500,maxWidth:400,pointerEvents:'none',animation:'fadeSlideDown 0.3s ease'}}>
           🔔 {toast.title}

@@ -9,7 +9,7 @@ const TYPES = [
   { value: 'reminder', label: 'Reminder', icon: '\u23F0' },
 ];
 
-export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }) {
+export default function AddCalendarItemModal({ defaultDate, onClose, onCreated, syncToOutlook }) {
   const { user } = useAuth();
   const [type, setType] = useState('event');
   const [title, setTitle] = useState('');
@@ -68,6 +68,7 @@ export default function AddCalendarItemModal({ defaultDate, onClose, onCreated }
         link: link.trim() || undefined,
         project: project || undefined,
         description,
+        syncToOutlook,
       });
       onCreated();
     } catch (err) {

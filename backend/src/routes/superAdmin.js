@@ -5,6 +5,7 @@ const Company = require('../models/Company');
 const User = require('../models/User');
 const Project = require('../models/Project');
 const SuperNotification = require('../models/SuperNotification');
+const SuperSetting = require('../models/SuperSetting');
 
 const env = require('../config/env');
 const JWT_SECRET = env.JWT_SECRET || 'gresio-jwt-secret';
@@ -166,6 +167,29 @@ router.delete('/notifications/:id', auth, superAdminOnly, async (req, res, next)
   try {
     await SuperNotification.findByIdAndDelete(req.params.id);
     res.json({ message: 'Notification dismissed' });
+  } catch (e) { next(e); }
+});
+
+router.get('/settings', auth, superAdminOnly, async (req, res, next) => {
+  try {
+    const all = await SuperSetting.find().lean();
+    const map = {};
+    all.forEach(s => { map[s.key] = s.value; });
+    res.json(map);
+  } catch (e) { next(e); }
+});
+
+router.put('/settings', auth, superAdminOnly, async (req, res, next) => {
+  try {
+    const entries = Object.entries(req.body);
+    for (const [key, value] of entries) {
+      await SuperSetting.findOneAndUpdate(
+        { key },
+        { key, value },
+        { upsert: true, new: true },
+      );
+    }
+    res.json({ message: 'Settings saved' });
   } catch (e) { next(e); }
 });
 

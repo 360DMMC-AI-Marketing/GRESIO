@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Activity, Building2, Calendar, CheckCircle, Loader, FolderKanban, DollarSign, CreditCard, Clock } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Building2, Calendar, CheckCircle, FolderKanban, DollarSign, CreditCard, Clock } from 'lucide-react';
 import StatusBadge from '../../components/super-admin/StatusBadge';
 import PlanBadge from '../../components/super-admin/PlanBadge';
 import { api } from '../../services/api';
+import Skeleton from '../../components/Skeleton';
 
 const tabs = [
   { key:'overview', label:'Overview' },
@@ -43,10 +44,15 @@ export default function CompanyDetail() {
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="flex items-center gap-2 text-surface-400 text-sm">
-        <Loader size={16} className="animate-spin" />
-        Loading company...
+    <div className="space-y-6">
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl border border-surface-200 p-5 space-y-4">
+          <Skeleton.Text lines={6} />
+        </div>
+        <div className="bg-white rounded-xl border border-surface-200 p-5 space-y-4">
+          <Skeleton.Text lines={6} />
+        </div>
       </div>
     </div>
   );

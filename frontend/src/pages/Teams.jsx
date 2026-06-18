@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Skeleton from '../components/Skeleton';
 import { integrations, users, projects as projectsApi } from '../services/api';
 
 export default function Teams() {
@@ -62,8 +63,11 @@ export default function Teams() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="space-y-6">
+        <Skeleton.PageHeader />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1,2].map(i => <div key={i} className="bg-white rounded-xl border border-surface-200 p-6 space-y-4"><Skeleton.Avatar /><Skeleton.Text lines={4} /></div>)}
+        </div>
       </div>
     );
   }

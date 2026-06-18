@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Skeleton from '../components/Skeleton';
 import toast from 'react-hot-toast';
 
 export default function TemplateDetail() {
@@ -8,6 +9,8 @@ export default function TemplateDetail() {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [using, setUsing] = useState(false);
+  const [rating, setRating] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
 
   useEffect(() => {
     fetch(`/api/templates/${id}`, {
@@ -18,35 +21,48 @@ export default function TemplateDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const rateTemplate = async (star) => {
+    setRating(true);
+    try {
+      const res = await fetch(`/api/templates/${id}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
+        body: JSON.stringify({ rating: star }),
+      });
+      const d = await res.json();
+      if (d.data) {
+        setTemplate(prev => ({ ...prev, rating: d.data.rating, ratingCount: d.data.ratingCount }));
+        toast.success(`Rated ${star}/5!`);
+      }
+    } catch (e) { toast.error('Failed to rate'); }
+    finally { setRating(false); }
+  };
+
   const useTemplate = async () => {
     setUsing(true);
     try {
-      const res = await fetch(`/api/templates/${id}/download`, {
+      const res = await fetch(`/api/templates/${id}/apply`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
       });
       const d = await res.json();
       if (d.data) {
-        const ph = d.data;
-        const projectRes = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
-          body: JSON.stringify({
-            name: ph.name,
-            description: ph.description,
-            projectType: ph.projectType,
-          }),
-        });
-        const projectData = await projectRes.json();
-        toast.success('Project created from template!');
-        navigate(`/projects/${projectData._id}`);
+        toast.success(`Project "${d.data.name}" created with ${d.data.tasks?.length || 0} tasks across ${d.data.sprints?.length || 0} sprints!`);
+        navigate(`/projects/${d.data._id}`);
+      } else {
+        toast.error(d.error || 'Failed to apply template');
       }
     } catch (e) {
       toast.error('Error: ' + e.message);
     } finally { setUsing(false); }
   };
 
-  if (loading) return <div className="p-8 text-center text-surface-500 text-sm">Loading...</div>;
+  if (loading) return (
+    <div className="p-8 space-y-6">
+      <Skeleton.PageHeader />
+      <Skeleton.Text lines={6} />
+    </div>
+  );
   if (!template) return <div className="p-8 text-center text-surface-500 text-sm">Template not found</div>;
 
   return (
@@ -68,9 +84,17 @@ export default function TemplateDetail() {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-surface-900">{template.price > 0 ? `$${template.price}` : 'Free'}</div>
-            <div className="text-[10px] text-surface-400 mt-1">
-              ⬇ {template.downloads} · ★ {template.rating} ({template.ratingCount})
+            <div className="flex items-center justify-end gap-1 mt-1">
+              {[1,2,3,4,5].map(star => (
+                <button key={star} onClick={() => rateTemplate(star)} disabled={rating}
+                  onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}
+                  className={`text-sm cursor-pointer border-none bg-transparent p-0 leading-none transition-colors ${star <= (hoverRating || template.rating) ? 'text-amber-400' : 'text-surface-300'} disabled:opacity-50`}>
+                  ★
+                </button>
+              ))}
+              <span className="text-[10px] text-surface-400 ml-1">({template.ratingCount})</span>
             </div>
+            <div className="text-[10px] text-surface-400 mt-0.5">⬇ {template.downloads}</div>
           </div>
         </div>
 

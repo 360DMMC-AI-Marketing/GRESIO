@@ -14,6 +14,7 @@ const calendarEventSchema = new mongoose.Schema({
     model: { type: String, enum: ['Project', 'Sprint', 'Task', null], default: null },
     id: { type: mongoose.Schema.Types.ObjectId, default: null },
   },
+  outlookEventId: { type: String, default: '' },
 }, { timestamps: true });
 
 calendarEventSchema.index({ domain: 1, date: 1 });

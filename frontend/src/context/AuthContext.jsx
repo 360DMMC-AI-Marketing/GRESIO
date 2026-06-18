@@ -66,6 +66,19 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const res = await auth.login({ email, password });
+    if (res.data.requiresTwoFactor) {
+      return { requiresTwoFactor: true, tempToken: res.data.tempToken, email: res.data.email };
+    }
+    localStorage.setItem('gresio_token', res.data.token);
+    localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
+    setUser(res.data.user);
+    if (res.data.user?.theme) setTheme(res.data.user.theme);
+    await fetchCompany(res.data.user);
+    return res.data;
+  }, [fetchCompany]);
+
+  const verify2fa = useCallback(async (tempToken, code) => {
+    const res = await auth.verify2fa({ tempToken, code });
     localStorage.setItem('gresio_token', res.data.token);
     localStorage.setItem('gresio_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -101,7 +114,7 @@ export function AuthProvider({ children }) {
   }, [theme]);
 
   return (
-    <AuthContext.Provider value={{ user, company, login, logout, loading, socket, updateUser, updateCompany, fetchCompany, theme, toggleTheme }}>
+    <AuthContext.Provider value={{ user, company, login, logout, loading, socket, updateUser, updateCompany, fetchCompany, theme, toggleTheme, verify2fa }}>
       {children}
     </AuthContext.Provider>
   );

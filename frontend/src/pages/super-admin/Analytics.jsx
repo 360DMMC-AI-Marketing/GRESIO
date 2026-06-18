@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, Building2, Users, DollarSign, TrendingUp, Loader, Calendar } from 'lucide-react';
+import { BarChart3, Building2, Users, DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { api } from '../../services/api';
+import Skeleton from '../../components/Skeleton';
 
 const planColors = {
   starter: '#9ca3af',
@@ -45,11 +46,13 @@ export default function Analytics() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-2 text-surface-400 text-sm">
-          <Loader size={16} className="animate-spin" />
-          Loading analytics...
+      <div className="space-y-5">
+        <Skeleton.PageHeader />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
         </div>
+        <Skeleton.Chart />
+        <Skeleton.Table rows={4} />
       </div>
     );
   }

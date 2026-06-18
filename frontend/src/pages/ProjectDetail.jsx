@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import Skeleton from '../components/Skeleton';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
 import { Workflow } from 'lucide-react';
@@ -425,6 +426,24 @@ export default function ProjectDetail() {
     try { await projects.delete(id); navigate('/projects'); } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
   };
 
+  const handleSaveAsTemplate = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/templates/from-project/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
+      });
+      const d = await res.json();
+      if (d.data) {
+        toast.success(`Template "${d.data.name}" created!`);
+        setModalAlert({ title:'Template Created', message:`"${d.data.name}" is now available in the Template Marketplace.`, type:'success' });
+      } else {
+        toast.error(d.error || 'Failed to save template');
+      }
+    } catch (e) { setModalAlert({ title:'Error', message:e.message, type:'error' }); }
+    finally { setSaving(false); }
+  };
+
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
@@ -556,7 +575,15 @@ export default function ProjectDetail() {
   };
 
   if (!project) {
-    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+    return (
+      <div className="p-6 space-y-6">
+        <Skeleton.PageHeader />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => <Skeleton.StatCard key={i} />)}
+        </div>
+        <Skeleton.Text lines={12} />
+      </div>
+    );
   }
 
   const typeCfg = TYPE_CONFIGS[project.projectType] || TYPE_CONFIGS.software;
@@ -1956,6 +1983,17 @@ export default function ProjectDetail() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="settings-section" style={{borderLeft:'3px solid #8b5cf6'}}>
+            <div className="settings-title">📦 Save as Template</div>
+            <div style={{fontSize:10,color:'#6b7280',marginBottom:8}}>
+              Turn this project into a reusable template. All sprints become phases and tasks are preserved.
+            </div>
+            <button className="btn" style={{fontSize:10,padding:'6px 14px',background:'#8b5cf6',color:'white',border:'none',cursor:'pointer',borderRadius:6,fontWeight:500}}
+              onClick={handleSaveAsTemplate} disabled={saving}>
+              {saving ? 'Saving…' : 'Save as Template'}
+            </button>
           </div>
 
           {canManage && (

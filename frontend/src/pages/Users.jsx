@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api, { workLogs } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
 import Dropdown from '../components/Dropdown';
 
 const ROLE_STYLES = {
@@ -161,7 +162,12 @@ export default function Users() {
   };
   function getTagStyle(tag) { return TAG_STYLES[tag.toLowerCase().trim()] || TAG_STYLES.default; }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return (
+    <div>
+      <Skeleton.PageHeader />
+      <Skeleton.Table rows={8} />
+    </div>
+  );
 
   const renderMemberRow = (member, groupIcon) => {
     const first = member.memberships?.[0] || {};

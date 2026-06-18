@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   onboardingCompleted: { type: Boolean, default: false },
   theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+  resetPasswordToken: { type: String, default: '' },
+  resetPasswordExpire: { type: Date, default: null },
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorSecret: { type: String, default: '' },
+  backupCodes: [{ type: String }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sprints as sprintsApi, projects, tasks as tasksApi, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
 import Dropdown from '../components/Dropdown';
 
 const STATUS_META = {
@@ -77,7 +78,14 @@ export default function Sprints() {
     finally { setCreatingTask(null); }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return (
+    <div>
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[1,2,3,4].map(i => <div key={i} className="bg-white rounded-xl border border-surface-200 p-5 space-y-4"><Skeleton.Box w="60%" h={20} /><Skeleton.Box w="100%" h={8} /><Skeleton.Text lines={2} /></div>)}
+      </div>
+    </div>
+  );
 
   return (
     <div>

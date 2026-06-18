@@ -46,6 +46,12 @@ export const auth = {
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.patch('/auth/profile', data),
   changePassword: (data) => api.post('/auth/change-password', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (token, data) => api.post(`/auth/reset-password/${token}`, data),
+  verify2fa: (data) => api.post('/auth/verify-2fa', data),
+  setup2fa: () => api.post('/auth/setup-2fa'),
+  enable2fa: (data) => api.post('/auth/enable-2fa', data),
+  disable2fa: (data) => api.post('/auth/disable-2fa', data),
 };
 
 export const users = {
@@ -270,6 +276,8 @@ export const superAdmin = {
   getRevenue: (period) => superApi.get('/super-api/analytics/revenue', { params: { period } }),
   getGrowth: (period) => superApi.get('/super-api/analytics/growth', { params: { period } }),
   getHealth: () => superApi.get('/super-api/health'),
+  getSettings: () => superApi.get('/super-api/settings'),
+  saveSettings: (data) => superApi.put('/super-api/settings', data),
 };
 
 export const ai = {
@@ -296,13 +304,6 @@ export const templates = {
   download: (id) => api.post(`/templates/${id}/download`),
   rate: (id, rating) => api.post(`/templates/${id}/rate`, { rating }),
   my: () => api.get('/templates/my'),
-};
-
-export const referrals = {
-  generate: () => api.get('/referrals/generate'),
-  my: () => api.get('/referrals/my'),
-  redeem: (code) => api.post('/referrals/redeem', { code }),
-  stats: () => api.get('/referrals/stats'),
 };
 
 export const reportShare = {

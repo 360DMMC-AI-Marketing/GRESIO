@@ -24,7 +24,9 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^8.0.10",
     "openai": "^6.44.0",
+    "qrcode": "^1.5.4",
     "socket.io": "^4.7.5",
+    "speakeasy": "^2.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

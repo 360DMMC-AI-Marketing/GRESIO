@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { projects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
 import Modal, { ConfirmModal } from '../components/Modal';
 import ReportChoiceModal from '../components/ReportChoiceModal';
 import Dropdown from '../components/Dropdown';
@@ -54,7 +55,14 @@ export default function Projects() {
     } catch (err) { console.error(err); }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return (
+    <div>
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1,2,3,4,5,6].map(i => <Skeleton.ProjectCard key={i} />)}
+      </div>
+    </div>
+  );
 
   return (
     <div>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { integrations, users, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
+import Modal, { InputModal, ConfirmModal, AlertModal } from '../components/Modal';
 
 const PLAN_INFO = {
   starter: { label: 'Starter', price: '$0', color: 'bg-surface-200', textColor: 'text-surface-700', users: 10, projects: 3 },
@@ -15,9 +17,7 @@ function fmtLimit(val) {
 
 export default function Admin() {
   const { user, company, updateCompany } = useAuth();
-  const [integrationsList, setIntegrationsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(null);
   const [syncingPlatform, setSyncingPlatform] = useState(null);
   const [outlookUsers, setOutlookUsers] = useState([]);
   const [teamIdInput, setTeamIdInput] = useState('');
@@ -26,12 +26,12 @@ export default function Admin() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
+  const [alertModal, setAlertModal] = useState(null);
   useEffect(() => {
     Promise.all([
       integrations.getAll(),
       users.getAll({ hasOutlook: 'true' }),
     ]).then(([intRes, ouRes]) => {
-      setIntegrationsList(intRes.data);
       const msft = intRes.data.find(i => i.name === 'microsoft_graph');
       if (msft?.config?.teamsTeamId) setTeamIdInput(msft.config.teamsTeamId);
       setOutlookUsers(ouRes.data);
@@ -46,21 +46,9 @@ export default function Admin() {
       const res = await companies.updatePlan(company._id, plan);
       updateCompany(res.data);
     } catch (e) {
-      alert('Upgrade failed: ' + (e.response?.data?.message || e.message));
+      setAlertModal({ title: 'Upgrade Failed', message: e.response?.data?.message || e.message, type: 'error' });
     } finally {
       setUpgrading(null);
-    }
-  };
-
-  const handleSync = async (name) => {
-    setSyncing(name);
-    try {
-      const res = await integrations.sync(name);
-      alert(res.data.message);
-    } catch (err) {
-      alert('Sync failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setSyncing(null);
     }
   };
 
@@ -71,9 +59,9 @@ export default function Admin() {
       const res = platform === 'github'
         ? await integrations.sync(name)
         : await integrations.syncPlatform(name, platform);
-      alert(res.data.message);
+      setAlertModal({ title: 'Sync Result', message: res.data.message, type: 'success' });
     } catch (err) {
-      alert('Sync failed: ' + (err.response?.data?.message || err.message));
+      setAlertModal({ title: 'Sync Failed', message: err.response?.data?.message || err.message, type: 'error' });
     } finally {
       setSyncingPlatform(null);
     }
@@ -100,10 +88,15 @@ export default function Admin() {
     }
   };
 
-  const platformIcons = { github: '🐙', clickup: '📋', microsoft_graph: '⭐' };
-  const platformLabels = { github: 'GitHub (Add-on)', clickup: 'ClickUp (Add-on)', microsoft_graph: 'Microsoft 365 — Primary' };
-
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div></div>;
+  if (loading) return (
+    <div className="space-y-6">
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {[1,2,3].map(i => <Skeleton.StatCard key={i} />)}
+      </div>
+      <Skeleton.Table rows={6} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -194,37 +187,151 @@ export default function Admin() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">🔌 Integrations</h2>
-          {integrationsList.length === 0 ? (
-            <div className="text-center py-10 text-surface-400">
-              <p className="text-3xl mb-2">🔌</p>
-              <p className="text-sm">No integrations configured. Add API keys in your .env file.</p>
-            </div>
-          ) : (
+        <div className="space-y-6">
+
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">🔑 API Keys</h2>
+            <p className="text-xs text-surface-500 mb-3">Generate API keys for programmatic access to GRESIO (Zapier, custom integrations).</p>
             <div className="space-y-3">
-              {[...integrationsList].sort((a, b) => a.name === 'microsoft_graph' ? -1 : b.name === 'microsoft_graph' ? 1 : 0).map((int) => (
-                <div key={int._id} className={`flex items-center justify-between p-3 border rounded-lg ${int.name === 'microsoft_graph' ? 'border-primary-300 bg-primary-50/30' : 'border-surface-200'}`}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{platformIcons[int.name] || '🔌'}</span>
-                    <div>
-                      <p className="font-medium text-surface-900 text-sm">{platformLabels[int.name] || (int.name || '').replace('_', ' ')}</p>
-                      <p className="text-xs text-surface-400">
-                        {int.isConnected ? `Last sync: ${int.lastSync ? new Date(int.lastSync).toLocaleString() : 'Never'}` : 'Not connected'}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleSync(int.name)}
-                    disabled={syncing === int.name || !int.isConnected}
-                    className="px-3 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {syncing === int.name ? 'Syncing...' : 'Sync Now'}
+              <ApiKeySection />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">👥 Import from Microsoft 365</h2>
+            <p className="text-xs text-surface-500 mb-4">Enter your company email domain to import all users from Azure AD. Each user's role is inferred from their Azure AD job title / department, and they are automatically placed in the correct department team group across all projects.</p>
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-surface-700 mb-1">Company domain</label>
+                <div className="flex items-center border border-surface-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-500">
+                  <span className="px-3 text-sm text-surface-400 bg-surface-50 py-2 border-r border-surface-300">@</span>
+                  <input type="text" value={importDomain} onChange={e => setImportDomain(e.target.value)}
+                    placeholder="yourcompany.com" className="flex-1 px-3 py-2 text-sm outline-none bg-white" />
+                </div>
+              </div>
+              <button onClick={handleImport} disabled={importing || !importDomain.trim()}
+                className="px-5 py-2 text-sm font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <svg viewBox="0 0 21 21" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="8" height="8" fill="#F25022"/>
+                  <rect x="12" y="1" width="8" height="8" fill="#7FBA00"/>
+                  <rect x="1" y="12" width="8" height="8" fill="#00A4EF"/>
+                  <rect x="12" y="12" width="8" height="8" fill="#FFB900"/>
+                </svg>
+                {importing ? 'Importing...' : 'Import Users'}
+              </button>
+            </div>
+            {importResult && (
+              <div className={`mt-4 p-3 rounded-lg text-sm ${importResult.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {importResult.type === 'success'
+                  ? `✅ ${importResult.imported} users imported, ${importResult.skipped} skipped (${importResult.total} found in Azure AD)`
+                  : `❌ ${importResult.message}`}
+                <button onClick={() => setImportResult(null)} className="ml-3 text-xs underline">Dismiss</button>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">🐙 GitHub Activity</h2>
+            <div className="text-center">
+              <p className="text-5xl mb-4">🐙</p>
+              <p className="text-sm text-surface-500 mb-3">Track commits, pull requests, and issues</p>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Repositories</p>
+                  <p className="text-lg font-bold text-surface-900">Linked</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Commits</p>
+                  <p className="text-lg font-bold text-surface-900">Via API</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Pull Requests</p>
+                  <p className="text-lg font-bold text-surface-900">Auto-synced</p>
+                </div>
+              </div>
+              <button onClick={() => handlePlatformSync('github')} disabled={syncingPlatform === 'github'}
+                className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                {syncingPlatform === 'github' ? 'Syncing...' : 'Sync Now'}
+              </button>
+              <p className="text-xs text-surface-400 mt-2">Configure GitHub token in .env file</p>
+            </div>
+          </div>
+
+          {['admin', 'project_manager'].includes(user?.role) && (
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">💬 Microsoft Teams</h2>
+            <div className="text-center">
+              <p className="text-5xl mb-4">💬</p>
+              <p className="text-sm text-surface-500 mb-3">Messages, meetings, channel creation</p>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Messages</p>
+                  <p className="text-lg font-bold text-surface-900">Via Graph API</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Meetings</p>
+                  <p className="text-lg font-bold text-surface-900">Auto-detected</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Channels</p>
+                  <p className="text-lg font-bold text-surface-900">Auto-create</p>
+                </div>
+              </div>
+              <div style={{textAlign:'left',marginTop:12}}>
+                <label className="block text-xs font-medium text-surface-700 mb-1">Default Team ID (for project channels)</label>
+                <div style={{display:'flex',gap:6}}>
+                  <input className="s-input" style={{flex:1}} value={teamIdInput}
+                    onChange={e => setTeamIdInput(e.target.value)}
+                    placeholder="e.g. 48dfb6b8-..." />
+                  <button onClick={async () => {
+                    setSavingTeamId(true);
+                    try {
+                      await integrations.update('microsoft_graph', { config: { teamsTeamId: teamIdInput } });
+                      setAlertModal({ title: 'Saved', message: 'Default Team ID saved', type: 'success' });
+                    } catch (e) { setAlertModal({ title: 'Error', message: e.response?.data?.message || e.message, type: 'error' }); }
+                    finally { setSavingTeamId(false); }
+                  }} disabled={savingTeamId}
+                    className="px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+                    {savingTeamId ? 'Saving…' : 'Save'}
                   </button>
                 </div>
-              ))}
+              </div>
+              <button onClick={() => handlePlatformSync('teams')} disabled={syncingPlatform === 'teams'}
+                className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                {syncingPlatform === 'teams' ? 'Syncing...' : 'Sync Now'}
+              </button>
+              <p className="text-xs text-surface-400 mt-2">Tracked via Microsoft Graph API integration</p>
             </div>
+          </div>
           )}
+
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-4">📧 Microsoft Outlook</h2>
+            <div className="text-center">
+              <p className="text-5xl mb-4">📧</p>
+              <p className="text-sm text-surface-500 mb-3">Email and calendar tracking</p>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Emails</p>
+                  <p className="text-lg font-bold text-surface-900">Via Graph API</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Calendar</p>
+                  <p className="text-lg font-bold text-surface-900">Synced</p>
+                </div>
+                <div className="p-3 bg-surface-50 rounded-lg">
+                  <p className="text-sm text-surface-500">Workload</p>
+                  <p className="text-lg font-bold text-surface-900">Available</p>
+                </div>
+              </div>
+              <button onClick={() => handlePlatformSync('outlook')} disabled={syncingPlatform === 'outlook'}
+                className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                {syncingPlatform === 'outlook' ? 'Syncing...' : 'Sync Now'}
+              </button>
+              <p className="text-xs text-surface-400 mt-2">Configure Microsoft Graph credentials in .env</p>
+            </div>
+          </div>
+
         </div>
 
         <div className="bg-white rounded-xl border border-surface-200 p-5">
@@ -252,112 +359,6 @@ export default function Admin() {
           )}
         </div>
 
-        <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">🐙 GitHub Activity</h2>
-          <div className="text-center">
-            <p className="text-5xl mb-4">🐙</p>
-            <p className="text-sm text-surface-500 mb-3">Track commits, pull requests, and issues</p>
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Repositories</p>
-                <p className="text-lg font-bold text-surface-900">Linked</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Commits</p>
-                <p className="text-lg font-bold text-surface-900">Via API</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Pull Requests</p>
-                <p className="text-lg font-bold text-surface-900">Auto-synced</p>
-              </div>
-            </div>
-            <button onClick={() => handlePlatformSync('github')} disabled={syncingPlatform === 'github'}
-              className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
-              {syncingPlatform === 'github' ? 'Syncing...' : 'Sync Now'}
-            </button>
-            <p className="text-xs text-surface-400 mt-2">Configure GitHub token in .env file</p>
-          </div>
-        </div>
-
-        {['admin', 'project_manager'].includes(user?.role) && (
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">💬 Microsoft Teams</h2>
-          <div className="text-center">
-            <p className="text-5xl mb-4">💬</p>
-            <p className="text-sm text-surface-500 mb-3">Messages, meetings, channel creation</p>
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Messages</p>
-                <p className="text-lg font-bold text-surface-900">Via Graph API</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Meetings</p>
-                <p className="text-lg font-bold text-surface-900">Auto-detected</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Channels</p>
-                <p className="text-lg font-bold text-surface-900">Auto-create</p>
-              </div>
-            </div>
-            <div style={{textAlign:'left',marginTop:12}}>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Default Team ID (for project channels)</label>
-              <div style={{display:'flex',gap:6}}>
-                <input className="s-input" style={{flex:1}} value={teamIdInput}
-                  onChange={e => setTeamIdInput(e.target.value)}
-                  placeholder="e.g. 48dfb6b8-..." />
-                <button onClick={async () => {
-                  setSavingTeamId(true);
-                  try {
-                    await integrations.update('microsoft_graph', { config: { teamsTeamId: teamIdInput } });
-                    alert('Default Team ID saved');
-                  } catch (e) { alert('Error: ' + (e.response?.data?.message || e.message)); }
-                  finally { setSavingTeamId(false); }
-                }} disabled={savingTeamId}
-                  className="px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
-                  {savingTeamId ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </div>
-            <button onClick={() => handlePlatformSync('teams')} disabled={syncingPlatform === 'teams'}
-              className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
-              {syncingPlatform === 'teams' ? 'Syncing...' : 'Sync Now'}
-            </button>
-            <p className="text-xs text-surface-400 mt-2">Tracked via Microsoft Graph API integration</p>
-          </div>
-        </div>
-        )}
-
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">📧 Microsoft Outlook</h2>
-          <div className="text-center">
-            <p className="text-5xl mb-4">📧</p>
-            <p className="text-sm text-surface-500 mb-3">Email and calendar tracking</p>
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Emails</p>
-                <p className="text-lg font-bold text-surface-900">Via Graph API</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Calendar</p>
-                <p className="text-lg font-bold text-surface-900">Synced</p>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg">
-                <p className="text-sm text-surface-500">Workload</p>
-                <p className="text-lg font-bold text-surface-900">Available</p>
-              </div>
-            </div>
-            <button onClick={() => handlePlatformSync('outlook')} disabled={syncingPlatform === 'outlook'}
-              className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
-              {syncingPlatform === 'outlook' ? 'Syncing...' : 'Sync Now'}
-            </button>
-            <p className="text-xs text-surface-400 mt-2">Configure Microsoft Graph credentials in .env</p>
-          </div>
-        </div>
-
-        </div>
-
         <div className="bg-white rounded-xl border border-surface-200 p-5">
           <h2 className="text-lg font-semibold text-surface-900 mb-4">⚙️ System Settings</h2>
           <div className="space-y-4">
@@ -380,48 +381,14 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-surface-200 p-5 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">👥 Import from Microsoft 365</h2>
-          <p className="text-xs text-surface-500 mb-4">Enter your company email domain to import all users from Azure AD. Each user's role is inferred from their Azure AD job title / department, and they are automatically placed in the correct department team group across all projects.</p>
-          <div className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="block text-xs font-medium text-surface-700 mb-1">Company domain</label>
-              <div className="flex items-center border border-surface-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-500">
-                <span className="px-3 text-sm text-surface-400 bg-surface-50 py-2 border-r border-surface-300">@</span>
-                <input type="text" value={importDomain} onChange={e => setImportDomain(e.target.value)}
-                  placeholder="yourcompany.com" className="flex-1 px-3 py-2 text-sm outline-none bg-white" />
-              </div>
-            </div>
-            <button onClick={handleImport} disabled={importing || !importDomain.trim()}
-              className="px-5 py-2 text-sm font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-              <svg viewBox="0 0 21 21" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1" y="1" width="8" height="8" fill="#F25022"/>
-                <rect x="12" y="1" width="8" height="8" fill="#7FBA00"/>
-                <rect x="1" y="12" width="8" height="8" fill="#00A4EF"/>
-                <rect x="12" y="12" width="8" height="8" fill="#FFB900"/>
-              </svg>
-              {importing ? 'Importing...' : 'Import Users'}
-            </button>
-          </div>
-          {importResult && (
-            <div className={`mt-4 p-3 rounded-lg text-sm ${importResult.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-              {importResult.type === 'success'
-                ? `✅ ${importResult.imported} users imported, ${importResult.skipped} skipped (${importResult.total} found in Azure AD)`
-                : `❌ ${importResult.message}`}
-              <button onClick={() => setImportResult(null)} className="ml-3 text-xs underline">Dismiss</button>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">🔑 API Keys</h2>
-          <p className="text-xs text-surface-500 mb-3">Generate API keys for programmatic access to GRESIO (Zapier, custom integrations).</p>
-          <div className="space-y-3">
-            <ApiKeySection />
-          </div>
-        </div>
-
       </div>
+      <AlertModal
+        open={!!alertModal}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title}
+        message={alertModal?.message}
+        type={alertModal?.type}
+      />
     </div>
   );
 }
@@ -429,10 +396,14 @@ export default function Admin() {
 function ApiKeySection() {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [keyName, setKeyName] = useState('');
+  const [createdKey, setCreatedKey] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetch('/api/v1/api-keys', {
+    fetch('/api/api-keys', {
       headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
     }).then(r => r.json())
       .then(d => setKeys(d.data || []))
@@ -441,43 +412,102 @@ function ApiKeySection() {
   }, []);
 
   const createKey = async () => {
-    setCreating(true);
+    const name = keyName.trim();
+    if (!name) return;
     try {
-      const name = prompt('Name for this API key:');
-      if (!name) { setCreating(false); return; }
-      const res = await fetch('/api/v1/api-keys', {
+      const res = await fetch('/api/api-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
         body: JSON.stringify({ name, scopes: ['projects:read', 'tasks:read', 'tasks:write', 'reports:read'] }),
       });
       const data = await res.json();
-      if (data.key) {
-        alert(`Your API key: ${data.key}\n\nSave this — it will not be shown again.`);
+      if (!res.ok || !data.key) {
+        setCreatedKey('Error: ' + (data.error || 'Unknown error'));
+      } else {
+        setCreatedKey(data.key);
         setKeys(prev => [...prev, data.data]);
       }
-    } catch (e) { alert('Error: ' + e.message); }
-    finally { setCreating(false); }
+    } catch (e) { setCreatedKey('Error: ' + e.message); }
+    finally { setShowCreate(false); setKeyName(''); }
   };
 
-  const deleteKey = async (id) => {
-    if (!confirm('Delete this API key?')) return;
+  const deleteKey = async () => {
+    if (!deleteTarget) return;
     try {
-      await fetch(`/api/v1/api-keys/${id}`, {
+      await fetch(`/api/api-keys/${deleteTarget}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
       });
-      setKeys(prev => prev.filter(k => k._id !== id));
-    } catch (e) { alert('Error: ' + e.message); }
+      setKeys(prev => prev.filter(k => k._id !== deleteTarget));
+    } catch (e) { setCreatedKey('Error: ' + e.message); }
+    finally { setDeleteTarget(null); }
+  };
+
+  const copyKey = () => {
+    navigator.clipboard.writeText(createdKey).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
   };
 
   if (loading) return <div className="text-xs text-surface-400">Loading...</div>;
 
   return (
     <div>
-      <button onClick={createKey} disabled={creating}
-        className="mb-3 px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 cursor-pointer border-none">
-        {creating ? 'Creating...' : '+ Generate New Key'}
+      <button onClick={() => { setKeyName(''); setShowCreate(true); }}
+        className="mb-3 px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 cursor-pointer border-none">
+        + Generate New Key
       </button>
+
+      <InputModal
+        open={showCreate}
+        onClose={() => { setShowCreate(false); setKeyName(''); }}
+        title="Generate API Key"
+        icon="🔑"
+        submitText="Generate"
+        onSubmit={createKey}
+        fields={[
+          { key: 'name', label: 'Key name', type: 'text', placeholder: 'e.g. CI/CD Pipeline',
+            value: keyName, onChange: e => setKeyName(e.target.value) },
+        ]}
+      />
+
+      <Modal open={!!createdKey} onClose={() => setCreatedKey(null)}
+        title={createdKey?.startsWith('Error') ? 'Error' : 'API Key Generated'}
+        icon={createdKey?.startsWith('Error') ? '❌' : '🔑'}
+        footer={
+          createdKey?.startsWith('Error')
+            ? <button onClick={() => setCreatedKey(null)}
+                className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 cursor-pointer border-none">OK</button>
+            : <button onClick={() => setCreatedKey(null)}
+                className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 cursor-pointer border-none">Done</button>
+        }>
+        {createdKey?.startsWith('Error') ? (
+          <p className="m-0 text-xs text-red-500">{createdKey}</p>
+        ) : (
+          <>
+            <p className="m-0 text-xs text-surface-500 mb-3">Save this key — it will not be shown again.</p>
+            <div className="flex gap-2">
+              <input readOnly value={createdKey}
+                className="flex-1 px-3 py-2 text-xs font-mono bg-surface-50 border border-surface-300 rounded-lg text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" />
+              <button onClick={copyKey}
+                className="px-3 py-2 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none whitespace-nowrap">
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={deleteKey}
+        title="Delete API Key"
+        message="Are you sure you want to delete this API key? This action cannot be undone, and any services using this key will lose access."
+        confirmText="Delete"
+        confirmColor="#ef4444"
+      />
 
       {keys.length === 0 ? (
         <p className="text-xs text-surface-400">No API keys yet. Generate one to get started.</p>
@@ -493,7 +523,7 @@ function ApiKeySection() {
                 </span>
                 {k.lastUsed && <span className="text-[9px] text-surface-400 ml-2">Last used: {new Date(k.lastUsed).toLocaleDateString()}</span>}
               </div>
-              <button onClick={() => deleteKey(k._id)}
+              <button onClick={() => setDeleteTarget(k._id)}
                 className="text-[10px] text-danger-500 hover:underline cursor-pointer bg-transparent border-none">Delete</button>
             </div>
           ))}

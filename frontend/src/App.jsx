@@ -9,6 +9,8 @@ import MobileNav from './components/MobileNav';
 
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Projects = lazy(() => import('./pages/Projects'));
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
@@ -44,7 +46,6 @@ const PublicReport = lazy(() => import('./pages/PublicReport'));
 const TemplateMarketplace = lazy(() => import('./pages/TemplateMarketplace'));
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const CreateTemplate = lazy(() => import('./pages/CreateTemplate'));
-const Referrals = lazy(() => import('./pages/Referrals'));
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
 const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
 const SuperAdminCompanyDetail = lazy(() => import('./pages/super-admin/CompanyDetail'));
@@ -55,10 +56,24 @@ const SuperAdminNotifications = lazy(() => import('./pages/super-admin/Notificat
 const SuperAdminProfile = lazy(() => import('./pages/super-admin/Profile'));
 const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
 import ScrollToTop from './components/ScrollToTop';
+import Skeleton from './components/Skeleton';
 import WelcomeWizard from './components/WelcomeWizard';
 
+function SuspenseFallback() {
+  return (
+    <div className="min-h-screen bg-white p-6 space-y-6">
+      <Skeleton.PageHeader />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
+      </div>
+      <Skeleton.Chart />
+      <Skeleton.Table rows={4} />
+    </div>
+  );
+}
+
 function SuspenseWrapper({ children }) {
-  return <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-surface-400 text-sm">Loading...</div>}>{children}</Suspense>;
+  return <Suspense fallback={<SuspenseFallback />}>{children}</Suspense>;
 }
 
 export default function App() {
@@ -82,6 +97,8 @@ export default function App() {
             <Route path="/report/:id" element={<ReportPreviewPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/shared-report/:token" element={<PublicReport />} />
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
@@ -108,7 +125,6 @@ export default function App() {
               <Route path="/templates" element={<TemplateMarketplace />} />
               <Route path="/templates/:id" element={<TemplateDetail />} />
               <Route path="/templates/create" element={<CreateTemplate />} />
-              <Route path="/referrals" element={<Referrals />} />
             </Route>
             <Route element={<SuperAdminLayout />}>
               <Route path="/super/dashboard" element={<SuperAdminDashboard />} />

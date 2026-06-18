@@ -2,7 +2,11 @@ const Task = require('../models/Task');
 const Sprint = require('../models/Sprint');
 const Project = require('../models/Project');
 const CalendarEvent = require('../models/CalendarEvent');
+const Activity = require('../models/Activity');
+const User = require('../models/User');
+const Company = require('../models/Company');
 const Notification = require('../models/Notification');
+const msGraph = require('../services/microsoftGraphService');
 
 exports.getCalendarEvents = async (req, res, next) => {
   try {
@@ -34,13 +38,24 @@ exports.getCalendarEvents = async (req, res, next) => {
       ...(userId ? { user: userId } : {}),
       ...(projectId ? { project: projectId } : {}),
     };
+    const outlookFilter = {
+      domain,
+      type: 'outlook_calendar',
+      createdAt: { $gte: startDate, $lte: endDate },
+      ...(userId ? { user: userId } : {}),
+    };
 
-    const [tasks, sprints, projects, calendarEvents] = await Promise.all([
+    const [tasks, sprints, projects, calendarEvents, outlookEvents, outlookUsers] = await Promise.all([
       Task.find(taskFilter).select('title deadline project assignee status priority').populate('project', 'name').populate('assignee', 'name').lean(),
       Sprint.find(sprintFilter).populate('project', 'name domain').lean(),
       Project.find(projectFilter).select('name deadline status phase').lean(),
       CalendarEvent.find(calendarFilter).populate('project', 'name').populate('user', 'name').lean(),
+      Activity.find(outlookFilter).lean(),
+      User.find({ domain }).select('_id name').lean(),
     ]);
+
+    const userMap = {};
+    outlookUsers.forEach(u => { userMap[u._id.toString()] = u.name; });
 
     const mappedTasks = tasks.map(t => ({
       _id: t._id,
@@ -102,7 +117,22 @@ exports.getCalendarEvents = async (req, res, next) => {
       source: 'custom',
     }));
 
-    const all = [...mappedTasks, ...mappedSprints, ...mappedProjects, ...mappedCustom];
+    const mappedOutlook = outlookEvents.map(a => ({
+      _id: a._id,
+      title: a.metadata?.subject || a.description?.replace('Event: ', '') || 'Outlook Event',
+      date: a.metadata?.start ? new Date(a.metadata.start) : a.createdAt,
+      endDate: a.metadata?.end ? new Date(a.metadata.end) : null,
+      type: 'event',
+      userId: a.user?.toString() || null,
+      userName: userMap[a.user?.toString()] || '',
+      projectName: '',
+      projectId: null,
+      description: a.description || '',
+      link: null,
+      source: 'outlook',
+    }));
+
+    const all = [...mappedTasks, ...mappedSprints, ...mappedProjects, ...mappedCustom, ...mappedOutlook];
     all.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     res.json(all);
@@ -147,6 +177,29 @@ exports.createCalendarEvent = async (req, res, next) => {
       type, description, link: link || '', project: project || undefined,
     });
 
+    if (syncToOutlook) {
+      const [company, creator] = await Promise.all([
+        Company.findOne({ domain }).lean(),
+        User.findById(req.user._id).lean(),
+      ]);
+      if (company?.outlookTenantId && creator?.outlookEmail) {
+        const creds = {
+          tenantId: company.outlookTenantId,
+          clientId: company.outlookClientId,
+          clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+        };
+        const result = await msGraph.createOutlookCalendarEvent(
+          creator.outlookEmail, title, new Date(date).toISOString(),
+          endDate ? new Date(endDate).toISOString() : undefined,
+          description || '', creds,
+        );
+        if (result.id) {
+          event.outlookEventId = result.id;
+          await event.save();
+        }
+      }
+    }
+
     await Notification.create({
       user: req.user._id,
       domain,
@@ -171,6 +224,27 @@ exports.updateCalendarEvent = async (req, res, next) => {
       { new: true, runValidators: true }
     );
     if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    if (event.outlookEventId) {
+      const [company, creator] = await Promise.all([
+        Company.findOne({ domain: req.user.domain }).lean(),
+        User.findById(req.user._id).lean(),
+      ]);
+      if (company?.outlookTenantId && creator?.outlookEmail) {
+        const creds = {
+          tenantId: company.outlookTenantId,
+          clientId: company.outlookClientId,
+          clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+        };
+        await msGraph.updateOutlookCalendarEvent(
+          creator.outlookEmail, event.outlookEventId, title,
+          new Date(date).toISOString(),
+          endDate ? new Date(endDate).toISOString() : undefined,
+          description || '', creds,
+        );
+      }
+    }
+
     res.json(event);
   } catch (error) {
     next(error);
@@ -183,6 +257,22 @@ exports.deleteCalendarEvent = async (req, res, next) => {
       _id: req.params.id, domain: req.user.domain,
     });
     if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    if (event.outlookEventId) {
+      const [company, creator] = await Promise.all([
+        Company.findOne({ domain: req.user.domain }).lean(),
+        User.findById(req.user._id).lean(),
+      ]);
+      if (company?.outlookTenantId && creator?.outlookEmail) {
+        const creds = {
+          tenantId: company.outlookTenantId,
+          clientId: company.outlookClientId,
+          clientSecret: company.getDecryptedOutlookSecret ? company.getDecryptedOutlookSecret() : company.outlookClientSecret,
+        };
+        await msGraph.deleteOutlookCalendarEvent(creator.outlookEmail, event.outlookEventId, creds);
+      }
+    }
+
     res.json({ message: 'Event deleted' });
   } catch (error) {
     next(error);

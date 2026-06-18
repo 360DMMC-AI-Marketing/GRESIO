@@ -248,6 +248,57 @@ class MicrosoftGraphService {
       return { error: msg };
     }
   }
+
+  async createOutlookCalendarEvent(userEmail, title, startDateTime, endDateTime, description, creds) {
+    try {
+      if (!userEmail) return { error: 'No user email' };
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+      if (!client) return { error: 'Graph not configured' };
+      const body = {
+        subject: title,
+        start: { dateTime: startDateTime, timeZone: 'UTC' },
+        end: { dateTime: endDateTime || startDateTime, timeZone: 'UTC' },
+      };
+      if (description) body.body = { contentType: 'text', content: description };
+      const { data } = await client.post(`/users/${userEmail}/calendar/events`, body);
+      return { id: data.id };
+    } catch (error) {
+      console.error('Create Outlook event error:', error.message);
+      return { error: error.message };
+    }
+  }
+
+  async updateOutlookCalendarEvent(userEmail, outlookEventId, title, startDateTime, endDateTime, description, creds) {
+    try {
+      if (!userEmail || !outlookEventId) return { error: 'Missing email or eventId' };
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+      if (!client) return { error: 'Graph not configured' };
+      const body = {
+        subject: title,
+        start: { dateTime: startDateTime, timeZone: 'UTC' },
+        end: { dateTime: endDateTime || startDateTime, timeZone: 'UTC' },
+      };
+      if (description) body.body = { contentType: 'text', content: description };
+      await client.patch(`/users/${userEmail}/calendar/events/${outlookEventId}`, body);
+      return { success: true };
+    } catch (error) {
+      console.error('Update Outlook event error:', error.message);
+      return { error: error.message };
+    }
+  }
+
+  async deleteOutlookCalendarEvent(userEmail, outlookEventId, creds) {
+    try {
+      if (!userEmail || !outlookEventId) return { error: 'Missing email or eventId' };
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+      if (!client) return { error: 'Graph not configured' };
+      await client.delete(`/users/${userEmail}/calendar/events/${outlookEventId}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Delete Outlook event error:', error.message);
+      return { error: error.message };
+    }
+  }
 }
 
 module.exports = new MicrosoftGraphService();

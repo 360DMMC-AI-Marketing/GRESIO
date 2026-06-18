@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { tasks, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from '../components/Skeleton';
 import Modal from '../components/Modal';
 import Dropdown from '../components/Dropdown';
 import toast from 'react-hot-toast';
@@ -121,7 +122,14 @@ export default function Tasks() {
   };
 
   if (loading && currentList.length === 0) {
-    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+    return (
+      <div>
+        <Skeleton.PageHeader />
+        <div className="bg-white rounded-xl border border-surface-200">
+          {[1,2,3,4,5,6].map(i => <Skeleton.TaskRow key={i} />)}
+        </div>
+      </div>
+    );
   }
 
   return (

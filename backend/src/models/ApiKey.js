@@ -26,8 +26,8 @@ apiKeySchema.statics.hashKey = function (key) {
 };
 
 apiKeySchema.pre('save', function (next) {
-  if (this.isModified('key')) {
-    this.prefix = this.key.split('_')[0] + '_' + this.key.split('_')[1].substring(0, 4);
+  if (this.isModified('key') && !this.prefix) {
+    this.prefix = this.key.substring(0, 8);
   }
   next();
 });

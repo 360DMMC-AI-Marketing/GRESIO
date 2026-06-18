@@ -23,6 +23,7 @@ const env = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  GRAPH_SENDER_EMAIL: process.env.GRAPH_SENDER_EMAIL || '',
 };
 
 module.exports = env;
