@@ -231,6 +231,26 @@ export const calendarEvents = {
   delete: (id) => api.delete(`/calendar/${id}`),
 };
 
+export const aiBridge = {
+  getPending: () => api.get('/ai-bridge/pending'),
+  getHistory: () => api.get('/ai-bridge/history'),
+  respond: (id, response) => api.post(`/ai-bridge/respond/${id}`, { response }),
+};
+
+export const workDna = {
+  getDashboard: () => api.get('/work-dna/dashboard'),
+  getDecisions: (params) => api.get('/work-dna/decisions', { params }),
+  getDecisionTrail: (refType, refId) => api.get(`/work-dna/decisions/${refType}/${refId}`),
+  createDecision: (data) => api.post('/work-dna/decisions', data),
+  deleteDecision: (id) => api.delete(`/work-dna/decisions/${id}`),
+  getDejaVu: (projectId) => api.get(`/work-dna/deja-vu/${projectId}`),
+  searchDejaVu: (q) => api.get('/work-dna/deja-vu/search', { params: { q } }),
+  getPatterns: () => api.get('/work-dna/patterns'),
+  getAnalyses: (params) => api.get('/work-dna/analyses', { params }),
+  analyzeAll: () => api.post('/work-dna/analyze-all'),
+
+};
+
 // Super admin API — uses same token, no baseURL prefix
 export const superAdmin = {
   login: (data) => superApi.post('/super-api/auth/login', data),

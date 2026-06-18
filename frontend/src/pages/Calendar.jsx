@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { calendarEvents, projects } from '../services/api';
 import AddCalendarItemModal from '../components/AddCalendarItemModal';
 import Dropdown from '../components/Dropdown';
@@ -52,8 +53,10 @@ const iconMap = { task: '\u2713', sprint: '\u26A1', project_deadline: '\u2691', 
 const USER_PALETTE = ['#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316', '#6366f1', '#ec4899'];
 
 export default function Calendar() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const today = new Date();
+  const canAdd = ['admin', 'project_manager', 'manager'].includes(user?.role);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [events, setEvents] = useState([]);
@@ -216,10 +219,12 @@ export default function Calendar() {
                       ))}
                       {dayEvts.length > 4 && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium mt-0.5">+{dayEvts.length - 4} more</span>}
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
-                      className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
-                      +
-                    </button>
+                    {canAdd && (
+                      <button onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
+                        className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
+                        +
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -244,10 +249,12 @@ export default function Calendar() {
                   <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 rounded-full">{selectedEvents.length} item{selectedEvents.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex items-center gap-1">
+                {canAdd && (
                   <button onClick={() => openAddModal(selectedDay)}
                     className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 px-3 py-1 rounded-md transition-colors cursor-pointer bg-transparent border-none">
                     + Add
                   </button>
+                )}
                   <button onClick={() => setSelectedDay(null)}
                     className="text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400 text-lg leading-none bg-transparent border-none cursor-pointer p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">&times;</button>
                 </div>
@@ -296,17 +303,19 @@ export default function Calendar() {
           {agendaGroups.today.length === 0 && agendaGroups.thisWeek.length === 0 && agendaGroups.nextWeek.length === 0 && agendaGroups.later.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-sm text-neutral-400 dark:text-neutral-500">No upcoming events</p>
-              <button onClick={() => openAddModal(new Date())}
-                className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer bg-transparent border-none">
-                Add your first event
-              </button>
+              {canAdd && (
+                <button onClick={() => openAddModal(new Date())}
+                  className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer bg-transparent border-none">
+                  Add your first event
+                </button>
+              )}
             </div>
           ) : (
             <>
               {agendaGroups.today.length > 0 && (
-                <AgendaSection title="Today" events={agendaGroups.today} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={() => openAddModal(new Date())} navigate={navigate} />
+                <AgendaSection title="Today" events={agendaGroups.today} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
               )}
-              <AgendaSection title="This Week" events={agendaGroups.thisWeek} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={() => openAddModal(new Date())} navigate={navigate} />
+              <AgendaSection title="This Week" events={agendaGroups.thisWeek} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
               {agendaGroups.nextWeek.length > 0 && (
                 <AgendaSection title="Next Week" events={agendaGroups.nextWeek} colors={COLORS} labels={LABELS} icons={iconMap} navigate={navigate} />
               )}
@@ -318,10 +327,12 @@ export default function Calendar() {
         </div>
       )}
 
-      <button onClick={() => openAddModal(new Date())}
-        className="fixed bottom-6 right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-colors cursor-pointer border-none z-40">
-        +
-      </button>
+      {canAdd && (
+        <button onClick={() => openAddModal(new Date())}
+          className="fixed bottom-6 right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-colors cursor-pointer border-none z-40">
+          +
+        </button>
+      )}
 
       {showAddModal && (
         <AddCalendarItemModal defaultDate={addDate} onClose={() => setShowAddModal(false)} onCreated={handleEventCreated} />

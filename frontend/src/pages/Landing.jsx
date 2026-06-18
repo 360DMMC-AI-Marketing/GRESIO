@@ -186,6 +186,38 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* WORKDNA — COMPANY BRAIN */}
+      <section className="py-24 px-5 bg-surface-50/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">The next evolution</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-4">🧬 WorkDNA — Your Company Brain</h2>
+            <p className="text-surface-500 max-w-2xl mx-auto">
+              Every project makes you smarter. WorkDNA captures every decision, surfaces patterns from past projects, and warns you before mistakes repeat. No other PM tool has a memory.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: '🗄️', title: 'Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team — everything in one place.', color: 'border-t-primary-500' },
+              { icon: '📝', title: 'Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.', color: 'border-t-green-500' },
+              { icon: '🔄', title: 'Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn from what happened.', color: 'border-t-amber-500' },
+              { icon: '🔍', title: 'Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost, no setup needed.', color: 'border-t-red-500' },
+            ].map((f, i) => (
+              <div key={i} className={`bg-white rounded-xl border border-surface-200 border-t-4 ${f.color} p-6 text-left hover:shadow-lg transition-all`}>
+                <span className="text-2xl mb-3 block">{f.icon}</span>
+                <h3 className="text-base font-bold text-surface-900 mb-2">{f.title}</h3>
+                <p className="text-sm text-surface-500 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link to="/pricing#workdna" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-base">
+              See WorkDNA Plans <span className="text-lg">→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-5 bg-white">
         <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-12 shadow-lg relative overflow-hidden">

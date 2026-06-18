@@ -225,10 +225,12 @@ export default function Dashboard() {
             </span>
             <span style={{ fontSize: 18, fontWeight: 800, color: healthColor, lineHeight: 1 }}>{healthScore}%</span>
           </div>
-          <div style={{ position: 'relative' }}>
+           <div style={{ position: 'relative' }}>
+            {user?.role === 'admin' && (
             <button onClick={() => setShowCustomize(!showCustomize)}
               style={{ background: showCustomize ? '#e0e7ff' : '#f8fafc', border: '0.5px solid #e2e8f0', borderRadius: 20, padding: '5px 14px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 11, fontWeight: 600, color: showCustomize ? '#2347e8' : '#64748b', transition: 'all 0.15s' }}
               title="Customize dashboard"><span style={{fontSize:13}}>✎</span> Customize</button>
+            )}
             {showCustomize && (
               <>
                 <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowCustomize(false)} />
@@ -378,7 +380,7 @@ export default function Dashboard() {
         {sections.plan && company && (
           <div className="card">
             <div className="card-header"><span className="card-title">Plan</span>
-              <Link to="/admin" className="card-link">Manage →</Link>
+              {user?.role === 'admin' && <Link to="/admin" className="card-link">Manage →</Link>}
             </div>
             <div style={{ padding: '8px 12px' }}>
               <div className="flex items-center justify-between mb-2">

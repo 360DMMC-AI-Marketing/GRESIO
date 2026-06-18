@@ -14,7 +14,7 @@ function fmtLimit(val) {
 }
 
 export default function Admin() {
-  const { company, updateCompany } = useAuth();
+  const { user, company, updateCompany } = useAuth();
   const [integrationsList, setIntegrationsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(null);
@@ -281,6 +281,7 @@ export default function Admin() {
           </div>
         </div>
 
+        {['admin', 'project_manager'].includes(user?.role) && (
         <div className="bg-white rounded-xl border border-surface-200 p-5">
           <h2 className="text-lg font-semibold text-surface-900 mb-4">💬 Microsoft Teams</h2>
           <div className="text-center">
@@ -326,6 +327,7 @@ export default function Admin() {
             <p className="text-xs text-surface-400 mt-2">Tracked via Microsoft Graph API integration</p>
           </div>
         </div>
+        )}
 
         <div className="bg-white rounded-xl border border-surface-200 p-5">
           <h2 className="text-lg font-semibold text-surface-900 mb-4">📧 Microsoft Outlook</h2>

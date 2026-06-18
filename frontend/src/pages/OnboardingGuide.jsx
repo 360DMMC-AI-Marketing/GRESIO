@@ -123,6 +123,8 @@ export default function OnboardingGuide() {
             ['Delete Users','✅','❌','❌','❌','❌','❌','❌'],
             ['Company / Plan Settings','✅','❌','❌','❌','❌','❌','❌'],
             ['Manage Integrations','✅','❌','❌','❌','❌','❌','❌'],
+            ['Customize Dashboard','✅','❌','❌','❌','❌','❌','❌'],
+            ['Microsoft Teams Settings','✅','✅','❌','❌','❌','❌','❌'],
           ]} />
           <p style={{fontSize:10,color:'#6b7280',marginTop:6}}>🔒 = Manual gate — requires explicit action by permitted role. System will not auto-transition.</p>
         </Section>
@@ -350,7 +352,94 @@ export default function OnboardingGuide() {
           </ul>
         </Section>
 
-        <Section title="10. Getting Started Checklist">
+        <Section title="10. WorkDNA — Company Brain">
+          <p style={{fontSize:11}}>WorkDNA is GRESIO's intelligent project archive — it automatically analyzes every active project each month, logs key decisions, and lets you search past projects to learn from before starting something new.</p>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🧬 What WorkDNA Does</h4>
+          <InfoTable rows={[
+            ['Feature','What It Does','How It Helps'],
+            ['Monthly Project Archive','Each month, WorkDNA scans all active projects and saves a full snapshot: features, tech stack, risks, patterns, task stats, team members, documents, repositories, and technical URLs','Every project\'s complete technical state is preserved. No more digging through old chats to find what was used.'],
+            ['Decision Journal','Log every important decision — what was decided, why, what alternatives were considered, and the outcome','Never lose context. New team members can catch up in minutes instead of weeks.'],
+            ['Déjà Vu Search','Search archived projects and past decisions by keyword (features, tech, project names) to find similar work done before','Avoid repeating the same mistakes. Know what to watch out for before you start.'],
+            ['Pattern Detection','Rule-based analysis of overdue tasks, bug density, sprint cadence, and completion rates across all projects','Get warned about problems before they become crises. Spot bottlenecks you didn\'t know existed.'],
+          ]} />
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>How to Use It</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li>Navigate to <strong>Insights → WorkDNA</strong> from the sidebar</li>
+            <li>The <strong>Project Archive</strong> tab shows all analyzed projects — click any to expand and see every technical detail (features, tech stack, docs, repos, risks, stats, key decisions)</li>
+            <li>Click <strong>"Monthly Analysis"</strong> to trigger an immediate scan of all active projects and create fresh archives</li>
+            <li>Use the <strong>Decision Journal</strong> tab to browse all logged decisions and their outcomes</li>
+            <li>Use the <strong>Déjà Vu</strong> tab to search archived projects and decisions by keyword — find similar past projects before starting new work</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Log Decisions</h4>
+          <InfoTable rows={[
+            ['Role','Log Decision','Delete Decision','Run Analysis','View WorkDNA'],
+            ['Admin','✅','✅','✅','✅'],
+            ['Project Manager','✅','✅','✅','✅'],
+            ['Team Lead','✅','✅','❌','✅'],
+            ['Manager','✅','❌','✅','✅'],
+            ['Developer','❌','❌','❌','✅'],
+            ['QA Tester','❌','❌','❌','✅'],
+            ['Intern / Other','❌','❌','❌','✅'],
+          ]} />
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What Each Archive Contains</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li><strong>Features</strong> — extracted from task titles and types</li>
+            <li><strong>Tech Stack</strong> — detected from task descriptions across all projects</li>
+            <li><strong>Risks</strong> — overdue tasks, critical bugs, delayed status, sprint overdue</li>
+            <li><strong>Patterns</strong> — task completion rate, sprint cadence, bug density</li>
+            <li><strong>Stats</strong> — tasks (done/overdue/total), sprints, bugs, decisions count</li>
+            <li><strong>Documents</strong> — all resources linked to the project (Figma, docs, repos, specs)</li>
+            <li><strong>Repositories</strong> — GitHub repos and other code hosting links</li>
+            <li><strong>Technical URLs</strong> — frontend/backend/mobile repos, staging/production URLs, API docs</li>
+            <li><strong>Key Decisions</strong> — decisions linked to the project, with rationale and outcome</li>
+            <li><strong>Client & Description</strong> — project metadata</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Why WorkDNA Matters</h4>
+          <p style={{fontSize:11}}>
+            Traditional PM tools manage tasks. WorkDNA manages <strong>wisdom</strong>. Every project makes your company smarter. 
+            When someone leaves, their decision trail stays. When a new project starts, past archives are already searchable. 
+            Over time, WorkDNA becomes your company's most valuable asset — the one thing that compounds in value with every project.
+          </p>
+        </Section>
+
+        <Section title="11. WorkDNA — Fully Automatic (No AI Needed)">
+          <p style={{fontSize:11}}>WorkDNA is designed to be fully automatic and self-contained. All analysis is done using <strong>rule-based logic</strong> — no external API keys, no AI costs, no setup required.</p>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>⚙️ How Analysis Works</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li>When you click <strong>"Monthly Analysis"</strong>, WorkDNA scans all active projects immediately</li>
+            <li>For each project, it fetches: tasks, sprints, bugs, decisions, resources, team members, settings</li>
+            <li>Features are extracted from task titles and types using keyword matching</li>
+            <li>Tech stack is detected from task descriptions (React, Node.js, Database, Mobile, DevOps, etc.)</li>
+            <li>Risks are calculated: overdue tasks, unresolved critical bugs, low progress, sprint delays</li>
+            <li>Patterns are detected: completion rate, sprint cadence, bug density</li>
+            <li>A summary is generated automatically from project status, completion rate, and features</li>
+            <li>Results are saved as a monthly snapshot — one document per project per month</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🧠 Why Rule-Based</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li><strong>Zero cost</strong> — no API keys, no monthly bills, no token limits</li>
+            <li><strong>Instant</strong> — analysis completes in seconds, not minutes</li>
+            <li><strong>Deterministic</strong> — same data always produces same results, no hallucination risk</li>
+            <li><strong>Private</strong> — no data leaves your server, all processing is local</li>
+            <li><strong>Self-contained</strong> — works immediately after deployment, no configuration needed</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🔮 Future Possibilities</h4>
+          <p style={{fontSize:11}}>While WorkDNA is currently 100% rule-based, its architecture supports adding AI-powered features later (semantic search, natural language queries, auto-extracted decisions) if needed. But for now, everything works automatically — no setup, no cost, no complexity.</p>
+
+          <blockquote style={{margin:'10px 0',padding:'8px 12px',background:'#f0f4ff',borderLeft:'3px solid #2347e8',fontSize:11,borderRadius:4}}>
+            <strong>💡 Bottom line:</strong> WorkDNA is the easiest intelligence layer to adopt — click one button and every project is archived forever. No configuration, no API keys, no maintenance.
+          </blockquote>
+        </Section>
+
+        <Section title="12. Getting Started Checklist">
           <p>Before you start using GRESIO, complete this checklist:</p>
           <ul style={{margin:0,padding:0,fontSize:11,listStyle:'none'}}>
             {[
@@ -362,6 +451,7 @@ export default function OnboardingGuide() {
               {k:'qa',l:'I know how to run test cases (if I\'m QA)'},
               {k:'calendar',l:'I know how to use the Calendar to track deadlines and events'},
               {k:'relay',l:'I understand how Project Relay chains work'},
+              {k:'workdna',l:'I understand WorkDNA and how to log decisions'},
               {k:'help',l:'I know where to find help if I\'m stuck'},
             ].map(({k,l}) => (
               <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
@@ -385,7 +475,7 @@ export default function OnboardingGuide() {
         </Section>
 
         {user?.role === 'admin' && (
-        <Section title="11. Admin: Import Users from Microsoft 365">
+        <Section title="13. Admin: Import Users from Microsoft 365">
           <p style={{fontSize:11}}>As an admin, you can import all company users from your Microsoft 365 / Azure AD directory directly into GRESIO in one click.</p>
 
           <h4 style={{margin:'14px 0 6px',fontSize:11,color:'#111827'}}>What this does</h4>
@@ -416,7 +506,7 @@ export default function OnboardingGuide() {
         </Section>
         )}
 
-        <Section title="14. FAQ & Troubleshooting">
+        <Section title="16. FAQ & Troubleshooting">
           <div style={{display:'flex',flexDirection:'column',gap:12,fontSize:11}}>
             <Qa q="Why can't I click 'Launch'?" a={"Only Admin, PM, or Team Lead can launch a project. If you don't see the button or it's grayed out, your role doesn't have permission. Contact your PM."} />
             <Qa q="The project is stuck in Development. Why won't it move to Testing?" a={"Check that: All tasks are marked \"Done\" (not \"In Review\" or \"In Progress\"), All sprints are marked \"Completed\", There are no open blockers."} />
@@ -429,7 +519,7 @@ export default function OnboardingGuide() {
           </div>
         </Section>
 
-        <Section title="11. Calendar">
+        <Section title="14. Calendar">
           <p style={{fontSize:11}}>The Calendar page gives you a month-view of all your team's important dates — tasks, sprints, project deadlines, milestones, events, and reminders — all in one place.</p>
 
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What You See</h4>
@@ -456,7 +546,7 @@ export default function OnboardingGuide() {
           <p style={{fontSize:11}}>The Calendar is available from the sidebar under <strong>Workspace → Execution → Calendar</strong>. It is visible to all roles.</p>
         </Section>
 
-        <Section title="12. Project Relay">
+        <Section title="15. Project Relay">
           <p style={{fontSize:11}}>Project Relay lets you chain projects in ordered pipelines. When one project is delivered, the next project's team is automatically notified — perfect for workflows where projects depend on each other.</p>
 
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Concepts</h4>
@@ -509,6 +599,8 @@ export default function OnboardingGuide() {
             ['1.5','June 2026','Added Calendar page with color-coded tasks, sprints, deadlines, milestones, events, and reminders'],
             ['1.6','June 2026','Added Project Relay — chain projects in ordered pipelines with delivery notifications'],
             ['1.7','June 2026','Added dedicated Calendar (11) and Project Relay (12) sections to the guide; updated checklist with relay item'],
+            ['2.0','June 2026','🧬 Added WorkDNA — Company Brain: Decision Journal, Project Déjà Vu, Pattern Detection, Invisible Work Map. New WorkDNA page under Insights. Added to Landing page and Onboarding guide as section 10.'],
+            ['2.1','June 2026','🤖 Added AI Roadmap section to Onboarding (section 11). Created stub AI provider + embeddings services. Ready for API key activation.'],
           ]} />
         </Section>
       </div>

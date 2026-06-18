@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
-  Building2, Bell as BellIcon, Activity, Workflow, ClipboardList, MessageSquare,
+  Building2, Bell as BellIcon, Activity, Workflow, ClipboardList, MessageSquare, BrainCircuit,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -53,6 +53,7 @@ const sidebarGroups = [
     items: [
       { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics', roles: MANAGERS },
       { id: 'reports', label: 'Reports', icon: FileText, path: '/reports', roles: MANAGERS },
+      { id: 'workdna', label: 'WorkDNA', icon: BrainCircuit, path: '/work-dna', roles: ALL },
     ],
   },
 ];

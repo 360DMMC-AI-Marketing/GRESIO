@@ -1,0 +1,16 @@
+const { Router } = require('express');
+const c = require('../controllers/workDnaController');
+const { auth, authorize } = require('../middleware/auth');
+const r = Router();
+r.use(auth);
+r.get('/dashboard', c.getWorkDnaDashboard);
+r.get('/decisions', c.getDecisions);
+r.get('/decisions/:refType/:refId', c.getDecisionTrailHandler);
+r.post('/decisions', authorize('admin', 'project_manager', 'team_lead', 'manager'), c.createDecision);
+r.delete('/decisions/:id', authorize('admin', 'project_manager', 'team_lead'), c.deleteDecision);
+r.get('/deja-vu/search', c.searchDejaVu);
+r.get('/deja-vu/:id', c.getProjectDejaVuHandler);
+r.get('/patterns', c.getPatternDetectionHandler);
+r.get('/analyses', c.getAnalyses);
+r.post('/analyze-all', c.analyzeAllProjects);
+module.exports = r;

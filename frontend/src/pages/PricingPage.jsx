@@ -86,6 +86,15 @@ const FEATURE_SECTIONS = [
     ],
   },
   {
+    title: 'WorkDNA — Company Brain', id: 'workdna',
+    rows: [
+      { label: 'Monthly Project Archive (auto snapshots)', starter: false, team: true, enterprise: true },
+      { label: 'Decision Journal (log & search decisions)', starter: false, team: true, enterprise: true },
+      { label: 'Déjà Vu (search past projects by keyword)', starter: false, team: true, enterprise: true },
+      { label: 'Pattern Detection (risks, cadence, density)', starter: false, team: true, enterprise: true },
+    ],
+  },
+  {
     title: 'Integrations',
     rows: [
       { label: 'Azure AD / Microsoft 365 import', starter: false, team: true, enterprise: true },
@@ -186,7 +195,7 @@ function ComparisonTable() {
           {FEATURE_SECTIONS.map((section, si) => (
             <Fragment key={si}>
               <tr>
-                <td colSpan={4} className="text-left text-xs font-bold text-surface-700 bg-surface-50 py-2.5 px-3 uppercase tracking-wider border-t border-surface-200">
+                <td colSpan={4} id={section.id || ''} className="text-left text-xs font-bold text-surface-700 bg-surface-50 py-2.5 px-3 uppercase tracking-wider border-t border-surface-200">
                   {section.title}
                 </td>
               </tr>

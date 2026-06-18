@@ -21,6 +21,7 @@ import WorkLogs from './pages/WorkLogs';
 import TestCaseDashboard from './pages/TestCaseDashboard';
 import ProjectRelay from './pages/ProjectRelay';
 import OnboardingGuide from './pages/OnboardingGuide';
+import WorkDNA from './pages/WorkDNA';
 import About from './pages/About';
 import Blog from './pages/Blog';
 import Careers from './pages/Careers';
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/work-dna" element={<WorkDNA />} />
 
           </Route>
           <Route element={<SuperAdminLayout />}>

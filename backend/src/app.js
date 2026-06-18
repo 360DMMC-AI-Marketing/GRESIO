@@ -116,6 +116,7 @@ app.use('/api/timeline', require('./routes/timeline'));
 
 app.use('/api/search', searchRoutes);
 app.use('/api/chains', chainRoutes);
+app.use('/api/work-dna', require('./routes/workDna'));
 
 app.use('/super-api', superAdminRoutes);
 

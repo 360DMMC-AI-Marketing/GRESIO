@@ -102,11 +102,13 @@ export default function Projects() {
                 {value:'content', label:'Content / Writing'},
                 {value:'research', label:'Research / Analysis'},
               ]} style={{width:'100%'}} /></div>
+          {['admin', 'project_manager'].includes(user?.role) && (
           <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:6}}>
             <input type="checkbox" id="createTeamsChannel" checked={form.createTeamsChannel}
               onChange={e => setForm({ ...form, createTeamsChannel: e.target.checked })} />
             <label htmlFor="createTeamsChannel" style={{fontSize:10,color:'#374151',cursor:'pointer'}}>Create Microsoft Teams channel for this project</label>
           </div>
+          )}
         </div>
       </Modal>
 

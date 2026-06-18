@@ -8,6 +8,9 @@ const Activity = require('../models/Activity');
 const ProjectMember = require('../models/ProjectMember');
 const User = require('../models/User');
 const Report = require('../models/Report');
+const AiAnalysis = require('../models/AiAnalysis');
+const DecisionJournal = require('../models/DecisionJournal');
+const Bug = require('../models/Bug');
 const { getDomainProjectIds } = require('../config/planLimits');
 
 function computePhaseDuration(project, phaseList) {
@@ -50,6 +53,24 @@ async function buildReportData(projectId, type) {
   const members = await ProjectMember.find({ project: projectId, status: 'active' })
     .populate('user', 'name email role avatar')
     .lean();
+
+  const latestAnalysis = await AiAnalysis.findOne({ projectId })
+    .sort({ createdAt: -1 })
+    .select('features techStack keyDecisions summary risks projectDescription documents technicalUrls')
+    .lean();
+
+  const keyDecisions = await DecisionJournal.find({ project: projectId })
+    .sort({ createdAt: -1 })
+    .select('decision alternatives rationale outcome tags createdBy')
+    .populate('createdBy', 'name')
+    .lean();
+
+  const bugs = await Bug.find({ project: projectId })
+    .sort({ createdAt: -1 })
+    .select('title severity status feature resolutionNotes')
+    .lean();
+
+  const settings = project.settings || {};
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.status === 'done').length;
@@ -133,7 +154,10 @@ async function buildReportData(projectId, type) {
       launchedAt: project.launchedAt,
       deliveredAt: project.deliveredAt,
       deliveryNotes: project.deliveryNotes || '',
+      client: project.client || settings.clientName || '',
       duration: computePhaseDuration(project, phaseOrder),
+      repositories: project.repositories || [],
+      healthNotes: settings.healthNotes || '',
     },
     tasks: {
       total: totalTasks,
@@ -182,6 +206,52 @@ async function buildReportData(projectId, type) {
       description: a.description,
       date: a.createdAt,
     })),
+    features: latestAnalysis?.features || [],
+    analysisSummary: latestAnalysis?.summary || '',
+    keyDecisions: (keyDecisions?.length > 0
+      ? keyDecisions.map(d => ({
+          decision: d.decision,
+          alternatives: d.alternatives || '',
+          rationale: d.rationale || '',
+          outcome: d.outcome || '',
+          tags: d.tags || [],
+          by: d.createdBy?.name || '',
+        }))
+      : (latestAnalysis?.keyDecisions || []).map(d => ({
+          decision: d.decision,
+          alternatives: d.alternatives || '',
+          rationale: d.rationale || '',
+          outcome: d.outcome || '',
+          tags: d.tags || [],
+          by: '',
+        }))
+    ),
+    techStack: project.techStack || [],
+    risks: settings.risks || [],
+    blockers: settings.blockers || [],
+    issues: settings.issues || [],
+    dependencies: settings.dependencies || [],
+    client: project.client || settings.clientName || '',
+    technicalUrls: latestAnalysis?.technicalUrls || {},
+    documents: (latestAnalysis?.documents || []).map(d => ({
+      title: d.title || '',
+      type: d.type || '',
+      url: d.url || '',
+    })),
+    bugs: {
+      total: bugs.length,
+      open: bugs.filter(b => b.status === 'open').length,
+      inProgress: bugs.filter(b => b.status === 'in_progress').length,
+      fixed: bugs.filter(b => b.status === 'fixed').length,
+      closed: bugs.filter(b => b.status === 'closed').length,
+      items: bugs.slice(0, 20).map(b => ({
+        title: b.title,
+        severity: b.severity,
+        status: b.status,
+        feature: b.feature || '',
+        resolutionNotes: b.resolutionNotes || '',
+      })),
+    },
   };
 
   if (type === 'admin') {
@@ -220,18 +290,83 @@ async function buildReportData(projectId, type) {
     };
   }
 
+  const featureCount = (latestAnalysis?.features || []).length;
+  const decisionCount = keyDecisions.length > 0 ? keyDecisions.length : (latestAnalysis?.keyDecisions || []).length;
+  const bugFixedCount = bugs.filter(b => ['fixed', 'closed'].includes(b.status)).length;
+  const bugTotalCount = bugs.length;
+
+  const phaseDescriptions = {
+    discovery: { label: 'Discovery', desc: 'Requirements & research' },
+    planning: { label: 'Planning', desc: 'Architecture & design planning' },
+    development: { label: 'Development', desc: 'Core feature development' },
+    designing: { label: 'Design', desc: 'UI/UX design' },
+    prototyping: { label: 'Prototyping', desc: 'Interactive prototypes' },
+    testing: { label: 'Testing', desc: 'QA & bug fixes' },
+    review: { label: 'Review', desc: 'Client review & feedback' },
+    launched: { label: 'Launch', desc: 'Production deployment' },
+    delivered: { label: 'Delivered', desc: 'Handover complete' },
+    business_growth: { label: 'Business Growth', desc: 'Growth initiatives' },
+    validation: { label: 'Validation', desc: 'Market validation' },
+    content_creation: { label: 'Content Creation', desc: 'Content development' },
+    editing: { label: 'Editing', desc: 'Review & editing' },
+    research: { label: 'Research', desc: 'Research phase' },
+    analysis: { label: 'Analysis', desc: 'Data analysis' },
+  };
+
   return {
     ...baseData,
     reportType: 'client',
-    title: 'Project Summary Report — Client',
+    title: 'Delivery Report — Client',
     sections: [
       'executive-summary',
-      'task-completion',
-      'testing-quality',
-      'team',
-      'delivery-notes',
+      'project-overview',
+      'what-was-delivered',
+      'work-completed',
+      'technical-details',
+      'issues-resolutions',
+      'testing-results',
+      'deployment-info',
+      'documentation',
+      'training-handover',
+      'support-maintenance',
+      'financial-summary',
+      'client-feedback',
+      'next-steps',
+      'appendices',
     ],
-    clientSummary: `This report summarizes the successful delivery of ${project.name}. The project was completed with a ${completionRate}% task completion rate and a ${tcPassRate}% test pass rate.`,
+    clientSummary: `${project.name} — a ${project.projectType || 'custom'} project for ${project.client || settings.clientName || 'the client'} — was successfully delivered. The project achieved a ${completionRate}% task completion rate (${doneTasks}/${totalTasks} tasks completed) and a ${tcPassRate}% test pass rate.${featureCount > 0 ? ` A total of ${featureCount} features were delivered.` : ''}${bugTotalCount > 0 ? ` ${bugFixedCount}/${bugTotalCount} bugs were resolved.` : ''}${decisionCount > 0 ? ` ${decisionCount} key decisions were documented throughout the project lifecycle.` : ''} The project spanned ${computePhaseDuration(project, phaseOrder)} days from start to delivery.`,
+    phaseTimeline: phaseOrder.map((phase, i) => ({
+      phase,
+      label: phaseDescriptions[phase]?.label || phase.replace(/_/g, ' '),
+      description: phaseDescriptions[phase]?.desc || '',
+      index: i + 1,
+      total: totalPhases,
+      current: phase === project.phase,
+      passed: currentPhaseIndex >= i,
+      completed: currentPhaseIndex > i,
+    })),
+    featureCount,
+    decisionCount,
+    bugFixedCount,
+    bugTotalCount,
+    overallHealth: (() => {
+      if (project.status === 'completed' || project.phase === 'delivered') return 'green';
+      if (project.status === 'at_risk' || project.status === 'delayed') return 'yellow';
+      if (project.status === 'blocked') return 'red';
+      if (project.status === 'on_track') return 'green';
+      if (delayedTasks > 0 || overdueTasks > 0) return 'yellow';
+      return completionRate >= 80 ? 'green' : 'yellow';
+    })(),
+    keyMilestones: (() => {
+      const milestones = [];
+      if (featureCount > 0) milestones.push(`${featureCount} features delivered`);
+      if (totalPhases > 0 && currentPhaseIndex >= totalPhases - 1) milestones.push('All phases completed');
+      if (project.launchedAt) milestones.push('Production launch');
+      if (project.deliveredAt) milestones.push('Project delivered');
+      if (tcPassRate >= 80) milestones.push(`${tcPassRate}% test pass rate`);
+      if (completionRate >= 90) milestones.push(`${completionRate}% task completion`);
+      return milestones;
+    })(),
   };
 }
 
