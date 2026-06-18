@@ -1,5 +1,5 @@
 function Box({ className = '', w, h, circle = false }) {
-  return <div className={`animate-pulse bg-surface-200 ${circle ? 'rounded-full' : 'rounded-lg'} ${className}`} style={{ width: w, height: h }} />;
+  return <div className={`animate-skeleton bg-surface-200 ${circle ? 'rounded-full' : 'rounded-lg'} ${className}`} style={{ width: w, height: h }} />;
 }
 
 function Text({ lines = 3, className = '' }) {

@@ -62,7 +62,7 @@ export default function TemplateMarketplace() {
       {loading ? (
         <div className="grid grid-cols-3 gap-3">
           {[1,2,3,4,5,6].map(i => (
-            <div key={i} className="bg-white rounded-xl border border-surface-200 p-4 animate-pulse">
+            <div key={i} className="bg-white rounded-xl border border-surface-200 p-4 animate-skeleton">
               <div className="h-4 bg-surface-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-surface-100 rounded w-1/2 mb-2" />
               <div className="h-3 bg-surface-100 rounded w-full" />
