@@ -7,6 +7,10 @@ const reportSchema = new mongoose.Schema({
   generatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   generatedAt: { type: Date, default: Date.now },
   downloadCount: { type: Number, default: 0 },
+  shareToken: { type: String, unique: true, sparse: true },
+  sharePassword: { type: String },
+  shareExpiresAt: { type: Date },
+  shareEnabled: { type: Boolean, default: false },
 }, { timestamps: true });
 
 reportSchema.index({ project: 1, type: 1 }, { unique: true });

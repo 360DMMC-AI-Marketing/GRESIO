@@ -272,5 +272,44 @@ export const superAdmin = {
   getHealth: () => superApi.get('/super-api/health'),
 };
 
+export const ai = {
+  chat: (projectId, message) => api.post(`/ai/chat/${projectId}`, { message }),
+  getChatHistory: (projectId) => api.get(`/ai/chat/${projectId}/history`),
+  clearChatHistory: (projectId) => api.delete(`/ai/chat/${projectId}`),
+  generateReportSummary: (id) => api.post(`/ai/report-summary/${id}`),
+  estimateTask: (data) => api.post('/ai/estimate', data),
+  detectRisks: (projectId) => api.get(`/ai/risks/${projectId}`),
+  generateTemplate: (data) => api.post('/ai/generate-template', data),
+};
+
+export const aiAgent = {
+  command: (command) => api.post('/ai-agent/command', { command }),
+  suggestions: () => api.get('/ai-agent/suggestions'),
+};
+
+export const templates = {
+  list: (params) => api.get('/templates', { params }),
+  getById: (id) => api.get(`/templates/${id}`),
+  create: (data) => api.post('/templates', data),
+  update: (id, data) => api.patch(`/templates/${id}`, data),
+  delete: (id) => api.delete(`/templates/${id}`),
+  download: (id) => api.post(`/templates/${id}/download`),
+  rate: (id, rating) => api.post(`/templates/${id}/rate`, { rating }),
+  my: () => api.get('/templates/my'),
+};
+
+export const referrals = {
+  generate: () => api.get('/referrals/generate'),
+  my: () => api.get('/referrals/my'),
+  redeem: (code) => api.post('/referrals/redeem', { code }),
+  stats: () => api.get('/referrals/stats'),
+};
+
+export const reportShare = {
+  share: (id, data) => api.post(`/reports/${id}/share`, data),
+  getSettings: (id) => api.get(`/reports/${id}/share`),
+  disable: (id) => api.delete(`/reports/${id}/share`),
+};
+
 export { superAdmin as api };
 export default api;

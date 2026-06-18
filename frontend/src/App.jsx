@@ -1,52 +1,65 @@
+import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import SuperAdminLayout from './components/SuperAdminLayout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Projects from './pages/Projects';
-import ProjectDetail from './pages/ProjectDetail';
-import Tasks from './pages/Tasks';
-import Sprints from './pages/Sprints';
-import Users from './pages/Users';
-import Analytics from './pages/Analytics';
-import Admin from './pages/Admin';
-import Profile from './pages/Profile';
-import Github from './pages/Github';
-import Teams from './pages/Teams';
-import Outlook from './pages/Outlook';
-import WorkLogs from './pages/WorkLogs';
-import TestCaseDashboard from './pages/TestCaseDashboard';
-import ProjectRelay from './pages/ProjectRelay';
-import OnboardingGuide from './pages/OnboardingGuide';
-import WorkDNA from './pages/WorkDNA';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import Careers from './pages/Careers';
-import Landing from './pages/Landing';
-import FeaturesPage from './pages/FeaturesPage';
-import HowItWorksPage from './pages/HowItWorksPage';
-import PricingPage from './pages/PricingPage';
-import ContactPage from './pages/ContactPage';
-import NotificationsPage from './pages/NotificationsPage';
-import PrivacyPage from './pages/PrivacyPage';
-import ReportsPage from './pages/ReportsPage';
-import ReportPreviewPage from './pages/ReportPreviewPage';
-import ReportEditPage from './pages/ReportEditPage';
-import Calendar from './pages/Calendar';
-import SuperAdminDashboard from './pages/super-admin/Dashboard';
-import SuperAdminCompanies from './pages/super-admin/Companies';
-import SuperAdminCompanyDetail from './pages/super-admin/CompanyDetail';
-import SuperAdminAdmins from './pages/super-admin/Admins';
-import SuperAdminAnalytics from './pages/super-admin/Analytics';
-import SuperAdminHealth from './pages/super-admin/Health';
-import SuperAdminNotifications from './pages/super-admin/Notifications';
-import SuperAdminProfile from './pages/super-admin/Profile';
-import SuperAdminSettings from './pages/super-admin/Settings';
+import AiCommandBar from './components/AiCommandBar';
+import MobileNav from './components/MobileNav';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Projects = lazy(() => import('./pages/Projects'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Sprints = lazy(() => import('./pages/Sprints'));
+const Users = lazy(() => import('./pages/Users'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Github = lazy(() => import('./pages/Github'));
+const Teams = lazy(() => import('./pages/Teams'));
+const Outlook = lazy(() => import('./pages/Outlook'));
+const WorkLogs = lazy(() => import('./pages/WorkLogs'));
+const TestCaseDashboard = lazy(() => import('./pages/TestCaseDashboard'));
+const ProjectRelay = lazy(() => import('./pages/ProjectRelay'));
+const OnboardingGuide = lazy(() => import('./pages/OnboardingGuide'));
+const WorkDNA = lazy(() => import('./pages/WorkDNA'));
+const About = lazy(() => import('./pages/About'));
+const Blog = lazy(() => import('./pages/Blog'));
+const Careers = lazy(() => import('./pages/Careers'));
+const Landing = lazy(() => import('./pages/Landing'));
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
+const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const ReportPreviewPage = lazy(() => import('./pages/ReportPreviewPage'));
+const ReportEditPage = lazy(() => import('./pages/ReportEditPage'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const PublicReport = lazy(() => import('./pages/PublicReport'));
+const TemplateMarketplace = lazy(() => import('./pages/TemplateMarketplace'));
+const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
+const CreateTemplate = lazy(() => import('./pages/CreateTemplate'));
+const Referrals = lazy(() => import('./pages/Referrals'));
+const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
+const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
+const SuperAdminCompanyDetail = lazy(() => import('./pages/super-admin/CompanyDetail'));
+const SuperAdminAdmins = lazy(() => import('./pages/super-admin/Admins'));
+const SuperAdminAnalytics = lazy(() => import('./pages/super-admin/Analytics'));
+const SuperAdminHealth = lazy(() => import('./pages/super-admin/Health'));
+const SuperAdminNotifications = lazy(() => import('./pages/super-admin/Notifications'));
+const SuperAdminProfile = lazy(() => import('./pages/super-admin/Profile'));
+const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
 import ScrollToTop from './components/ScrollToTop';
 import WelcomeWizard from './components/WelcomeWizard';
+
+function SuspenseWrapper({ children }) {
+  return <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-surface-400 text-sm">Loading...</div>}>{children}</Suspense>;
+}
 
 export default function App() {
   return (
@@ -54,57 +67,65 @@ export default function App() {
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <BrowserRouter>
         <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/how-it-works" element={<HowItWorksPage />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/report/:id" element={<ReportPreviewPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/sprints" element={<Sprints />} />
-            <Route path="/work-logs" element={<WorkLogs />} />
-            <Route path="/test-cases" element={<TestCaseDashboard />} />
-            <Route path="/test-cases/:projectId" element={<TestCaseDashboard />} />
-            <Route path="/relay" element={<ProjectRelay />} />
-            <Route path="/onboarding-guide" element={<OnboardingGuide />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/github" element={<Github />} />
-            <Route path="/teams" element={<Teams />} />
-            <Route path="/outlook" element={<Outlook />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/projects/:projectId/reports/edit" element={<ReportEditPage />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/work-dna" element={<WorkDNA />} />
-
-          </Route>
-          <Route element={<SuperAdminLayout />}>
-            <Route path="/super/dashboard" element={<SuperAdminDashboard />} />
-            <Route path="/super/companies" element={<SuperAdminCompanies />} />
-            <Route path="/super/companies/:id" element={<SuperAdminCompanyDetail />} />
-            <Route path="/super/admins" element={<SuperAdminAdmins />} />
-            <Route path="/super/analytics" element={<SuperAdminAnalytics />} />
-            <Route path="/super/health" element={<SuperAdminHealth />} />
-            <Route path="/super/notifications" element={<SuperAdminNotifications />} />
-            <Route path="/super/profile" element={<SuperAdminProfile />} />
-            <Route path="/super/settings" element={<SuperAdminSettings />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <SuspenseWrapper>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/report/:id" element={<ReportPreviewPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/shared-report/:token" element={<PublicReport />} />
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/sprints" element={<Sprints />} />
+              <Route path="/work-logs" element={<WorkLogs />} />
+              <Route path="/test-cases" element={<TestCaseDashboard />} />
+              <Route path="/test-cases/:projectId" element={<TestCaseDashboard />} />
+              <Route path="/relay" element={<ProjectRelay />} />
+              <Route path="/onboarding-guide" element={<OnboardingGuide />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/github" element={<Github />} />
+              <Route path="/teams" element={<Teams />} />
+              <Route path="/outlook" element={<Outlook />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/projects/:projectId/reports/edit" element={<ReportEditPage />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/work-dna" element={<WorkDNA />} />
+              <Route path="/templates" element={<TemplateMarketplace />} />
+              <Route path="/templates/:id" element={<TemplateDetail />} />
+              <Route path="/templates/create" element={<CreateTemplate />} />
+              <Route path="/referrals" element={<Referrals />} />
+            </Route>
+            <Route element={<SuperAdminLayout />}>
+              <Route path="/super/dashboard" element={<SuperAdminDashboard />} />
+              <Route path="/super/companies" element={<SuperAdminCompanies />} />
+              <Route path="/super/companies/:id" element={<SuperAdminCompanyDetail />} />
+              <Route path="/super/admins" element={<SuperAdminAdmins />} />
+              <Route path="/super/analytics" element={<SuperAdminAnalytics />} />
+              <Route path="/super/health" element={<SuperAdminHealth />} />
+              <Route path="/super/notifications" element={<SuperAdminNotifications />} />
+              <Route path="/super/profile" element={<SuperAdminProfile />} />
+              <Route path="/super/settings" element={<SuperAdminSettings />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </SuspenseWrapper>
+        <AiCommandBar />
+        <MobileNav />
         <WelcomeWizard />
       </BrowserRouter>
     </AuthProvider>

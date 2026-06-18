@@ -457,6 +457,77 @@ exports.deleteReport = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+
+exports.shareReport = async (req, res) => {
+  try {
+    const { enabled, password, expiresInDays } = req.body;
+    const report = await Report.findById(req.params.id);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    if (!enabled) {
+      report.shareEnabled = false;
+      report.shareToken = undefined;
+      report.sharePassword = undefined;
+      report.shareExpiresAt = undefined;
+      await report.save();
+      return res.json({ message: 'Sharing disabled' });
+    }
+
+    const shareToken = crypto.randomBytes(24).toString('hex');
+    report.shareToken = shareToken;
+    report.shareEnabled = true;
+    if (password) report.sharePassword = await bcrypt.hash(password, 10);
+    if (expiresInDays) report.shareExpiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+    await report.save();
+
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.json({ url: `${baseUrl}/shared-report/${shareToken}`, token: shareToken });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getSharedReport = async (req, res) => {
+  try {
+    const report = await Report.findOne({ shareToken: req.params.token, shareEnabled: true })
+      .populate('project', 'name client projectType')
+      .lean();
+    if (!report) return res.status(404).json({ error: 'Report not found or sharing disabled' });
+    if (report.shareExpiresAt && new Date(report.shareExpiresAt) < new Date()) {
+      return res.status(410).json({ error: 'Share link expired' });
+    }
+
+    if (report.sharePassword) {
+      const { password } = req.query;
+      if (!password) return res.status(401).json({ error: 'Password required' });
+      const valid = await bcrypt.compare(password, report.sharePassword);
+      if (!valid) return res.status(403).json({ error: 'Invalid password' });
+    }
+
+    const data = report.data;
+    res.json({
+      projectName: report.project?.name || 'Project',
+      clientSummary: data.clientSummary || data.client,
+      sections: data.sections || data.clientSections || [],
+      generatedAt: report.generatedAt,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getShareSettings = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id).select('shareEnabled shareExpiresAt').lean();
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+    res.json({ enabled: report.shareEnabled, expiresAt: report.shareExpiresAt });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.countDownload = async (req, res) => {
   try {
     const report = await Report.findByIdAndUpdate(

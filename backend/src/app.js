@@ -117,8 +117,16 @@ app.use('/api/timeline', require('./routes/timeline'));
 app.use('/api/search', searchRoutes);
 app.use('/api/chains', chainRoutes);
 app.use('/api/work-dna', require('./routes/workDna'));
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/ai-agent', require('./routes/aiAgent'));
+app.use('/api/v1', require('./routes/publicApi'));
+app.use('/api/api-keys', require('./routes/apiKeys'));
+app.use('/api/templates', require('./routes/templates'));
+app.use('/api/referrals', require('./routes/referrals'));
 
 app.use('/super-api', superAdminRoutes);
+
+app.get('/api/shared-report/:token', require('./controllers/reportController').getSharedReport);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

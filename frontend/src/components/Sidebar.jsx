@@ -54,6 +54,8 @@ const sidebarGroups = [
       { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics', roles: MANAGERS },
       { id: 'reports', label: 'Reports', icon: FileText, path: '/reports', roles: MANAGERS },
       { id: 'workdna', label: 'WorkDNA', icon: BrainCircuit, path: '/work-dna', roles: ALL },
+      { id: 'templates', label: 'Templates', icon: ClipboardList, path: '/templates', roles: ALL },
+      { id: 'referrals', label: 'Referrals', icon: Users, path: '/referrals', roles: ALL },
     ],
   },
 ];

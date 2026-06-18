@@ -413,7 +413,92 @@ export default function Admin() {
           )}
         </div>
 
+        <div className="bg-white rounded-xl border border-surface-200 p-5">
+          <h2 className="text-lg font-semibold text-surface-900 mb-4">🔑 API Keys</h2>
+          <p className="text-xs text-surface-500 mb-3">Generate API keys for programmatic access to GRESIO (Zapier, custom integrations).</p>
+          <div className="space-y-3">
+            <ApiKeySection />
+          </div>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+function ApiKeySection() {
+  const [keys, setKeys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/v1/api-keys', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
+    }).then(r => r.json())
+      .then(d => setKeys(d.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const createKey = async () => {
+    setCreating(true);
+    try {
+      const name = prompt('Name for this API key:');
+      if (!name) { setCreating(false); return; }
+      const res = await fetch('/api/v1/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
+        body: JSON.stringify({ name, scopes: ['projects:read', 'tasks:read', 'tasks:write', 'reports:read'] }),
+      });
+      const data = await res.json();
+      if (data.key) {
+        alert(`Your API key: ${data.key}\n\nSave this — it will not be shown again.`);
+        setKeys(prev => [...prev, data.data]);
+      }
+    } catch (e) { alert('Error: ' + e.message); }
+    finally { setCreating(false); }
+  };
+
+  const deleteKey = async (id) => {
+    if (!confirm('Delete this API key?')) return;
+    try {
+      await fetch(`/api/v1/api-keys/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('gresio_token')}` },
+      });
+      setKeys(prev => prev.filter(k => k._id !== id));
+    } catch (e) { alert('Error: ' + e.message); }
+  };
+
+  if (loading) return <div className="text-xs text-surface-400">Loading...</div>;
+
+  return (
+    <div>
+      <button onClick={createKey} disabled={creating}
+        className="mb-3 px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 cursor-pointer border-none">
+        {creating ? 'Creating...' : '+ Generate New Key'}
+      </button>
+
+      {keys.length === 0 ? (
+        <p className="text-xs text-surface-400">No API keys yet. Generate one to get started.</p>
+      ) : (
+        <div className="space-y-2">
+          {keys.map(k => (
+            <div key={k._id} className="flex items-center justify-between p-2 bg-surface-50 rounded-lg">
+              <div>
+                <span className="text-xs font-semibold text-surface-900">{k.name}</span>
+                <span className="text-[9px] text-surface-400 ml-2">••••••{k.prefix?.slice(-4)}</span>
+                <span className={`text-[9px] ml-2 px-1.5 py-0.5 rounded ${k.active ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}`}>
+                  {k.active ? 'active' : 'inactive'}
+                </span>
+                {k.lastUsed && <span className="text-[9px] text-surface-400 ml-2">Last used: {new Date(k.lastUsed).toLocaleDateString()}</span>}
+              </div>
+              <button onClick={() => deleteKey(k._id)}
+                className="text-[10px] text-danger-500 hover:underline cursor-pointer bg-transparent border-none">Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

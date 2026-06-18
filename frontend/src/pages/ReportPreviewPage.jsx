@@ -6,12 +6,14 @@ import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
+import ShareReportModal from '../components/ShareReportModal';
 
 export default function ReportPreviewPage() {
   const { id } = useParams();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const reportRef = useRef(null);
 
   useEffect(() => {
@@ -87,18 +89,28 @@ export default function ReportPreviewPage() {
             <Link to="/reports" className="text-sm text-primary-600 hover:text-primary-700 font-medium">&larr; Back to Reports</Link>
             <h1 className="text-2xl font-bold text-surface-900 mt-1">{d?.title || d?.project?.name || 'Report'} {isCustom && <span className="text-[10px] font-normal text-surface-400 ml-2">(Custom)</span>}</h1>
           </div>
-          <button
-            onClick={handleExportPdf}
-            disabled={exporting}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm disabled:opacity-50"
-          >
-            {exporting ? (
-              <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating PDF...</>
-            ) : (
-              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF</>
+          <div className="flex items-center gap-2">
+            {!isAdmin && (
+              <button onClick={() => setShowShare(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-surface-100 text-surface-700 font-medium rounded-lg hover:bg-surface-200 transition-colors text-sm cursor-pointer border-none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Share
+              </button>
             )}
-          </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm disabled:opacity-50 cursor-pointer border-none"
+            >
+              {exporting ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating PDF...</>
+              ) : (
+                <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF</>
+              )}
+            </button>
+          </div>
         </div>
+        <ShareReportModal open={showShare} onClose={() => setShowShare(false)} reportId={report?._id} />
 
         <div ref={reportRef} className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* HEADER */}
