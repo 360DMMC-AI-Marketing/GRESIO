@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { myTasks, projects, sprints } from '../services/api';
-import Skeleton from '../components/Skeleton';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS = {
@@ -45,17 +44,7 @@ export default function MyTasks() {
   const roleIcons = { developer:'💻', qa_tester:'🧪', project_manager:'📋', manager:'📋', admin:'🏢' };
 
   if (loading) {
-    return (
-      <div style={{padding:'24px 32px'}}>
-        <Skeleton.PageHeader />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
-        </div>
-        <div className="bg-white rounded-xl border border-surface-200">
-          {[1,2,3,4,5].map(i => <Skeleton.TaskRow key={i} />)}
-        </div>
-      </div>
-    );
+    return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'60vh',color:'#6b7280',fontSize:14}}>Loading your workspace...</div>;
   }
 
   return (

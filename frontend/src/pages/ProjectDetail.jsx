@@ -3,7 +3,6 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import Skeleton from '../components/Skeleton';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
 import { Workflow } from 'lucide-react';
@@ -575,15 +574,7 @@ export default function ProjectDetail() {
   };
 
   if (!project) {
-    return (
-      <div className="p-6 space-y-6">
-        <Skeleton.PageHeader />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <Skeleton.StatCard key={i} />)}
-        </div>
-        <Skeleton.Text lines={12} />
-      </div>
-    );
+    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
   }
 
   const typeCfg = TYPE_CONFIGS[project.projectType] || TYPE_CONFIGS.software;

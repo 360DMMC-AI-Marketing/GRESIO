@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { reportsService } from '../services/reports';
 import { useAuth } from '../context/AuthContext';
-import Skeleton from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { ConfirmModal } from '../components/Modal';
 
@@ -46,11 +45,8 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div>
-        <Skeleton.PageHeader />
-        <div className="space-y-3">
-          {[1,2,3].map(i => <div key={i} className="bg-white rounded-xl border border-surface-200 p-5"><Skeleton.Text lines={2} /></div>)}
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

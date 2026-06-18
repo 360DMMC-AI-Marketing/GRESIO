@@ -1,6 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Skeleton from './Skeleton';
 import Header from './super-admin/Header';
 import Sidebar from './super-admin/Sidebar';
 import { auth } from '../services/api';
@@ -10,19 +9,10 @@ export default function SuperAdminLayout() {
 
   if (loading) {
     return (
-      <div className="h-screen flex bg-[#f9fafb]">
-        <div className="w-[250px] bg-white border-r border-surface-200 p-4 space-y-4">
-          <Skeleton.Box w="80%" h={20} />
-          {[1,2,3,4].map(i => <div key={i} className="flex items-center gap-3"><Skeleton.Box w={20} h={20} round /><Skeleton.Box w="60%" h={14} /></div>)}
-        </div>
-        <div className="flex-1 flex flex-col">
-          <div className="h-14 border-b border-surface-200 bg-white flex items-center px-6">
-            <Skeleton.Box w="20%" h={16} />
-          </div>
-          <div className="flex-1 p-6">
-            <Skeleton.PageHeader />
-            <Skeleton.Text lines={4} />
-          </div>
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-neutral-500 text-sm">Loading...</p>
         </div>
       </div>
     );

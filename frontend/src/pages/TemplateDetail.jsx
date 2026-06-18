@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Skeleton from '../components/Skeleton';
 import toast from 'react-hot-toast';
 
 export default function TemplateDetail() {
@@ -57,12 +56,7 @@ export default function TemplateDetail() {
     } finally { setUsing(false); }
   };
 
-  if (loading) return (
-    <div className="p-8 space-y-6">
-      <Skeleton.PageHeader />
-      <Skeleton.Text lines={6} />
-    </div>
-  );
+  if (loading) return <div className="p-8 text-center text-surface-500 text-sm">Loading...</div>;
   if (!template) return <div className="p-8 text-center text-surface-500 text-sm">Template not found</div>;
 
   return (

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import Skeleton from '../components/Skeleton';
 
 const SECTION_LABELS = {
   'executive-summary': 'Executive Summary',
@@ -46,9 +45,8 @@ export default function PublicReport() {
   useEffect(() => { load(''); }, [token]);
 
   if (loading) return (
-    <div className="min-h-screen bg-surface-50 p-8 space-y-6">
-      <Skeleton.PageHeader />
-      <Skeleton.Text lines={10} />
+    <div className="min-h-screen flex items-center justify-center bg-surface-50">
+      <div className="text-surface-500 text-sm">Loading report...</div>
     </div>
   );
 

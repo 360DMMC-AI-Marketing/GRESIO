@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { workDna } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Skeleton from '../components/Skeleton';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import { Play, Search, FolderOpen, BookOpen, RefreshCw, X, Plus } from 'lucide-react';
@@ -118,16 +117,7 @@ export default function WorkDNA() {
     );
   }, [analyses, searchQuery]);
 
-  if (loading) return (
-    <div className="space-y-6">
-      <Skeleton.PageHeader />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <Skeleton.StatCard key={i} />)}
-      </div>
-      <Skeleton.Chart />
-      <Skeleton.Table rows={4} />
-    </div>
-  );
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" /></div>;
   if (typeof analyses === 'undefined') return <div className="bg-white rounded-xl border border-surface-200 p-5 text-center text-xs text-surface-500">Loading analyses...</div>;
 
   const badgeClass = (bg, color) => `text-[9px] font-medium px-[7px] py-[1px] rounded-full ${bg} ${color}`;

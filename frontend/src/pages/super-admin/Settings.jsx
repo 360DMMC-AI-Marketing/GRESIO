@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Loader } from 'lucide-react';
 import Dropdown from '../../components/Dropdown';
 import { api } from '../../services/api';
-import Skeleton from '../../components/Skeleton';
 
 export default function SettingsPage() {
   const [form, setForm] = useState({
@@ -47,11 +46,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl space-y-6">
-        <Skeleton.PageHeader />
-        <div className="bg-white rounded-xl border border-surface-200 p-5 space-y-4">
-          {[1,2,3].map(i => <div key={i} className="space-y-2"><Skeleton.Box w="30%" h={14} /><Skeleton.Box w="80%" h={32} /></div>)}
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader size={20} className="text-surface-400 animate-spin" />
       </div>
     );
   }

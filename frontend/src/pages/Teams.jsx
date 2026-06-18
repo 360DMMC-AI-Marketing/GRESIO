@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Skeleton from '../components/Skeleton';
 import { integrations, users, projects as projectsApi } from '../services/api';
 
 export default function Teams() {
@@ -62,14 +61,7 @@ export default function Teams() {
   const syncRelative = lastSync ? formatTimeAgo(lastSync) : null;
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton.PageHeader />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1,2].map(i => <div key={i} className="bg-white rounded-xl border border-surface-200 p-6 space-y-4"><Skeleton.Avatar /><Skeleton.Text lines={4} /></div>)}
-        </div>
-      </div>
-    );
+    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
   }
 
   return (

@@ -56,18 +56,15 @@ const SuperAdminNotifications = lazy(() => import('./pages/super-admin/Notificat
 const SuperAdminProfile = lazy(() => import('./pages/super-admin/Profile'));
 const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
 import ScrollToTop from './components/ScrollToTop';
-import Skeleton from './components/Skeleton';
 import WelcomeWizard from './components/WelcomeWizard';
 
 function SuspenseFallback() {
   return (
-    <div className="min-h-screen bg-white p-6 space-y-6">
-      <Skeleton.PageHeader />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <p className="text-neutral-500 text-sm">Loading...</p>
       </div>
-      <Skeleton.Chart />
-      <Skeleton.Table rows={4} />
     </div>
   );
 }

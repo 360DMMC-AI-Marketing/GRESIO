@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import Skeleton from '../components/Skeleton';
 import Dropdown from '../components/Dropdown';
 
 const MOOD_EMOJI = { great:'😊', good:'🙂', okay:'😐', difficult:'😓' };
@@ -125,14 +124,7 @@ export default function WorkLogs() {
   const myHours = myLogs.reduce((s, l) => s + (l.hours || 0), 0);
 
   if (loading) {
-    return (
-      <div>
-        <Skeleton.PageHeader />
-        <div className="bg-white rounded-xl border border-surface-200">
-          {[1,2,3,4,5].map(i => <Skeleton.LogEntry key={i} />)}
-        </div>
-      </div>
-    );
+    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
   }
 
   return (

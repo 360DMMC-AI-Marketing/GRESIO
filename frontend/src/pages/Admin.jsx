@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { integrations, users, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Skeleton from '../components/Skeleton';
 import Modal, { InputModal, ConfirmModal, AlertModal } from '../components/Modal';
 
 const PLAN_INFO = {
@@ -88,15 +87,7 @@ export default function Admin() {
     }
   };
 
-  if (loading) return (
-    <div className="space-y-6">
-      <Skeleton.PageHeader />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <Skeleton.StatCard key={i} />)}
-      </div>
-      <Skeleton.Table rows={6} />
-    </div>
-  );
+  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div></div>;
 
   return (
     <div className="space-y-6">

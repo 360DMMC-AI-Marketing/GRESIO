@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { analytics, projects } from '../services/api';
 import StatCard from '../components/StatCard';
-import Skeleton from '../components/Skeleton';
 import Dropdown from '../components/Dropdown';
 
 const secTitle = { fontSize:15,fontWeight:600,color:'#111827',marginBottom:12,display:'flex',alignItems:'center',gap:8 };
@@ -133,16 +132,7 @@ export default function AnalyticsPage() {
       .finally(() => setLoadingDomainGroups(false));
   }, []);
 
-  if (loading) return (
-    <div className="space-y-6">
-      <Skeleton.PageHeader />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1,2,3,4].map(i => <Skeleton.StatCard key={i} />)}
-      </div>
-      <Skeleton.Chart />
-      <Skeleton.Table rows={5} />
-    </div>
-  );
+  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div></div>;
   if (error) return <div style={{padding:20,fontSize:12,color:'#ef4444'}}>Error: {error}</div>;
   if (!data) return <div className="p-8 text-sm text-surface-500">No analytics data available.</div>;
 
