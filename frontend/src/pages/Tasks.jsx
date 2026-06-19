@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tasks, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Modal from '../components/Modal';
+import Modal, { ConfirmModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
 import toast from 'react-hot-toast';
 
@@ -498,6 +498,7 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
   ]);
   const [aiPriority, setAiPriority] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const isCreator = task.createdBy?._id === user?._id;
   const isAdmin = user?.role === 'admin';
@@ -525,7 +526,6 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this task?')) return;
     try {
       await tasks.delete(task._id);
       onUpdated();
@@ -550,7 +550,7 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
   };
 
   return (
-    <Modal open onClose={onClose} title={editing ? 'Edit Task' : 'Task Details'} icon="📝" style={{ maxWidth: 520 }}>
+    <><Modal open onClose={onClose} title={editing ? 'Edit Task' : 'Task Details'} icon="📝" style={{ maxWidth: 520 }}>
       {editing ? (
         <div className="space-y-2.5">
           <div>
@@ -702,11 +702,19 @@ function TaskDrawer({ task, allUsers, onClose, onUpdated, user }) {
           <div className="flex items-center gap-1.5 justify-end pt-2 border-t border-surface-100">
             {canEdit && <button onClick={() => setEditing(true)}
               className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-[11px] font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors">Edit</button>}
-            {canDelete && <button onClick={handleDelete}
+            {canDelete && <button onClick={() => setShowConfirmDelete(true)}
               className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-red-100 transition-colors">Delete</button>}
           </div>
         </div>
       )}
     </Modal>
-  );
+      <ConfirmModal
+        open={showConfirmDelete}
+        onClose={() => setShowConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete Task"
+        message="Delete this task permanently?"
+        confirmText="Delete" />
+  </>
+);
 }

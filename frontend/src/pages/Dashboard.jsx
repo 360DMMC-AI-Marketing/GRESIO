@@ -258,7 +258,7 @@ export default function Dashboard() {
                     { key: 'insights', label: "Today's Pulse" },
                     { key: 'atRisk', label: 'Projects at Risk' },
                     { key: 'projects', label: 'Projects' },
-                    { key: 'capacity', label: 'Team Workload' },
+                    { key: 'capacity', label: 'Department Workload' },
                     { key: 'plan', label: 'Plan' },
                     { key: 'matrix', label: 'Portfolio Matrix' },
                   ].map(item => (
@@ -289,7 +289,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-6 hover:shadow-hover-lift hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-neutral-500 font-medium">Team</p>
+              <p className="text-sm text-neutral-500 font-medium">Department</p>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-3xl font-bold text-neutral-900 tracking-tight">{stats?.activeUsers || 0}</span>
                 <span className="text-sm text-success-600 font-medium">online</span>
@@ -426,7 +426,7 @@ export default function Dashboard() {
           <div style={{ padding: '14px 18px', borderBottom: '0.5px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 16 }}>📊</span> Team Workload
+                <span style={{ fontSize: 16 }}>📊</span> Department Workload
                 <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 400 }}>— Next 6 Weeks</span>
                 {capacityData && (
                   <span style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>
@@ -563,7 +563,7 @@ export default function Dashboard() {
 
               {/* Totals row */}
               <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', gap: 6, background: '#fafbfc', borderTop: '0.5px solid #f3f4f6' }}>
-                <div style={{ width: 170, flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#374151' }}>Team Total</div>
+                <div style={{ width: 170, flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#374151' }}>Department Total</div>
                 {capacityData.weekStarts?.map((ws, i) => {
                   const totalH = capacityData.users?.reduce((s, u) => s + (u.periods?.[i]?.totalHours || 0), 0) || 0;
                   return (

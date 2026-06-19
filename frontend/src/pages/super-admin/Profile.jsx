@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, Save, Camera } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
   const user = JSON.parse(localStorage.getItem('sa_user') || '{}');
@@ -12,7 +13,7 @@ export default function ProfilePage() {
   });
 
   const handleSave = () => {
-    alert('Profile updated (demo)');
+    toast.success('Profile updated (demo)');
   };
 
   return (

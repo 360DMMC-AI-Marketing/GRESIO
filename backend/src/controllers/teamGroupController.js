@@ -80,7 +80,7 @@ exports.getAllDomainGrouped = async (req, res, next) => {
     ]);
 
     const allGroupIds = mergedGroups.flatMap(g => g.groupIds);
-    const members = await ProjectMember.find({ teamGroup: { $in: allGroupIds } })
+    const members = await ProjectMember.find({ teamGroup: { $in: allGroupIds }, status: { $ne: 'inactive' } })
       .populate('user', 'name email avatar role isActive')
       .populate('invitedBy', 'name email')
       .populate('project', 'name')
@@ -119,6 +119,74 @@ exports.getAllDomainGrouped = async (req, res, next) => {
 
     const usedIds = new Set(mergedGroups.flatMap(g => g.groupIds.map(id => String(id))));
     const ungrouped = activeMembers.filter(m => !m.teamGroup || !usedIds.has(String(m.teamGroup._id || m.teamGroup)));
+
+    // Include users with NO project memberships at all (free/unassigned)
+    const User = require('../models/User');
+    const domainUserIds = new Set();
+    grouped.forEach(g => g.members.forEach(m => { if (m.user?._id) domainUserIds.add(String(m.user._id)); }));
+    ungrouped.forEach(m => { if (m.user?._id) domainUserIds.add(String(m.user._id)); });
+    // Also collect user IDs from ALL ProjectMember records in this domain
+    const allDomainMembers = await ProjectMember.find({ project: { $in: projectObjectIds }, status: { $ne: 'inactive' } }).select('user email').lean();
+    allDomainMembers.forEach(m => { if (m.user) domainUserIds.add(String(m.user)); });
+
+    const allDomainUsers = await User.find({ domain: req.user.domain, isActive: true }).select('name email role').lean();
+    const freeUsers = allDomainUsers.filter(u => !domainUserIds.has(String(u._id)));
+    freeUsers.forEach(u => {
+      ungrouped.push({
+        user: { _id: u._id, name: u.name, email: u.email, role: u.role },
+        email: u.email,
+        projectRole: u.role || 'developer',
+        status: 'active',
+        _id: u._id,
+      });
+    });
+
+    // Attach assignment counts (tasks, test cases, bugs) to each member
+    const Task = require('../models/Task');
+    const TestCase = require('../models/TestCase');
+    const Bug = require('../models/Bug');
+
+    const allUserIds = [];
+    grouped.forEach(g => g.members.forEach(m => { if (m.user?._id) allUserIds.push(m.user._id); }));
+    ungrouped.forEach(m => { if (m.user?._id) allUserIds.push(m.user._id); });
+
+    if (allUserIds.length > 0) {
+      const [taskCounts, testCaseCounts, bugCounts] = await Promise.all([
+        Task.aggregate([
+          { $match: { assignee: { $in: allUserIds }, isActive: true, status: { $ne: 'done' }, project: { $in: projectObjectIds } } },
+          { $group: { _id: '$assignee', count: { $sum: 1 } } },
+        ]),
+        TestCase.aggregate([
+          { $match: { assignee: { $in: allUserIds }, isActive: true, project: { $in: projectObjectIds } } },
+          { $group: { _id: '$assignee', count: { $sum: 1 } } },
+        ]),
+        Bug.aggregate([
+          { $match: { assignee: { $in: allUserIds }, isActive: true, project: { $in: projectObjectIds } } },
+          { $group: { _id: '$assignee', count: { $sum: 1 } } },
+        ]),
+      ]);
+
+      const tcMap = Object.fromEntries(taskCounts.map(r => [String(r._id), r.count]));
+      const tccMap = Object.fromEntries(testCaseCounts.map(r => [String(r._id), r.count]));
+      const bcMap = Object.fromEntries(bugCounts.map(r => [String(r._id), r.count]));
+
+      const attachCounts = m => {
+        const uid = m.user?._id ? String(m.user._id) : null;
+        m.assignmentCounts = {
+          tasks: uid ? (tcMap[uid] || 0) : 0,
+          testCases: uid ? (tccMap[uid] || 0) : 0,
+          bugs: uid ? (bcMap[uid] || 0) : 0,
+        };
+      };
+
+      grouped.forEach(g => g.members.forEach(attachCounts));
+      ungrouped.forEach(attachCounts);
+    } else {
+      const attachZero = m => { m.assignmentCounts = { tasks: 0, testCases: 0, bugs: 0 }; };
+      grouped.forEach(g => g.members.forEach(attachZero));
+      ungrouped.forEach(attachZero);
+    }
+
     res.json({ groups: grouped, ungrouped });
   } catch (e) { next(e); }
 };
@@ -131,7 +199,7 @@ exports.getGroupedMembers = async (req, res, next) => {
     }
     const ProjectMember = require('../models/ProjectMember');
     const { status } = req.query;
-    const filter = { project: req.params.projectId };
+    const filter = { project: req.params.projectId, status: { $ne: 'inactive' } };
     if (status) filter.status = status;
     const members = await ProjectMember.find(filter)
       .populate('user', 'name email avatar role')

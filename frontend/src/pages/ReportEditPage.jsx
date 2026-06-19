@@ -41,7 +41,7 @@ function buildSectionsFromData(data, type) {
     key_achievements: '<p>List key achievements here...</p>',
     challenges: '<p>Describe challenges and solutions here...</p>',
     screenshots: '<p>Add screenshots or demo links here...</p>',
-    team: `<p>Team members: ${data?.team || 'N/A'}</p>`,
+    team: `<p>Members: ${data?.team || 'N/A'}</p>`,
     client_feedback: '<p>Client feedback section...</p>',
     next_steps: `<p>Remaining tasks: ${tasks.byStatus?.todo || 0} todo, ${tasks.byStatus?.inProgress || 0} in progress.</p>`,
     thank_you: '<p>Thank you for your collaboration!</p>',

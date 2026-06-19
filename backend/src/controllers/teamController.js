@@ -176,8 +176,12 @@ exports.removeMember = async (req, res, next) => {
     if (member.user) {
       await Project.findByIdAndUpdate(member.project, { $pull: { members: member.user } });
     }
-    await ProjectMember.findByIdAndDelete(req.params.memberId);
-    res.json({ message: 'Member removed' });
+    // Detach project but keep the record so department membership persists
+    await ProjectMember.updateOne(
+      { _id: member._id },
+      { $set: { status: 'inactive', project: null } }
+    );
+    res.json({ message: 'Member removed from project' });
   } catch (e) { next(e); }
 };
 

@@ -183,7 +183,7 @@ function PMView({ data, navigate }) {
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:12,marginBottom:16}}>
         <StatCard label="Projects" value={data.stats.totalProjects} />
         <StatCard label="Total Sprints" value={data.stats.totalSprints} />
-        <StatCard label="Team Members" value={data.stats.memberCount} />
+        <StatCard label="Members" value={data.stats.memberCount} />
         <StatCard label="Completion Rate" value={`${data.stats.completionRate}%`} color="#22c55e" />
       </div>
 
@@ -211,7 +211,7 @@ function PMView({ data, navigate }) {
       ))}
 
       {/* Tasks by Team Member */}
-      <SectionBlock title="👥 Tasks by Team Member" empty="No members with tasks">
+      <SectionBlock title="👥 Tasks by Member" empty="No members with tasks">
         {Object.values(data.sections.tasksByMember || {}).filter(m => m.tasks.length > 0).map(({ user:u, tasks:ts }) => {
           const workload = ts.length > 8 ? 'overloaded' : ts.length > 3 ? 'normal' : 'underutilized';
           const workloadColor = workload === 'overloaded' ? '#ef4444' : workload === 'normal' ? '#22c55e' : '#f59e0b';

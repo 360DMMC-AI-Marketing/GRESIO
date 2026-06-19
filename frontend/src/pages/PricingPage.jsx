@@ -21,7 +21,7 @@ const PLANS = [
       </svg>
     ),
     capabilities: [
-      { label: 'Team members', value: 'Up to 10', icon: '👥' },
+      { label: 'Members', value: 'Up to 10', icon: '👥' },
       { label: 'Active projects', value: '3', icon: '📁' },
       { label: 'Sprint management', value: true, icon: '⚡' },
       { label: 'Kanban boards', value: true, icon: '📋' },
@@ -51,14 +51,14 @@ const PLANS = [
       </svg>
     ),
     capabilities: [
-      { label: 'Team members', value: 'Up to 50', icon: '👥' },
+      { label: 'Members', value: 'Up to 50', icon: '👥' },
       { label: 'Active projects', value: 'Unlimited', icon: '📁' },
       { label: 'Sprint management', value: true, icon: '⚡' },
       { label: 'Kanban boards', value: true, icon: '📋' },
       { label: 'Test cases', value: true, icon: '🧪' },
       { label: 'Auto status flow', value: true, icon: '🔄' },
       { label: 'WorkDNA archive + journal', value: true, icon: '🧬' },
-      { label: 'Team workload heatmap', value: true, icon: '📊' },
+      { label: 'Workload heatmap', value: true, icon: '📊' },
       { label: 'Admin PDF reports', value: true, icon: '📄' },
       { label: 'Client PDF reports', value: true, icon: '📑' },
       { label: 'Advanced analytics', value: true, icon: '📈' },
@@ -83,7 +83,7 @@ const PLANS = [
       </svg>
     ),
     capabilities: [
-      { label: 'Team members', value: 'Unlimited', icon: '👥' },
+      { label: 'Members', value: 'Unlimited', icon: '👥' },
       { label: 'Active projects', value: 'Unlimited', icon: '📁' },
       { label: 'Everything in Team', value: true, icon: '✅' },
       { label: 'Custom fields & workflows', value: true, icon: '⚙️' },
@@ -107,7 +107,7 @@ const FEATURES = [
   {
     group: 'Team & Access',
     items: [
-      { label: 'Team members', starter: '10', team: '50', enterprise: '∞' },
+      { label: 'Members', starter: '10', team: '50', enterprise: '∞' },
       { label: 'Projects', starter: '3', team: '∞', enterprise: '∞' },
       { label: 'Roles (Admin, PM, Lead, Dev, QA, Viewer)', starter: true, team: true, enterprise: true },
       { label: 'Role-based permissions', starter: true, team: true, enterprise: true },
@@ -123,7 +123,7 @@ const FEATURES = [
       { label: 'Calendar view', starter: true, team: true, enterprise: true },
       { label: 'Work log tracking', starter: true, team: true, enterprise: true },
       { label: 'Auto status flow', starter: false, team: true, enterprise: true },
-      { label: 'Team workload heatmap', starter: false, team: true, enterprise: true },
+      { label: 'Workload heatmap', starter: false, team: true, enterprise: true },
     ],
   },
   {
@@ -207,7 +207,7 @@ export default function PricingPage() {
     const hasTeamNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'team');
     if (teamSize > 50 || hasEnterpriseNeed) return { id: 'enterprise', label: 'Enterprise', reason: hasEnterpriseNeed ? 'Your security and compliance requirements' : 'Your team size requires unlimited seats' };
     if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return { id: 'team', label: 'Team', reason: hasTeamNeed ? `Includes ${keyNeeds.filter(n => NEEDS.find(nd => nd.id === n)?.plan === 'team').map(n => NEEDS.find(nd => nd.id === n)?.label).join(', ')}` : 'Your team is ready to scale' };
-    return { id: 'starter', label: 'Starter', reason: 'Suitable for small teams getting started' };
+    return { id: 'starter', label: 'Starter', reason: 'Suitable for small departments getting started' };
   })();
 
   return (

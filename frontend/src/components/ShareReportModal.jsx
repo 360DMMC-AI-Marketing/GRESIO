@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
+import toast from 'react-hot-toast';
 
 export default function ShareReportModal({ open, onClose, reportId }) {
   const [enabled, setEnabled] = useState(false);
@@ -37,7 +38,7 @@ export default function ShareReportModal({ open, onClose, reportId }) {
         setEnabled(true);
       }
     } catch (e) {
-      alert('Error: ' + e.message);
+      toast.error('Error: ' + e.message);
     } finally { setLoading(false); }
   };
 
@@ -51,7 +52,7 @@ export default function ShareReportModal({ open, onClose, reportId }) {
       setEnabled(false);
       setShareUrl('');
     } catch (e) {
-      alert('Error: ' + e.message);
+      toast.error('Error: ' + e.message);
     } finally { setLoading(false); }
   };
 

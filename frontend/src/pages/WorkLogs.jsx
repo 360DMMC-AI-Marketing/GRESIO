@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Dropdown from '../components/Dropdown';
+import toast from 'react-hot-toast';
 
 const MOOD_EMOJI = { great:'😊', good:'🙂', okay:'😐', difficult:'😓' };
 const CATEGORIES = ['development', 'meeting', 'review', 'testing', 'deployment', 'other'];
@@ -113,7 +114,7 @@ export default function WorkLogs() {
       setShowForm(false);
       setEditingId(null);
       await loadMyLogs();
-    } catch (e) { alert(e.response?.data?.message || 'Failed to save'); }
+    } catch (e) { toast.error(e.response?.data?.message || 'Failed to save'); }
     finally { setSaving(false); }
   };
 
@@ -279,7 +280,7 @@ export default function WorkLogs() {
                 </div>
 
                 <button onClick={() => {
-                  if (!selectedTask) { alert('Please select a task'); return; }
+                  if (!selectedTask) { toast.error('Please select a task'); return; }
                   setStep('confirm');
                 }}
                   className="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors cursor-pointer border-none">

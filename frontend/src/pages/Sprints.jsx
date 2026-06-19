@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { sprints as sprintsApi, projects, tasks as tasksApi, users as usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Dropdown from '../components/Dropdown';
+import toast from 'react-hot-toast';
 
 const STATUS_META = {
   planning: { label:'Planning', cls:'bg-neutral-100 text-neutral-600' },
@@ -90,7 +91,7 @@ export default function Sprints() {
       setTaskForm({ title:'', priority:'medium', assignee:'', deadline:'' });
       setShowAddTask(null);
       fetch();
-    } catch (err) { alert('Failed: ' + (err.response?.data?.message || err.message)); }
+    } catch (err) { toast.error('Failed: ' + (err.response?.data?.message || err.message)); }
     finally { setCreatingTask(null); }
   };
 

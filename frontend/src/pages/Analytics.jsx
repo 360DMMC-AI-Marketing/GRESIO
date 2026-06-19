@@ -286,14 +286,14 @@ export default function AnalyticsPage() {
           <div style={card}>
             <div style={secTitle}>
               <span>📊 Project Workload Dashboard</span>
-              <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· team size & effort distribution</span>
+              <span style={{fontSize:9,fontWeight:400,color:'#6b7280'}}>· department size & effort distribution</span>
             </div>
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',fontSize:10,borderCollapse:'collapse',minWidth:550}}>
                 <thead>
                   <tr style={{borderBottom:'0.5px solid #e5e7eb'}}>
                     <th style={{textAlign:'left',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Project</th>
-                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Team Size</th>
+                    <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Department Size</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Progress</th>
                     <th style={{textAlign:'center',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Workload</th>
                     <th style={{textAlign:'right',padding:'6px 8px',color:'#6b7280',fontWeight:500}}>Contribution</th>
@@ -646,7 +646,7 @@ export default function AnalyticsPage() {
                             <table style={{width:'100%',fontSize:10,borderCollapse:'collapse'}}>
                               <thead>
                                 <tr style={{borderBottom:'0.5px solid #d1d5db'}}>
-                                  <th style={{textAlign:'left',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Team Member</th>
+                                  <th style={{textAlign:'left',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Member</th>
                                   <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Tasks</th>
                                   <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>Done</th>
                                   <th style={{textAlign:'center',padding:'3px 6px',color:'#6b7280',fontWeight:500}}>TC</th>
@@ -741,7 +741,7 @@ export default function AnalyticsPage() {
 
           {selectedDept && !loadingDomainGroups && !domainGroups && (
             <div style={{textAlign:'center',padding:16,fontSize:11,color:'#9ca3af'}}>
-              Unable to load department data. No team groups configured.
+              Unable to load department data. No departments configured.
             </div>
           )}
 
@@ -1054,7 +1054,7 @@ export default function AnalyticsPage() {
               <table className="w-full text-[10px] border-collapse">
                 <thead>
                   <tr className="border-b border-surface-200">
-                    <th className="text-left px-[6px] py-[5px] text-surface-500 font-medium">Team Member</th>
+                    <th className="text-left px-[6px] py-[5px] text-surface-500 font-medium">Member</th>
                     <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">Tasks</th>
                     <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">Done</th>
                     <th className="text-center px-[6px] py-[5px] text-surface-500 font-medium">TC</th>
@@ -1084,7 +1084,7 @@ export default function AnalyticsPage() {
               </table>
               {proj.members.length > 0 && (
                 <div className="flex items-center gap-2 mt-2 px-[8px] py-[6px] bg-primary-50 rounded-lg">
-                  <span className="text-[10px] font-semibold text-primary-700">Total Team Contribution</span>
+                  <span className="text-[10px] font-semibold text-primary-700">Total Contribution</span>
                   <div className="flex-1 h-[4px] bg-blue-100 rounded-[2px]">
                     <div className="h-[4px] rounded-[2px] bg-primary-600" style={{width:Math.min(Math.round(proj.members.reduce((s,m) => s + m.participation, 0) / proj.members.length), 100)+'%'}} />
                   </div>

@@ -65,7 +65,7 @@ export function AlertModal({ open, onClose, title, message, type }) {
   );
 }
 
-export function InputModal({ open, onClose, onSubmit, title, icon, fields, submitText }) {
+export function InputModal({ open, onClose, onSubmit, title, icon, fields, submitText, children }) {
   return (
     <Modal
       open={open}
@@ -92,6 +92,7 @@ export function InputModal({ open, onClose, onSubmit, title, icon, fields, submi
           )}
         </label>
       ))}
+      {children}
     </Modal>
   );
 }

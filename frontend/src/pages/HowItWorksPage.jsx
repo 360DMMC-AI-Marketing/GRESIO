@@ -57,7 +57,7 @@ const FAQS = [
   },
   {
     q: 'Can I track time spent on tasks?',
-    a: 'Yes — GRESIO includes work log tracking. Team members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and team members.',
+    a: 'Yes — GRESIO includes work log tracking. Members can log hours against tasks and sprints. Reports show time distribution across projects, phases, and members.',
   },
   {
     q: 'What analytics are available?',

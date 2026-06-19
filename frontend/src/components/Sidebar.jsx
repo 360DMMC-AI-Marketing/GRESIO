@@ -40,7 +40,7 @@ const sidebarGroups = [
     label: 'Organization',
     icon: Users,
     items: [
-      { id: 'team', label: 'Team', icon: Group, path: '/users', roles: MANAGERS },
+      { id: 'team', label: 'Department', icon: Group, path: '/users', roles: MANAGERS },
       { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/calendar', roles: ALL },
       { id: 'worklog', label: 'Work Log', icon: Clock, path: '/work-logs', roles: ALL },
     ],

@@ -85,12 +85,12 @@ export default function OnboardingGuide() {
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Available Roles</h4>
           <InfoTable rows={[
             ['Admin','1 — Highest','Full system access. Can create/delete projects, assign roles, manage company settings, manage integrations, and access all features.'],
-            ['Project Manager (PM)','2','Manages multiple projects. Can create sprints, assign tasks, launch/deliver projects, manage team members, and view all reports.'],
-            ['Team Lead','3','Leads a team. Can create tasks, manage sprint backlog, approve phase transitions, manage resources, and manage team members.'],
-            ['Manager','3','Oversees operations. Can edit projects, create tasks, edit/delete test cases, and view team work logs.'],
+            ['Project Manager (PM)','2','Manages multiple projects. Can create sprints, assign tasks, launch/deliver projects, manage members, and view all reports.'],
+            ['Team Lead','3','Leads a department. Can create tasks, manage sprint backlog, approve phase transitions, manage resources, and manage members.'],
+            ['Manager','3','Oversees operations. Can edit projects, create tasks, edit/delete test cases, and view work logs.'],
             ['QA Tester','4','Executes test cases. Can create tasks, execute/retest test cases, manage bugs, and mark test results.'],
             ['Developer','4','Executes assigned tasks. Can update task status, view projects, and run test cases.'],
-            ['Intern','5','Supports the team. Can view projects, update own tasks, run test cases, and view dashboards.'],
+            ['Intern','5','Supports the department. Can view projects, update own tasks, run test cases, and view dashboards.'],
             ['Other','5','Base-level access. Can view dashboards and basic project information.'],
           ]} />
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Detailed Permission Matrix</h4>
@@ -111,12 +111,12 @@ export default function OnboardingGuide() {
             ['Edit / Delete Test Case','✅','✅','✅','✅','✅','❌','❌'],
             ['Execute / Retest Test Case','✅','✅','✅','❌','✅','❌','❌'],
             ['Manage Resources','✅','✅','✅','❌','❌','❌','❌'],
-            ['Manage Team Members','✅','✅','✅','❌','❌','❌','❌'],
+            ['Manage Members','✅','✅','✅','❌','❌','❌','❌'],
             ['Manage Bugs','✅','✅','✅','❌','✅','❌','❌'],
             ['🔒 Launch Project','✅','✅','❌','❌','❌','❌','❌'],
             ['🔒 Deliver Project','✅','✅','❌','❌','❌','❌','❌'],
             ['Evaluate Phase','✅','✅','✅','❌','❌','❌','❌'],
-            ['View Team Work Logs','✅','✅','✅','✅','❌','❌','❌'],
+            ['View Work Logs','✅','✅','✅','✅','❌','❌','❌'],
             ['View Dashboard / Reports','✅','✅','✅','✅','✅','✅','✅'],
             ['Generate / Delete Reports','✅','✅','✅','✅','❌','❌','❌'],
             ['Change User Roles','✅','❌','❌','❌','❌','❌','❌'],
@@ -204,7 +204,7 @@ export default function OnboardingGuide() {
             ['🔍 Review','Schedule review calls, track phase changes'],
             ['📅 Calendar','Task deadlines, sprint dates, project milestones, events, and reminders — month view with color-coded items'],
             ['🔗 Relay','Chain projects in an ordered pipeline with completion tracking and auto-notifications'],
-            ['👥 Team','Team members, roles, workload distribution'],
+            ['👥 Department','Members, roles, workload distribution'],
             ['🔗 Resources','Linked repositories, documentation, environments'],
             ['⚙️ Settings','Project configuration, notifications, integrations'],
           ]} />

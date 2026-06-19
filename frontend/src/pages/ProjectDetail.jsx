@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
+import api, { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
@@ -86,6 +86,9 @@ export default function ProjectDetail() {
   const [confirmState, setConfirmState] = useState(null); // { title, message, onConfirm }
   const [showAddMember, setShowAddMember] = useState(false);
   const [addMemberForm, setAddMemberForm] = useState({ email:'', role:'developer', teamGroup:'', message:'' });
+  const [showNewDeptForm, setShowNewDeptForm] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptIcon, setNewDeptIcon] = useState('👥');
   const [tcList, setTcList] = useState([]);
   const [tcStats, setTcStats] = useState(null);
   const [showTcForm, setShowTcForm] = useState(false);
@@ -521,13 +524,22 @@ export default function ProjectDetail() {
     try {
       await projects.removeTeamMember(id, memberId);
       setMembers(prev => prev.filter(m => m._id !== memberId));
+      setSelectedMember(null);
       const groupedRes = await projects.getGroupedMembers(id);
       if (groupedRes.data) setGroupedData(groupedRes.data);
     } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
   };
 
   const handleMemberClick = (m) => {
-    setSelectedMember(m);
+    setSelectedMember({
+      user: m.user || { email: m.email },
+      memberships: [{
+        project: m.project || null,
+        projectRole: m.projectRole,
+        status: m.status,
+        memberId: m._id,
+      }],
+    });
   };
 
   const openResourceForm = (res = null) => {
@@ -589,7 +601,7 @@ export default function ProjectDetail() {
     { key:'sprints', label:'⚡ Sprints' },
     { key:'test-cases', label:'🧪 Test Cases' },
     { key:'review', label:'🔍 Review' },
-    { key:'team', label:'👥 Team' },
+    { key:'team', label:'👥 Department' },
     { key:'resources', label:'🔗 Resources' },
     ...(['admin','project_manager','team_lead'].includes(user?.role) ? [{ key:'settings', label:'⚙️ Settings' }] : []),
   ];
@@ -1202,8 +1214,44 @@ export default function ProjectDetail() {
             <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>
               {groupedData.groups.reduce((s, g) => s + g.members.length, 0) + groupedData.ungrouped.length} members
             </div>
-            {canManage && <button className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>}
+            {canManage && (
+              <div style={{ display:'flex', gap:6 }}>
+                <button className="btn btn-blue" onClick={() => setShowNewDeptForm(!showNewDeptForm)}>+ Create department</button>
+                <button className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>
+              </div>
+            )}
           </div>
+
+          {showNewDeptForm && (
+            <div style={{ background:'white', borderRadius:12, border:'1px solid #2347e8', padding:'16px 18px', marginBottom:16, boxShadow:'0 2px 8px rgba(35,71,232,0.08)' }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'#111827', marginBottom:12 }}>Create new department</div>
+              <input value={newDeptName} onChange={e => setNewDeptName(e.target.value)}
+                placeholder="Department name *" style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', marginBottom:10, boxSizing:'border-box' }} />
+              <div style={{ display:'flex', gap:4, marginBottom:10, flexWrap:'wrap' }}>
+                {['👥','💻','🎨','⚙️','📋','🔬','📊','🏗️','📝','🛠️','🎯','📦'].map(emoji => (
+                  <span key={emoji} onClick={() => setNewDeptIcon(emoji)}
+                    style={{ fontSize:16, cursor:'pointer', padding:'2px 4px', borderRadius:4, background: newDeptIcon === emoji ? '#e0e7ff' : 'transparent' }}>{emoji}</span>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:6 }}>
+                <button type="button" onClick={async () => {
+                  if (!newDeptName.trim()) { toast.error('Enter a department name'); return; }
+                  try {
+                    await api.post(`/projects/${id}/team/groups`, { name: newDeptName.trim(), icon: newDeptIcon });
+                    const res = await projects.getGroupedMembers(id);
+                    if (res.data) setGroupedData(res.data);
+                    setNewDeptName('');
+                    setNewDeptIcon('👥');
+                    setShowNewDeptForm(false);
+                    toast.success('Department created');
+                  } catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
+                }}
+                  style={{ padding:'6px 16px', background:'#2347e8', color:'white', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>Create</button>
+                <button type="button" onClick={() => { setShowNewDeptForm(false); setNewDeptName(''); setNewDeptIcon('👥'); }}
+                  style={{ padding:'6px 16px', background:'#f3f4f6', color:'#374151', borderRadius:6, fontSize:10, border:'none', cursor:'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
 
           {/* Suggested teams based on project type */}
           {canManage && suggestedTeams.filter(s => s.existingCount === 0).length > 0 && (
@@ -1238,7 +1286,7 @@ export default function ProjectDetail() {
           )}
 
           {groupedData.groups.length === 0 && groupedData.ungrouped.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>👥</p><p style={{fontSize:11}}>No team members yet</p></div>
+            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>👥</p><p style={{fontSize:11}}>No members yet</p></div>
           ) : (
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
               {groupedData.groups.map(g => (
@@ -1274,7 +1322,7 @@ export default function ProjectDetail() {
                             <span style={{fontSize:9,color:isActive?'#16a34a':'#d97706',fontWeight:500}}>{isActive ? 'Active' : 'Pending'}</span>
                           </div>
                           {canManage && (
-                            <span onClick={() => setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) })} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0,marginLeft:4}}>✕</span>
+                            <span onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0,marginLeft:4}}>✕</span>
                           )}
                         </div>
                       );
@@ -1302,7 +1350,7 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                       {canManage && (
-                        <span onClick={() => setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) })} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0}}>✕</span>
+                        <span onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0}}>✕</span>
                       )}
                     </div>
                   ))}
@@ -2140,15 +2188,16 @@ export default function ProjectDetail() {
 
       <InputModal
         open={showAddMember} onClose={() => setShowAddMember(false)}
-        title="Add team member" icon="👥" submitText="Send invitation"
+        title="Add member" icon="👥" submitText="Send invitation"
         onSubmit={handleAddMember}
         fields={[
           { key:'email', label:'Email address', type:'email', placeholder:'user@company.com', value:addMemberForm.email, onChange:e => setAddMemberForm({...addMemberForm,email:e.target.value}) },
-          { key:'teamGroup', label:'Team group', type:'select', value:addMemberForm.teamGroup, onChange:e => setAddMemberForm({...addMemberForm,teamGroup:e.target.value}), options:[{value:'',label:'— No group —'}, ...groupedData.groups.map(g => ({value:g._id,label:`${g.icon} ${g.name}`}))] },
-          { key:'role', label:'Project role', type:'select', value:addMemberForm.role, onChange:e => setAddMemberForm({...addMemberForm,role:e.target.value}), options:[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}] },
+          { key:'teamGroup', label:'Department', type:'select', value:addMemberForm.teamGroup, onChange:v => setAddMemberForm({...addMemberForm,teamGroup:v}), options:[{value:'',label:'— Select department —'}, ...groupedData.groups.map(g => ({value:g._id,label:`${g.icon} ${g.name}`}))] },
+          { key:'role', label:'Project role', type:'select', value:addMemberForm.role, onChange:v => setAddMemberForm({...addMemberForm,role:v}), options:[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}] },
           { key:'message', label:'Invitation message (optional)', type:'textarea', placeholder:'Welcome to the project!', value:addMemberForm.message, onChange:e => setAddMemberForm({...addMemberForm,message:e.target.value}) },
         ]}
-      />
+      >
+      </InputModal>
       <InputModal
         open={showTcForm} onClose={() => { setShowTcForm(false); setEditingTc(null); }}
         title={editingTc ? 'Edit Test Case' : 'New Test Case'} icon="🧪" submitText={editingTc ? 'Save' : 'Create'}
@@ -2172,7 +2221,7 @@ export default function ProjectDetail() {
             }
             setShowTcForm(false);
             setEditingTc(null);
-          } catch (e) { alert(e.response?.data?.message || 'Failed'); }
+          } catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
         }}
         fields={[
           { key:'title', label:'Title *', type:'text', placeholder:'e.g. Validate API rate limiting', value:tcForm.title, onChange:e => setTcForm({...tcForm,title:e.target.value}) },
@@ -2227,7 +2276,7 @@ export default function ProjectDetail() {
                 setTcStats(statsRes.data);
                 setProject(projRes.data);
                 setShowFailForm(false);
-              } catch (e) { alert(e.response?.data?.message || 'Failed'); }
+              } catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
             }} style={{fontSize:10,padding:'5px 12px'}}>Mark as Failed</button>
           </>
         }
@@ -2329,10 +2378,10 @@ export default function ProjectDetail() {
               )}
 
               <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:8, marginTop:24 }}>
-                Project Assignments ({selectedMember.memberships?.length || selectedMember.user?.assignedProjects?.length || 0})
+                Project Assignments ({(selectedMember.memberships || []).filter(ms => ms.project).length || selectedMember.user?.assignedProjects?.length || 0})
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {(selectedMember.memberships || []).map((ms, i) => {
+                {(selectedMember.memberships || []).filter(ms => ms.project).map((ms, i) => {
                   const roleStyles = { admin:{bg:'#f0f4ff',clr:'#1a35c4'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'#1a35c4'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
                   const rs = roleStyles[ms.projectRole] || roleStyles.developer;
                   return (
@@ -2348,7 +2397,7 @@ export default function ProjectDetail() {
                     </div>
                   );
                 })}
-                {(!selectedMember.memberships || selectedMember.memberships.length === 0) && (
+                {(!selectedMember.memberships || selectedMember.memberships.filter(ms => ms.project).length === 0) && (
                   <div style={{ textAlign:'center', padding:'12px 0', color:'#9ca3af', fontSize:11 }}>No project assignments</div>
                 )}
               </div>

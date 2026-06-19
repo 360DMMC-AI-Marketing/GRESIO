@@ -72,6 +72,7 @@ export default function TestCaseDashboard() {
   const [bugStats, setBugStats] = useState(null);
   const [testToRun, setTestToRun] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [editTest, setEditTest] = useState(null);
   const [editStatus, setEditStatus] = useState('');
   const [editAssignee, setEditAssignee] = useState('');
@@ -245,7 +246,6 @@ export default function TestCaseDashboard() {
   };
 
   const handleDeleteTest = async (id) => {
-    if (!window.confirm('Delete this test case?')) return;
     try {
       await testCases.delete(id);
       toast.success('Test case deleted');
