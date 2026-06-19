@@ -474,6 +474,13 @@ export default function PricingPage() {
                 </button>
                 {activeGroup === si && (
                   <div className="px-6 pb-4">
+                    {/* Column headers */}
+                    <div className="flex items-center gap-3 py-2 mb-1 border-b border-surface-100">
+                      <span className="flex-1 text-[10px] font-bold text-surface-400 uppercase tracking-widest">Feature</span>
+                      <span className="w-20 text-center text-[10px] font-bold text-surface-400 uppercase tracking-widest">Starter</span>
+                      <span className="w-20 text-center text-[10px] font-bold text-primary-600 uppercase tracking-widest bg-primary-50 py-1 rounded">Team</span>
+                      <span className="w-20 text-center text-[10px] font-bold text-amber-600 uppercase tracking-widest">Enterprise</span>
+                    </div>
                     {section.items.map((item, ri) => (
                       <div key={ri} className="flex items-center gap-3 py-2.5 border-b border-surface-50 last:border-b-0">
                         <span className="flex-1 text-xs text-surface-600">{item.label}</span>
