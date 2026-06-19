@@ -1,9 +1,14 @@
 const Template = require('../models/Template');
 
+function userDomain(user) {
+  return user.email?.split('@')[1]?.toLowerCase() || user.domain || '';
+}
+
 exports.list = async (req, res) => {
   try {
     const { type, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
-    const filter = { approved: true, domain: req.user.domain };
+    const domain = userDomain(req.user);
+    const filter = { approved: true, domain };
     if (type) filter.projectType = type;
     if (category) filter.category = category;
     if (minPrice || maxPrice) {
@@ -33,7 +38,8 @@ exports.list = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const template = await Template.findById(req.params.id).populate('author', 'name email').lean();
+    const domain = userDomain(req.user);
+    const template = await Template.findOne({ _id: req.params.id, domain }).populate('author', 'name email').lean();
     if (!template) return res.status(404).json({ error: 'Template not found' });
     res.json({ data: template });
   } catch (err) {
@@ -54,7 +60,7 @@ exports.create = async (req, res) => {
       name, description, projectType: projectType || 'software',
       category: category || 'general', price: price || 0,
       phases, tags: tags || [],
-      author: req.user._id, domain: req.user.domain,
+      author: req.user._id, domain: userDomain(req.user),
     });
     res.status(201).json({ data: template });
   } catch (err) {
@@ -94,8 +100,9 @@ exports.remove = async (req, res) => {
 
 exports.download = async (req, res) => {
   try {
-    const template = await Template.findByIdAndUpdate(
-      req.params.id,
+    const domain = userDomain(req.user);
+    const template = await Template.findOneAndUpdate(
+      { _id: req.params.id, domain },
       { $inc: { downloads: 1 } },
       { new: true }
     ).lean();
@@ -108,7 +115,8 @@ exports.download = async (req, res) => {
 
 exports.apply = async (req, res) => {
   try {
-    const template = await Template.findById(req.params.id).lean();
+    const domain = userDomain(req.user);
+    const template = await Template.findOne({ _id: req.params.id, domain }).lean();
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
     const Project = require('../models/Project');
@@ -215,7 +223,7 @@ exports.fromProject = async (req, res) => {
       projectType: project.projectType || 'software',
       phases: phases.length > 0 ? phases : [{ name: 'Planning', tasks: allTasks.map(t => ({ title: t.title, description: t.description || '', estimatedHours: t.estimatedHours || 4 })) }],
       author: req.user._id,
-      domain: req.user.domain,
+      domain: userDomain(req.user),
       approved: true,
       tags: ['from-project'],
     });
@@ -231,7 +239,8 @@ exports.rate = async (req, res) => {
     const { rating } = req.body;
     if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Rating must be 1-5' });
 
-    const template = await Template.findById(req.params.id);
+    const domain = userDomain(req.user);
+    const template = await Template.findOne({ _id: req.params.id, domain });
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
     const total = template.rating * template.ratingCount + rating;

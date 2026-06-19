@@ -5,7 +5,7 @@ const c = require('../controllers/templateController');
 
 router.get('/', auth, c.list);
 router.get('/my', auth, c.myTemplates);
-router.get('/:id', c.getById);
+router.get('/:id', auth, c.getById);
 router.post('/', auth, c.create);
 router.patch('/:id', auth, c.update);
 router.delete('/:id', auth, c.remove);
