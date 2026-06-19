@@ -228,117 +228,148 @@ export default function PricingPage() {
             Start with everything you need. Scale with more power. Upgrade when you outgrow.
           </p>
 
-          {/* Plan Match — floating guide */}
-          <div className="mt-7 max-w-lg mx-auto">
-            <button onClick={() => setGuideOpen(!guideOpen)}
-              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-primary-200 hover:border-primary-400 rounded-full text-sm font-medium text-primary-700 hover:text-primary-800 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <span className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-600 group-hover:bg-primary-200 transition-colors">?</span>
-              <span>Match me to a plan</span>
-              <svg className={`w-3.5 h-3.5 text-primary-400 transition-transform duration-200 ${guideOpen ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+          {/* Plan Match + Features — side by side */}
+          <div className="mt-7 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Left: Plan Match */}
+            <div className="text-left">
+              <button onClick={() => setGuideOpen(!guideOpen)}
+                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-primary-200 hover:border-primary-400 rounded-full text-sm font-medium text-primary-700 hover:text-primary-800 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                <span className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-600 group-hover:bg-primary-200 transition-colors">?</span>
+                <span>Match me to a plan</span>
+                <svg className={`w-3.5 h-3.5 text-primary-400 transition-transform duration-200 ${guideOpen ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-            {guideOpen && (
-              <div className="mt-3 text-left bg-white rounded-2xl border border-surface-200 shadow-xl shadow-primary-100/20 overflow-hidden">
-                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
-                  <p className="text-sm font-semibold text-white">Find your plan</p>
-                  <p className="text-[12px] text-primary-200 mt-0.5">Tell us about your team and we'll match you</p>
-                </div>
+              {guideOpen && (
+                <div className="mt-3 bg-white rounded-2xl border border-surface-200 shadow-xl shadow-primary-100/20 overflow-hidden">
+                  <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                    <p className="text-sm font-semibold text-white">Find your plan</p>
+                    <p className="text-[12px] text-primary-200 mt-0.5">Tell us about your team and we'll match you</p>
+                  </div>
 
-                <div className="p-5 space-y-5">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">1</span>
-                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Team size</span>
-                    </div>
-                    <div className="flex items-center gap-3 pl-7">
-                      <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
-                        className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">−</button>
-                      <div className="relative">
+                  <div className="p-5 space-y-5">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">1</span>
+                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Team size</span>
+                      </div>
+                      <div className="flex items-center gap-3 pl-7">
+                        <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                          className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">−</button>
                         <input type="number" min="1" max="200" value={teamSize}
                           onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
                           className="w-16 text-center text-sm font-bold text-surface-800 border-2 border-surface-200 focus:border-primary-400 rounded-xl py-2 outline-none bg-surface-50/50" />
+                        <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
+                          className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">+</button>
+                        <span className="text-xs text-surface-400 ml-1">members</span>
                       </div>
-                      <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
-                        className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">+</button>
-                      <span className="text-xs text-surface-400 ml-1">members</span>
                     </div>
-                  </div>
 
-                  <div className="border-t border-surface-100 pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">2</span>
-                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Project type</span>
+                    <div className="border-t border-surface-100 pt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">2</span>
+                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Project type</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pl-7">
+                        {PROJECT_TYPES.map(pt => (
+                          <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
+                            className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
+                              projectTypes.includes(pt.id)
+                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
+                                : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
+                            }`}>
+                            {pt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 pl-7">
-                      {PROJECT_TYPES.map(pt => (
-                        <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
-                          className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
-                            projectTypes.includes(pt.id)
-                              ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
-                              : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
-                          }`}>
-                          {pt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="border-t border-surface-100 pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">3</span>
-                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Key features</span>
+                    <div className="border-t border-surface-100 pt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">3</span>
+                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Key features</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pl-7">
+                        {NEEDS.map(nd => (
+                          <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
+                            className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
+                              keyNeeds.includes(nd.id)
+                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
+                                : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
+                            }`}>
+                            {nd.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 pl-7">
-                      {NEEDS.map(nd => (
-                        <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
-                          className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
-                            keyNeeds.includes(nd.id)
-                              ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
-                              : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
-                          }`}>
-                          {nd.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className={`border-t pt-4 ${
-                    recommended.id === 'starter' ? 'border-surface-100' :
-                    recommended.id === 'team' ? 'border-primary-200' :
-                    'border-amber-200'
-                  }`}>
-                    <div className="flex items-center justify-between pl-7">
-                      <div>
-                        <span className="text-[10px] text-surface-400 uppercase tracking-wider font-semibold">Your match</span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`text-lg font-bold ${
-                            recommended.id === 'team' ? 'text-primary-600' :
-                            recommended.id === 'enterprise' ? 'text-amber-600' :
-                            'text-surface-600'
-                          }`}>{recommended.label}</span>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                            recommended.id === 'team' ? 'bg-primary-50 text-primary-700' :
-                            recommended.id === 'enterprise' ? 'bg-amber-50 text-amber-700' :
-                            'bg-surface-100 text-surface-600'
-                          }`}>{recommended.reason}</span>
+                    <div className={`border-t pt-4 ${recommended.id === 'starter' ? 'border-surface-100' : recommended.id === 'team' ? 'border-primary-200' : 'border-amber-200'}`}>
+                      <div className="flex items-center justify-between pl-7">
+                        <div>
+                          <span className="text-[10px] text-surface-400 uppercase tracking-wider font-semibold">Your match</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-lg font-bold ${recommended.id === 'team' ? 'text-primary-600' : recommended.id === 'enterprise' ? 'text-amber-600' : 'text-surface-600'}`}>{recommended.label}</span>
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${recommended.id === 'team' ? 'bg-primary-50 text-primary-700' : recommended.id === 'enterprise' ? 'bg-amber-50 text-amber-700' : 'bg-surface-100 text-surface-600'}`}>{recommended.reason}</span>
+                          </div>
                         </div>
+                        <a href={`#plan-${recommended.id}`}
+                          className={`text-xs font-semibold px-5 py-2 rounded-xl transition-all ${recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' : recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' : 'bg-surface-800 text-white hover:bg-surface-900 shadow-sm'}`}>
+                          View {recommended.label}
+                        </a>
                       </div>
-                      <a href={`#plan-${recommended.id}`}
-                        className={`text-xs font-semibold px-5 py-2 rounded-xl transition-all ${
-                          recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' :
-                          recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' :
-                          'bg-surface-800 text-white hover:bg-surface-900 shadow-sm'
-                        }`}>
-                        View {recommended.label}
-                      </a>
                     </div>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Right: Everything compared */}
+            <div className="text-left">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-surface-800">Everything compared</h3>
+                <p className="text-[11px] text-surface-400">Click a category to see what each plan includes</p>
               </div>
-            )}
+              <div className="bg-surface-50 rounded-xl border border-surface-200 overflow-hidden max-h-[500px] overflow-y-auto">
+                {FEATURES.map((section, si) => (
+                  <div key={si} className="border-b border-surface-200 last:border-b-0">
+                    <button onClick={() => setActiveGroup(activeGroup === si ? -1 : si)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface-100 transition-colors cursor-pointer border-none">
+                      <span className="text-[11px] font-semibold text-surface-600">{section.group}</span>
+                      <svg className={`w-3 h-3 text-surface-400 transition-transform ${activeGroup === si ? 'rotate-180' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {activeGroup === si && (
+                      <div className="px-4 pb-3">
+                        <div className="flex items-center gap-2 py-1.5 mb-1 border-b border-surface-200">
+                          <span className="flex-1 text-[9px] font-bold text-surface-400 uppercase tracking-widest">Feature</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-surface-400 uppercase tracking-widest">Starter</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-primary-600 uppercase tracking-widest bg-primary-50 py-0.5 rounded">Team</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-amber-600 uppercase tracking-widest">Enterprise</span>
+                        </div>
+                        {section.items.map((item, ri) => (
+                          <div key={ri} className="flex items-center gap-2 py-2 border-b border-surface-100 last:border-b-0">
+                            <span className="flex-1 text-[11px] text-surface-500">{item.label}</span>
+                            <span className={`w-14 text-center text-[10px] font-medium ${item.starter === true ? 'text-green-600' : item.starter === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                              {item.starter === true ? '✓' : item.starter === false ? '—' : item.starter}
+                            </span>
+                            <span className={`w-14 text-center text-[10px] font-medium bg-primary-50 py-0.5 rounded ${item.team === true ? 'text-primary-700' : item.team === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                              {item.team === true ? '✓' : item.team === false ? '—' : item.team}
+                            </span>
+                            <span className={`w-14 text-center text-[10px] font-medium ${item.enterprise === true ? 'text-amber-600' : item.enterprise === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                              {item.enterprise === true ? '✓' : item.enterprise === false ? '—' : item.enterprise}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Billing toggle */}
@@ -466,61 +497,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* FEATURE BROWSER — Accordion */}
-      <section className="py-16 px-5 bg-surface-50/50">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-surface-900 mb-2">Everything compared</h2>
-            <p className="text-sm text-surface-400">Click a category to see what each plan includes</p>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
-            {FEATURES.map((section, si) => (
-              <div key={si} className="border-b border-surface-100 last:border-b-0">
-                <button onClick={() => setActiveGroup(activeGroup === si ? -1 : si)}
-                  className="w-full flex items-center justify-between px-6 py-3.5 text-left hover:bg-surface-50 transition-colors cursor-pointer border-none">
-                  <span className="text-sm font-bold text-surface-700">{section.group}</span>
-                  <svg className={`w-4 h-4 text-surface-400 transition-transform ${activeGroup === si ? 'rotate-180' : ''}`}
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {activeGroup === si && (
-                  <div className="px-6 pb-4">
-                    {/* Column headers */}
-                    <div className="flex items-center gap-3 py-2 mb-1 border-b border-surface-100">
-                      <span className="flex-1 text-[10px] font-bold text-surface-400 uppercase tracking-widest">Feature</span>
-                      <span className="w-20 text-center text-[10px] font-bold text-surface-400 uppercase tracking-widest">Starter</span>
-                      <span className="w-20 text-center text-[10px] font-bold text-primary-600 uppercase tracking-widest bg-primary-50 py-1 rounded">Team</span>
-                      <span className="w-20 text-center text-[10px] font-bold text-amber-600 uppercase tracking-widest">Enterprise</span>
-                    </div>
-                    {section.items.map((item, ri) => (
-                      <div key={ri} className="flex items-center gap-3 py-2.5 border-b border-surface-50 last:border-b-0">
-                        <span className="flex-1 text-xs text-surface-600">{item.label}</span>
-                        <span className={`w-20 text-center text-xs font-medium ${
-                          item.starter === true ? 'text-green-600' : item.starter === false ? 'text-surface-300' : 'text-surface-700'
-                        }`}>
-                          {item.starter === true ? '✓' : item.starter === false ? '—' : item.starter}
-                        </span>
-                        <span className={`w-20 text-center text-xs font-medium bg-primary-50 py-1 rounded ${
-                          item.team === true ? 'text-primary-700' : item.team === false ? 'text-surface-300' : 'text-surface-700'
-                        }`}>
-                          {item.team === true ? '✓' : item.team === false ? '—' : item.team}
-                        </span>
-                        <span className={`w-20 text-center text-xs font-medium ${
-                          item.enterprise === true ? 'text-amber-600' : item.enterprise === false ? 'text-surface-300' : 'text-surface-700'
-                        }`}>
-                          {item.enterprise === true ? '✓' : item.enterprise === false ? '—' : item.enterprise}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-20 px-5">
