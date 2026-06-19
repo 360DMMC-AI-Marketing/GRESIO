@@ -1,255 +1,415 @@
-import { useState, Fragment } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 
-const BILLING_OPTIONS = [
-  { value: 'monthly', label: 'Monthly', suffix: '/month' },
-  { value: 'semiannual', label: '6 months', suffix: '/mo', badge: 'Save 20%' },
-  { value: 'annual', label: 'Yearly', suffix: '/mo', badge: 'Save 40%' },
-];
-
 const PLANS = [
   {
-    name: 'Starter', price: { monthly: 0, semiannual: 0, annual: 0 }, period: { monthly: 'forever', semiannual: 'forever', annual: 'forever' },
-    cta: 'Get Started', popular: false,
-  },
-  {
-    name: 'Team', price: { monthly: 29, semiannual: 23, annual: 17 }, period: { monthly: '/month', semiannual: '/mo', annual: '/mo' },
-    cta: 'Start Free Trial', popular: true,
-  },
-  {
-    name: 'Enterprise', price: { monthly: 99, semiannual: 79, annual: 59 }, period: { monthly: '/month', semiannual: '/mo', annual: '/mo' },
-    cta: 'Contact Sales', popular: false,
-  },
-];
-
-const Check = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-green-500 mx-auto">
-    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const Dash = () => (
-  <span className="text-surface-300 mx-auto block text-center">—</span>
-);
-
-function Cell({ value, highlighted }) {
-  const base = 'text-xs py-3 px-3 text-center';
-  const bg = highlighted ? 'bg-primary-50/60' : '';
-  const cls = highlighted ? 'font-semibold text-surface-800' : 'text-surface-500';
-  if (value === true) return <td className={`${base} ${bg}`}><Check /></td>;
-  if (value === false) return <td className={`${base} ${bg}`}><Dash /></td>;
-  return <td className={`${base} ${bg} ${cls}`}>{value}</td>;
-}
-
-const FEATURE_SECTIONS = [
-  {
-    title: 'Users & Access',
-    rows: [
-      { label: 'Team members', starter: 'Up to 10', team: 'Up to 50', enterprise: 'Unlimited' },
-      { label: 'Active projects', starter: '3', team: 'Unlimited', enterprise: 'Unlimited' },
-      { label: 'Role-based access (Admin, PM, Lead, Dev, QA, Viewer)', starter: true, team: true, enterprise: true },
+    id: 'starter',
+    name: 'Starter',
+    tagline: 'For small teams getting started',
+    price: { monthly: 0, semiannual: 0, annual: 0 },
+    badge: 'Free forever',
+    cta: 'Get Started',
+    color: 'from-surface-50 to-surface-100',
+    border: 'border-surface-200',
+    accent: 'text-surface-500',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" className="text-surface-300" />
+        <path d="M12 16l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-surface-400" />
+      </svg>
+    ),
+    capabilities: [
+      { label: 'Team members', value: 'Up to 10', icon: '👥' },
+      { label: 'Active projects', value: '3', icon: '📁' },
+      { label: 'Sprint management', value: true, icon: '⚡' },
+      { label: 'Kanban boards', value: true, icon: '📋' },
+      { label: 'Test cases', value: true, icon: '🧪' },
+      { label: 'GitHub integration', value: true, icon: '🔗' },
+      { label: 'Work logs', value: true, icon: '⏱️' },
+      { label: 'Auto status flow', value: false, icon: '🔄' },
+      { label: 'WorkDNA', value: false, icon: '🧬' },
+      { label: 'Advanced reports', value: false, icon: '📊' },
     ],
   },
   {
-    title: 'Project Management',
-    rows: [
-      { label: 'Sprint management with burndown charts', starter: true, team: true, enterprise: true },
-      { label: 'Task tracking (Kanban board)', starter: true, team: true, enterprise: true },
-      { label: '8-step project lifecycle phases', starter: true, team: true, enterprise: true },
-      { label: 'Calendar (tasks, sprints, deadlines, events)', starter: true, team: true, enterprise: true },
+    id: 'team',
+    name: 'Team',
+    tagline: 'For growing teams that ship fast',
+    price: { monthly: 29, semiannual: 23, annual: 17 },
+    badge: 'Most popular',
+    cta: 'Start Free Trial',
+    color: 'from-primary-600 to-primary-800',
+    border: 'border-primary-600',
+    accent: 'text-white',
+    popular: true,
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="2" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="1.5" className="text-primary-200" />
+        <path d="M11 21v-2a4 4 0 014-4h2a4 4 0 014 4v2M16 11a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-white" />
+      </svg>
+    ),
+    capabilities: [
+      { label: 'Team members', value: 'Up to 50', icon: '👥' },
+      { label: 'Active projects', value: 'Unlimited', icon: '📁' },
+      { label: 'Sprint management', value: true, icon: '⚡' },
+      { label: 'Kanban boards', value: true, icon: '📋' },
+      { label: 'Test cases', value: true, icon: '🧪' },
+      { label: 'Auto status flow', value: true, icon: '🔄' },
+      { label: 'WorkDNA archive + journal', value: true, icon: '🧬' },
+      { label: 'Team workload heatmap', value: true, icon: '📊' },
+      { label: 'Admin PDF reports', value: true, icon: '📄' },
+      { label: 'Client PDF reports', value: true, icon: '📑' },
+      { label: 'Advanced analytics', value: true, icon: '📈' },
+      { label: 'MS Teams + Outlook', value: true, icon: '🔗' },
+      { label: 'Priority support', value: true, icon: '🎯' },
+    ],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    tagline: 'For organizations with advanced needs',
+    price: { monthly: 99, semiannual: 79, annual: 59 },
+    badge: 'Full power',
+    cta: 'Contact Sales',
+    color: 'from-amber-500 to-amber-700',
+    border: 'border-amber-500',
+    accent: 'text-white',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M4 28V8l8-4 8 4v20H4z" stroke="currentColor" strokeWidth="1.5" className="text-amber-200" />
+        <path d="M12 28v-8h8v8M12 12h8M12 16h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-white" />
+      </svg>
+    ),
+    capabilities: [
+      { label: 'Team members', value: 'Unlimited', icon: '👥' },
+      { label: 'Active projects', value: 'Unlimited', icon: '📁' },
+      { label: 'Everything in Team', value: true, icon: '✅' },
+      { label: 'Custom fields & workflows', value: true, icon: '⚙️' },
+      { label: 'Dedicated account manager', value: true, icon: '👤' },
+      { label: 'SAML SSO', value: true, icon: '🔐' },
+      { label: 'On-premise option', value: true, icon: '🖥️' },
+      { label: 'White-label', value: 'Add-on', icon: '🏷️' },
+      { label: 'API access', value: 'Add-on', icon: '🔌' },
+      { label: 'SLA guarantee', value: true, icon: '📋' },
+    ],
+  },
+];
+
+const BILLING = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'semiannual', label: '6 months', save: '20%' },
+  { value: 'annual', label: 'Yearly', save: '40%' },
+];
+
+const FEATURES = [
+  {
+    group: 'Team & Access',
+    items: [
+      { label: 'Team members', starter: '10', team: '50', enterprise: '∞' },
+      { label: 'Projects', starter: '3', team: '∞', enterprise: '∞' },
+      { label: 'Roles (Admin, PM, Lead, Dev, QA, Viewer)', starter: true, team: true, enterprise: true },
+      { label: 'Role-based permissions', starter: true, team: true, enterprise: true },
+      { label: 'Azure AD / M365 import', starter: false, team: true, enterprise: true },
+    ],
+  },
+  {
+    group: 'Project Management',
+    items: [
+      { label: '8-step lifecycle (5 project types)', starter: true, team: true, enterprise: true },
+      { label: 'Sprint management + burndown', starter: true, team: true, enterprise: true },
+      { label: 'Kanban task board', starter: true, team: true, enterprise: true },
+      { label: 'Calendar view', starter: true, team: true, enterprise: true },
       { label: 'Work log tracking', starter: true, team: true, enterprise: true },
+      { label: 'Auto status flow', starter: false, team: true, enterprise: true },
+      { label: 'Team workload heatmap', starter: false, team: true, enterprise: true },
     ],
   },
   {
-    title: 'Testing & Quality',
-    rows: [
+    group: 'Testing & Quality',
+    items: [
       { label: 'Test case management', starter: true, team: true, enterprise: true },
-      { label: 'Auto-create bugs from failed tests', starter: true, team: true, enterprise: true },
+      { label: 'Auto-create bugs from failures', starter: true, team: true, enterprise: true },
     ],
   },
   {
-    title: 'Automation',
-    rows: [
-      { label: 'Auto status flow (smart phase transitions)', starter: false, team: true, enterprise: true },
-    ],
-  },
-  {
-    title: 'Reporting & Analytics',
-    rows: [
-      { label: 'Basic reporting', starter: true, team: true, enterprise: true },
-      { label: 'Advanced analytics dashboard', starter: false, team: true, enterprise: true },
+    group: 'Reporting & Analytics',
+    items: [
+      { label: 'Dashboard analytics', starter: true, team: true, enterprise: true },
+      { label: 'Advanced analytics', starter: false, team: true, enterprise: true },
+      { label: 'Admin PDF reports', starter: false, team: true, enterprise: true },
+      { label: 'Client PDF reports', starter: false, team: true, enterprise: true },
       { label: 'Custom reports', starter: false, team: false, enterprise: true },
-      { label: 'Admin project reports (PDF)', starter: false, team: true, enterprise: true },
-      { label: 'Client project reports (PDF)', starter: false, team: true, enterprise: true },
     ],
   },
   {
-    title: 'WorkDNA — Company Brain', id: 'workdna',
-    rows: [
-      { label: 'Monthly Project Archive (auto snapshots)', starter: false, team: true, enterprise: true },
-      { label: 'Decision Journal (log & search decisions)', starter: false, team: true, enterprise: true },
-      { label: 'Déjà Vu (search past projects by keyword)', starter: false, team: true, enterprise: true },
-      { label: 'Pattern Detection (risks, cadence, density)', starter: false, team: true, enterprise: true },
+    group: 'WorkDNA — Company Brain',
+    items: [
+      { label: 'Monthly project archive', starter: false, team: true, enterprise: true },
+      { label: 'Decision journal', starter: false, team: true, enterprise: true },
+      { label: 'Deja vu search', starter: false, team: true, enterprise: true },
+      { label: 'Pattern detection', starter: false, team: true, enterprise: true },
     ],
   },
   {
-    title: 'Integrations',
-    rows: [
-      { label: 'Azure AD / Microsoft 365 import', starter: false, team: true, enterprise: true },
+    group: 'Integrations & Support',
+    items: [
       { label: 'GitHub integration', starter: true, team: true, enterprise: true },
-      { label: 'Microsoft Teams integration', starter: true, team: true, enterprise: true },
-      { label: 'Outlook integration', starter: true, team: true, enterprise: true },
-    ],
-  },
-  {
-    title: 'Notifications',
-    rows: [
-      { label: 'Email notifications', starter: true, team: true, enterprise: true },
-      { label: 'In-app notifications', starter: true, team: true, enterprise: true },
-    ],
-  },
-  {
-    title: 'Support',
-    rows: [
-      { label: 'Community support', starter: true, team: false, enterprise: false },
-      { label: 'Email support', starter: true, team: false, enterprise: false },
+      { label: 'MS Teams + Outlook', starter: true, team: true, enterprise: true },
+      { label: 'Email + community support', starter: true, team: false, enterprise: false },
       { label: 'Priority support', starter: false, team: true, enterprise: false },
-      { label: 'Dedicated support & account manager', starter: false, team: false, enterprise: true },
-    ],
-  },
-  {
-    title: 'Enterprise Features',
-    rows: [
-      { label: 'Custom fields & workflows', starter: false, team: false, enterprise: true },
+      { label: 'Dedicated account manager', starter: false, team: false, enterprise: true },
       { label: 'SAML SSO', starter: false, team: false, enterprise: true },
-      { label: 'On-premise deployment option', starter: false, team: false, enterprise: true },
-      { label: 'SLA guarantee', starter: false, team: false, enterprise: true },
-      { label: 'White-label option', starter: false, team: '—', enterprise: 'Add-on' },
-      { label: 'API access', starter: false, team: '—', enterprise: 'Add-on' },
+      { label: 'On-premise deployment', starter: false, team: false, enterprise: true },
+      { label: 'White-label / API add-ons', starter: false, team: false, enterprise: 'Add-on' },
     ],
   },
 ];
 
-function PlanCard({ plan, billing }) {
-  const price = plan.price[billing];
-  const period = plan.period[billing];
-  const monthlyEquiv = billing === 'semiannual' ? Math.round(price) : billing === 'annual' ? Math.round(price) : price;
-
-  return (
-    <div className={`relative rounded-xl border px-5 py-6 text-center flex flex-col items-center ${plan.popular ? 'bg-primary-600 border-primary-600 text-white scale-105 shadow-lg ring-2 ring-primary-400 z-10' : 'bg-white border-surface-200'}`}>
-      {plan.popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap">
-          Most Popular
-        </div>
-      )}
-      <h3 className={`text-sm font-semibold mb-1 ${plan.popular ? 'text-primary-100' : 'text-surface-500'}`}>{plan.name}</h3>
-      <div className="mb-1">
-        <span className={`text-3xl font-bold ${plan.popular ? 'text-white' : 'text-surface-900'}`}>${price}</span>
-        <span className={`text-sm ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>{period}</span>
-      </div>
-      {billing !== 'monthly' && price > 0 && (
-        <p className={`text-[10px] leading-tight ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>
-          ${monthlyEquiv}/mo — billed ${price * (billing === 'semiannual' ? 6 : 12)} {billing === 'semiannual' ? 'every 6 months' : 'yearly'}
-        </p>
-      )}
-      {price === 0 && <p className={`text-[10px] ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>Free forever</p>}
-      <div className="mt-4 w-full">
-        {plan.cta === 'Contact Sales' ? (
-          <Link to="/contact"
-            className={`block text-center text-sm font-semibold py-2.5 rounded-lg transition-all ${plan.popular ? 'bg-white text-primary-700 hover:bg-primary-50' : 'bg-surface-50 text-surface-700 hover:bg-surface-100 border border-surface-200'}`}>
-            Contact Sales
-          </Link>
-        ) : (
-          <Link to={`/register${plan.price.monthly === 0 ? '' : '?plan=' + plan.name.toLowerCase()}`}
-            className={`block text-center text-sm font-semibold py-2.5 rounded-lg transition-all ${plan.popular ? 'bg-white text-primary-700 hover:bg-primary-50' : 'bg-surface-50 text-surface-700 hover:bg-surface-100 border border-surface-200'}`}>
-            {plan.cta}
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ComparisonTable() {
-  return (
-    <div className="max-w-5xl mx-auto overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="text-left text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-3 w-[34%]" />
-            {['Starter', 'Team', 'Enterprise'].map((name, i) => (
-              <th key={i} className={`text-center text-sm font-bold py-3 px-3 w-[22%] ${i === 1 ? 'bg-primary-50 text-primary-800' : 'text-surface-600'}`}>
-                <div className="flex flex-col items-center gap-1">
-                  {i === 1 && (
-                    <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">MOST POPULAR</span>
-                  )}
-                  {name}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {FEATURE_SECTIONS.map((section, si) => (
-            <Fragment key={si}>
-              <tr>
-                <td colSpan={4} id={section.id || ''} className="text-left text-xs font-bold text-surface-700 bg-surface-50 py-2.5 px-3 uppercase tracking-wider border-t border-surface-200">
-                  {section.title}
-                </td>
-              </tr>
-              {section.rows.map((row, ri) => (
-                <tr key={ri} className="border-b border-surface-100 hover:bg-surface-50/50 transition-colors">
-                  <td className="text-xs text-surface-600 py-3 px-3">{row.label}</td>
-                  <Cell value={row.starter} highlighted={false} />
-                  <Cell value={row.team} highlighted={true} />
-                  <Cell value={row.enterprise} highlighted={false} />
-                </tr>
-              ))}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+function Capability({ cap, planId }) {
+  const isStarter = planId === 'starter';
+  const textCls = isStarter ? 'text-surface-600' : 'text-white/90';
+  if (cap.value === true) return <span className={`${textCls}`}>✓</span>;
+  if (cap.value === false) return <span className={`${isStarter ? 'text-surface-300' : 'text-white/30'}`}>—</span>;
+  return <span className={`font-semibold ${isStarter ? 'text-surface-900' : 'text-white'}`}>{cap.value}</span>;
 }
 
 export default function PricingPage() {
   const [billing, setBilling] = useState('semiannual');
+  const [activeGroup, setActiveGroup] = useState(0);
+  const [teamSize, setTeamSize] = useState('');
+
+  const recommended = !teamSize ? null : parseInt(teamSize) <= 10 ? 'starter' : parseInt(teamSize) <= 50 ? 'team' : 'enterprise';
 
   return (
     <div className="min-h-screen bg-white">
       <PublicNavbar />
-      <section className="pt-36 pb-20 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">Simple, transparent pricing</h1>
-            <p className="text-lg text-surface-500 max-w-xl mx-auto">Start free, scale as you grow. Save up to 40% with longer plans.</p>
+
+      {/* HERO */}
+      <section className="pt-36 pb-14 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#f0f4ff_0%,_transparent_70%)]" />
+        <div className="relative max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-50 border border-primary-200 rounded-full text-xs font-semibold text-primary-700 mb-6">
+            🚀 Save up to 40% with annual billing
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-surface-900 tracking-tight mb-3">
+            One platform,<br />three ways to grow
+          </h1>
+          <p className="text-lg text-surface-500 max-w-2xl mx-auto">
+            Start with everything you need. Scale with more power. Upgrade when you outgrow.
+          </p>
+
+          {/* Team Size Recommender */}
+          <div className="mt-8 max-w-md mx-auto">
+            <div className="bg-white border border-surface-200 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+              <span className="text-sm text-surface-400 shrink-0">👥 My team has</span>
+              <input type="number" min="1" max="500" placeholder="0" value={teamSize}
+                onChange={e => setTeamSize(e.target.value)}
+                className="w-20 text-center text-lg font-bold text-surface-900 border border-surface-200 rounded-lg py-1.5 outline-none focus:border-primary-400 bg-surface-50" />
+              <span className="text-sm text-surface-400 shrink-0">people</span>
+              {recommended && (
+                <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg shrink-0">
+                  Try <span className="capitalize">{recommended}</span>
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex items-center bg-surface-100 rounded-xl p-1">
-              {BILLING_OPTIONS.map((opt) => (
-                <button key={opt.value} onClick={() => setBilling(opt.value)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${billing === opt.value ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
-                  {opt.label}
-                  {opt.badge && <span className="ml-1.5 text-[10px] font-bold text-green-600">{opt.badge}</span>}
+          {/* Billing toggle */}
+          <div className="mt-6 flex justify-center">
+            <div className="inline-flex items-center bg-surface-100 rounded-xl p-1 gap-0.5">
+              {BILLING.map(b => (
+                <button key={b.value} onClick={() => setBilling(b.value)}
+                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer border-none ${
+                    billing === b.value ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'
+                  }`}>
+                  {b.label}
+                  {b.save && billing === b.value && (
+                    <span className="ml-1 text-[10px] font-bold text-green-600">−{b.save}</span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-5 items-stretch mb-16 max-w-4xl mx-auto">
-            {PLANS.map((plan, i) => (
-              <PlanCard key={i} plan={plan} billing={billing} />
-            ))}
-          </div>
-
-          <h2 className="text-2xl font-bold text-surface-900 text-center mb-8">Compare plans in detail</h2>
-          <ComparisonTable />
         </div>
       </section>
+
+      {/* PLAN CARDS — JOURNEY LAYOUT */}
+      <section className="px-5 pb-10">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-0 md:gap-4 items-stretch">
+          {PLANS.map((plan, i) => {
+            const price = plan.price[billing];
+            const monthlyEquiv = billing === 'semiannual' ? price : billing === 'annual' ? price : price;
+            const periodLabel = billing === 'monthly' ? '/month' : billing === 'semiannual' ? '/mo billed semi' : '/mo billed yearly';
+
+            return (
+              <div key={plan.id} className={`relative flex flex-col ${
+                i === 0 ? '' : i === 1 ? '-mt-4 md:mt-0' : 'mt-4 md:mt-0'
+              }`}>
+                {/* Connector line */}
+                {i > 0 && (
+                  <div className="hidden md:block absolute -left-2 top-1/2 -translate-y-1/2 z-10">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="#2347e8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                )}
+
+                <div className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-all duration-300 ${
+                  plan.popular
+                    ? 'bg-primary-600 border-primary-600 shadow-xl shadow-primary-200 scale-[1.02] z-20'
+                    : 'bg-white border-surface-200 hover:border-surface-300 shadow-sm hover:shadow-md'
+                }`}>
+                  {/* Badge */}
+                  <div className={`absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    plan.popular
+                      ? 'bg-amber-400 text-amber-900'
+                      : 'bg-surface-100 text-surface-500'
+                  }`}>
+                    {plan.badge}
+                  </div>
+
+                  {/* Header */}
+                  <div className="flex items-start gap-3 mb-4 mt-1">
+                    <div className={plan.popular ? 'text-white' : 'text-primary-600'}>
+                      {plan.icon}
+                    </div>
+                    <div>
+                      <h3 className={`text-lg font-bold ${plan.popular ? 'text-white' : 'text-surface-900'}`}>{plan.name}</h3>
+                      <p className={`text-xs ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>{plan.tagline}</p>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-4">
+                    <span className={`text-4xl font-black tracking-tight ${plan.popular ? 'text-white' : 'text-surface-900'}`}>
+                      ${price}
+                    </span>
+                    <span className={`text-sm ml-1 ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>
+                      {price === 0 ? 'forever' : periodLabel}
+                    </span>
+                    {billing !== 'monthly' && price > 0 && (
+                      <p className={`text-[11px] mt-0.5 ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>
+                        ${monthlyEquiv}/mo — ${price * (billing === 'semiannual' ? 6 : 12)} {billing === 'semiannual' ? 'every 6 months' : 'yearly'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* CTA */}
+                  {plan.cta === 'Contact Sales' ? (
+                    <Link to="/contact"
+                      className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-5 ${
+                        plan.popular
+                          ? 'bg-white text-primary-700 hover:bg-primary-50'
+                          : 'bg-surface-900 text-white hover:bg-surface-800'
+                      }`}>
+                      Contact Sales
+                    </Link>
+                  ) : (
+                    <Link to={`/register${plan.price.monthly === 0 ? '' : '?plan=' + plan.id}`}
+                      className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-5 ${
+                        plan.popular
+                          ? 'bg-white text-primary-700 hover:bg-primary-50'
+                          : 'bg-surface-900 text-white hover:bg-surface-800'
+                      }`}>
+                      {plan.cta}
+                    </Link>
+                  )}
+
+                  {/* Capabilities grid */}
+                  <div className="space-y-1.5 flex-1">
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider mb-2 ${plan.popular ? 'text-primary-200' : 'text-surface-400'}`}>
+                      What's included
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      {plan.capabilities.map((cap, ci) => (
+                        <div key={ci} className="flex items-center gap-2 text-xs">
+                          <span className="shrink-0 text-[10px]">{cap.icon}</span>
+                          <span className={`truncate ${plan.popular ? 'text-white/80' : 'text-surface-500'}`}>{cap.label}</span>
+                          <span className="ml-auto shrink-0">
+                            <Capability cap={cap} planId={plan.id} />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* FEATURE BROWSER — Accordion */}
+      <section className="py-16 px-5 bg-surface-50/50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-surface-900 mb-2">Everything compared</h2>
+            <p className="text-sm text-surface-400">Click a category to see what each plan includes</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+            {FEATURES.map((section, si) => (
+              <div key={si} className="border-b border-surface-100 last:border-b-0">
+                <button onClick={() => setActiveGroup(activeGroup === si ? -1 : si)}
+                  className="w-full flex items-center justify-between px-6 py-3.5 text-left hover:bg-surface-50 transition-colors cursor-pointer border-none">
+                  <span className="text-sm font-bold text-surface-700">{section.group}</span>
+                  <svg className={`w-4 h-4 text-surface-400 transition-transform ${activeGroup === si ? 'rotate-180' : ''}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {activeGroup === si && (
+                  <div className="px-6 pb-4">
+                    {section.items.map((item, ri) => (
+                      <div key={ri} className="flex items-center gap-3 py-2.5 border-b border-surface-50 last:border-b-0">
+                        <span className="flex-1 text-xs text-surface-600">{item.label}</span>
+                        <span className={`w-20 text-center text-xs font-medium ${
+                          item.starter === true ? 'text-green-600' : item.starter === false ? 'text-surface-300' : 'text-surface-700'
+                        }`}>
+                          {item.starter === true ? '✓' : item.starter === false ? '—' : item.starter}
+                        </span>
+                        <span className={`w-20 text-center text-xs font-medium bg-primary-50 py-1 rounded ${
+                          item.team === true ? 'text-primary-700' : item.team === false ? 'text-surface-300' : 'text-surface-700'
+                        }`}>
+                          {item.team === true ? '✓' : item.team === false ? '—' : item.team}
+                        </span>
+                        <span className={`w-20 text-center text-xs font-medium ${
+                          item.enterprise === true ? 'text-amber-600' : item.enterprise === false ? 'text-surface-300' : 'text-surface-700'
+                        }`}>
+                          {item.enterprise === true ? '✓' : item.enterprise === false ? '—' : item.enterprise}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-5">
+        <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-12 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-36 h-36 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to build something great?</h2>
+          <p className="text-primary-200 mb-8 max-w-lg mx-auto relative">No credit card. No setup cost. Just you and a platform that works the way you do.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
+            <Link to="/register"
+              className="px-10 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 hover:scale-105 transition-all shadow-md text-base">
+              Start Free — No CC Required
+            </Link>
+            <Link to="/contact"
+              className="px-10 py-4 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-all text-base">
+              Talk to Sales
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <PublicFooter />
     </div>
   );

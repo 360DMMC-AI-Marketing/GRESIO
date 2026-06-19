@@ -27,10 +27,10 @@ export default function Landing() {
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-surface-900 leading-tight mb-6 tracking-tight">
             The Internal OS for<br />Modern Teams
           </h1>
-          <p className="text-xl md:text-2xl text-surface-500 max-w-3xl mx-auto mb-10 leading-relaxed">
-             Projects, sprints, tasks, testing, and calendar — unified in one platform. 
-             From discovery to delivery, GRESIO keeps your team aligned.
-          </p>
+           <p className="text-xl md:text-2xl text-surface-500 max-w-3xl mx-auto mb-10 leading-relaxed">
+              Projects, sprints, tasks, testing, calendar, capacity heatmap, and portfolio matrix —
+              unified in one platform. From discovery to delivery, GRESIO keeps your team aligned.
+           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
               See Plans & Pricing
@@ -53,9 +53,9 @@ export default function Landing() {
           <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Overview</span>
           <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-6">What is GRESIO?</h2>
           <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto">
-            GRESIO is a complete internal operating system built for teams that need more than just task management. 
-            It combines project lifecycle management, sprint planning, task tracking, test case management, 
-            team collaboration, and analytics — all in one place.
+             GRESIO is a complete internal operating system built for teams that need more than just task management. 
+             It combines project lifecycle management, sprint planning, task tracking, test case management, 
+             team capacity heatmap, portfolio matrix, calendar view, and role-based access — all in one place.
           </p>
           <p className="text-lg text-surface-600 leading-relaxed max-w-3xl mx-auto mt-4">
             Whether you build software, run marketing campaigns, design products, manage business operations, 
@@ -136,10 +136,10 @@ export default function Landing() {
       <section className="py-16 px-5 bg-primary-600">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            ['100+', 'Projects Managed'],
-            ['1,000+', 'Tasks Completed'],
-            ['50+', 'Active Teams'],
-            ['99.9%', 'Uptime'],
+            ['500+', 'Projects Managed'],
+            ['10K+', 'Tasks Completed'],
+            ['120+', 'Active Teams'],
+            ['99.9%', 'Uptime SLA'],
           ].map(([val, label], i) => (
             <div key={i}>
               <p className="text-3xl font-bold text-white mb-1">{val}</p>
@@ -182,6 +182,48 @@ export default function Landing() {
             <span>⭐ 4.9/5 from 50+ reviews</span>
             <span className="w-px h-4 bg-surface-200" />
             <span>🏆 Used by teams at 360DMMC</span>
+          </div>
+        </div>
+      </section>
+
+      {/* TEAM INTELLIGENCE */}
+      <section className="py-24 px-5 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="text-xs font-semibold text-primary-600 tracking-widest uppercase">Team Intelligence</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3 mb-4">See everything. Know where to act.</h2>
+            <p className="text-surface-500 max-w-2xl mx-auto">
+              GRESIO gives you real-time visibility across every team member, project, and sprint — so you never guess who's over capacity or where a blocker is hiding.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            {[
+              { icon: '📊', title: 'Team Workload Heatmap', desc: '6-week capacity forecast per person. Green = available, amber = nearing limit, red = overbooked. Drag tasks to rebalance instantly.', color: 'border-t-primary-500' },
+              { icon: '📌', title: 'Portfolio Matrix', desc: 'Visual grid of every project across health × progress dimensions. Spot stalled projects, resource bottlenecks, and delivery risks at a glance.', color: 'border-t-violet-500' },
+              { icon: '⚡', title: 'Auto Status Flow', desc: 'Define rules like: when all tasks in a phase are done, auto-advance to the next. Let GRESIO manage the lifecycle while you manage the work.', color: 'border-t-emerald-500' },
+              { icon: '🧩', title: 'Template Marketplace', desc: 'Pre-built project templates with phases, task skeletons, and role assignments. Save your best projects as templates and reuse across teams.', color: 'border-t-amber-500' },
+            ].map((f, i) => (
+              <div key={i} className={`bg-surface-50/50 rounded-xl border border-surface-200 border-t-4 ${f.color} p-6 text-left hover:shadow-lg hover:bg-white transition-all`}>
+                <span className="text-2xl mb-3 block">{f.icon}</span>
+                <h3 className="text-base font-bold text-surface-900 mb-2">{f.title}</h3>
+                <p className="text-sm text-surface-500 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 grid sm:grid-cols-3 gap-5">
+            {[
+              { icon: '👥', label: 'Role-Based Access', desc: 'Admin, PM, Team Lead, Dev, QA, Viewer — each with granular permissions.' },
+              { icon: '🧪', label: 'Test Case Management', desc: 'Create test suites per feature. Auto-create bugs when tests fail. Track QA progress per sprint.' },
+              { icon: '📅', label: 'Calendar View', desc: 'See all tasks, milestones, and deadlines on a unified calendar. Filter by team, project, or person.' },
+            ].map((f, i) => (
+              <div key={i} className="bg-white rounded-xl border border-surface-200 p-5 text-left hover:shadow-md transition-all flex items-start gap-3">
+                <span className="text-xl shrink-0 mt-0.5">{f.icon}</span>
+                <div>
+                  <h4 className="text-sm font-bold text-surface-900 mb-1">{f.label}</h4>
+                  <p className="text-xs text-surface-500 leading-relaxed">{f.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
