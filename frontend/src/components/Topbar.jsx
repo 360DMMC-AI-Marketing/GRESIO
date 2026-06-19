@@ -289,8 +289,8 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
         </button>
       )}
       {toast && (
-        <div style={{position:'fixed',top:12,left:'50%',transform:'translateX(-50%)',zIndex:10001,background:'#1f2937',color:'white',padding:'10px 18px',borderRadius:10,boxShadow:'0 8px 30px rgba(0,0,0,0.2)',fontSize:12,fontWeight:500,maxWidth:400,pointerEvents:'none',animation:'fadeSlideDown 0.3s ease'}}>
-          🔔 {toast.title}
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] bg-neutral-800 text-white px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in">
+          {toast.title}
         </div>
       )}
       <div className="relative" ref={searchRef}>
@@ -303,7 +303,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
             className="bg-transparent border-none outline-none text-xs text-neutral-700 w-full placeholder:text-neutral-400" />
         </div>
         {showSearch && (
-          <div className="absolute top-10 left-0 w-[320px] bg-white rounded-xl border border-neutral-200 shadow-modal z-50 max-h-72 overflow-y-auto animate-fade-in">
+          <div className="absolute top-10 left-0 w-[320px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 max-h-72 overflow-y-auto animate-fade-in">
             {searchResults.map((r, i) => (
               <div key={i} onClick={() => { navigate(r.to); setShowSearch(false); setSearchQuery(''); }}
                 className="flex items-center gap-2 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
@@ -326,7 +326,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
             )}
           </button>
           {showPanel && (
-            <div className="absolute right-0 top-10 w-[380px] bg-white rounded-xl border border-neutral-200 shadow-modal z-50 overflow-hidden" style={{boxShadow:'0 10px 40px rgba(0,0,0,0.15)'}}>
+            <div className="absolute right-0 top-10 w-[380px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
                 <span className="text-sm font-semibold text-neutral-900">Notifications</span>
                 <div className="flex items-center gap-2">
@@ -497,7 +497,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
       </div>
       {showNotifSettings && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30" onClick={() => setShowNotifSettings(false)}>
-          <div className="bg-white rounded-xl shadow-xl w-[340px] p-6 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[340px] p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-neutral-900">Notification Settings</p>
               <button onClick={() => setShowNotifSettings(false)}

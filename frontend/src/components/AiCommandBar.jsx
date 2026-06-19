@@ -60,7 +60,7 @@ export default function AiCommandBar() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-[9999]" onClick={toggle} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-[540px] z-[10000] bg-white rounded-xl shadow-2xl border border-surface-200 overflow-hidden">
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-[540px] z-[10000] bg-white rounded-2xl shadow-2xl border border-surface-200 overflow-hidden">
         <div className="p-3 border-b border-surface-100">
           <div className="flex items-center gap-2 bg-surface-50 rounded-lg px-3 py-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-surface-400 shrink-0"><path d="M12 2a10 10 0 0 0-10 10c0 4.5 3 8.3 7 9.5V14H7l4-6v4h2v-4l4 6h-4v7.5c4-1.2 7-5 7-9.5A10 10 0 0 0 12 2z"/></svg>

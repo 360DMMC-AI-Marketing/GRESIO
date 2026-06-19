@@ -253,9 +253,8 @@ export default function WorkLogs() {
       {/* Form Modal */}
       {showForm && (
         <>
-          <div onClick={() => setShowForm(false)}
-            style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',zIndex:1001}} />
-          <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'white',borderRadius:16,width:420,maxHeight:'85vh',overflowY:'auto',zIndex:1002,padding:24,boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)'}}>
+          <div className="fixed inset-0 z-[1001] bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[420px] max-h-[85vh] overflow-y-auto z-[1002] p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-surface-900">{editingId ? 'Edit Entry' : 'Log Today\'s Work'}</h3>
               <button onClick={() => setShowForm(false)}

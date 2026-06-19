@@ -101,7 +101,7 @@ export default function PublicNavbar() {
                   className="flex-1 border-none outline-none text-sm text-surface-900 placeholder:text-surface-400 bg-transparent" />
                 <span className="text-[10px] font-medium text-surface-300 bg-surface-200/60 px-1.5 py-0.5 rounded">ESC</span>
                 {query.trim() && results.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl shadow-black/5 border border-surface-200 overflow-hidden max-h-80 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 overflow-hidden max-h-80 overflow-y-auto">
                     <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400">Pages</div>
                     {results.map((item, i) => (
                       <button key={i} onClick={() => handleSelect(item.to)}
@@ -116,7 +116,7 @@ export default function PublicNavbar() {
                   </div>
                 )}
                 {query.trim() && results.length === 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl shadow-black/5 border border-surface-200 p-6 text-center">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 p-6 text-center">
                     <span className="text-2xl block mb-2">🔍</span>
                     <p className="text-sm font-medium text-surface-700 mb-0.5">No results for "{query}"</p>
                     <p className="text-xs text-surface-400">Try a different search term</p>

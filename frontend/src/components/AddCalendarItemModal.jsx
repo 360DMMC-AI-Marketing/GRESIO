@@ -80,7 +80,7 @@ export default function AddCalendarItemModal({ defaultDate, onClose, onCreated, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60" onClick={onClose}>
-      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-sm mx-4 p-5 animate-fade-in" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-5 animate-fade-in" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-neutral-900 dark:text-white">Add to Calendar</h2>
           <button onClick={onClose}

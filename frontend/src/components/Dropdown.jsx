@@ -33,6 +33,7 @@ export default function Dropdown({ value, onChange, options, placeholder, classN
               className={`dropdown-option ${o.value === value ? 'selected' : ''}`}
               onClick={() => { onChange(o.value); setOpen(false) }}
             >
+              {o.dot && <span style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:o.dot,marginRight:5,flexShrink:0}} />}
               {o.label}
             </div>
           ))}

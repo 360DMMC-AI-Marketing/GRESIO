@@ -9,11 +9,11 @@ import Dropdown from '../components/Dropdown';
 const ALL_STATUSES = ['draft', 'auto-draft', 'ready', 'in_progress', 'passed', 'failed', 'blocked', 'skipped', 'retesting'];
 
 const TABS = [
-  { key: 'all', label: 'All Tests', icon: '📋' },
-  { key: 'auto', label: 'Auto-Generated', icon: '🤖' },
-  { key: 'flagged', label: 'Flagged', icon: '🚩' },
-  { key: 'bugs', label: 'Bugs', icon: '🐛' },
-  { key: 'config', label: 'Interest Config', icon: '⚙️' },
+  { key: 'all', label: 'All Tests' },
+  { key: 'auto', label: 'Auto-Generated' },
+  { key: 'flagged', label: 'Flagged' },
+  { key: 'bugs', label: 'Bugs' },
+  { key: 'config', label: 'Interest Config' },
 ];
 
 const STATUS_CLASS = {
@@ -43,6 +43,14 @@ const BUG_STATUS_CLS = {
   reopened: 'tb-dl',
 };
 
+const TEST_COLUMNS = [
+  { key: 'draft', label: 'Draft', statuses: ['draft', 'auto-draft'], dot: '#9ca3af', border: 'border-t-gray-400', bg: 'bg-gray-50' },
+  { key: 'ready', label: 'Ready', statuses: ['ready'], dot: '#3b82f6', border: 'border-t-blue-500', bg: 'bg-blue-50' },
+  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress', 'retesting'], dot: '#f59e0b', border: 'border-t-amber-500', bg: 'bg-amber-50' },
+  { key: 'passed', label: 'Passed', statuses: ['passed'], dot: '#22c55e', border: 'border-t-emerald-500', bg: 'bg-emerald-50' },
+  { key: 'issues', label: 'Issues', statuses: ['failed', 'blocked', 'skipped'], dot: '#ef4444', border: 'border-t-red-500', bg: 'bg-red-50' },
+];
+
 export default function TestCaseDashboard() {
   const { projectId: urlProjectId } = useParams();
   const { user, socket } = useAuth();
@@ -70,6 +78,7 @@ export default function TestCaseDashboard() {
   const [qaMembers, setQaMembers] = useState([]);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newForm, setNewForm] = useState({ title: '', description: '', type: 'manual', priority: 'medium' });
+  const [draggedTest, setDraggedTest] = useState(null);
 
   useEffect(() => {
     projects.getAll().then(res => setProjectList(res.data)).catch(() => {});
@@ -279,6 +288,22 @@ export default function TestCaseDashboard() {
     } catch (e) { toast.error(e.response?.data?.message || 'Update failed'); }
   };
 
+  const handleInlineTestStatus = async (testId, newStatus) => {
+    try {
+      await testCases.update(testId, { status: newStatus });
+      toast.success(`Status set to ${newStatus.replace('_', ' ')}`);
+      fetchData();
+    } catch (e) { toast.error(e.response?.data?.message || 'Update failed'); }
+  };
+
+  const handleTestDrop = async (testId, columnKey) => {
+    setDraggedTest(null);
+    const col = TEST_COLUMNS.find(c => c.key === columnKey);
+    if (!col) return;
+    const newStatus = col.statuses[0];
+    await handleInlineTestStatus(testId, newStatus);
+  };
+
   if (!projectList.length && !selectedProject) {
     return (
       <div>
@@ -325,7 +350,7 @@ export default function TestCaseDashboard() {
                 <div key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`tab ${activeTab === tab.key ? 'active' : ''}`}
                   style={{fontSize:11,padding:'8px 12px'}}>
-                  {tab.icon} {tab.label}
+                  {tab.label}
                 </div>
               ))}
             </div>
@@ -345,11 +370,11 @@ export default function TestCaseDashboard() {
       )}
 
       {showDeleteConfirm && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000}} onClick={() => setShowDeleteConfirm(false)}>
-          <div className="card" style={{padding:20,maxWidth:360,width:'90%'}} onClick={e => e.stopPropagation()}>
-            <h3 style={{fontSize:13,fontWeight:700,color:'#111827',margin:'0 0 6px'}}>Delete All Flagged Tests?</h3>
-            <p style={{fontSize:11,color:'#6b7280',margin:'0 0 14px'}}>This action cannot be undone. {flaggedList.length} test cases will be permanently deleted.</p>
-            <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/45" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-[360px] w-[90%]" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-surface-900 mb-1.5">Delete All Flagged Tests?</h3>
+            <p className="text-[11px] text-surface-500 mb-3.5">This action cannot be undone. {flaggedList.length} test cases will be permanently deleted.</p>
+            <div className="flex gap-1.5 justify-end">
               <button className="btn btn-gray" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
               <button className="btn" style={{background:'#b91c1c',color:'white'}} onClick={handleDeleteAllFlagged}>Delete All</button>
             </div>
@@ -358,34 +383,34 @@ export default function TestCaseDashboard() {
       )}
 
       {showNewForm && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000}} onClick={() => { setShowNewForm(false); setNewForm({ title: '', description: '', type: 'manual', priority: 'medium' }); }}>
-          <div className="card" style={{padding:20,maxWidth:420,width:'90%'}} onClick={e => e.stopPropagation()}>
-            <h3 style={{fontSize:13,fontWeight:700,color:'#111827',margin:'0 0 14px'}}>+ New Test Case</h3>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/45" onClick={() => { setShowNewForm(false); setNewForm({ title: '', description: '', type: 'manual', priority: 'medium' }); }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-[420px] w-[90%]" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-surface-900 mb-3.5">+ New Test Case</h3>
+            <div className="flex flex-col gap-2.5">
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Title *</label>
-                <input className="finput" style={{width:'100%'}} value={newForm.title}
+                <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Title *</label>
+                <input className="finput w-full" value={newForm.title}
                   onChange={e => setNewForm({...newForm, title: e.target.value})} placeholder="Test case title" />
               </div>
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Description</label>
-                <textarea className="finput" style={{width:'100%',resize:'vertical',minHeight:50}} value={newForm.description}
+                <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Description</label>
+                <textarea className="finput w-full resize-y min-h-[50px]" value={newForm.description}
                   onChange={e => setNewForm({...newForm, description: e.target.value})} placeholder="Optional description" />
               </div>
-              <div style={{display:'flex',gap:10}}>
-                <div style={{flex:1}}>
-                  <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Type</label>
+              <div className="flex gap-2.5">
+                <div className="flex-1">
+                  <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Type</label>
                   <Dropdown value={newForm.type} onChange={v => setNewForm({...newForm, type:v})}
                     options={['manual','integration','unit','e2e','security','performance'].map(t => ({value:t, label:t}))} style={{width:'100%'}} />
                 </div>
-                <div style={{flex:1}}>
-                  <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Priority</label>
+                <div className="flex-1">
+                  <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Priority</label>
                   <Dropdown value={newForm.priority} onChange={v => setNewForm({...newForm, priority:v})}
                     options={['low','medium','high','urgent','critical'].map(p => ({value:p, label:p}))} style={{width:'100%'}} />
                 </div>
               </div>
             </div>
-            <div style={{display:'flex',gap:6,justifyContent:'flex-end',marginTop:14}}>
+            <div className="flex gap-1.5 justify-end mt-3.5">
               <button className="btn btn-gray" onClick={() => { setShowNewForm(false); setNewForm({ title: '', description: '', type: 'manual', priority: 'medium' }); }}>Cancel</button>
               <button className="btn btn-green" onClick={handleNewTest}>+ Create</button>
             </div>
@@ -394,25 +419,25 @@ export default function TestCaseDashboard() {
       )}
 
       {editTest && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000}} onClick={() => setEditTest(null)}>
-          <div className="card" style={{padding:20,maxWidth:400,width:'90%'}} onClick={e => e.stopPropagation()}>
-            <h3 style={{fontSize:13,fontWeight:700,color:'#111827',margin:'0 0 4px'}}>✏️ Edit Test Case</h3>
-            <p style={{fontSize:11,color:'#6b7280',margin:'0 0 14px'}}>{editTest.testCaseId} — {editTest.title}</p>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/45" onClick={() => setEditTest(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-[400px] w-[90%]" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-surface-900 mb-1">Edit Test Case</h3>
+            <p className="text-[11px] text-surface-500 mb-3.5">{editTest.testCaseId} — {editTest.title}</p>
+            <div className="flex flex-col gap-2.5">
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Status</label>
+                <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Status</label>
                 <Dropdown value={editStatus} onChange={v => setEditStatus(v)}
                   options={ALL_STATUSES.map(s => ({value:s, label:s}))} style={{width:'100%'}} />
               </div>
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:'#6b7280',display:'block',marginBottom:3}}>Assign to QA Tester</label>
+                <label className="text-[10px] font-medium text-surface-500 block mb-0.5">Assign to QA Tester</label>
                 <Dropdown value={editAssignee} onChange={v => setEditAssignee(v)}
                   options={[{value:'', label:'Unassigned'}, ...qaMembers.map(m => ({value:m.user?._id, label:m.user?.name || m.user?.email}))]} style={{width:'100%'}} />
               </div>
             </div>
-            <div style={{display:'flex',gap:6,justifyContent:'flex-end',marginTop:14}}>
+            <div className="flex gap-1.5 justify-end mt-3.5">
               <button className="btn btn-gray" onClick={() => setEditTest(null)}>Cancel</button>
-              <button className="btn btn-blue" onClick={handleSaveEdit}>💾 Save</button>
+              <button className="btn btn-blue" onClick={handleSaveEdit}>Save</button>
             </div>
           </div>
         </div>
@@ -421,52 +446,109 @@ export default function TestCaseDashboard() {
   );
 
   function renderAllTests() {
+    if (testList.length === 0) {
+      return (
+        <div>
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-xs font-semibold text-surface-900">All Test Cases (0)</span>
+            <div className="flex gap-1.5">
+              {canEdit && <button className="btn btn-green text-[10px]" onClick={() => setShowNewForm(true)}>+ New Test Case</button>}
+              {canEdit && <button className="btn btn-blue text-[10px]" onClick={handleGenerateTests}>Generate from Tasks</button>}
+              {canEdit && <button className="btn btn-amber text-[10px]" onClick={handleGenerateCompleted}>From Completed Sprints</button>}
+            </div>
+          </div>
+          <div className="text-center py-10 text-[11px] text-surface-400">No test cases yet.</div>
+        </div>
+      );
+    }
     return (
       <div>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-          <div style={{fontSize:12,fontWeight:600,color:'#111827'}}>All Test Cases ({testList.length})</div>
-          <div style={{display:'flex',gap:6}}>
-            {canEdit && <button className="btn btn-green" onClick={() => setShowNewForm(true)} style={{fontSize:10}}>+ New Test Case</button>}
-            {canEdit && <button className="btn btn-blue" onClick={handleGenerateTests} style={{fontSize:10}}>🤖 Generate from Tasks</button>}
-            {canEdit && <button className="btn btn-amber" onClick={handleGenerateCompleted} style={{fontSize:10}}>📦 From Completed Sprints</button>}
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-xs font-semibold text-surface-900">All Test Cases ({testList.length})</span>
+          <div className="flex gap-1.5">
+            {canEdit && <button className="btn btn-green text-[10px]" onClick={() => setShowNewForm(true)}>+ New Test Case</button>}
+            {canEdit && <button className="btn btn-blue text-[10px]" onClick={handleGenerateTests}>Generate from Tasks</button>}
+            {canEdit && <button className="btn btn-amber text-[10px]" onClick={handleGenerateCompleted}>From Completed Sprints</button>}
           </div>
         </div>
-        {testList.length === 0 ? (
-          <div style={{textAlign:'center',padding:'30px 0',color:'#9ca3af',fontSize:11}}>No test cases yet.</div>
-        ) : (
-          <div style={{border:'0.5px solid #e5e7eb',borderRadius:8,overflow:'hidden'}}>
-            {testList.map(tc => (
-              <div key={tc._id} className="task-row">
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <span className={`tbadge ${STATUS_CLASS[tc.status] || 'tb-todo'}`}>{tc.status}</span>
-                    <span className="t-title" style={{fontSize:11}}>{tc.testCaseId} — {tc.title}</span>
-                    {tc.autoGenerated && <span className="tbadge tb-todo" style={{fontSize:8}}>auto</span>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
+          {TEST_COLUMNS.map(col => {
+            const colTests = testList.filter(t => col.statuses.includes(t.status));
+            return (
+              <div key={col.key}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('bg-primary-50/50'); }}
+                onDragLeave={e => e.currentTarget.classList.remove('bg-primary-50/50')}
+                onDrop={e => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('bg-primary-50/50');
+                  const testId = e.dataTransfer.getData('text/plain');
+                  if (testId) handleTestDrop(testId, col.key);
+                }}
+                className="bg-surface-50/50 rounded-xl border border-surface-200 flex flex-col min-h-[200px]">
+                <div className="flex items-center justify-between px-2.5 py-2 border-b border-surface-200">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
+                    <span className="text-[11px] font-bold text-surface-700">{col.label}</span>
                   </div>
-                  <div style={{fontSize:10,color:'#9ca3af',marginTop:2}}>
-                    {tc.feature && <>{tc.feature} · </>}
-                    <span style={{color:'#6b7280',fontWeight:500}}>{tc.priority}</span> · {tc.type}
-                    {tc.assignee && <> · {tc.assignee.name}</>}
-                  </div>
+                  <span className="text-[9px] font-medium text-surface-400 bg-surface-100 px-1.5 py-0.5 rounded-full">{colTests.length}</span>
                 </div>
-                <div style={{display:'flex',gap:4,flexShrink:0}}>
-                  {isManager && ['ready', 'in_progress', 'retesting'].includes(tc.status) && (
-                    <button className="btn btn-green" style={{fontSize:9,padding:'3px 8px'}} onClick={() => setTestToRun(tc)}>▶ Run</button>
-                  )}
-                  {tc.status === 'failed' && (
-                    <button className="btn btn-amber" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleRetestTest(tc._id)}>🔄 Retest</button>
-                  )}
-                  {canEdit && (
-                    <button className="btn btn-red" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleDeleteTest(tc._id)}>🗑</button>
-                  )}
-                  {canEdit && (
-                  <button className="btn btn-gray" style={{fontSize:9,padding:'3px 8px'}} onClick={() => handleOpenEdit(tc)}>Edit</button>
-                  )}
+                <div className="flex-1 p-1.5 space-y-1.5 min-h-[150px]">
+                  {colTests.length === 0 ? (
+                    <div className="text-center py-6 text-[9px] text-surface-300 italic">Drop tests here</div>
+                  ) : colTests.map(tc => (
+                    <div key={tc._id}
+                      draggable
+                      onDragStart={e => { e.dataTransfer.setData('text/plain', tc._id); setDraggedTest(tc._id); }}
+                      onDragEnd={() => setDraggedTest(null)}
+                      className={`bg-white rounded-lg border border-surface-200 border-t-2 ${
+                        col.border
+                      } p-2.5 cursor-grab hover:shadow-md hover:-translate-y-0.5 transition-all ${
+                        draggedTest === tc._id ? 'opacity-50 shadow-lg' : ''
+                      }`}>
+                      <div className="flex items-start gap-1 mb-1">
+                        <span className={`tbadge ${STATUS_CLASS[tc.status] || 'tb-todo'} text-[8px] leading-none`} style={{padding:'1px 5px'}}>{tc.status}</span>
+                        {tc.autoGenerated && <span className="tbadge tb-todo text-[7px]" style={{padding:'1px 4px'}}>auto</span>}
+                      </div>
+                      <p className="text-[11px] font-semibold text-surface-900 leading-tight truncate">{tc.testCaseId} — {tc.title}</p>
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                        <span style={{fontSize:9,fontWeight:600,color:'#6b7280',background:'#f3f4f6',padding:'0 5px',borderRadius:4,lineHeight:'16px'}}>{tc.priority}</span>
+                        <span style={{fontSize:9,color:'#9ca3af'}}>{tc.type}</span>
+                        {tc.feature && <span style={{fontSize:9,color:'#9ca3af',maxWidth:80,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tc.feature}</span>}
+                      </div>
+                      <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-surface-100">
+                        <span className="text-[9px] text-surface-500 font-medium truncate max-w-[70px]">{tc.assignee?.name || 'Unassigned'}</span>
+                        <div className="flex gap-1">
+                          {isManager && ['ready', 'in_progress', 'retesting'].includes(tc.status) && (
+                            <button onClick={e => { e.stopPropagation(); setTestToRun(tc); }}
+                              className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-blue-100 transition-colors leading-none">Run</button>
+                          )}
+                          {tc.status === 'in_progress' && isManager && (
+                            <>
+                              <button onClick={e => { e.stopPropagation(); handleInlineTestStatus(tc._id, 'passed'); }}
+                                className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-emerald-100 transition-colors leading-none">Pass</button>
+                              <button onClick={e => { e.stopPropagation(); handleInlineTestStatus(tc._id, 'failed'); }}
+                                className="px-1.5 py-0.5 bg-red-50 text-red-700 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-red-100 transition-colors leading-none">Fail</button>
+                              <button onClick={e => { e.stopPropagation(); handleInlineTestStatus(tc._id, 'blocked'); }}
+                                className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-amber-100 transition-colors leading-none">Block</button>
+                            </>
+                          )}
+                          {tc.status === 'failed' && (
+                            <button onClick={e => { e.stopPropagation(); handleRetestTest(tc._id); }}
+                              className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-amber-100 transition-colors leading-none">Retest</button>
+                          )}
+                          {canEdit && (
+                            <button onClick={e => { e.stopPropagation(); handleOpenEdit(tc); }}
+                              className="px-1.5 py-0.5 bg-surface-100 text-surface-600 rounded text-[8px] font-semibold border-none cursor-pointer hover:bg-surface-200 transition-colors leading-none">Edit</button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     );
   }

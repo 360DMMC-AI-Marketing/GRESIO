@@ -38,6 +38,9 @@ const PricingPage = lazy(() => import('./pages/PricingPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const Guides = lazy(() => import('./pages/Guides'));
+const MyTasks = lazy(() => import('./pages/MyTasks'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ReportPreviewPage = lazy(() => import('./pages/ReportPreviewPage'));
 const ReportEditPage = lazy(() => import('./pages/ReportEditPage'));
@@ -90,6 +93,8 @@ export default function App() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/guides" element={<Guides />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/report/:id" element={<ReportPreviewPage />} />
             <Route path="/login" element={<Login />} />
@@ -102,6 +107,7 @@ export default function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/my-tasks" element={<MyTasks />} />
               <Route path="/sprints" element={<Sprints />} />
               <Route path="/work-logs" element={<WorkLogs />} />
               <Route path="/test-cases" element={<TestCaseDashboard />} />

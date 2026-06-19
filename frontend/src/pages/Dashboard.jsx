@@ -250,9 +250,9 @@ export default function Dashboard() {
             )}
             {showCustomize && (
               <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowCustomize(false)} />
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: '10px 0', minWidth: 210 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', padding: '0 14px 8px', borderBottom: '0.5px solid #f3f4f6', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Customize Dashboard</div>
+                <div className="fixed inset-0 z-[99]" onClick={() => setShowCustomize(false)} />
+                <div className="absolute top-full right-0 mt-1.5 z-[100] bg-white rounded-2xl shadow-2xl border border-surface-200 py-2.5 min-w-[210px]">
+                  <div className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider px-3.5 pb-2 border-b border-surface-100 mb-1">Customize Dashboard</div>
                   {[
                     { key: 'statsGrid', label: 'Stats Grid' },
                     { key: 'insights', label: "Today's Pulse" },
@@ -263,11 +263,9 @@ export default function Dashboard() {
                     { key: 'matrix', label: 'Portfolio Matrix' },
                   ].map(item => (
                     <div key={item.key} onClick={() => toggleSection(item.key)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, color: '#374151', transition: 'background 0.1s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <div style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid', borderColor: sections[item.key] ? '#2347e8' : '#d1d5db', background: sections[item.key] ? '#2347e8' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 }}>
-                        {sections[item.key] && <span style={{ color: '#fff', fontSize: 10, lineHeight: 1 }}>✓</span>}
+                      className="flex items-center gap-2 px-3.5 py-1.5 cursor-pointer text-xs text-surface-700 hover:bg-surface-50 transition-colors">
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${sections[item.key] ? 'bg-primary-600 border-primary-600' : 'border-surface-300 bg-transparent'}`}>
+                        {sections[item.key] && <span className="text-white text-[10px] leading-none">✓</span>}
                       </div>
                       {item.label}
                     </div>
@@ -584,86 +582,76 @@ export default function Dashboard() {
 
           {/* Hover tooltip */}
           {hoveredCell && (
-            <div style={{
-              position: 'fixed', left: tooltipPos.x, top: tooltipPos.y, transform: 'translate(-50%, -100%)',
-              background: '#1f2937', color: '#fff', borderRadius: 10, padding: '10px 14px',
-              fontSize: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.25)', zIndex: 1000, minWidth: 200, maxWidth: 300, pointerEvents: 'none',
-            }}>
-              <div style={{ fontWeight: 600, marginBottom: 6, color: '#e5e7eb' }}>
+            <div className="fixed z-[1000] pointer-events-none bg-neutral-800 text-white rounded-2xl shadow-2xl p-2.5 text-[11px] min-w-[200px] max-w-[300px]"
+              style={{ left: tooltipPos.x, top: tooltipPos.y, transform: 'translate(-50%, -100%)' }}>
+              <div className="font-semibold mb-1.5 text-neutral-200">
                 {hoveredCell.user.name} · {new Date(hoveredCell.period.start).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
               </div>
               {hoveredCell.period.tasks?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div className="flex flex-col gap-0.5">
                   {hoveredCell.period.tasks.map(t => (
-                    <div key={t._id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                      <span style={{ color: '#d1d5db', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</span>
-                      <span style={{ fontWeight: 600, color: '#fbbf24', flexShrink: 0 }}>{t.estimatedHours}h</span>
+                    <div key={t._id} className="flex justify-between gap-2">
+                      <span className="text-neutral-300 truncate">{t.title}</span>
+                      <span className="font-semibold text-amber-300 shrink-0">{t.estimatedHours}h</span>
                     </div>
                   ))}
-                  <div style={{ borderTop: '0.5px solid #374151', marginTop: 3, paddingTop: 3, display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
-                    <span style={{ color: '#9ca3af' }}>Total</span>
-                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{hoveredCell.period.totalHours}h</span>
+                  <div className="border-t border-neutral-700 mt-0.5 pt-0.5 flex justify-between text-[10px]">
+                    <span className="text-neutral-400">Total</span>
+                    <span className="font-bold text-amber-300">{hoveredCell.period.totalHours}h</span>
                   </div>
                 </div>
               ) : (
-                <div style={{ color: '#6b7280', fontStyle: 'italic' }}>No tasks this week</div>
+                <div className="text-neutral-500 italic">No tasks this week</div>
               )}
             </div>
           )}
 
           {/* Click modal */}
           {selectedCell && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            <div className="fixed inset-0 z-[999] flex items-center justify-center"
               onClick={() => setSelectedCell(null)}>
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
-              <div onClick={e => e.stopPropagation()} style={{
-                position: 'relative', background: '#fff', borderRadius: 16, maxWidth: 480, width: '90%',
-                maxHeight: '80vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 0,
-              }}>
-                <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+              <div onClick={e => e.stopPropagation()}
+                className="relative bg-white rounded-2xl shadow-2xl max-w-[480px] w-[90%] max-h-[80vh] overflow-auto">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{selectedCell.user.name}</div>
-                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>
-                      Week of {new Date(selectedCell.period.start).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })} · <span style={{ fontWeight: 600, color: selectedCell.period.totalHours > 40 ? '#ef4444' : selectedCell.period.totalHours > 28 ? '#f59e0b' : '#22c55e' }}>{selectedCell.period.totalHours}h</span> of {selectedCell.period.capacity}h
+                    <div className="text-sm font-bold text-surface-900">{selectedCell.user.name}</div>
+                    <div className="text-[11px] text-surface-500 mt-0.5">
+                      Week of {new Date(selectedCell.period.start).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })} · <span className="font-semibold" style={{color: selectedCell.period.totalHours > 40 ? '#ef4444' : selectedCell.period.totalHours > 28 ? '#f59e0b' : '#22c55e'}}>{selectedCell.period.totalHours}h</span> of {selectedCell.period.capacity}h
                     </div>
                   </div>
                   <button onClick={() => setSelectedCell(null)}
-                    style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#f3f4f6', cursor: 'pointer', fontSize: 14, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    className="w-7 h-7 rounded-lg bg-surface-100 text-surface-500 hover:text-surface-700 flex items-center justify-center border-none cursor-pointer text-sm">
                     ✕
                   </button>
                 </div>
-                <div style={{ padding: '12px 20px 20px' }}>
+                <div className="px-5 py-3">
                   {selectedCell.period.tasks?.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>Assigned Tasks</div>
+                    <div className="flex flex-col gap-1">
+                      <div className="text-[10px] font-semibold text-surface-400 uppercase tracking-wider mb-1.5">Assigned Tasks</div>
                       {selectedCell.period.tasks.map((t, i) => (
-                        <div key={t._id || i} style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-                          borderRadius: 8, background: i % 2 === 0 ? '#f9fafb' : '#fff',
-                          border: '0.5px solid #f3f4f6',
-                        }}>
-                          <div style={{
-                            width: 3, height: 24, borderRadius: 2,
-                            background: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#d1d5db',
-                            flexShrink: 0,
-                          }} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 500, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
-                            <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 1 }}>{t.project}</div>
+                        <div key={t._id || i}
+                          className="flex items-center gap-2.5 p-2 rounded-lg border border-surface-100"
+                          style={{background: i % 2 === 0 ? '#f9fafb' : '#fff'}}>
+                          <div className="w-[3px] h-6 rounded-full shrink-0"
+                            style={{background: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#d1d5db'}} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-surface-900 truncate">{t.title}</div>
+                            <div className="text-[10px] text-surface-400 mt-0.5">{t.project}</div>
                           </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{t.estimatedHours}h</div>
-                            <div style={{ fontSize: 9, color: '#9ca3af', textTransform: 'capitalize' }}>{t.status?.replace(/_/g, ' ')}</div>
+                          <div className="text-right shrink-0">
+                            <div className="text-sm font-bold text-surface-900">{t.estimatedHours}h</div>
+                            <div className="text-[9px] text-surface-400 capitalize">{t.status?.replace(/_/g, ' ')}</div>
                           </div>
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 10px 0', marginTop: 4, borderTop: '0.5px solid #f3f4f6' }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{selectedCell.period.tasks.length} tasks</span>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{selectedCell.period.totalHours}h total</span>
+                      <div className="flex justify-between items-center px-2.5 pt-2.5 mt-1 border-t border-surface-100">
+                        <span className="text-[11px] font-semibold text-surface-500">{selectedCell.period.tasks.length} tasks</span>
+                        <span className="text-sm font-bold text-surface-900">{selectedCell.period.totalHours}h total</span>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '30px 0', color: '#9ca3af', fontSize: 12 }}>
+                    <div className="text-center py-8 text-xs text-surface-400">
                       No tasks assigned this week
                     </div>
                   )}

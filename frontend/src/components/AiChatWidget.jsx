@@ -47,7 +47,7 @@ export default function AiChatWidget({ projectId }) {
       </button>
 
       {open && (
-        <div className="fixed bottom-20 right-5 w-[360px] h-[500px] bg-white rounded-xl shadow-2xl border border-surface-200 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-20 right-5 w-[360px] h-[500px] bg-white rounded-2xl shadow-2xl border border-surface-200 flex flex-col z-50 overflow-hidden">
           <div className="px-4 py-3 bg-[#2347e8] text-white text-sm font-semibold flex items-center justify-between shrink-0">
             <span>AI Project Assistant</span>
             <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white cursor-pointer bg-transparent border-none">✕</button>
