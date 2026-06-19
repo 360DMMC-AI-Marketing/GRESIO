@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { analytics, projects, companies } from '../services/api';
+import { users as usersApi } from '../services/api';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
@@ -29,7 +30,7 @@ function relativeTime(date) {
 const ICON_BG = { brand:'bg-brand-50 text-brand-600', green:'bg-success-50 text-success-600', yellow:'bg-warning-50 text-warning-600', blue:'bg-info-50 text-info-600' };
 
 const DEFAULT_SECTIONS = {
-  statsGrid: true, insights: true, atRisk: true, projects: true, plan: true, matrix: true,
+  statsGrid: true, insights: true, atRisk: true, projects: true, plan: true, matrix: true, capacity: true,
 };
 
 function loadSections() {
@@ -138,6 +139,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState(loadSections);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [viewMode, setViewMode] = useState('weeks');
+  const [capacityData, setCapacityData] = useState(null);
+  const [capacityLoading, setCapacityLoading] = useState(true);
+  const [capacityError, setCapacityError] = useState(null);
+  const [hoveredCell, setHoveredCell] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [selectedCell, setSelectedCell] = useState(null);
+
+  const loadCapacity = useCallback(() => {
+    setCapacityLoading(true);
+    setCapacityError(null);
+    usersApi.getCapacity().then(r => setCapacityData(r.data)).catch(e => { console.error('Capacity API error:', e); setCapacityError(e.message || 'Unknown error'); }).finally(() => setCapacityLoading(false));
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -162,7 +176,10 @@ export default function Dashboard() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+    loadCapacity();
+    const interval = setInterval(loadCapacity, 30000);
+    return () => clearInterval(interval);
+  }, [loadCapacity]);
 
   const streak = useMemo(() => calculateStreak(productivity), [productivity]);
   const healthTrend = useMemo(() => getHealthTrend(productivity), [productivity]);
@@ -241,6 +258,7 @@ export default function Dashboard() {
                     { key: 'insights', label: "Today's Pulse" },
                     { key: 'atRisk', label: 'Projects at Risk' },
                     { key: 'projects', label: 'Projects' },
+                    { key: 'capacity', label: 'Team Workload' },
                     { key: 'plan', label: 'Plan' },
                     { key: 'matrix', label: 'Portfolio Matrix' },
                   ].map(item => (
@@ -402,6 +420,267 @@ export default function Dashboard() {
         </div>
         )}
       </div>
+
+      {/* ── Team Workload ── */}
+      {sections.capacity && (
+        <div style={{ marginTop: 12, background: '#fff', borderRadius: 14, border: '0.5px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          {/* Header */}
+          <div style={{ padding: '14px 18px', borderBottom: '0.5px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 16 }}>📊</span> Team Workload
+                <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 400 }}>— Next 6 Weeks</span>
+                {capacityData && (
+                  <span style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>
+                    · auto-refreshes every 30s
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>
+                Hover any week for task details · Click to expand
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={loadCapacity} disabled={capacityLoading}
+                style={{ padding: '5px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: '0.5px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4, opacity: capacityLoading ? 0.5 : 1 }}>
+                <span style={{ display: 'inline-block', animation: capacityLoading ? 'spin 1s linear infinite' : 'none' }}>⟳</span>
+                {capacityLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              {(capacityData?.sprints?.length > 0) && (
+              <div style={{ display: 'flex', gap: 4, background: '#f9fafb', padding: 2, borderRadius: 8, border: '0.5px solid #f3f4f6' }}>
+                <button onClick={() => setViewMode('weeks')}
+                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'weeks' ? '#fff' : 'transparent', color: viewMode === 'weeks' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'weeks' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                  Weeks
+                </button>
+                <button onClick={() => setViewMode('sprints')}
+                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'sprints' ? '#fff' : 'transparent', color: viewMode === 'sprints' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'sprints' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                  Sprints
+                </button>
+              </div>
+            )}
+            </div>
+          </div>
+
+          {capacityLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+              <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full" />
+            </div>
+          ) : capacityData ? (
+            <>
+              {/* Column headers */}
+              <div style={{ display: 'flex', alignItems: 'center', padding: '8px 18px', background: '#fafbfc', borderBottom: '0.5px solid #f3f4f6', gap: 6 }}>
+                <div style={{ width: 170, flexShrink: 0, fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Member</div>
+                {capacityData.weekStarts?.map((ws, i) => (
+                  <div key={ws} style={{ flex: 1, minWidth: 74, textAlign: 'center', fontSize: 9, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    {new Date(ws).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+                  </div>
+                ))}
+              </div>
+
+              {/* User rows */}
+              {capacityData.users?.map((u, ui) => {
+                const allTasks = (u.periods || []).flatMap(p => p.tasks || []);
+                const sprintHours = (capacityData.sprints || []).map(s => {
+                  const st = allTasks.filter(t => t.sprint && t.sprint.toString() === s._id.toString());
+                  return { ...s, totalHours: st.reduce((sum, t) => sum + (t.estimatedHours || 0), 0), taskCount: st.length };
+                }).filter(s => s.totalHours > 0 || s.taskCount > 0);
+
+                return (
+                  <div key={u._id} style={{ borderBottom: '0.5px solid #f3f4f6', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#fafbfc'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div style={{ display: 'flex', alignItems: 'stretch', padding: '10px 18px', gap: 6 }}>
+                      <div style={{ width: 170, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#2347e8', flexShrink: 0 }}>
+                          {u.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: u.status === 'active' ? '#22c55e' : u.status === 'in_meeting' ? '#f59e0b' : '#d1d5db', flexShrink: 0 }} />
+                            <span style={{ fontSize: 9, color: '#9ca3af', textTransform: 'capitalize' }}>{u.role?.replace(/_/g, ' ')}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {u.periods?.map((p, i) => {
+                        const h = p?.totalHours || 0;
+                        const cap = p?.capacity || 40;
+                        const ratio = cap > 0 ? h / cap : 0;
+                        const barRatio = Math.min(ratio, 1);
+                        let color = '#22c55e';
+                        if (ratio >= 0.9) color = '#ef4444';
+                        else if (ratio >= 0.7) color = '#f59e0b';
+                        const bgOpacity = ratio >= 0.9 ? '#fef2f280' : ratio >= 0.7 ? '#fffbeb80' : '#f0fdf480';
+                        const ws = capacityData.weekStarts?.[i];
+
+                        return (
+                          <div key={ws || i} style={{ flex: 1, minWidth: 74, padding: '4px 4px' }}>
+                            <div
+                              onMouseEnter={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top - 8 });
+                                setHoveredCell({ user: u, period: p, weekIdx: i, userIdx: ui });
+                              }}
+                              onMouseLeave={() => setHoveredCell(null)}
+                              onClick={() => setSelectedCell({ user: u, period: p, weekIdx: i })}
+                              style={{
+                                background: bgOpacity,
+                                borderRadius: 8,
+                                padding: '6px 4px 4px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                border: '0.5px solid',
+                                borderColor: ratio >= 0.9 ? '#fecaca' : ratio >= 0.7 ? '#fde68a' : '#bbf7d0',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                transition: 'all 0.15s',
+                              }}
+                              className="capacity-cell"
+                            >
+                              <div style={{ height: 3, borderRadius: 2, background: '#e5e7eb', marginBottom: 4, overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.round(barRatio * 100)}%`, height: '100%', borderRadius: 2, background: color, transition: 'width 0.3s ease' }} />
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color, lineHeight: 1.2 }}>{h}h</div>
+                              <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 1 }}>{(p?.tasks?.length || 0)} task{(p?.tasks?.length || 0) !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {sprintHours.length > 0 && (
+                      <div style={{ padding: '0 18px 8px 182px', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {sprintHours.map(sh => (
+                          <div key={sh._id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f0f4ff', borderRadius: 6, padding: '2px 8px', border: '0.5px solid #e0e7ff' }}>
+                            <span style={{ fontSize: 9, fontWeight: 600, color: '#2347e8' }}>{sh.name}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: '#2347e8' }}>{sh.totalHours}h</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Totals row */}
+              <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', gap: 6, background: '#fafbfc', borderTop: '0.5px solid #f3f4f6' }}>
+                <div style={{ width: 170, flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#374151' }}>Team Total</div>
+                {capacityData.weekStarts?.map((ws, i) => {
+                  const totalH = capacityData.users?.reduce((s, u) => s + (u.periods?.[i]?.totalHours || 0), 0) || 0;
+                  return (
+                    <div key={ws} style={{ flex: 1, minWidth: 74, textAlign: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: totalH > 40 * (capacityData.users?.length || 1) ? '#ef4444' : totalH > 28 * (capacityData.users?.length || 1) ? '#f59e0b' : '#111827' }}>{totalH}h</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af', fontSize: 12 }}>
+              {capacityError || 'No data available'}
+            </div>
+          )}
+
+          {/* Hover tooltip */}
+          {hoveredCell && (
+            <div style={{
+              position: 'fixed', left: tooltipPos.x, top: tooltipPos.y, transform: 'translate(-50%, -100%)',
+              background: '#1f2937', color: '#fff', borderRadius: 10, padding: '10px 14px',
+              fontSize: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.25)', zIndex: 1000, minWidth: 200, maxWidth: 300, pointerEvents: 'none',
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: '#e5e7eb' }}>
+                {hoveredCell.user.name} · {new Date(hoveredCell.period.start).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+              </div>
+              {hoveredCell.period.tasks?.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {hoveredCell.period.tasks.map(t => (
+                    <div key={t._id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ color: '#d1d5db', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</span>
+                      <span style={{ fontWeight: 600, color: '#fbbf24', flexShrink: 0 }}>{t.estimatedHours}h</span>
+                    </div>
+                  ))}
+                  <div style={{ borderTop: '0.5px solid #374151', marginTop: 3, paddingTop: 3, display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
+                    <span style={{ color: '#9ca3af' }}>Total</span>
+                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{hoveredCell.period.totalHours}h</span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#6b7280', fontStyle: 'italic' }}>No tasks this week</div>
+              )}
+            </div>
+          )}
+
+          {/* Click modal */}
+          {selectedCell && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setSelectedCell(null)}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
+              <div onClick={e => e.stopPropagation()} style={{
+                position: 'relative', background: '#fff', borderRadius: 16, maxWidth: 480, width: '90%',
+                maxHeight: '80vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 0,
+              }}>
+                <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{selectedCell.user.name}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>
+                      Week of {new Date(selectedCell.period.start).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })} · <span style={{ fontWeight: 600, color: selectedCell.period.totalHours > 40 ? '#ef4444' : selectedCell.period.totalHours > 28 ? '#f59e0b' : '#22c55e' }}>{selectedCell.period.totalHours}h</span> of {selectedCell.period.capacity}h
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedCell(null)}
+                    style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#f3f4f6', cursor: 'pointer', fontSize: 14, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    ✕
+                  </button>
+                </div>
+                <div style={{ padding: '12px 20px 20px' }}>
+                  {selectedCell.period.tasks?.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>Assigned Tasks</div>
+                      {selectedCell.period.tasks.map((t, i) => (
+                        <div key={t._id || i} style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                          borderRadius: 8, background: i % 2 === 0 ? '#f9fafb' : '#fff',
+                          border: '0.5px solid #f3f4f6',
+                        }}>
+                          <div style={{
+                            width: 3, height: 24, borderRadius: 2,
+                            background: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#d1d5db',
+                            flexShrink: 0,
+                          }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                            <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 1 }}>{t.project}</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{t.estimatedHours}h</div>
+                            <div style={{ fontSize: 9, color: '#9ca3af', textTransform: 'capitalize' }}>{t.status?.replace(/_/g, ' ')}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 10px 0', marginTop: 4, borderTop: '0.5px solid #f3f4f6' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{selectedCell.period.tasks.length} tasks</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{selectedCell.period.totalHours}h total</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '30px 0', color: '#9ca3af', fontSize: 12 }}>
+                      No tasks assigned this week
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <style>{`
+            .capacity-cell:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+          `}</style>
+        </div>
+      )}
 
       {/* ── Project Portfolio Matrix (end of page) ── */}
       {sections.matrix && matrixData.length > 0 && (

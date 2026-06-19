@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Dropdown from '../components/Dropdown';
-import { users as usersApi } from '../services/api';
 
 const MOOD_EMOJI = { great:'😊', good:'🙂', okay:'😐', difficult:'😓' };
 const CATEGORIES = ['development', 'meeting', 'review', 'testing', 'deployment', 'other'];
@@ -24,13 +23,11 @@ export default function WorkLogs() {
   const { user } = useAuth();
   const isManager = ['admin','project_manager','team_lead'].includes(user?.role);
 
-  const [view, setView] = useState('my'); // my, history, capacity
+  const [view, setView] = useState('my'); // my, history
   const [myLogs, setMyLogs] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [userData, setUserData] = useState({ projects: [], tasks: [] });
   const [loading, setLoading] = useState(true);
-  const [capacityData, setCapacityData] = useState(null);
-  const [capacityLoading, setCapacityLoading] = useState(false);
 
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -59,15 +56,6 @@ export default function WorkLogs() {
       const res = await api.get(`/work-logs/history/${user._id}`);
       setHistoryLogs(res.data);
     } catch (e) { /* ignore */ }
-  };
-
-  const loadCapacity = async () => {
-    setCapacityLoading(true);
-    try {
-      const res = await usersApi.getCapacity();
-      setCapacityData(res.data);
-    } catch (e) { /* ignore */ }
-    finally { setCapacityLoading(false); }
   };
 
   const loadUserData = async () => {
@@ -158,9 +146,8 @@ export default function WorkLogs() {
         {[
           { key:'my', label:`My Log (${myLogs.length})` },
           { key:'history', label:'History (14d)' },
-          { key:'capacity', label:'⚡ Capacity' },
         ].map(tab => (
-          <button key={tab.key} onClick={() => { setView(tab.key); if (tab.key === 'history') loadHistory(); if (tab.key === 'capacity') loadCapacity(); }}
+          <button key={tab.key} onClick={() => { setView(tab.key); if (tab.key === 'history') loadHistory(); }}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer border-none ${
               view === tab.key ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700 bg-transparent'
             }`}>
@@ -259,86 +246,6 @@ export default function WorkLogs() {
                 );
               });
             })()
-          )}
-        </div>
-      )}
-
-      {/* Capacity View */}
-      {view === 'capacity' && (
-        <div className="bg-white rounded-xl border border-surface-200 overflow-hidden max-w-full">
-          <div className="p-4 border-b border-surface-100 bg-surface-50">
-            <h2 className="text-sm font-semibold text-surface-900">Team Workload — Next 6 Weeks</h2>
-            <p className="text-xs text-surface-400 mt-0.5">Hours allocated vs. 40h/week capacity. <span className="text-amber-600">Yellow</span> = near limit, <span className="text-red-600">Red</span> = overallocated.</p>
-          </div>
-          {capacityLoading ? (
-            <div className="flex justify-center py-16">
-              <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full" />
-            </div>
-          ) : capacityData ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
-                <thead>
-                  <tr className="bg-surface-50">
-                    <th className="sticky left-0 bg-surface-50 z-10 text-left px-4 py-2.5 text-surface-600 font-semibold min-w-[140px] border-r border-surface-200">Member</th>
-                    <th className="px-3 py-2.5 text-surface-600 font-semibold text-center border-r border-surface-200" style={{minWidth:80}}>Status</th>
-                    {capacityData.weekStarts.map((ws, i) => (
-                      <th key={ws} className={`px-3 py-2.5 text-surface-600 font-semibold text-center border-r border-surface-200 ${i === capacityData.weekStarts.length - 1 ? '' : ''}`} style={{minWidth:100}}>
-                        {new Date(ws).toLocaleDateString('en', { month:'short', day:'numeric' })}
-                      </th>
-                    ))}
-                    {capacityData.sprints?.map(s => (
-                      <th key={s._id} className="px-3 py-2.5 text-primary-600 font-semibold text-center border-r border-surface-200" style={{minWidth:100}}>
-                        {s.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {capacityData.users.map(u => {
-                    const maxCol = Math.max(capacityData.weekStarts.length, capacityData.sprints?.length || 0);
-                    return (
-                      <tr key={u._id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                        <td className="sticky left-0 bg-white z-10 px-4 py-2.5 border-r border-surface-200">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold shrink-0">
-                              {u.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-surface-900 font-medium text-xs truncate">{u.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5 text-center border-r border-surface-200">
-                          <span className={`inline-block w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-green-500' : u.status === 'in_meeting' ? 'bg-amber-400' : 'bg-surface-300'}`} />
-                        </td>
-                        {capacityData.weekStarts.map((ws, i) => {
-                          const p = u.periods?.[i];
-                          const h = p?.totalHours || 0;
-                          const cap = p?.capacity || 40;
-                          const ratio = cap > 0 ? h / cap : 0;
-                          let bg = 'bg-green-100 text-green-800';
-                          if (ratio >= 0.9) bg = 'bg-red-100 text-red-800';
-                          else if (ratio >= 0.7) bg = 'bg-amber-100 text-amber-800';
-                          return (
-                            <td key={ws} className={`px-3 py-2.5 text-center border-r border-surface-200 ${bg} font-medium`}>
-                              {h}h
-                            </td>
-                          );
-                        })}
-                        {capacityData.sprints?.map(s => {
-                          const sprintTasks = u.periods?.length > 0 ? u.periods.flatMap(p => p.tasks) : [];
-                          return (
-                            <td key={s._id} className="px-3 py-2.5 text-center border-r border-surface-200 text-surface-400">
-                              —
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-16 text-surface-400 text-sm">Failed to load capacity data.</div>
           )}
         </div>
       )}

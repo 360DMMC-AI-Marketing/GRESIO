@@ -240,6 +240,7 @@ exports.getCapacity = async (req, res, next) => {
             title: t.title,
             estimatedHours: t.estimatedHours || 0,
             project: t.project?.name || 'No project',
+            sprint: t.sprint,
             status: t.status,
             priority: t.priority,
           })),

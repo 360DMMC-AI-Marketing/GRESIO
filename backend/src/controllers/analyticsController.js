@@ -24,6 +24,7 @@ exports.getDashboardStats = async (req, res, next) => {
     const totalTasks = await Task.countDocuments({ isActive: true, project: { $in: projectIds } });
     const completedTasks = await Task.countDocuments({ status: 'done', project: { $in: projectIds } });
     const atRiskProjects = await Project.countDocuments({ status: 'at_risk', domain });
+    const blockedProjects = await Project.countDocuments({ status: 'blocked', domain });
     const delayedProjects = await Project.countDocuments({ status: 'delayed', domain });
 
     const totalTestingItems = await TestingItem.countDocuments({ isActive: true, project: { $in: projectIds } });
@@ -52,7 +53,7 @@ exports.getDashboardStats = async (req, res, next) => {
       healthScore,
       totalUsers, activeUsers, idleUsers, inactiveUsers,
       totalProjects, completedProjects, inProgressProjects,
-      totalTasks, completedTasks, atRiskProjects, delayedProjects,
+      totalTasks, completedTasks, atRiskProjects, blockedProjects, delayedProjects,
       avgActivityScore: avgActivityScore[0]?.avg || 0,
       testingMetrics: { total: totalTestingItems, passed: passedTesting, failed: failedTesting, blocked: blockedTesting, overdue: overdueTesting },
       recentActivity,
