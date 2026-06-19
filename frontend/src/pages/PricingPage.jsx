@@ -176,20 +176,20 @@ function Capability({ cap, planId }) {
 }
 
 const PROJECT_TYPES = [
-  { id: 'software', label: '💻 Software', desc: 'Dev, code, deploy' },
-  { id: 'design', label: '🎨 Design', desc: 'UX, brand, creative' },
-  { id: 'business', label: '📈 Business', desc: 'Ops, strategy' },
-  { id: 'content', label: '✍️ Content', desc: 'Writing, media' },
-  { id: 'research', label: '🔬 Research', desc: 'Analysis, data' },
+  { id: 'software', label: 'Software', desc: 'Dev, code, deploy' },
+  { id: 'design', label: 'Design', desc: 'UX, brand, creative' },
+  { id: 'business', label: 'Business', desc: 'Ops, strategy' },
+  { id: 'content', label: 'Content', desc: 'Writing, media' },
+  { id: 'research', label: 'Research', desc: 'Analysis, data' },
 ];
 
 const NEEDS = [
-  { id: 'tasks', label: '📋 Task & sprint mgmt', plan: 'starter' },
-  { id: 'testing', label: '🧪 QA testing', plan: 'starter' },
-  { id: 'reports', label: '📑 PDF reports', plan: 'team' },
-  { id: 'dna', label: '🧬 WorkDNA archive', plan: 'team' },
-  { id: 'capacity', label: '📊 Capacity planning', plan: 'team' },
-  { id: 'sso', label: '🔐 SSO & enterprise', plan: 'enterprise' },
+  { id: 'tasks', label: 'Task & sprint mgmt', plan: 'starter' },
+  { id: 'testing', label: 'QA testing', plan: 'starter' },
+  { id: 'reports', label: 'PDF reports', plan: 'team' },
+  { id: 'dna', label: 'WorkDNA archive', plan: 'team' },
+  { id: 'capacity', label: 'Capacity planning', plan: 'team' },
+  { id: 'sso', label: 'SSO & enterprise', plan: 'enterprise' },
 ];
 
 export default function PricingPage() {
@@ -204,9 +204,9 @@ export default function PricingPage() {
   const recommended = (() => {
     const hasEnterpriseNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'enterprise');
     const hasTeamNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'team');
-    if (teamSize > 50 || hasEnterpriseNeed) return { id: 'enterprise', label: 'Enterprise', emoji: '🏢', reason: hasEnterpriseNeed ? 'Your security & compliance needs' : 'Your team size requires unlimited seats' };
-    if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return { id: 'team', label: 'Team', emoji: '🚀', reason: hasTeamNeed ? `You need ${keyNeeds.filter(n => NEEDS.find(nd => nd.id === n)?.plan === 'team').map(n => NEEDS.find(nd => nd.id === n)?.label.split(' ').slice(1).join(' ')).join(', ')}` : 'Your team is ready to scale' };
-    return { id: 'starter', label: 'Starter', emoji: '🌱', reason: 'Perfect for small teams getting started' };
+    if (teamSize > 50 || hasEnterpriseNeed) return { id: 'enterprise', label: 'Enterprise', reason: hasEnterpriseNeed ? 'Your security and compliance requirements' : 'Your team size requires unlimited seats' };
+    if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return { id: 'team', label: 'Team', reason: hasTeamNeed ? `Includes ${keyNeeds.filter(n => NEEDS.find(nd => nd.id === n)?.plan === 'team').map(n => NEEDS.find(nd => nd.id === n)?.label).join(', ')}` : 'Your team is ready to scale' };
+    return { id: 'starter', label: 'Starter', reason: 'Suitable for small teams getting started' };
   })();
 
   return (
@@ -218,7 +218,7 @@ export default function PricingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#f0f4ff_0%,_transparent_70%)]" />
         <div className="relative max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-50 border border-primary-200 rounded-full text-xs font-semibold text-primary-700 mb-6">
-            🚀 Save up to 40% with annual billing
+            Save up to 40% with annual billing
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-surface-900 tracking-tight mb-3">
             One platform,<br />three ways to grow
@@ -227,51 +227,40 @@ export default function PricingPage() {
             Start with everything you need. Scale with more power. Upgrade when you outgrow.
           </p>
 
-          {/* Recommendation Quiz */}
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="bg-white border-2 border-primary-100 rounded-2xl shadow-lg shadow-primary-100/30 overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 flex items-center gap-3">
-                <span className="text-xl">🧭</span>
-                <div className="text-left">
-                  <p className="text-white font-semibold text-sm">Not sure which plan?</p>
-                  <p className="text-primary-200 text-xs">Answer a few quick questions — we'll recommend the right fit.</p>
-                </div>
+          {/* Plan Advisor */}
+          <div className="mt-8 max-w-xl mx-auto">
+            <div className="border border-surface-200 rounded-lg bg-white">
+              <div className="border-b border-surface-100 px-5 py-3">
+                <p className="text-xs font-semibold text-surface-800">Plan advisor</p>
+                <p className="text-[11px] text-surface-400 mt-0.5">Select your team profile for a recommendation</p>
               </div>
 
-              <div className="p-6 space-y-5">
-                {/* Q1: Team size */}
-                <div>
-                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">👥 How big is your team?</p>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
-                      className="w-10 h-10 rounded-xl border border-surface-200 flex items-center justify-center text-surface-600 hover:bg-surface-100 hover:border-surface-300 transition-all text-lg font-bold cursor-pointer">−</button>
-                    <div className="flex-1 relative">
-                      <input type="range" min="1" max="200" value={teamSize}
-                        onChange={e => setTeamSize(parseInt(e.target.value))}
-                        className="w-full h-2 bg-surface-200 rounded-full appearance-none cursor-pointer accent-primary-600" />
-                      <div className="flex justify-between text-[10px] text-surface-400 mt-1 px-0.5">
-                        <span>1</span><span>50</span><span>100</span><span>200</span>
-                      </div>
+              <div className="px-5 py-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-surface-500 w-24 shrink-0">Team size</label>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min="1" max="200" value={teamSize}
+                      onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
+                      className="w-16 text-center text-xs font-medium text-surface-800 border border-surface-200 rounded py-1.5 outline-none focus:border-surface-400 bg-surface-50" />
+                    <div className="flex gap-1">
+                      <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                        className="w-6 h-6 border border-surface-200 rounded flex items-center justify-center text-surface-400 hover:bg-surface-100 transition-all text-xs cursor-pointer">−</button>
+                      <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
+                        className="w-6 h-6 border border-surface-200 rounded flex items-center justify-center text-surface-400 hover:bg-surface-100 transition-all text-xs cursor-pointer">+</button>
                     </div>
-                    <div className="w-16 h-10 rounded-xl bg-primary-50 border border-primary-200 flex items-center justify-center text-sm font-bold text-primary-700">
-                      {teamSize}
-                    </div>
-                    <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
-                      className="w-10 h-10 rounded-xl border border-surface-200 flex items-center justify-center text-surface-600 hover:bg-surface-100 hover:border-surface-300 transition-all text-lg font-bold cursor-pointer">+</button>
+                    <span className="text-[11px] text-surface-400">members</span>
                   </div>
                 </div>
 
-                {/* Q2: Project types */}
                 <div>
-                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">📋 What do you build? <span className="text-surface-300 font-normal normal-case">(tap all that apply)</span></p>
-                  <div className="flex flex-wrap gap-2">
+                  <label className="text-xs text-surface-500 block mb-2">Project type</label>
+                  <div className="flex flex-wrap gap-1.5">
                     {PROJECT_TYPES.map(pt => (
                       <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 text-[11px] font-medium border rounded transition-all cursor-pointer ${
                           projectTypes.includes(pt.id)
-                            ? 'bg-primary-50 border-primary-300 text-primary-700 shadow-sm'
-                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-300 hover:text-surface-700'
+                            ? 'bg-surface-800 border-surface-800 text-white'
+                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-400 hover:text-surface-700'
                         }`}>
                         {pt.label}
                       </button>
@@ -279,16 +268,15 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Q3: Key needs */}
                 <div>
-                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">🎯 What matters most to you? <span className="text-surface-300 font-normal normal-case">(tap all that apply)</span></p>
-                  <div className="flex flex-wrap gap-2">
+                  <label className="text-xs text-surface-500 block mb-2">Key requirements</label>
+                  <div className="flex flex-wrap gap-1.5">
                     {NEEDS.map(nd => (
                       <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 text-[11px] font-medium border rounded transition-all cursor-pointer ${
                           keyNeeds.includes(nd.id)
-                            ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm'
-                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-300 hover:text-surface-700'
+                            ? 'bg-surface-800 border-surface-800 text-white'
+                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-400 hover:text-surface-700'
                         }`}>
                         {nd.label}
                       </button>
@@ -296,33 +284,29 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Result */}
-                <div className={`rounded-xl border-2 p-4 flex items-center gap-4 transition-all ${
-                  recommended.id === 'starter'
-                    ? 'border-surface-200 bg-surface-50'
-                    : recommended.id === 'team'
-                    ? 'border-primary-200 bg-primary-50'
-                    : 'border-amber-200 bg-amber-50'
+                <div className={`border-l-2 pl-3 py-2 ${
+                  recommended.id === 'starter' ? 'border-surface-300 bg-surface-50' :
+                  recommended.id === 'team' ? 'border-primary-500 bg-primary-50' :
+                  'border-amber-500 bg-amber-50'
                 }`}>
-                  <span className="text-3xl">{recommended.emoji}</span>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-bold text-surface-900">
-                      We recommend <span className={`${
-                        recommended.id === 'team' ? 'text-primary-600' : recommended.id === 'enterprise' ? 'text-amber-600' : 'text-surface-600'
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-surface-800">
+                      Recommended: <span className={`${
+                        recommended.id === 'team' ? 'text-primary-600' :
+                        recommended.id === 'enterprise' ? 'text-amber-600' :
+                        'text-surface-500'
                       }`}>{recommended.label}</span>
                     </p>
-                    <p className="text-xs text-surface-500 mt-0.5">{recommended.reason}</p>
+                    <a href={`#plan-${recommended.id}`}
+                      className={`text-[11px] font-medium px-3 py-1 rounded transition-all ${
+                        recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700' :
+                        recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600' :
+                        'bg-surface-700 text-white hover:bg-surface-800'
+                      }`}>
+                      View plan
+                    </a>
                   </div>
-                  <a href={`#plan-${recommended.id}`}
-                    className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition-all ${
-                      recommended.id === 'team'
-                        ? 'bg-primary-600 text-white hover:bg-primary-700'
-                        : recommended.id === 'enterprise'
-                        ? 'bg-amber-500 text-white hover:bg-amber-600'
-                        : 'bg-surface-800 text-white hover:bg-surface-900'
-                    }`}>
-                    View {recommended.label} →
-                  </a>
+                  <p className="text-[11px] text-surface-500 mt-1">{recommended.reason}</p>
                 </div>
               </div>
             </div>
