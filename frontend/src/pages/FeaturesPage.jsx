@@ -45,6 +45,7 @@ const CATEGORIES = [
       { title: 'Type-Specific Transitions', desc: 'Each of the 5 project types has unique auto-transition rules. Software, Design, Business, Content, Research — all different.' },
       { title: 'Manual Gates', desc: 'Launch and Delivered phases require explicit approval by Admin, PM, or Team Lead — full control over releases.' },
       { title: 'Evaluate Phase Button', desc: 'Manually trigger phase evaluation to check if conditions are met for the next phase.' },
+      { title: 'Template Marketplace', desc: 'Pre-built project templates with phases, task skeletons, and role assignments. Save your best projects as reusable templates.' },
     ],
   },
   {
@@ -60,13 +61,24 @@ const CATEGORIES = [
     ],
   },
   {
-    icon: '👥', title: 'Team Management', desc: 'Role-based access control with granular permissions and intelligent team grouping.',
+    icon: '👥', title: 'Team Management', desc: 'Role-based access control with granular permissions, capacity planning, and intelligent team grouping.',
     features: [
       { title: '8 User Roles', desc: 'Admin, PM, Team Lead, Manager, QA Tester, Developer, Intern, Other — each with tailored permissions.' },
       { title: 'Role-Based Access (RBAC)', desc: '27+ granular permissions controlling create/edit/delete for projects, sprints, tasks, test cases, and more.' },
       { title: 'Team Groups', desc: 'Auto-created groups: Development, QA, Design, PM, Business, Admin, Interns — with role color coding.' },
       { title: 'Smart Invite & Suggestions', desc: 'Invite by email with role and group. AI-suggested team compositions based on project type.' },
       { title: 'Member Work Log Viewer', desc: 'Click any team member to see their work logs, project assignments, and role details.' },
+      { title: 'Team Workload Heatmap', desc: '6-week capacity forecast per person. Green = available, amber = nearing limit, red = overbooked. Drag tasks to rebalance instantly.' },
+      { title: 'Portfolio Matrix', desc: 'Visual grid of every project across health × progress dimensions. Spot stalled projects, resource bottlenecks, and delivery risks at a glance.' },
+    ],
+  },
+  {
+    icon: '🧬', title: 'WorkDNA — Company Brain', desc: 'Every project makes your team smarter. WorkDNA captures decisions, surfaces past patterns, and warns before mistakes repeat.',
+    features: [
+      { title: 'Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team.' },
+      { title: 'Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.' },
+      { title: 'Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn.' },
+      { title: 'Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost.' },
     ],
   },
   {
@@ -117,7 +129,7 @@ export default function FeaturesPage() {
           </h1>
           <p className="text-lg md:text-xl text-surface-500 max-w-3xl mx-auto mb-8 leading-relaxed">
             One platform covering the full project lifecycle — project management, sprints, 
-            tasks, testing, analytics, integrations, and automation. No more juggling between tools.
+             tasks, testing, capacity heatmap, portfolio matrix, WorkDNA, analytics, integrations, and automation. No more juggling between tools.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
@@ -131,17 +143,17 @@ export default function FeaturesPage() {
       </section>
 
       {/* STATS */}
-      <section className="py-14 px-5 bg-primary-600">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className="py-20 px-5 bg-surface-50">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             ['5', 'Project Types'],
             ['7', 'Lifecycle Phases'],
             ['27+', 'Granular Permissions'],
             ['180+', 'Total Features'],
           ].map(([val, label], i) => (
-            <div key={i}>
-              <p className="text-3xl font-bold text-white mb-1">{val}</p>
-              <p className="text-sm text-primary-200">{label}</p>
+            <div key={i} className="bg-white rounded-xl border border-surface-200 p-6 text-center hover:shadow-md transition-all">
+              <p className="text-3xl font-bold text-primary-600 mb-1">{val}</p>
+              <p className="text-sm text-surface-500">{label}</p>
             </div>
           ))}
         </div>
