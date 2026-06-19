@@ -3,7 +3,7 @@ const router = express.Router();
 const { auth, authorize } = require('../middleware/auth');
 const c = require('../controllers/templateController');
 
-router.get('/', c.list);
+router.get('/', auth, c.list);
 router.get('/my', auth, c.myTemplates);
 router.get('/:id', c.getById);
 router.post('/', auth, c.create);
