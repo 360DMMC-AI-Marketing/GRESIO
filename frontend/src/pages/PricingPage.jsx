@@ -228,91 +228,114 @@ export default function PricingPage() {
             Start with everything you need. Scale with more power. Upgrade when you outgrow.
           </p>
 
-          {/* Plan Guide — collapsible */}
-          <div className="mt-8 max-w-lg mx-auto">
+          {/* Plan Match — floating guide */}
+          <div className="mt-7 max-w-lg mx-auto">
             <button onClick={() => setGuideOpen(!guideOpen)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border border-surface-200 hover:border-surface-300 rounded-lg transition-all text-left cursor-pointer">
-              <div>
-                <p className="text-sm font-semibold text-surface-800">Need help choosing a plan?</p>
-                <p className="text-[11px] text-surface-400 mt-0.5">Answer a few questions and we will recommend the right fit</p>
-              </div>
-              <svg className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${guideOpen ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-primary-200 hover:border-primary-400 rounded-full text-sm font-medium text-primary-700 hover:text-primary-800 shadow-sm hover:shadow-md transition-all cursor-pointer">
+              <span className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-600 group-hover:bg-primary-200 transition-colors">?</span>
+              <span>Match me to a plan</span>
+              <svg className={`w-3.5 h-3.5 text-primary-400 transition-transform duration-200 ${guideOpen ? 'rotate-180' : ''}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {guideOpen && (
-              <div className="mt-2 border border-surface-200 rounded-lg bg-white p-5 space-y-4">
-                <div>
-                  <p className="text-xs text-surface-500 mb-2">How many people are on your team?</p>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
-                      className="w-7 h-7 bg-surface-100 hover:bg-surface-200 rounded flex items-center justify-center text-surface-500 transition-all text-xs cursor-pointer border border-surface-200">−</button>
-                    <input type="number" min="1" max="200" value={teamSize}
-                      onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
-                      className="w-14 text-center text-xs font-medium text-surface-800 border border-surface-200 rounded py-1 outline-none bg-white" />
-                    <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
-                      className="w-7 h-7 bg-surface-100 hover:bg-surface-200 rounded flex items-center justify-center text-surface-500 transition-all text-xs cursor-pointer border border-surface-200">+</button>
-                    <span className="text-[11px] text-surface-400">members</span>
-                  </div>
+              <div className="mt-3 text-left bg-white rounded-2xl border border-surface-200 shadow-xl shadow-primary-100/20 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                  <p className="text-sm font-semibold text-white">Find your plan</p>
+                  <p className="text-[12px] text-primary-200 mt-0.5">Tell us about your team and we'll match you</p>
                 </div>
 
-                <div>
-                  <p className="text-xs text-surface-500 mb-2">What type of work does your team do?</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {PROJECT_TYPES.map(pt => (
-                      <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
-                        className={`px-2.5 py-1 text-[11px] font-medium rounded transition-all cursor-pointer ${
-                          projectTypes.includes(pt.id)
-                            ? 'bg-surface-800 text-white'
-                            : 'bg-surface-100 text-surface-500 hover:bg-surface-200'
+                <div className="p-5 space-y-5">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">1</span>
+                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Team size</span>
+                    </div>
+                    <div className="flex items-center gap-3 pl-7">
+                      <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                        className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">−</button>
+                      <div className="relative">
+                        <input type="number" min="1" max="200" value={teamSize}
+                          onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
+                          className="w-16 text-center text-sm font-bold text-surface-800 border-2 border-surface-200 focus:border-primary-400 rounded-xl py-2 outline-none bg-surface-50/50" />
+                      </div>
+                      <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
+                        className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">+</button>
+                      <span className="text-xs text-surface-400 ml-1">members</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-surface-100 pt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">2</span>
+                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Project type</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pl-7">
+                      {PROJECT_TYPES.map(pt => (
+                        <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
+                          className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
+                            projectTypes.includes(pt.id)
+                              ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
+                              : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
+                          }`}>
+                          {pt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-surface-100 pt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">3</span>
+                      <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Key features</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pl-7">
+                      {NEEDS.map(nd => (
+                        <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
+                          className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
+                            keyNeeds.includes(nd.id)
+                              ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
+                              : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
+                          }`}>
+                          {nd.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`border-t pt-4 ${
+                    recommended.id === 'starter' ? 'border-surface-100' :
+                    recommended.id === 'team' ? 'border-primary-200' :
+                    'border-amber-200'
+                  }`}>
+                    <div className="flex items-center justify-between pl-7">
+                      <div>
+                        <span className="text-[10px] text-surface-400 uppercase tracking-wider font-semibold">Your match</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={`text-lg font-bold ${
+                            recommended.id === 'team' ? 'text-primary-600' :
+                            recommended.id === 'enterprise' ? 'text-amber-600' :
+                            'text-surface-600'
+                          }`}>{recommended.label}</span>
+                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                            recommended.id === 'team' ? 'bg-primary-50 text-primary-700' :
+                            recommended.id === 'enterprise' ? 'bg-amber-50 text-amber-700' :
+                            'bg-surface-100 text-surface-600'
+                          }`}>{recommended.reason}</span>
+                        </div>
+                      </div>
+                      <a href={`#plan-${recommended.id}`}
+                        className={`text-xs font-semibold px-5 py-2 rounded-xl transition-all ${
+                          recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' :
+                          recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' :
+                          'bg-surface-800 text-white hover:bg-surface-900 shadow-sm'
                         }`}>
-                        {pt.label}
-                      </button>
-                    ))}
+                        View {recommended.label}
+                      </a>
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <p className="text-xs text-surface-500 mb-2">Which features are important to you?</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {NEEDS.map(nd => (
-                      <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
-                        className={`px-2.5 py-1 text-[11px] font-medium rounded transition-all cursor-pointer ${
-                          keyNeeds.includes(nd.id)
-                            ? 'bg-surface-800 text-white'
-                            : 'bg-surface-100 text-surface-500 hover:bg-surface-200'
-                        }`}>
-                        {nd.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`border-l-2 pl-3 py-2 ${
-                  recommended.id === 'starter' ? 'border-surface-300 bg-surface-50' :
-                  recommended.id === 'team' ? 'border-primary-500 bg-primary-50' :
-                  'border-amber-500 bg-amber-50'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-surface-800">
-                      Recommended: <span className={`${
-                        recommended.id === 'team' ? 'text-primary-600' :
-                        recommended.id === 'enterprise' ? 'text-amber-600' :
-                        'text-surface-500'
-                      }`}>{recommended.label}</span>
-                    </p>
-                    <a href={`#plan-${recommended.id}`}
-                      className={`text-[11px] font-medium px-3 py-1 rounded transition-all ${
-                        recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700' :
-                        recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600' :
-                        'bg-surface-700 text-white hover:bg-surface-800'
-                      }`}>
-                      View plan
-                    </a>
-                  </div>
-                  <p className="text-[11px] text-surface-500 mt-1">{recommended.reason}</p>
                 </div>
               </div>
             )}
