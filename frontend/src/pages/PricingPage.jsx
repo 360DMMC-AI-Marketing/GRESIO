@@ -175,12 +175,39 @@ function Capability({ cap, planId }) {
   return <span className={`font-semibold ${isStarter ? 'text-surface-900' : 'text-white'}`}>{cap.value}</span>;
 }
 
+const PROJECT_TYPES = [
+  { id: 'software', label: '💻 Software', desc: 'Dev, code, deploy' },
+  { id: 'design', label: '🎨 Design', desc: 'UX, brand, creative' },
+  { id: 'business', label: '📈 Business', desc: 'Ops, strategy' },
+  { id: 'content', label: '✍️ Content', desc: 'Writing, media' },
+  { id: 'research', label: '🔬 Research', desc: 'Analysis, data' },
+];
+
+const NEEDS = [
+  { id: 'tasks', label: '📋 Task & sprint mgmt', plan: 'starter' },
+  { id: 'testing', label: '🧪 QA testing', plan: 'starter' },
+  { id: 'reports', label: '📑 PDF reports', plan: 'team' },
+  { id: 'dna', label: '🧬 WorkDNA archive', plan: 'team' },
+  { id: 'capacity', label: '📊 Capacity planning', plan: 'team' },
+  { id: 'sso', label: '🔐 SSO & enterprise', plan: 'enterprise' },
+];
+
 export default function PricingPage() {
   const [billing, setBilling] = useState('semiannual');
   const [activeGroup, setActiveGroup] = useState(0);
-  const [teamSize, setTeamSize] = useState('');
+  const [teamSize, setTeamSize] = useState(5);
+  const [projectTypes, setProjectTypes] = useState([]);
+  const [keyNeeds, setKeyNeeds] = useState([]);
 
-  const recommended = !teamSize ? null : parseInt(teamSize) <= 10 ? 'starter' : parseInt(teamSize) <= 50 ? 'team' : 'enterprise';
+  const toggleArray = (arr, item) => arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
+
+  const recommended = (() => {
+    const hasEnterpriseNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'enterprise');
+    const hasTeamNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'team');
+    if (teamSize > 50 || hasEnterpriseNeed) return { id: 'enterprise', label: 'Enterprise', emoji: '🏢', reason: hasEnterpriseNeed ? 'Your security & compliance needs' : 'Your team size requires unlimited seats' };
+    if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return { id: 'team', label: 'Team', emoji: '🚀', reason: hasTeamNeed ? `You need ${keyNeeds.filter(n => NEEDS.find(nd => nd.id === n)?.plan === 'team').map(n => NEEDS.find(nd => nd.id === n)?.label.split(' ').slice(1).join(' ')).join(', ')}` : 'Your team is ready to scale' };
+    return { id: 'starter', label: 'Starter', emoji: '🌱', reason: 'Perfect for small teams getting started' };
+  })();
 
   return (
     <div className="min-h-screen bg-white">
@@ -200,19 +227,104 @@ export default function PricingPage() {
             Start with everything you need. Scale with more power. Upgrade when you outgrow.
           </p>
 
-          {/* Team Size Recommender */}
-          <div className="mt-8 max-w-md mx-auto">
-            <div className="bg-white border border-surface-200 rounded-xl p-3 flex items-center gap-3 shadow-sm">
-              <span className="text-sm text-surface-400 shrink-0">👥 My team has</span>
-              <input type="number" min="1" max="500" placeholder="0" value={teamSize}
-                onChange={e => setTeamSize(e.target.value)}
-                className="w-20 text-center text-lg font-bold text-surface-900 border border-surface-200 rounded-lg py-1.5 outline-none focus:border-primary-400 bg-surface-50" />
-              <span className="text-sm text-surface-400 shrink-0">people</span>
-              {recommended && (
-                <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg shrink-0">
-                  Try <span className="capitalize">{recommended}</span>
-                </span>
-              )}
+          {/* Recommendation Quiz */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div className="bg-white border-2 border-primary-100 rounded-2xl shadow-lg shadow-primary-100/30 overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 flex items-center gap-3">
+                <span className="text-xl">🧭</span>
+                <div className="text-left">
+                  <p className="text-white font-semibold text-sm">Not sure which plan?</p>
+                  <p className="text-primary-200 text-xs">Answer a few quick questions — we'll recommend the right fit.</p>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* Q1: Team size */}
+                <div>
+                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">👥 How big is your team?</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                      className="w-10 h-10 rounded-xl border border-surface-200 flex items-center justify-center text-surface-600 hover:bg-surface-100 hover:border-surface-300 transition-all text-lg font-bold cursor-pointer">−</button>
+                    <div className="flex-1 relative">
+                      <input type="range" min="1" max="200" value={teamSize}
+                        onChange={e => setTeamSize(parseInt(e.target.value))}
+                        className="w-full h-2 bg-surface-200 rounded-full appearance-none cursor-pointer accent-primary-600" />
+                      <div className="flex justify-between text-[10px] text-surface-400 mt-1 px-0.5">
+                        <span>1</span><span>50</span><span>100</span><span>200</span>
+                      </div>
+                    </div>
+                    <div className="w-16 h-10 rounded-xl bg-primary-50 border border-primary-200 flex items-center justify-center text-sm font-bold text-primary-700">
+                      {teamSize}
+                    </div>
+                    <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
+                      className="w-10 h-10 rounded-xl border border-surface-200 flex items-center justify-center text-surface-600 hover:bg-surface-100 hover:border-surface-300 transition-all text-lg font-bold cursor-pointer">+</button>
+                  </div>
+                </div>
+
+                {/* Q2: Project types */}
+                <div>
+                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">📋 What do you build? <span className="text-surface-300 font-normal normal-case">(tap all that apply)</span></p>
+                  <div className="flex flex-wrap gap-2">
+                    {PROJECT_TYPES.map(pt => (
+                      <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                          projectTypes.includes(pt.id)
+                            ? 'bg-primary-50 border-primary-300 text-primary-700 shadow-sm'
+                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-300 hover:text-surface-700'
+                        }`}>
+                        {pt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Q3: Key needs */}
+                <div>
+                  <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">🎯 What matters most to you? <span className="text-surface-300 font-normal normal-case">(tap all that apply)</span></p>
+                  <div className="flex flex-wrap gap-2">
+                    {NEEDS.map(nd => (
+                      <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                          keyNeeds.includes(nd.id)
+                            ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm'
+                            : 'bg-white border-surface-200 text-surface-500 hover:border-surface-300 hover:text-surface-700'
+                        }`}>
+                        {nd.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Result */}
+                <div className={`rounded-xl border-2 p-4 flex items-center gap-4 transition-all ${
+                  recommended.id === 'starter'
+                    ? 'border-surface-200 bg-surface-50'
+                    : recommended.id === 'team'
+                    ? 'border-primary-200 bg-primary-50'
+                    : 'border-amber-200 bg-amber-50'
+                }`}>
+                  <span className="text-3xl">{recommended.emoji}</span>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-bold text-surface-900">
+                      We recommend <span className={`${
+                        recommended.id === 'team' ? 'text-primary-600' : recommended.id === 'enterprise' ? 'text-amber-600' : 'text-surface-600'
+                      }`}>{recommended.label}</span>
+                    </p>
+                    <p className="text-xs text-surface-500 mt-0.5">{recommended.reason}</p>
+                  </div>
+                  <a href={`#plan-${recommended.id}`}
+                    className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition-all ${
+                      recommended.id === 'team'
+                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        : recommended.id === 'enterprise'
+                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                        : 'bg-surface-800 text-white hover:bg-surface-900'
+                    }`}>
+                    View {recommended.label} →
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -256,7 +368,7 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <div className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-all duration-300 ${
+                <div id={`plan-${plan.id}`} className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-all duration-300 ${
                   plan.popular
                     ? 'bg-primary-600 border-primary-600 shadow-xl shadow-primary-200 scale-[1.02] z-20'
                     : 'bg-white border-surface-200 hover:border-surface-300 shadow-sm hover:shadow-md'
