@@ -1,9 +1,10 @@
 const { Router } = require('express');
-const { getUsers, getUserById, createUser, updateUser, deleteUser, getUserActivity, getUserProfile } = require('../controllers/userController');
+const { getUsers, getUserById, createUser, updateUser, deleteUser, getUserActivity, getUserProfile, getCapacity } = require('../controllers/userController');
 const { auth, authorize } = require('../middleware/auth');
 const router = Router();
 router.use(auth);
 router.get('/', getUsers);
+router.get('/capacity', getCapacity);
 router.get('/:id/activity', getUserActivity);
 router.get('/:id/profile', getUserProfile);
 router.get('/:id', getUserById);

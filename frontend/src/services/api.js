@@ -58,6 +58,7 @@ export const users = {
   getAll: (params) => api.get('/users', { params }),
   getById: (id) => api.get(`/users/${id}`),
   getActivity: (id, params) => api.get(`/users/${id}/activity`, { params }),
+  getCapacity: () => api.get('/users/capacity'),
   create: (data) => api.post('/users', data),
   update: (id, data) => api.patch(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
