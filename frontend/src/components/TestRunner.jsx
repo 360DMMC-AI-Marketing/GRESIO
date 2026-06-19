@@ -117,27 +117,28 @@ export default function TestRunner({ testCase, onClose, onComplete }) {
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000}} onClick={onClose}>
-      <div className="card" style={{maxWidth:560,width:'90%',maxHeight:'90vh',display:'flex',flexDirection:'column'}} onClick={e => e.stopPropagation()}>
-        <div style={{padding:'14px 16px',borderBottom:'0.5px solid #e5e7eb'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#111827'}}>▶ Test Runner</div>
-            <span onClick={onClose} style={{cursor:'pointer',color:'#9ca3af',fontSize:14}}>✕</span>
+    <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-[10000]" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-[560px] w-[90%] max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 pt-6 pb-3 border-b border-surface-100">
+          <div>
+            <div className="text-sm font-bold text-surface-900">Test Runner</div>
+            <div className="text-xs font-semibold text-surface-700 mt-0.5">{testCase.testCaseId} — {testCase.title}</div>
+            {testCase.precondition && <div className="text-[10px] text-surface-400 mt-1">Precondition: {testCase.precondition}</div>}
           </div>
-          <div style={{fontSize:12,fontWeight:600,color:'#111827'}}>{testCase.testCaseId} — {testCase.title}</div>
-          {testCase.precondition && <div style={{fontSize:10,color:'#6b7280',marginTop:4}}>Precondition: {testCase.precondition}</div>}
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-100 text-surface-400 hover:text-surface-600 hover:bg-surface-200 transition-colors text-xs cursor-pointer">
+            ✕
+          </button>
         </div>
 
-        <div style={{padding:'14px 16px',overflowY:'auto',flex:1}}>
-          <div style={{display:'flex',gap:4,marginBottom:14}}>
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          <div className="flex gap-1 mb-4">
             {steps.map((_, i) => (
-              <div key={i} style={{
-                flex:1,height:4,borderRadius:4,
-                background: stepResults[i]?.status === 'fail' ? '#ef4444'
-                  : stepResults[i] ? '#22c55e'
-                  : i === currentStep ? '#2347e8'
-                  : '#e5e7eb'
-              }} />
+              <div key={i} className={`flex-1 h-1 rounded-full ${
+                stepResults[i]?.status === 'fail' ? 'bg-red-500'
+                  : stepResults[i] ? 'bg-green-500'
+                  : i === currentStep ? 'bg-primary-600'
+                  : 'bg-surface-200'
+              }`} />
             ))}
           </div>
 
@@ -278,55 +279,56 @@ export default function TestRunner({ testCase, onClose, onComplete }) {
 
           {/* Bug report popup */}
           {showBugForm && (
-            <div style={{
-              position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001,
-              animation:'fadeIn 300ms',
-            }} onClick={() => setShowBugForm(false)}>
-              <div style={{
-                width:520,background:'white',borderRadius:12,boxShadow:'0 20px 60px rgba(0,0,0,0.2)',overflow:'hidden',
-                animation:'scaleIn 300ms',
-              }} onClick={e => e.stopPropagation()}>
-                <div style={{background:'#1E3A5F',padding:'14px 24px'}}>
-                  <div style={{fontSize:14,fontWeight:700,color:'white'}}>Report Bug for {testCase.title} — {testCase.testCaseId}</div>
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[10001]"
+              onClick={() => setShowBugForm(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-[520px] max-w-full mx-4 overflow-hidden"
+                onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                  <h3 className="text-sm font-bold text-surface-900">Report Bug — {testCase.testCaseId}</h3>
+                  <button onClick={() => setShowBugForm(false)} className="text-surface-400 hover:text-surface-600 transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
                 </div>
-                <div style={{padding:24}}>
-                  <div style={{marginBottom:12,fontSize:10,color:'#6b7280',fontStyle:'italic'}}>
-                    A test step failed. Please provide details below to create a bug report.
-                  </div>
-                  <div style={{marginBottom:12}}>
-                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Bug Description <span style={{color:'#ef4444'}}>*</span></label>
+                <div className="px-6 pb-2">
+                  <p className="text-xs text-surface-400 italic">A test step failed. Provide details to create a bug report.</p>
+                </div>
+                <div className="px-6 pb-6 space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-surface-700 block mb-1">Bug Description <span className="text-red-500">*</span></label>
                     <textarea value={bugReport.bugDescription}
                       onChange={e => setBugReport({...bugReport, bugDescription: e.target.value})}
-                      style={{width:'100%',padding:'8px 10px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'white',outline:'none',minHeight:60,fontFamily:'inherit'}}
+                      className="w-full px-3 py-2 border border-surface-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all min-h-[60px]"
                       placeholder="Describe what went wrong..." required />
                   </div>
-                  <div style={{marginBottom:12}}>
-                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Severity <span style={{color:'#ef4444'}}>*</span></label>
+                  <div>
+                    <label className="text-xs font-semibold text-surface-700 block mb-1">Severity <span className="text-red-500">*</span></label>
                     <Dropdown value={bugReport.severity}
                       onChange={v => setBugReport({...bugReport, severity: v})}
                       options={[{value:'critical', label:'Critical'}, {value:'high', label:'High'}, {value:'medium', label:'Medium'}, {value:'low', label:'Low'}]} />
                   </div>
-                  <div style={{marginBottom:12}}>
-                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Screenshot</label>
+                  <div>
+                    <label className="text-xs font-semibold text-surface-700 block mb-1">Screenshot</label>
                     <input ref={screenshotRef} type="file" accept="image/*,.pdf"
                       onChange={e => { const f = e.target.files[0]; setScreenshotFile(f); if (f) { setBugReport({...bugReport, screenshot: URL.createObjectURL(f)}); } }}
-                      style={{width:'100%',padding:'5px 10px',fontSize:11,border:'0.5px solid #e5e7eb',borderRadius:6,background:'white',outline:'none'}} />
+                      className="w-full text-xs text-surface-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-colors" />
                     {screenshotFile && (
-                      <img src={bugReport.screenshot} alt="preview" style={{marginTop:6,maxHeight:80,borderRadius:4,border:'0.5px solid #e5e7eb'}} />
+                      <img src={bugReport.screenshot} alt="preview" className="mt-2 max-h-20 rounded-lg border border-surface-200" />
                     )}
                   </div>
-                  <div style={{marginBottom:16}}>
-                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Additional Notes</label>
+                  <div>
+                    <label className="text-xs font-semibold text-surface-700 block mb-1">Additional Notes</label>
                     <textarea value={bugReport.additionalNotes}
                       onChange={e => setBugReport({...bugReport, additionalNotes: e.target.value})}
-                      style={{width:'100%',padding:'8px 10px',border:'0.5px solid #e5e7eb',borderRadius:6,fontSize:11,background:'white',outline:'none',minHeight:40,fontFamily:'inherit'}}
+                      className="w-full px-3 py-2 border border-surface-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all min-h-[40px]"
                       placeholder="Optional notes..." />
                   </div>
-                  <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                    <button className="btn btn-gray" onClick={() => { setShowBugForm(false); setOverallResult(null); }}>
+                  <div className="flex items-center gap-2 justify-end pt-2 border-t border-surface-100">
+                    <button className="px-4 py-2 text-xs font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 transition-colors" onClick={() => { setShowBugForm(false); setOverallResult(null); }}>
                       Skip & Close
                     </button>
-                    <button className="btn btn-outline" onClick={async () => {
+                    <button className="px-4 py-2 text-xs font-medium text-surface-600 border border-surface-200 rounded-lg hover:bg-surface-50 transition-colors" onClick={async () => {
                       setShowBugForm(false);
                       setRunning(true);
                       try {
@@ -337,11 +339,11 @@ export default function TestRunner({ testCase, onClose, onComplete }) {
                       } catch(e) { toast.error('Retest failed'); }
                       setRunning(false);
                     }}>
-                      🔄 Re-run Test
+                      Re-run Test
                     </button>
-                    <button className="btn btn-blue" disabled={!bugReport.bugDescription.trim() || running}
+                    <button className="px-4 py-2 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50" disabled={!bugReport.bugDescription.trim() || running}
                       onClick={() => doSubmit({ ...bugReport, actualResult: failureReason })}>
-                      {running ? 'Submitting...' : '🐛 Submit Bug Report'}
+                      {running ? 'Submitting...' : 'Submit Bug Report'}
                     </button>
                   </div>
                 </div>

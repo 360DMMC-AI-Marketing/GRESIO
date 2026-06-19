@@ -44,73 +44,65 @@ export default function CreateChainModal({ projects, initial, onSave, onClose })
   };
 
   return (
-    <div style={{
-      position:'fixed',inset:0,background:'rgba(0,0,0,0.3)',zIndex:1000,
-      display:'flex',alignItems:'center',justifyContent:'center',padding:20,
-    }} onClick={onClose}>
-      <div style={{
-        background:'white',borderRadius:12,padding:20,maxWidth:520,width:'100%',
-        boxShadow:'0 10px 40px rgba(0,0,0,0.15)',maxHeight:'90vh',overflow:'auto',
-      }} onClick={e => e.stopPropagation()}>
-        <div style={{fontSize:14,fontWeight:700,color:'#111827',marginBottom:4}}>
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[1000] p-5"
+      onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-[520px] w-full max-h-[90vh] overflow-y-auto p-6"
+        onClick={e => e.stopPropagation()}>
+        <h3 className="text-sm font-bold text-surface-900 mb-1">
           {initial ? 'Edit Chain' : 'New Chain'}
-        </div>
-        <div style={{fontSize:10,color:'#6b7280',marginBottom:14}}>
+        </h3>
+        <p className="text-[10px] text-surface-400 mb-4">
           {initial ? 'Update the chain name and project order.' : 'Create a project pipeline chain.'}
-        </div>
+        </p>
 
-        <div style={{marginBottom:12}}>
-          <label style={{display:'block',fontSize:10,fontWeight:600,color:'#374151',marginBottom:4}}>Chain name *</label>
+        <div className="mb-3">
+          <label className="block text-[10px] font-semibold text-surface-700 mb-1">Chain name *</label>
           <input
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Winter Campaign Flow"
-            style={{width:'100%',padding:'7px 10px',fontSize:11,border:'0.5px solid #d1d5db',borderRadius:6,outline:'none',boxSizing:'border-box'}}
+            className="w-full px-2.5 py-1.5 text-[11px] border border-surface-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all box-border"
             autoFocus
           />
         </div>
 
-        <div style={{marginBottom:8}}>
-          <label style={{display:'block',fontSize:10,fontWeight:600,color:'#374151',marginBottom:4}}>Projects (in order)</label>
+        <div className="mb-2">
+          <label className="block text-[10px] font-semibold text-surface-700 mb-1">Projects (in order)</label>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search projects…"
-            style={{width:'100%',padding:'6px 10px',fontSize:10,border:'0.5px solid #d1d5db',borderRadius:6,outline:'none',boxSizing:'border-box',marginBottom:6}}
+            className="w-full px-2 py-1 text-[10px] border border-surface-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all mb-1.5"
           />
-          <div style={{maxHeight:240,overflowY:'auto',border:'0.5px solid #e5e7eb',borderRadius:6}}>
+          <div className="max-h-[240px] overflow-y-auto border border-surface-200 rounded-lg">
             {filtered.length === 0 ? (
-              <div style={{padding:12,textAlign:'center',fontSize:10,color:'#9ca3af'}}>No projects found</div>
+              <div className="p-3 text-center text-[10px] text-surface-400">No projects found</div>
             ) : (
               filtered.map(p => {
                 const checked = selectedIds.includes(p._id);
                 const idx = selectedIds.indexOf(p._id);
                 return (
                   <div key={p._id}
-                    style={{
-                      display:'flex',alignItems:'center',gap:6,padding:'5px 8px',fontSize:10,
-                      background: checked ? '#eff6ff' : 'transparent',
-                      borderBottom:'0.5px solid #f3f4f6',cursor:'pointer',
-                    }}
+                    className={`flex items-center gap-1.5 px-2 py-1 text-[10px] cursor-pointer ${checked ? 'bg-primary-50' : ''} border-b border-surface-100 last:border-b-0 hover:bg-surface-50 transition-colors`}
                     onClick={() => toggleProject(p._id)}
                   >
                     <input type="checkbox" checked={checked} readOnly
-                      style={{accentColor:'#2347e8',margin:0}} />
-                    <span style={{flex:1,color:'#111827',fontWeight:checked?600:400}}>{p.name}</span>
-                    {p.projectType && <span style={{fontSize:8,color:'#9ca3af'}}>{p.projectType}</span>}
+                      className="accent-primary-600 m-0" />
+                    <span className={`flex-1 ${checked ? 'font-semibold text-surface-900' : 'text-surface-700'}`}>{p.name}</span>
+                    {p.projectType && <span className="text-[8px] text-surface-400">{p.projectType}</span>}
                     {checked && (
-                      <span style={{display:'flex',gap:2,marginLeft:'auto'}}>
+                      <span className="flex gap-0.5 ml-auto items-center">
                         <button
                           onClick={(e) => { e.stopPropagation(); moveUp(p._id); }}
                           disabled={idx === 0}
-                          style={{padding:'1px 4px',fontSize:10,background:'#f3f4f6',border:'none',borderRadius:3,cursor:idx===0?'not-allowed':'pointer',color:'#374151',opacity:idx===0?0.4:1}}
+                          className={`px-1 py-0.5 text-[10px] bg-surface-100 border-none rounded cursor-pointer text-surface-700 ${idx === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-200'}`}
                         >↑</button>
                         <button
                           onClick={(e) => { e.stopPropagation(); moveDown(p._id); }}
                           disabled={idx === selectedIds.length - 1}
-                          style={{padding:'1px 4px',fontSize:10,background:'#f3f4f6',border:'none',borderRadius:3,cursor:idx===selectedIds.length-1?'not-allowed':'pointer',color:'#374151',opacity:idx===selectedIds.length-1?0.4:1}}
+                          className={`px-1 py-0.5 text-[10px] bg-surface-100 border-none rounded cursor-pointer text-surface-700 ${idx === selectedIds.length - 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-200'}`}
                         >↓</button>
-                        <span style={{fontSize:9,color:'#2347e8',fontWeight:600,marginLeft:4}}>#{idx + 1}</span>
+                        <span className="text-[9px] text-primary-600 font-semibold ml-1">#{idx + 1}</span>
                       </span>
                     )}
                   </div>
@@ -119,23 +111,24 @@ export default function CreateChainModal({ projects, initial, onSave, onClose })
             )}
           </div>
           {selectedIds.length > 0 && (
-            <div style={{marginTop:6,fontSize:9,color:'#6b7280'}}>
+            <div className="mt-1.5 text-[9px] text-surface-400">
               {selectedIds.length} project{selectedIds.length > 1 ? 's' : ''} selected
             </div>
           )}
         </div>
 
-        <div style={{display:'flex',gap:6,justifyContent:'flex-end',marginTop:14}}>
+        <div className="flex items-center gap-1.5 justify-end mt-4">
           <button onClick={onClose}
-            style={{padding:'6px 14px',background:'#f3f4f6',color:'#374151',borderRadius:6,fontSize:10,border:'none',cursor:'pointer',fontWeight:500}}>
+            className="px-3.5 py-1.5 bg-surface-100 text-surface-700 rounded-lg text-[10px] border-none cursor-pointer font-medium hover:bg-surface-200 transition-colors">
             Cancel
           </button>
           <button onClick={handleSave}
             disabled={!name.trim()}
-            style={{
-              padding:'6px 14px',background: name.trim() ? '#2347e8' : '#d1d5db',
-              color:'white',borderRadius:6,fontSize:10,border:'none',cursor: name.trim() ? 'pointer' : 'not-allowed',fontWeight:600,
-            }}>
+            className={`px-3.5 py-1.5 rounded-lg text-[10px] border-none font-semibold transition-colors ${
+              name.trim()
+                ? 'bg-primary-600 text-white cursor-pointer hover:bg-primary-700'
+                : 'bg-surface-200 text-surface-400 cursor-not-allowed'
+            }`}>
             {initial ? 'Save Changes' : 'Create Chain'}
           </button>
         </div>
