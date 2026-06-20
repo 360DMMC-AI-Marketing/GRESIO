@@ -1,7 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-const WAKE_WORD = 'hey gresio';
 const SILENCE_TIMEOUT = 2000;
+
+const WAKE_PATTERNS = [
+  { re: /\bhey\s*gresio\b/i },
+  { re: /\bhey\s*greesio\b/i },
+  { re: /\bhey\s*greshio\b/i },
+  { re: /\bhey\s*gressio\b/i },
+  { re: /\bhey\s*gremio\b/i },
+  { re: /\bhey\s*grelio\b/i },
+  { re: /\bhey\s*gr[ae]sh?i?o\b/i },
+  { re: /\bgresio\b/i },
+  { re: /\bgreesio\b/i },
+  { re: /\bgreshio\b/i },
+];
 
 export default function useSpeechRecognition() {
   const [isSupported, setIsSupported] = useState(false);
@@ -58,11 +70,15 @@ export default function useSpeechRecognition() {
 
       if (final) {
         if (!wakeRef.current) {
-          const wakeIndex = final.indexOf(WAKE_WORD);
-          if (wakeIndex !== -1) {
+          let wakeMatch = null;
+          for (const p of WAKE_PATTERNS) {
+            const m = final.match(p.re);
+            if (m) { wakeMatch = m; break; }
+          }
+          if (wakeMatch) {
             wakeRef.current = true;
             setWakeWordDetected(true);
-            const afterWake = final.slice(wakeIndex + WAKE_WORD.length).trim();
+            const afterWake = final.slice(wakeMatch.index + wakeMatch[0].length).trim();
             if (afterWake) {
               setCommand(afterWake);
               setTranscript(afterWake);

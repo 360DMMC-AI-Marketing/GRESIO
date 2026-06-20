@@ -77,14 +77,23 @@ export default function VoiceController() {
         sessionStorage.removeItem('voice_pending');
         const { command: pending } = JSON.parse(stored);
         if (pending) {
-          setPhase('executing');
-          const result = executeCommand(pending);
-          if (result.stopListening) {
-            setTimeout(() => deactivate(), 300);
-            return;
-          }
-          showFeedback(result.message, result.success ? 'success' : 'error');
-          setTimeout(() => { if (activatedRef.current) setPhase('listening'); }, 500);
+          activate();
+          const tryExecute = (attempts) => {
+            setPhase('executing');
+            const result = executeCommand(pending);
+            if (!result.success && result.message && result.message.includes('Could not find') && attempts > 0) {
+              setPhase('listening');
+              setTimeout(() => tryExecute(attempts - 1), 400);
+              return;
+            }
+            if (result.stopListening) {
+              setTimeout(() => deactivate(), 300);
+              return;
+            }
+            showFeedback(result.message, result.success ? 'success' : 'error');
+            setTimeout(() => { if (activatedRef.current) setPhase('listening'); }, 600);
+          };
+          tryExecute(8);
         }
       }
     } catch {}

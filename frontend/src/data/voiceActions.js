@@ -1,10 +1,9 @@
 function p(pattern) {
-  const parts = [pattern];
-  // Replace \s* with more flexible patterns for common variations
   let expanded = pattern.source.replace(/\\s\*/g, '\\s*');
-  // Add "a" and "the" variations: "create department" ~ "create a department"
+  // Add "a"/"the" variations: "create department" ~ "create a department"
   expanded = expanded.replace(/create\\s\*/g, 'create\\s*(?:a\\s*|the\\s*)?');
-  expanded = expanded.replace(/new\\s\*/g, '(?:new|create)\\s*');
+  // "new project" ~ "create project" ~ "create a new project"
+  expanded = expanded.replace(/new\\s\*/g, '(?:new|create)\\s*(?:a\\s*|the\\s*)?');
   expanded = expanded.replace(/generate\\s\*/g, 'generate\\s*(?:a\\s*)?');
   return new RegExp(expanded, 'i');
 }
