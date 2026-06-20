@@ -77,20 +77,6 @@ export default function VoiceController() {
     return /^(no|cancel|stop|nope|nevermind|forget\s*it|abort|quit|exit|don't|dont)$/i.test(text.trim());
   }, []);
 
-  useEffect(() => {
-    if (!command) return;
-    if (phase === 'listening') {
-      setPhase('confirming');
-      setPendingAction(command);
-    } else if (phase === 'confirming' && pendingAction) {
-      if (isConfirmation(command)) {
-        handleConfirm();
-      } else if (isRejection(command)) {
-        handleCancel();
-      }
-    }
-  }, [command, phase, pendingAction, isConfirmation, isRejection, handleConfirm, handleCancel]);
-
   const handleConfirm = useCallback(async () => {
     if (!pendingAction) return;
     setPhase('executing');
@@ -115,6 +101,20 @@ export default function VoiceController() {
       if (activatedRef.current) setPhase('listening');
     }, 200);
   }, [showFeedback, reset]);
+
+  useEffect(() => {
+    if (!command) return;
+    if (phase === 'listening') {
+      setPhase('confirming');
+      setPendingAction(command);
+    } else if (phase === 'confirming' && pendingAction) {
+      if (isConfirmation(command)) {
+        handleConfirm();
+      } else if (isRejection(command)) {
+        handleCancel();
+      }
+    }
+  }, [command, phase, pendingAction, isConfirmation, isRejection, handleConfirm, handleCancel]);
 
   useEffect(() => {
     const onKey = (e) => {
