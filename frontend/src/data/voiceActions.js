@@ -41,6 +41,8 @@ const VOICE_ACTIONS = {
     { match: /refresh/i, action: 'refresh', payload: null },
     { match: /scroll\s*down/i, action: 'scroll', payload: 'down' },
     { match: /scroll\s*up/i, action: 'scroll', payload: 'up' },
+    { match: /^gresio$/i, action: 'stop', payload: null },
+    { match: /^(hey\s*)?gresio\s*(stop|close|exit)?$/i, action: 'stop', payload: null },
     { match: /stop\s*listening/i, action: 'stop', payload: null },
     { match: /go\s*to\s*sleep/i, action: 'stop', payload: null },
   ],
