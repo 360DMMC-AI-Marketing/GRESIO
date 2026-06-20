@@ -247,11 +247,11 @@ export default function Users() {
         </div>
         {canManage && (
           <div style={{ display:'flex', gap:6 }}>
-            <button onClick={() => setShowNewDeptForm(!showNewDeptForm)}
+            <button data-voice="create-department" onClick={() => setShowNewDeptForm(!showNewDeptForm)}
               style={{ padding:'7px 16px', background:'#2347e8', color:'white', borderRadius:8, fontSize:11, fontWeight:600, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
               <span style={{ fontSize:14 }}>+</span> Create department
             </button>
-            <button onClick={() => setShowAddForm(!showAddForm)}
+            <button data-voice="invite-member" onClick={() => setShowAddForm(!showAddForm)}
               style={{ padding:'7px 16px', background:'#2347e8', color:'white', borderRadius:8, fontSize:11, fontWeight:600, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
               <span style={{ fontSize:14 }}>+</span> Invite
             </button>
@@ -487,7 +487,7 @@ export default function Users() {
                             </div>
                           </div>
                           {canManage && ms.memberId && (ms.project?._id || ms.project) && (
-                            <button onClick={() => handleRemoveMembership(ms)}
+                            <button data-voice="remove-member" onClick={() => handleRemoveMembership(ms)}
                               style={{ background:'none', border:'none', color:'#fca5a5', fontSize:13, cursor:'pointer', padding:2, lineHeight:1 }}
                               onMouseEnter={e => e.currentTarget.style.color='#ef4444'}
                               onMouseLeave={e => e.currentTarget.style.color='#fca5a5'}
@@ -821,7 +821,7 @@ export default function Users() {
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setConfirmModal({ show:false, message:'', onConfirm:null })}
                 className="text-[11px] font-semibold px-4 py-[7px] rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 transition-colors">Cancel</button>
-              <button type="button" onClick={() => { confirmModal.onConfirm?.(); setConfirmModal({ show:false, message:'', onConfirm:null }); }}
+              <button data-voice="confirm-remove" type="button" onClick={() => { confirmModal.onConfirm?.(); setConfirmModal({ show:false, message:'', onConfirm:null }); }}
                 className="text-[11px] font-semibold px-4 py-[7px] rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">Remove</button>
             </div>
           </div>

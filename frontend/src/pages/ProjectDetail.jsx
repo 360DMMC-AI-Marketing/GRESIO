@@ -674,7 +674,7 @@ export default function ProjectDetail() {
       {/* ===== Tabs ===== */}
       <div className="tabs">
         {TABS.map(t => (
-          <div key={t.key} className={`tab ${activeTab === t.key ? 'active' : ''}`} onClick={() => setActiveTab(t.key)}>
+          <div key={t.key} data-voice={`tab-${t.key}`} className={`tab ${activeTab === t.key ? 'active' : ''}`} onClick={() => setActiveTab(t.key)}>
             {t.label}
           </div>
         ))}
@@ -1005,7 +1005,7 @@ export default function ProjectDetail() {
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
             <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>{projectSprints.length} sprints · {activeSprints} active</div>
             {canManage && (
-              <button className="btn btn-blue" onClick={() => setShowSprintForm(!showSprintForm)}>+ New Sprint</button>
+              <button data-voice="new-sprint" className="btn btn-blue" onClick={() => setShowSprintForm(!showSprintForm)}>+ New Sprint</button>
             )}
           </div>
 
@@ -1216,8 +1216,8 @@ export default function ProjectDetail() {
             </div>
             {canManage && (
               <div style={{ display:'flex', gap:6 }}>
-                <button className="btn btn-blue" onClick={() => setShowNewDeptForm(!showNewDeptForm)}>+ Create department</button>
-                <button className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>
+                <button data-voice="create-department" className="btn btn-blue" onClick={() => setShowNewDeptForm(!showNewDeptForm)}>+ Create department</button>
+                <button data-voice="add-member" className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>
               </div>
             )}
           </div>
@@ -1234,7 +1234,7 @@ export default function ProjectDetail() {
                 ))}
               </div>
               <div style={{ display:'flex', gap:6 }}>
-                <button type="button" onClick={async () => {
+                <button data-voice="dept-create" type="button" onClick={async () => {
                   if (!newDeptName.trim()) { toast.error('Enter a department name'); return; }
                   try {
                     await api.post(`/projects/${id}/team/groups`, { name: newDeptName.trim(), icon: newDeptIcon });
@@ -1322,7 +1322,7 @@ export default function ProjectDetail() {
                             <span style={{fontSize:9,color:isActive?'#16a34a':'#d97706',fontWeight:500}}>{isActive ? 'Active' : 'Pending'}</span>
                           </div>
                           {canManage && (
-                            <span onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0,marginLeft:4}}>✕</span>
+                            <span data-voice="remove-member" onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0,marginLeft:4}}>✕</span>
                           )}
                         </div>
                       );
@@ -1350,7 +1350,7 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                       {canManage && (
-                        <span onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0}}>✕</span>
+                        <span data-voice="remove-member" onClick={e => { e.stopPropagation(); setConfirmState({ title:'Remove member', message:'Remove this member from the project?', onConfirm:() => handleRemoveMember(m._id) }); }} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0}}>✕</span>
                       )}
                     </div>
                   ))}
@@ -1456,7 +1456,7 @@ export default function ProjectDetail() {
               </span>}
             </div>
             {canManage && (
-              <button className="btn btn-blue" onClick={() => { setTcForm({ title:'', description:'', type:'manual', priority:'medium', assignee:'', sprint:'', linkedTask:'' }); setEditingTc(null); setShowTcForm(true); }}>+ New Test Case</button>
+              <button data-voice="new-test-case" className="btn btn-blue" onClick={() => { setTcForm({ title:'', description:'', type:'manual', priority:'medium', assignee:'', sprint:'', linkedTask:'' }); setEditingTc(null); setShowTcForm(true); }}>+ New Test Case</button>
             )}
             {canManage && (
               <button className="btn btn-outline" style={{marginLeft:6}} onClick={async () => {
@@ -2351,7 +2351,7 @@ export default function ProjectDetail() {
                   <div style={{ fontSize:10, color:'#6b7280', marginTop:1 }}>{selectedMember.user?.email || selectedMember.email}</div>
                 </div>
               </div>
-              <button onClick={() => setSelectedMember(null)}
+              <button data-voice="close-panel" onClick={() => setSelectedMember(null)}
                 style={{ background:'#f3f4f6', border:'none', borderRadius:8, width:28, height:28, fontSize:12, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>

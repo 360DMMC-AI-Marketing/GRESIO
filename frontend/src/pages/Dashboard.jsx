@@ -244,7 +244,7 @@ export default function Dashboard() {
           </div>
            <div style={{ position: 'relative' }}>
             {user?.role === 'admin' && (
-            <button onClick={() => setShowCustomize(!showCustomize)}
+            <button data-voice="customize" onClick={() => setShowCustomize(!showCustomize)}
               style={{ background: showCustomize ? '#e0e7ff' : '#f8fafc', border: '0.5px solid #e2e8f0', borderRadius: 20, padding: '5px 14px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 11, fontWeight: 600, color: showCustomize ? '#2347e8' : '#64748b', transition: 'all 0.15s' }}
               title="Customize dashboard"><span style={{fontSize:13}}>✎</span> Customize</button>
             )}
@@ -364,7 +364,7 @@ export default function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '12px' }}>
         {sections.projects && (
         <div className="card">
-          <div className="card-header"><span className="card-title">Projects</span><Link to="/projects" className="card-link">View all →</Link></div>
+          <div className="card-header"><span className="card-title">Projects</span><Link data-voice="view-all-projects" to="/projects" className="card-link">View all →</Link></div>
           {projectList.length === 0 && <p className="text-center text-neutral-400 text-sm py-10">No projects yet</p>}
           {projectList.map(p => {
             const pred = predictions.find(pr => String(pr.projectId) === String(p._id));
@@ -396,7 +396,7 @@ export default function Dashboard() {
         {sections.plan && company && (
           <div className="card">
             <div className="card-header"><span className="card-title">Plan</span>
-              {user?.role === 'admin' && <Link to="/admin" className="card-link">Manage →</Link>}
+              {user?.role === 'admin' && <Link data-voice="manage" to="/admin" className="card-link">Manage →</Link>}
             </div>
             <div style={{ padding: '8px 12px' }}>
               <div className="flex items-center justify-between mb-2">
@@ -439,18 +439,18 @@ export default function Dashboard() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={loadCapacity} disabled={capacityLoading}
+              <button data-voice="refresh-workload" onClick={loadCapacity} disabled={capacityLoading}
                 style={{ padding: '5px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: '0.5px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4, opacity: capacityLoading ? 0.5 : 1 }}>
                 <span style={{ display: 'inline-block', animation: capacityLoading ? 'spin 1s linear infinite' : 'none' }}>⟳</span>
                 {capacityLoading ? 'Refreshing...' : 'Refresh'}
               </button>
               {(capacityData?.sprints?.length > 0) && (
               <div style={{ display: 'flex', gap: 4, background: '#f9fafb', padding: 2, borderRadius: 8, border: '0.5px solid #f3f4f6' }}>
-                <button onClick={() => setViewMode('weeks')}
+                <button data-voice="view-weeks" onClick={() => setViewMode('weeks')}
                   style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'weeks' ? '#fff' : 'transparent', color: viewMode === 'weeks' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'weeks' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                   Weeks
                 </button>
-                <button onClick={() => setViewMode('sprints')}
+                <button data-voice="view-sprints" onClick={() => setViewMode('sprints')}
                   style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'sprints' ? '#fff' : 'transparent', color: viewMode === 'sprints' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'sprints' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                   Sprints
                 </button>
