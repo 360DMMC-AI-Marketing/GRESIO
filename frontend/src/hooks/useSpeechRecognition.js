@@ -33,6 +33,7 @@ export default function useSpeechRecognition() {
   const silenceTimerRef = useRef(null);
   const wakeRef = useRef(false);
   const commandAccumulatorRef = useRef('');
+  const listeningRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -103,18 +104,19 @@ export default function useSpeechRecognition() {
     recognition.onerror = () => {};
 
     recognition.onend = () => {
-      if (isListening) {
+      if (listeningRef.current) {
         try { recognition.start(); } catch {}
       }
     };
 
     recognitionRef.current = recognition;
+    listeningRef.current = true;
     setIsListening(true);
 
     try {
       recognition.start();
     } catch {}
-  }, [isListening, resetSilenceTimer]);
+  }, [resetSilenceTimer]);
 
   const stop = useCallback(() => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -122,6 +124,7 @@ export default function useSpeechRecognition() {
       try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
     }
+    listeningRef.current = false;
     setIsListening(false);
     setWakeWordDetected(false);
     wakeRef.current = false;

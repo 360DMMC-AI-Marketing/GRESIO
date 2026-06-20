@@ -32,6 +32,7 @@ export default function VoiceController() {
   const [aiResponse, setAiResponse] = useState('');
   const activatedRef = useRef(false);
   const feedbackTimerRef = useRef(null);
+  const deactivatedAtRef = useRef(0);
 
   const activate = useCallback(() => {
     start();
@@ -44,6 +45,7 @@ export default function VoiceController() {
     setPhase('idle');
     setPendingAction(null);
     activatedRef.current = false;
+    deactivatedAtRef.current = Date.now();
   }, [stop]);
 
   const showFeedback = useCallback((text, type) => {
@@ -173,6 +175,7 @@ export default function VoiceController() {
 
   useEffect(() => {
     if (wakeWordDetected && !activatedRef.current) {
+      if (Date.now() - deactivatedAtRef.current < 1500) return;
       activate();
       showFeedback('I\'m listening...', 'wake');
       window.dispatchEvent(new CustomEvent('voice-activated'));
