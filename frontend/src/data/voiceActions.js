@@ -16,11 +16,17 @@ const VOICE_ACTIONS = {
     { match: p(/go\s*to\s*setting/i), action: 'navigate', payload: '/settings' },
     { match: p(/go\s*to\s*task/i), action: 'navigate', payload: '/my-tasks' },
     { match: p(/go\s*to\s*analytics/i), action: 'navigate', payload: '/analytics' },
-    { match: p(/show\s*metric/i), action: 'click', payload: 'show-metrics' },
-    { match: p(/show\s*chart/i), action: 'click', payload: 'show-charts' },
+    { match: p(/show\s*metric/i), action: 'click', payload: 'customize' },
+    { match: p(/show\s*chart/i), action: 'click', payload: 'customize' },
     { match: p(/go\s*to\s*calendar/i), action: 'navigate', payload: '/calendar' },
     { match: p(/go\s*to\s*sprint/i), action: 'navigate', payload: '/sprints' },
     { match: p(/go\s*to\s*admin/i), action: 'navigate', payload: '/admin' },
+    { match: p(/customize/i), action: 'click', payload: 'customize' },
+    { match: p(/view\s*all\s*project/i), action: 'click', payload: 'view-all-projects' },
+    { match: /manage/i, action: 'click', payload: 'manage' },
+    { match: /refresh/i, action: 'click', payload: 'refresh-workload' },
+    { match: /show\s*week/i, action: 'click', payload: 'view-weeks' },
+    { match: /show\s*sprint/i, action: 'click', payload: 'view-sprints' },
   ],
 
   users: [
@@ -53,6 +59,7 @@ const VOICE_ACTIONS = {
   projects: [
     { match: p(/create\s*new\s*project/i), action: 'click', payload: 'new-project' },
     { match: p(/new\s*project/i), action: 'click', payload: 'new-project' },
+    { match: p(/submit\s*project/i), action: 'click', payload: 'create-project' },
     { match: p(/generate\s*report/i), action: 'click', payload: 'generate-report' },
     { match: p(/customize\s*report/i), action: 'click', payload: 'customize-report' },
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
@@ -71,7 +78,12 @@ const VOICE_ACTIONS = {
     { match: p(/create\s*task/i), action: 'click', payload: 'create-task-submit' },
     { match: p(/project\s*task/i), action: 'click', payload: 'tab-project-tasks' },
     { match: /separate\s*task/i, action: 'click', payload: 'tab-separate-tasks' },
-    { match: p(/filter\s*(all|todo|in.progress|review|done|delayed)/i), action: 'click', payload: 'filter-$1' },
+    { match: /filter\s*all/i, action: 'click', payload: 'filter-all' },
+    { match: /filter.*todo/i, action: 'click', payload: 'filter-todo' },
+    { match: /filter.*progress/i, action: 'click', payload: 'filter-in_progress' },
+    { match: /filter.*review/i, action: 'click', payload: 'filter-review' },
+    { match: /filter.*done/i, action: 'click', payload: 'filter-done' },
+    { match: /filter.*delay/i, action: 'click', payload: 'filter-delayed' },
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
   ],
 
@@ -84,7 +96,7 @@ const VOICE_ACTIONS = {
 
   analytics: [
     { match: p(/workload\s*overview/i), action: 'click', payload: 'tab-workload' },
-    { match: p(/projects\s*tab/i), action: 'click', payload: 'tab-projects-analytics' },
+    { match: p(/projects\s*tab/i), action: 'click', payload: 'tab-projects' },
     { match: p(/people\s*tab/i), action: 'click', payload: 'tab-people' },
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
   ],
@@ -112,9 +124,9 @@ const VOICE_ACTIONS = {
 
   settings: [
     { match: p(/save\s*setting/i), action: 'click', payload: 'save-settings' },
-    { match: /toggle\s*notification/i, action: 'click', payload: 'toggle-notifications' },
-    { match: p(/toggle\s*alert/i), action: 'click', payload: 'toggle-alerts' },
-    { match: p(/toggle\s*report/i), action: 'click', payload: 'toggle-weekly-report' },
+    { match: /toggle\s*notification/i, action: 'click', payload: 'toggle-emailNotifications' },
+    { match: p(/toggle\s*alert/i), action: 'click', payload: 'toggle-systemAlerts' },
+    { match: p(/toggle\s*report/i), action: 'click', payload: 'toggle-weeklyReport' },
     { match: p(/toggle\s*two.?factor/i), action: 'click', payload: 'toggle-two-factor' },
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
   ],
