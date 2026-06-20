@@ -29,6 +29,7 @@ export default function VoiceController() {
   const [pendingAction, setPendingAction] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackType, setFeedbackType] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
   const activatedRef = useRef(false);
   const feedbackTimerRef = useRef(null);
 
@@ -68,12 +69,27 @@ export default function VoiceController() {
     return () => window.removeEventListener('keydown', downHandler);
   }, [activate, deactivate, isSupported]);
 
+  const isConfirmation = useCallback((text) => {
+    return /^(yes|proceed|confirm|do\s*it|go\s*ahead|yep|yeah|sure|okay?|do\s*that)$/i.test(text.trim());
+  }, []);
+
+  const isRejection = useCallback((text) => {
+    return /^(no|cancel|stop|nope|nevermind|forget\s*it|abort|quit|exit|don't|dont)$/i.test(text.trim());
+  }, []);
+
   useEffect(() => {
-    if (command && phase === 'listening') {
+    if (!command) return;
+    if (phase === 'listening') {
       setPhase('confirming');
       setPendingAction(command);
+    } else if (phase === 'confirming' && pendingAction) {
+      if (isConfirmation(command)) {
+        handleConfirm();
+      } else if (isRejection(command)) {
+        handleCancel();
+      }
     }
-  }, [command, phase]);
+  }, [command, phase, pendingAction, isConfirmation, isRejection, handleConfirm, handleCancel]);
 
   const handleConfirm = useCallback(async () => {
     if (!pendingAction) return;
@@ -117,6 +133,15 @@ export default function VoiceController() {
       showFeedback('I\'m listening...', 'wake');
     }
   }, [wakeWordDetected, activate, showFeedback]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      setAiResponse(e.detail);
+      showFeedback(e.detail, 'ai');
+    };
+    window.addEventListener('voice-ai-response', handler);
+    return () => window.removeEventListener('voice-ai-response', handler);
+  }, [showFeedback]);
 
   if (!isSupported) return null;
 
@@ -213,7 +238,8 @@ export default function VoiceController() {
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111827', lineHeight: 1.4, maxWidth: 160, wordBreak: 'break-word' }}>
                       "{pendingAction}"
                     </div>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+                    <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 2 }}>Say "yes" or click</div>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                       <button onClick={handleConfirm}
                         style={{ padding: '4px 16px', background: '#2347e8', color: 'white', borderRadius: 20, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                         Proceed ✓
@@ -243,10 +269,10 @@ export default function VoiceController() {
         <div style={{
           position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
           zIndex: 99999, padding: '8px 20px', borderRadius: 24, fontSize: 12, fontWeight: 500,
-          background: feedbackType === 'success' ? '#f0fdf4' : feedbackType === 'error' ? '#fef2f2' : '#f9fafb',
-          color: feedbackType === 'success' ? '#16a34a' : feedbackType === 'error' ? '#dc2626' : '#374151',
+          background: feedbackType === 'success' ? '#f0fdf4' : feedbackType === 'error' ? '#fef2f2' : feedbackType === 'ai' ? '#eef2ff' : '#f9fafb',
+          color: feedbackType === 'success' ? '#16a34a' : feedbackType === 'error' ? '#dc2626' : feedbackType === 'ai' ? '#2347e8' : '#374151',
           border: `0.5px solid ${
-            feedbackType === 'success' ? '#bbf7d0' : feedbackType === 'error' ? '#fecaca' : '#e5e7eb'
+            feedbackType === 'success' ? '#bbf7d0' : feedbackType === 'error' ? '#fecaca' : feedbackType === 'ai' ? '#c7d2fe' : '#e5e7eb'
           }`,
           boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
           animation: 'radiance-fade-in 0.2s ease',
