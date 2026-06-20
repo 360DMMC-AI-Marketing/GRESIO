@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import SuperAdminLayout from './components/SuperAdminLayout';
 import AiCommandBar from './components/AiCommandBar';
 import VoiceController from './components/VoiceController';
+import ChatInterface from './components/ChatInterface';
 import MobileNav from './components/MobileNav';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -146,6 +147,7 @@ export default function App() {
         </SuspenseWrapper>
         <AiCommandBar />
         <VoiceController />
+        <ChatInterface />
         <MobileNav />
         <WelcomeWizard />
       </BrowserRouter>

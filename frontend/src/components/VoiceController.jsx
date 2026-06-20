@@ -24,7 +24,7 @@ const STYLES = `
 `;
 
 export default function VoiceController() {
-  const { isSupported, isListening, transcript, interimTranscript, wakeWordDetected, command, start, stop, reset } = useSpeechRecognition();
+  const { isSupported, isListening, transcript, interimTranscript, wakeWordDetected, command, start, stop, reset, clearCommand } = useSpeechRecognition();
   const [phase, setPhase] = useState('idle');
   const [pendingAction, setPendingAction] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
@@ -55,19 +55,6 @@ export default function VoiceController() {
       setFeedbackType('');
     }, 3000);
   }, []);
-
-  useEffect(() => {
-    if (!isSupported) return;
-    const downHandler = (e) => {
-      if (e.altKey && e.key === 'v') {
-        e.preventDefault();
-        if (activatedRef.current) deactivate();
-        else activate();
-      }
-    };
-    window.addEventListener('keydown', downHandler);
-    return () => window.removeEventListener('keydown', downHandler);
-  }, [activate, deactivate, isSupported]);
 
   // Auto-execute pending command after cross-page navigation
   useEffect(() => {
@@ -113,6 +100,11 @@ export default function VoiceController() {
     return rejectWords.test(t) || rejectPhrases.some(p => t.includes(p));
   }, []);
 
+  const isDismissCommand = useCallback((text) => {
+    const t = text.trim().toLowerCase();
+    return /\bthank\s*you\s*gresio\b/i.test(t) || /\bstop\s*listening\b/i.test(t) || /\bgo\s*to\s*sleep\b/i.test(t);
+  }, []);
+
   const handleConfirm = useCallback(async () => {
     if (!pendingAction) return;
     setPhase('executing');
@@ -122,35 +114,51 @@ export default function VoiceController() {
       return;
     }
     showFeedback(result.message, result.success ? 'success' : 'error');
-    reset();
+    clearCommand();
     setPendingAction(null);
     setTimeout(() => {
       if (activatedRef.current) setPhase('listening');
     }, 500);
-  }, [pendingAction, deactivate, showFeedback, reset]);
+  }, [pendingAction, deactivate, showFeedback, clearCommand]);
 
   const handleCancel = useCallback(() => {
     showFeedback('Cancelled', 'cancel');
-    reset();
+    clearCommand();
     setPendingAction(null);
     setTimeout(() => {
       if (activatedRef.current) setPhase('listening');
     }, 200);
-  }, [showFeedback, reset]);
+  }, [showFeedback, clearCommand]);
 
   useEffect(() => {
     if (!command) return;
     if (phase === 'listening') {
+      // Dismiss commands bypass confirmation
+      if (isDismissCommand(command)) {
+        setPhase('executing');
+        const result = executeCommand(command);
+        clearCommand();
+        setTimeout(() => deactivate(), 300);
+        return;
+      }
       setPhase('confirming');
       setPendingAction(command);
     } else if (phase === 'confirming' && pendingAction) {
+      // Also handle dismiss during confirmation
+      if (isDismissCommand(command)) {
+        setPhase('executing');
+        clearCommand();
+        setPendingAction(null);
+        setTimeout(() => deactivate(), 300);
+        return;
+      }
       if (isConfirmation(command)) {
         handleConfirm();
       } else if (isRejection(command)) {
         handleCancel();
       }
     }
-  }, [command, phase, pendingAction, isConfirmation, isRejection, handleConfirm, handleCancel]);
+  }, [command, phase, pendingAction, isConfirmation, isRejection, isDismissCommand, handleConfirm, handleCancel, clearCommand, deactivate]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -167,8 +175,15 @@ export default function VoiceController() {
     if (wakeWordDetected && !activatedRef.current) {
       activate();
       showFeedback('I\'m listening...', 'wake');
+      window.dispatchEvent(new CustomEvent('voice-activated'));
     }
   }, [wakeWordDetected, activate, showFeedback]);
+
+  useEffect(() => {
+    const handler = () => { if (activatedRef.current) deactivate(); };
+    window.addEventListener('voice-chat-opened', handler);
+    return () => window.removeEventListener('voice-chat-opened', handler);
+  }, [deactivate]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -191,15 +206,17 @@ export default function VoiceController() {
       {!isActive && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 99999, display: 'flex', alignItems: 'center', gap: 8,
+          zIndex: 99999, display: 'flex', alignItems: 'center', gap: 6,
           background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)',
-          borderRadius: 40, padding: '6px 14px 6px 10px',
+          borderRadius: 40, padding: '6px 10px',
           boxShadow: '0 2px 20px rgba(0,0,0,0.06)', border: '0.5px solid rgba(0,0,0,0.04)',
-          cursor: 'pointer', fontSize: 11, color: '#6b7280', transition: 'opacity 0.3s',
-          userSelect: 'none',
-        }} onClick={activate} title="Alt+V to activate">
-          <span style={{ fontSize: 14, lineHeight: 1 }}>✨</span>
-          <span>Voice — <span style={{ color: '#2347e8', fontWeight: 600 }}>Alt+V</span></span>
+          fontSize: 11, color: '#9ca3af', userSelect: 'none',
+        }}>
+          <span style={{ fontSize: 12, lineHeight: 1 }}>🎤</span>
+          <span>Say <span style={{ color: '#2347e8', fontWeight: 500 }}>"hey gresio"</span> for voice</span>
+          <span style={{ width: 1, height: 10, background: '#e5e7eb', margin: '0 4px' }} />
+          <span style={{ fontSize: 12 }}>💬</span>
+          <span style={{ color: '#6b7280' }}><span style={{ color: '#2347e8', fontWeight: 500 }}>Alt+V</span> for chat</span>
         </div>
       )}
 

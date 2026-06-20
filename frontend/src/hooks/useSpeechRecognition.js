@@ -10,6 +10,12 @@ const WAKE_PATTERNS = [
   { re: /\bhey\s*gremio\b/i },
   { re: /\bhey\s*grelio\b/i },
   { re: /\bhey\s*gr[ae]sh?i?o\b/i },
+  { re: /\bhello\s*gresio\b/i },
+  { re: /\bhello\s*greesio\b/i },
+  { re: /\bhello\s*greshio\b/i },
+  { re: /\bher\s*gresio\b/i },
+  { re: /\bher\s*greesio\b/i },
+  { re: /\bher\s*greshio\b/i },
   { re: /\bgresio\b/i },
   { re: /\bgreesio\b/i },
   { re: /\bgreshio\b/i },
@@ -125,6 +131,14 @@ export default function useSpeechRecognition() {
     setCommand('');
   }, []);
 
+  const clearCommand = useCallback(() => {
+    setTranscript('');
+    setInterimTranscript('');
+    setCommand('');
+    commandAccumulatorRef.current = '';
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+  }, []);
+
   const reset = useCallback(() => {
     setTranscript('');
     setInterimTranscript('');
@@ -145,5 +159,6 @@ export default function useSpeechRecognition() {
     start,
     stop,
     reset,
+    clearCommand,
   };
 }
