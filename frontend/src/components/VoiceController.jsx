@@ -69,12 +69,39 @@ export default function VoiceController() {
     return () => window.removeEventListener('keydown', downHandler);
   }, [activate, deactivate, isSupported]);
 
+  // Auto-execute pending command after cross-page navigation
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('voice_pending');
+      if (stored) {
+        sessionStorage.removeItem('voice_pending');
+        const { command: pending } = JSON.parse(stored);
+        if (pending) {
+          setPhase('executing');
+          const result = executeCommand(pending);
+          if (result.stopListening) {
+            setTimeout(() => deactivate(), 300);
+            return;
+          }
+          showFeedback(result.message, result.success ? 'success' : 'error');
+          setTimeout(() => { if (activatedRef.current) setPhase('listening'); }, 500);
+        }
+      }
+    } catch {}
+  }, []);
+
   const isConfirmation = useCallback((text) => {
-    return /^(yes|proceed|confirm|do\s*it|go\s*ahead|yep|yeah|sure|okay?|do\s*that)$/i.test(text.trim());
+    const t = text.trim().toLowerCase();
+    const confirmWords = /\b(yes|proceed|confirm|yep|yeah|sure|ok(?:ay)?)\b/i;
+    const confirmPhrases = ['do it', 'go ahead', 'do that'];
+    return confirmWords.test(t) || confirmPhrases.some(p => t.includes(p));
   }, []);
 
   const isRejection = useCallback((text) => {
-    return /^(no|cancel|stop|nope|nevermind|forget\s*it|abort|quit|exit|don't|dont)$/i.test(text.trim());
+    const t = text.trim().toLowerCase();
+    const rejectWords = /\b(no|cancel|stop|nope|nevermind|abort|quit|exit|don'?t)\b/i;
+    const rejectPhrases = ['forget it'];
+    return rejectWords.test(t) || rejectPhrases.some(p => t.includes(p));
   }, []);
 
   const handleConfirm = useCallback(async () => {

@@ -5,6 +5,14 @@ function getCurrentPage() {
   if (path === '/' || path === '/dashboard') return 'dashboard';
   if (path === '/users' || path.startsWith('/users')) return 'users';
   if (path.startsWith('/projects/')) return 'projectDetail';
+  if (path === '/projects' || path.startsWith('/projects?')) return 'projects';
+  if (path === '/sprints' || path.startsWith('/sprints')) return 'sprints';
+  if (path === '/tasks' || path.startsWith('/tasks')) return 'tasks';
+  if (path === '/my-tasks' || path === '/my-tasks/') return 'myTasks';
+  if (path === '/analytics' || path.startsWith('/analytics')) return 'analytics';
+  if (path === '/calendar' || path.startsWith('/calendar')) return 'calendar';
+  if (path === '/admin' || path.startsWith('/admin')) return 'admin';
+  if (path === '/settings' || path.startsWith('/settings')) return 'settings';
   return 'dashboard';
 }
 
@@ -78,15 +86,29 @@ export default function executeCommand(text) {
 
   // If not found and falls to 'ai', try ALL other pages
   if (action.action === 'ai') {
-    const allPages = ['dashboard', 'users', 'projectDetail'];
+    const allPages = ['dashboard', 'users', 'projectDetail', 'projects', 'sprints', 'tasks', 'myTasks', 'analytics', 'calendar', 'admin', 'settings'];
     for (const p of allPages) {
       if (p === page) continue;
       const a = matchAction(text, p);
       if (a.action !== 'ai') {
         // Found on another page — navigate there first
-        const pagePaths = { dashboard: '/', users: '/users', projectDetail: window.location.pathname };
+        const pagePaths = {
+          dashboard: '/',
+          users: '/users',
+          projects: '/projects',
+          projectDetail: window.location.pathname,
+          sprints: '/sprints',
+          tasks: '/tasks',
+          myTasks: '/my-tasks',
+          analytics: '/analytics',
+          calendar: '/calendar',
+          admin: '/admin',
+          settings: '/settings',
+        };
         if (pagePaths[p] && window.location.pathname !== pagePaths[p]) {
+          sessionStorage.setItem('voice_pending', JSON.stringify({ command: text }));
           window.location.href = pagePaths[p];
+          return { success: true, message: 'Navigating...', stopListening: true };
         }
         action = a;
         break;

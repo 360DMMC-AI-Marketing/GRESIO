@@ -110,6 +110,7 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
+                data-voice={`toggle-${item.key}`}
                 onClick={() => handleToggle(item.key)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
                   form[item.key] ? 'bg-[#2347e8]' : 'bg-surface-300'
@@ -136,6 +137,7 @@ export default function SettingsPage() {
             </div>
             <button
               type="button"
+              data-voice="toggle-two-factor"
               onClick={() => handleToggle('twoFactor')}
               className={`relative w-10 h-5 rounded-full transition-colors ${
                 form.twoFactor ? 'bg-[#2347e8]' : 'bg-surface-300'
@@ -173,7 +175,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <button
+      <button data-voice="save-settings"
         onClick={handleSave}
         disabled={saving}
         className="flex items-center gap-2 px-4 py-2.5 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] transition-colors w-fit disabled:opacity-50"

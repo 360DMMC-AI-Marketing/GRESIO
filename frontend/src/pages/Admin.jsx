@@ -163,7 +163,7 @@ export default function Admin() {
                     {isCurrent ? (
                       <span className="inline-block mt-2 text-[10px] font-semibold text-primary-600 uppercase">Current</span>
                     ) : (
-                      <button onClick={() => handleUpgrade(key)} disabled={upgrading === key}
+                      <button data-voice="upgrade-plan" onClick={() => handleUpgrade(key)} disabled={upgrading === key}
                         className="mt-2 w-full py-1.5 text-[10px] font-semibold bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
                         {upgrading === key ? '...' : 'Upgrade'}
                       </button>
@@ -200,7 +200,7 @@ export default function Admin() {
                     placeholder="yourcompany.com" className="flex-1 px-3 py-2 text-sm outline-none bg-white" />
                 </div>
               </div>
-              <button onClick={handleImport} disabled={importing || !importDomain.trim()}
+              <button data-voice="import-users" onClick={handleImport} disabled={importing || !importDomain.trim()}
                 className="px-5 py-2 text-sm font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                 <svg viewBox="0 0 21 21" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="1" y="1" width="8" height="8" fill="#F25022"/>
@@ -240,7 +240,7 @@ export default function Admin() {
                   <p className="text-lg font-bold text-surface-900">Auto-synced</p>
                 </div>
               </div>
-              <button onClick={() => handlePlatformSync('github')} disabled={syncingPlatform === 'github'}
+              <button data-voice="sync-github" onClick={() => handlePlatformSync('github')} disabled={syncingPlatform === 'github'}
                 className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
                 {syncingPlatform === 'github' ? 'Syncing...' : 'Sync Now'}
               </button>
@@ -287,7 +287,7 @@ export default function Admin() {
                   </button>
                 </div>
               </div>
-              <button onClick={() => handlePlatformSync('teams')} disabled={syncingPlatform === 'teams'}
+              <button data-voice="sync-teams" onClick={() => handlePlatformSync('teams')} disabled={syncingPlatform === 'teams'}
                 className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
                 {syncingPlatform === 'teams' ? 'Syncing...' : 'Sync Now'}
               </button>
@@ -315,7 +315,7 @@ export default function Admin() {
                   <p className="text-lg font-bold text-surface-900">Available</p>
                 </div>
               </div>
-              <button onClick={() => handlePlatformSync('outlook')} disabled={syncingPlatform === 'outlook'}
+              <button data-voice="sync-outlook-admin" onClick={() => handlePlatformSync('outlook')} disabled={syncingPlatform === 'outlook'}
                 className="mt-3 px-4 py-1.5 text-xs font-medium bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed">
                 {syncingPlatform === 'outlook' ? 'Syncing...' : 'Sync Now'}
               </button>
@@ -445,7 +445,7 @@ function ApiKeySection() {
 
   return (
     <div>
-      <button onClick={() => { setKeyName(''); setShowCreate(true); }}
+      <button data-voice="generate-key" onClick={() => { setKeyName(''); setShowCreate(true); }}
         className="mb-3 px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 cursor-pointer border-none">
         + Generate New Key
       </button>

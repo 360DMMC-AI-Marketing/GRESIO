@@ -140,16 +140,16 @@ export default function Calendar() {
         <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 flex-wrap gap-3">
           <h1 className="text-lg font-bold text-neutral-900 dark:text-white">Calendar</h1>
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={goToday} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors cursor-pointer border-none dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600">
+            <button data-voice="today" onClick={goToday} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors cursor-pointer border-none dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600">
               Today
             </button>
             <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-700 rounded-lg px-1 py-1">
-              <button onClick={prevMonth}
+              <button data-voice="prev-month" onClick={prevMonth}
                 className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white dark:hover:bg-neutral-600 text-neutral-500 dark:text-neutral-300 transition-colors cursor-pointer border-none bg-transparent">&lsaquo;</button>
               <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 w-36 text-center select-none">
                 {MONTHS[currentMonth]} {currentYear}
               </span>
-              <button onClick={nextMonth}
+              <button data-voice="next-month" onClick={nextMonth}
                 className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white dark:hover:bg-neutral-600 text-neutral-500 dark:text-neutral-300 transition-colors cursor-pointer border-none bg-transparent">&rsaquo;</button>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function Calendar() {
 
         <div className="flex items-center gap-6 px-5 border-b border-neutral-200 dark:border-neutral-700">
           {['month', 'agenda'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
+            <button key={tab} data-voice={`tab-${tab}`} onClick={() => setActiveTab(tab)}
               className={`text-sm font-semibold pb-2.5 transition-colors cursor-pointer bg-transparent border-none capitalize ${
                 activeTab === tab
                   ? 'text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 -mb-[1px]'
@@ -174,7 +174,7 @@ export default function Calendar() {
             onChange={v => setSelectedProjectId(v)}
             options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]}
           />
-          <button onClick={() => { const v = !syncToOutlook; setSyncToOutlook(v); localStorage.setItem('calendar_sync_outlook', v); }}
+          <button data-voice="sync-outlook" onClick={() => { const v = !syncToOutlook; setSyncToOutlook(v); localStorage.setItem('calendar_sync_outlook', v); }}
             className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex items-center gap-1.5 ${
               syncToOutlook
                 ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
@@ -236,7 +236,7 @@ export default function Calendar() {
                       {dayEvts.length > 4 && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium mt-0.5">+{dayEvts.length - 4} more</span>}
                     </div>
                     {canAdd && (
-                      <button onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
+                      <button data-voice="add-event-day" onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
                         className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
                         +
                       </button>
@@ -268,7 +268,7 @@ export default function Calendar() {
                 </div>
                 <div className="flex items-center gap-1">
                 {canAdd && (
-                  <button onClick={() => openAddModal(selectedDay)}
+                  <button data-voice="add-event" onClick={() => openAddModal(selectedDay)}
                     className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 px-3 py-1 rounded-md transition-colors cursor-pointer bg-transparent border-none">
                     + Add
                   </button>
@@ -322,7 +322,7 @@ export default function Calendar() {
             <div className="text-center py-12">
               <p className="text-sm text-neutral-400 dark:text-neutral-500">No upcoming events</p>
               {canAdd && (
-                <button onClick={() => openAddModal(new Date())}
+                <button data-voice="add-event" onClick={() => openAddModal(new Date())}
                   className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer bg-transparent border-none">
                   Add your first event
                 </button>

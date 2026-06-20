@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,background:'white',borderRadius:8,border:'0.5px solid #e5e7eb',padding:'4px 6px'}}>
           {tabs.map(t => (
-            <span key={t.key} onClick={() => setTab(t.key)}
+            <span key={t.key} data-voice={`tab-${t.key}`} onClick={() => setTab(t.key)}
               style={{fontSize:10,padding:'4px 10px',borderRadius:6,cursor:'pointer',fontWeight:500,
                 background:tab===t.key?'#2347e8':'transparent',color:tab===t.key?'white':'#374151'}}>{t.label}</span>
           ))}

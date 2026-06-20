@@ -141,7 +141,7 @@ export default function Tasks() {
         </div>
         <div className="flex gap-2">
           {(tab === 'separate' && canCreateSeparate) && (
-            <button onClick={() => setShowCreateModal(true)}
+            <button data-voice="add-separate-task" onClick={() => setShowCreateModal(true)}
               className="px-3.5 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 transition-colors">
               + Add Separate Task
             </button>
@@ -150,13 +150,13 @@ export default function Tasks() {
       </div>
 
       <div className="flex gap-0 border-b border-surface-200">
-        <button onClick={() => { setTab('project'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
+        <button data-voice="tab-project-tasks" onClick={() => { setTab('project'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
           className={`px-5 py-2 text-xs font-semibold cursor-pointer transition-all ${
             tab === 'project' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-surface-400 border-b-2 border-transparent hover:text-surface-600'
           }`}>
           Project Tasks
         </button>
-        <button onClick={() => { setTab('separate'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
+        <button data-voice="tab-separate-tasks" onClick={() => { setTab('separate'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
           className={`px-5 py-2 text-xs font-semibold cursor-pointer transition-all ${
             tab === 'separate' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-surface-400 border-b-2 border-transparent hover:text-surface-600'
           }`}>
@@ -168,7 +168,7 @@ export default function Tasks() {
         <div className="px-3 py-2 flex flex-wrap gap-1.5 items-center">
           <div className="flex gap-1">
             {FILTERS.map(s => (
-              <span key={s} onClick={() => setFilter(s)}
+              <span key={s} data-voice={`filter-${s}`} onClick={() => setFilter(s)}
                 className={`px-2.5 py-1 rounded-lg text-[10px] cursor-pointer font-medium transition-all ${
                   filter === s ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-500 hover:bg-surface-200'
                 }`}>
@@ -437,7 +437,7 @@ function CreateSeparateTaskModal({ allUsers, onClose, onCreated }) {
         <>
           <button onClick={onClose}
             className="px-3 py-1.5 bg-surface-100 text-surface-600 rounded-lg text-[11px] border-none cursor-pointer font-medium hover:bg-surface-200 transition-colors">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving || !title.trim()}
+          <button data-voice="create-task-submit" onClick={handleSubmit} disabled={saving || !title.trim()}
             className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border-none transition-colors ${
               saving || !title.trim() ? 'bg-surface-200 text-surface-400 cursor-not-allowed' : 'bg-primary-600 text-white cursor-pointer hover:bg-primary-700'
             }`}>

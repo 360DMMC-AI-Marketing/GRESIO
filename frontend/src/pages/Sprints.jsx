@@ -229,7 +229,7 @@ export default function Sprints() {
                             </div>
                             <input type="date" className="select" value={taskForm.deadline} onChange={e => setTaskForm({...taskForm, deadline:e.target.value})} />
                             <div className="flex gap-1.5">
-                              <button onClick={() => handleCreateTaskInSprint(s._id)} disabled={creatingTask === s._id || !taskForm.title.trim()}
+                              <button data-voice="create-task" onClick={() => handleCreateTaskInSprint(s._id)} disabled={creatingTask === s._id || !taskForm.title.trim()}
                                 className={`flex-1 px-2 py-1 rounded text-[9px] font-semibold border-none transition-colors ${
                                   creatingTask === s._id || !taskForm.title.trim()
                                     ? 'bg-surface-200 text-surface-400 cursor-not-allowed'
@@ -242,7 +242,7 @@ export default function Sprints() {
                             </div>
                           </div>
                         ) : (
-                          <button onClick={() => setShowAddTask(s._id)}
+                          <button data-voice="add-task" onClick={() => setShowAddTask(s._id)}
                             className="w-full px-2 py-1 bg-primary-50 text-primary-700 rounded text-[9px] font-semibold border-none cursor-pointer hover:bg-primary-100 transition-colors">
                             + Add Task
                           </button>

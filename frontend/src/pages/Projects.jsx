@@ -64,7 +64,7 @@ export default function Projects() {
           <div className="text-[11px] text-neutral-400 mt-0.5">{list.length} active projects</div>
         </div>
         {['admin', 'project_manager'].includes(user?.role) && (
-          <button onClick={() => setShowForm(!showForm)}
+          <button data-voice="new-project" onClick={() => setShowForm(!showForm)}
             style={{padding:'6px 12px',background:'#2347e8',color:'white',borderRadius:7,fontSize:11,fontWeight:600,border:'none',cursor:'pointer'}}>
             + New Project
           </button>
@@ -76,7 +76,7 @@ export default function Projects() {
           <>
             <button onClick={() => setShowForm(false)}
               style={{padding:'5px 12px',background:'#f3f4f6',color:'#374151',borderRadius:6,fontSize:11,border:'none',cursor:'pointer'}}>Cancel</button>
-            <button onClick={handleCreate}
+            <button data-voice="create-project" onClick={handleCreate}
               style={{padding:'5px 12px',background:'#2347e8',color:'white',borderRadius:6,fontSize:11,fontWeight:600,border:'none',cursor:'pointer'}}>Create</button>
           </>
         }>
@@ -144,14 +144,14 @@ export default function Projects() {
               </div>
               {(p.status === 'completed' || p.phase === 'delivered') && ['admin','project_manager','manager','team_lead'].includes(user?.role) && (
                 <div style={{display:'flex',gap:4,marginTop:8}}>
-                  <button
+                  <button data-voice="generate-report"
                     onClick={(e) => { e.stopPropagation(); setReportProject(p); }}
                     style={{flex:1,padding:'5px 0',background:'#2347e8',color:'white',borderRadius:6,fontSize:10,fontWeight:600,border:'none',cursor:'pointer'}}
                   >
                     Generate Report
                   </button>
                   {FEATURES.customReportEditor && (
-                    <button
+                    <button data-voice="customize-report"
                       onClick={(e) => { e.stopPropagation(); navigate(`/projects/${p._id}/reports/edit`); }}
                       style={{flex:1,padding:'5px 0',background:'#f3f4f6',color:'#374151',borderRadius:6,fontSize:10,fontWeight:600,border:'1px solid #d1d5db',cursor:'pointer'}}
                     >

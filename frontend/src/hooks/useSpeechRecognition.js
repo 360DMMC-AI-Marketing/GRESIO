@@ -64,10 +64,11 @@ export default function useSpeechRecognition() {
             setWakeWordDetected(true);
             const afterWake = final.slice(wakeIndex + WAKE_WORD.length).trim();
             if (afterWake) {
-              commandAccumulatorRef.current += (commandAccumulatorRef.current ? ' ' : '') + afterWake;
-              setTranscript(commandAccumulatorRef.current);
+              setCommand(afterWake);
+              setTranscript(afterWake);
+            } else {
+              resetSilenceTimer();
             }
-            resetSilenceTimer();
           }
         } else {
           commandAccumulatorRef.current += (commandAccumulatorRef.current ? ' ' : '') + final;

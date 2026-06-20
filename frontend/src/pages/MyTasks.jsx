@@ -112,7 +112,7 @@ export default function MyTasks() {
       {/* Tabs */}
       <div style={{display:'flex',gap:0,borderBottom:'2px solid #e5e7eb',marginBottom:20}}>
         {['tasks','analytics'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
+          <button key={tab} data-voice={`tab-${tab}-view`} onClick={() => setActiveTab(tab)}
             style={{
               padding:'8px 20px',fontSize:13,fontWeight:600,
               color: activeTab === tab ? '#111827' : '#6b7280',
