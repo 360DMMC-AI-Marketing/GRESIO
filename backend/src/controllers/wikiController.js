@@ -72,31 +72,28 @@ exports.createPage = async (req, res, next) => {
 
 exports.updatePage = async (req, res, next) => {
   try {
-    const filter = { _id: req.params.id, domain: req.user.domain };
-    const page = await Wiki.findOne(filter).lean();
+    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
     if (!page) return res.status(404).json({ message: 'Page not found' });
-    const updates = { ...req.body, updatedBy: req.user._id };
-    if (updates.title) {
-      updates.slug = await uniqueSlug(updates.title, req.user.domain, req.params.id);
+
+    if (req.body.title !== undefined) {
+      page.title = req.body.title;
+      page.slug = await uniqueSlug(req.body.title, req.user.domain, req.params.id);
     }
-    delete updates.files;
-    delete updates.contributors;
+    if (req.body.content !== undefined) page.content = req.body.content;
+    if (req.body.department !== undefined) page.department = req.body.department;
+    page.updatedBy = req.user._id;
+
     const already = page.contributors.some(c => c.user?.toString() === req.user._id.toString());
-    let updated;
     if (already) {
-      updated = await Wiki.findOneAndUpdate(
-        { ...filter, 'contributors.user': req.user._id },
-        { $set: { ...updates, 'contributors.$.updatedAt': new Date() } },
-        { new: true }
-      );
+      const idx = page.contributors.findIndex(c => c.user?.toString() === req.user._id.toString());
+      if (idx !== -1) page.contributors[idx].updatedAt = new Date();
     } else {
-      updated = await Wiki.findOneAndUpdate(
-        filter,
-        { $set: updates, $push: { contributors: { user: req.user._id, name: req.user.name, updatedAt: new Date() } } },
-        { new: true }
-      );
+      page.contributors.push({ user: req.user._id, name: req.user.name, updatedAt: new Date() });
     }
-    res.json(await populateRefs(Wiki.findById(updated._id)));
+
+    await page.save();
+    const result = await populateRefs(Wiki.findById(page._id));
+    res.json(result);
   } catch (e) { next(e); }
 };
 

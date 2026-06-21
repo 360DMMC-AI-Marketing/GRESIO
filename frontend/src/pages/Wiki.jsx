@@ -3,10 +3,27 @@ import { wiki, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X, FileUp } from 'lucide-react';
+import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X, FileUp, Calendar, Hash, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DEFAULT_DEPARTMENTS = ['General', 'Engineering', 'Product', 'Design', 'QA', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'];
+
+const DEPT_COLORS = {
+  General: { bg: 'bg-slate-500', light: 'bg-slate-100', text: 'text-slate-600', badge: 'bg-slate-100 text-slate-700', gradient: 'from-slate-400 to-slate-500' },
+  Engineering: { bg: 'bg-blue-500', light: 'bg-blue-50', text: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', gradient: 'from-blue-400 to-blue-600' },
+  Product: { bg: 'bg-violet-500', light: 'bg-violet-50', text: 'text-violet-600', badge: 'bg-violet-100 text-violet-700', gradient: 'from-violet-400 to-violet-600' },
+  Design: { bg: 'bg-pink-500', light: 'bg-pink-50', text: 'text-pink-600', badge: 'bg-pink-100 text-pink-700', gradient: 'from-pink-400 to-pink-600' },
+  QA: { bg: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700', gradient: 'from-emerald-400 to-emerald-600' },
+  HR: { bg: 'bg-orange-500', light: 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-100 text-orange-700', gradient: 'from-orange-400 to-orange-600' },
+  Finance: { bg: 'bg-teal-500', light: 'bg-teal-50', text: 'text-teal-600', badge: 'bg-teal-100 text-teal-700', gradient: 'from-teal-400 to-teal-600' },
+  Marketing: { bg: 'bg-rose-500', light: 'bg-rose-50', text: 'text-rose-600', badge: 'bg-rose-100 text-rose-700', gradient: 'from-rose-400 to-rose-600' },
+  Sales: { bg: 'bg-amber-500', light: 'bg-amber-50', text: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', gradient: 'from-amber-400 to-amber-600' },
+  Operations: { bg: 'bg-indigo-500', light: 'bg-indigo-50', text: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', gradient: 'from-indigo-400 to-indigo-600' },
+};
+
+function getDeptColor(dept) {
+  return DEPT_COLORS[dept] || DEPT_COLORS.General;
+}
 
 function formatSize(bytes) {
   if (!bytes) return '0 B';
@@ -14,6 +31,14 @@ function formatSize(bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function getInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function stripMd(text) {
+  return (text || '').replace(/[#*`\[\]>|~_\-]/g, '').replace(/\s+/g, ' ').trim();
 }
 
 export default function Wiki() {
@@ -142,12 +167,13 @@ export default function Wiki() {
   const handleAddDepartment = async () => {
     const name = prompt('Enter new department name:');
     if (!name || !name.trim()) return;
+    if (!company?._id) return toast.error('Company data not loaded');
     try {
       const res = await companies.addWikiDepartment(company._id, name.trim());
       updateCompany(res.data);
       toast.success(`Department "${name.trim()}" added`);
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Failed to add department');
+      toast.error(e.response?.data?.message || e.message || 'Failed to add department');
     }
   };
 
@@ -201,283 +227,399 @@ export default function Wiki() {
   });
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-[3px] border-[#2347e8] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-surface-400 font-medium">Loading wiki...</p>
+      </div>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-1">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2.5">
-            <BookOpen className="w-7 h-7 text-[#2347e8]" /> Wiki
-          </h1>
-          <p className="text-sm text-surface-500 mt-0.5">Company knowledge base</p>
+    <div className="max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2347e8] to-[#1d3dcc] flex items-center justify-center shadow-lg shadow-[#2347e8]/20">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Knowledge Base</h1>
+            </div>
+            <p className="text-sm text-surface-400 ml-[52px]">Company wiki & documentation</p>
+          </div>
         </div>
       </div>
 
       {view === 'list' && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-              <input
-                type="text" placeholder="Search pages..."
-                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
-              />
-            </div>
-            {canManage && (
-              <>
-                <button onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none shadow-sm">
-                  <Plus className="w-4 h-4" /> New Page
-                </button>
-                <input ref={importRef} type="file" multiple accept=".md,.txt" onChange={handleImport} className="hidden" />
-                <button onClick={() => importRef.current?.click()} disabled={importing}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white text-surface-700 border border-surface-200 rounded-lg text-xs font-semibold hover:bg-surface-50 hover:border-surface-300 transition-colors cursor-pointer disabled:opacity-50 shadow-sm">
-                  <FileUp className="w-4 h-4" /> {importing ? 'Importing...' : 'Import'}
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Department filter tabs */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button onClick={() => setActiveDepartment('All')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
-                activeDepartment === 'All'
-                  ? 'bg-[#2347e8] text-white border-[#2347e8]'
-                  : 'bg-white text-surface-600 border-surface-200 hover:border-surface-300'
-              }`}>
-              All
-            </button>
-            {departments.map(d => (
-              <button key={d} onClick={() => setActiveDepartment(d)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
-                  activeDepartment === d
-                    ? 'bg-[#2347e8] text-white border-[#2347e8]'
-                    : 'bg-white text-surface-600 border-surface-200 hover:border-surface-300'
-                }`}>
-                {d}
-              </button>
-            ))}
-            {canManage && (
-              <button onClick={handleAddDepartment}
-                className="px-2.5 py-1.5 text-xs font-medium text-[#2347e8] bg-transparent border border-dashed border-[#2347e8]/40 rounded-lg hover:bg-[#2347e8]/5 transition-colors cursor-pointer flex items-center gap-1">
-                <Plus className="w-3 h-3" /> New
-              </button>
-            )}
-          </div>
-
-          {filtered.length === 0 ? (
-            <div className="bg-white rounded-xl border border-surface-200 p-12 text-center">
-              <div className="w-14 h-14 bg-surface-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-7 h-7 text-surface-400" />
+          {/* Toolbar */}
+          <div className="bg-white rounded-2xl border border-surface-200 p-4 mb-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                <input
+                  type="text" placeholder="Search articles..."
+                  value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all placeholder:text-surface-400"
+                />
               </div>
-              <h3 className="text-base font-semibold text-surface-900 mb-1">No pages yet</h3>
-              <p className="text-sm text-surface-500 mb-4">
-                {searchQuery ? 'No pages match your search' : 'Create the first wiki page to document your processes'}
+              {canManage && (
+                <div className="flex items-center gap-2">
+                  <input ref={importRef} type="file" multiple accept=".md,.txt" onChange={handleImport} className="hidden" />
+                  <button onClick={() => importRef.current?.click()} disabled={importing}
+                    className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-surface-600 bg-surface-50 border border-surface-200 rounded-xl hover:bg-surface-100 hover:border-surface-300 transition-all cursor-pointer disabled:opacity-50">
+                    <FileUp className="w-4 h-4" /> {importing ? 'Importing...' : 'Import'}
+                  </button>
+                  <button onClick={() => setShowCreate(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20">
+                    <Plus className="w-4 h-4" /> New Article
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Department filter pills */}
+            <div className="flex items-center gap-1.5 flex-wrap mt-4 pt-3 border-t border-surface-100">
+              <button onClick={() => setActiveDepartment('All')}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                  activeDepartment === 'All'
+                    ? 'bg-surface-900 text-white border-surface-900 shadow-sm'
+                    : 'bg-white text-surface-500 border-surface-200 hover:border-surface-300 hover:text-surface-700'
+                }`}>
+                All
+              </button>
+              {departments.map(d => {
+                const c = getDeptColor(d);
+                return (
+                  <button key={d} onClick={() => setActiveDepartment(d)}
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeDepartment === d
+                        ? `${c.bg} text-white border-transparent shadow-sm`
+                        : 'bg-white text-surface-500 border-surface-200 hover:border-surface-300'
+                    }`}>
+                    {activeDepartment !== d && <span className={`w-1.5 h-1.5 rounded-full ${c.bg}`} />}
+                    {d}
+                  </button>
+                );
+              })}
+              {canManage && (
+                <button onClick={handleAddDepartment}
+                  className="px-3 py-2 text-xs font-medium text-[#2347e8] bg-transparent border border-dashed border-[#2347e8]/30 rounded-xl hover:bg-[#2347e8]/5 transition-all cursor-pointer flex items-center gap-1 ml-1">
+                  <Plus className="w-3 h-3" /> New
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Page count */}
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Hash className="w-3.5 h-3.5 text-surface-400" />
+            <span className="text-xs font-medium text-surface-400">{filtered.length} article{filtered.length !== 1 ? 's' : ''}</span>
+            {activeDepartment !== 'All' && (
+              <span className="text-xs text-surface-300">in <span className="font-semibold text-surface-400">{activeDepartment}</span></span>
+            )}
+          </div>
+
+          {/* Blog-style cards */}
+          {filtered.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-surface-200 p-16 text-center shadow-sm">
+              <div className="w-16 h-16 bg-gradient-to-br from-surface-100 to-surface-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <BookOpen className="w-8 h-8 text-surface-400" />
+              </div>
+              <h3 className="text-lg font-bold text-surface-900 mb-2">No articles yet</h3>
+              <p className="text-sm text-surface-400 max-w-sm mx-auto mb-6">
+                {searchQuery
+                  ? 'No articles match your search. Try a different keyword.'
+                  : activeDepartment !== 'All'
+                    ? `No articles in ${activeDepartment} yet.`
+                    : 'Create the first wiki article to build your company knowledge base.'}
               </p>
-              {canManage && !searchQuery && (
+              {canManage && !searchQuery && activeDepartment === 'All' && (
                 <button onClick={() => setShowCreate(true)}
-                  className="px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none">
-                  + Create First Page
+                  className="px-5 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20">
+                  <Plus className="w-4 h-4 inline-block mr-1.5 align-text-bottom" /> Create First Article
                 </button>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
-              {filtered.map(page => (
-                <div key={page._id}
-                  onClick={() => openPage(page._id)}
-                  className="bg-white rounded-xl border border-surface-200 p-4 hover:border-surface-300 transition-colors cursor-pointer">
-                  <h3 className="text-sm font-semibold text-surface-900">
-                    {page.title}
-                    {page.department && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-surface-100 text-surface-500 rounded-full">
-                        {page.department}
-                      </span>
-                    )}
-                  </h3>
-                  {page.content && (
-                    <p className="text-xs text-surface-500 mt-1 line-clamp-2">
-                      {page.content.replace(/[#*`\[\]]/g, '').slice(0, 200)}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-surface-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(page.updatedAt).toLocaleDateString()}
-                    </span>
-                    {page.updatedBy && (
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {page.updatedBy.name}
-                      </span>
-                    )}
-                    {page.files?.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-3 h-3" />
-                        {page.files.length}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="grid gap-4 md:grid-cols-2">
+              {filtered.map(page => {
+                const c = getDeptColor(page.department);
+                const excerpt = stripMd(page.content).slice(0, 160);
+                return (
+                  <article key={page._id}
+                    onClick={() => openPage(page._id)}
+                    className="group bg-white rounded-2xl border border-surface-200 overflow-hidden hover:border-surface-300 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
+                    {/* Color accent bar */}
+                    <div className={`h-1.5 bg-gradient-to-r ${c.gradient}`} />
+                    <div className="p-5">
+                      {/* Category badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {page.department && (
+                          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${c.badge}`}>
+                            {page.department}
+                          </span>
+                        )}
+                        {page.files?.length > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-surface-400 font-medium">
+                            <FileText className="w-3 h-3" />
+                            {page.files.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-base font-bold text-surface-900 leading-snug mb-2 group-hover:text-[#2347e8] transition-colors line-clamp-2">
+                        {page.title}
+                      </h3>
+
+                      {/* Excerpt */}
+                      {excerpt && (
+                        <p className="text-xs text-surface-500 leading-relaxed line-clamp-2 mb-4">
+                          {excerpt}
+                        </p>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-3 border-t border-surface-100">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-full ${c.light} flex items-center justify-center`}>
+                            <span className={`text-[10px] font-bold ${c.text}`}>
+                              {page.updatedBy?.name ? getInitials(page.updatedBy.name) : '?'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-semibold text-surface-700 leading-tight">
+                              {page.updatedBy?.name || 'Unknown'}
+                            </span>
+                            <span className="text-[10px] text-surface-400 leading-tight">
+                              {new Date(page.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-surface-300">
+                          <ArrowLeft className="w-4 h-4 -rotate-135 opacity-0 group-hover:opacity-100 transition-all" />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </>
       )}
 
+      {/* View - Blog article layout */}
+      {view === 'currentPage' && currentPage}
       {view === 'view' && currentPage && (
-        <div className="bg-white rounded-xl border border-surface-200">
-          <div className="flex items-center justify-between p-4 border-b border-surface-100">
-            <button onClick={() => { setCurrentPage(null); setView('list'); }}
-              className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-surface-700 transition-colors cursor-pointer bg-transparent border-none">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-            <div className="flex items-center gap-2">
-              <button onClick={startEdit}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-surface-600 hover:text-[#2347e8] bg-transparent border border-surface-200 rounded-lg hover:border-[#2347e8]/30 transition-colors cursor-pointer">
-                <Edit3 className="w-3.5 h-3.5" /> Edit
+        <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+          {/* Article header */}
+          <div className={`bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-8 pb-16`}>
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={() => { setCurrentPage(null); setView('list'); }}
+                className="flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
+                <ArrowLeft className="w-4 h-4" /> Back to articles
               </button>
-              {canManage && (
-                <button onClick={() => deletePage(currentPage._id)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-600 bg-transparent border border-red-200 rounded-lg hover:border-red-300 transition-colors cursor-pointer">
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+              <div className="flex items-center gap-2">
+                <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50">
+                  <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Attach'}
                 </button>
+                <button onClick={startEdit}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer">
+                  <Edit3 className="w-3.5 h-3.5" /> Edit
+                </button>
+                {canManage && (
+                  <button onClick={() => deletePage(currentPage._id)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-red-200 bg-red-500/10 hover:bg-red-500/20 rounded-xl border border-red-500/10 backdrop-blur-sm transition-all cursor-pointer">
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="max-w-3xl">
+              {currentPage.department && (
+                <span className={`inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-4`}>
+                  {currentPage.department}
+                </span>
               )}
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-3 mb-4">
+                {currentPage.title}
+              </h1>
+              <div className="flex items-center gap-4 text-sm text-white/70">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-xs font-bold text-white">
+                      {currentPage.updatedBy?.name ? getInitials(currentPage.updatedBy.name) : '?'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white/90">{currentPage.updatedBy?.name || 'Unknown'}</span>
+                    <div className="flex items-center gap-2 text-[11px] text-white/60">
+                      <span>Updated {new Date(currentPage.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                      {currentPage.createdAt !== currentPage.updatedAt && (
+                        <span>· Created {new Date(currentPage.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="p-6">
-            <h1 className="text-xl font-bold text-surface-900 mb-4">{currentPage.title}</h1>
-            <div className="prose prose-sm max-w-none text-surface-700">
-              <Markdown remarkPlugins={[remarkGfm]}>
-                {currentPage.content || '*No content*'}
-              </Markdown>
+
+          {/* Article content */}
+          <div className="px-8 py-8">
+            <div className="max-w-3xl mx-auto">
+              <div className="prose prose-sm md:prose-base max-w-none prose-headings:text-surface-900 prose-headings:font-bold prose-a:text-[#2347e8] prose-code:text-[#2347e8] prose-code:bg-surface-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-pre:bg-surface-900 prose-pre:text-surface-100 prose-pre:rounded-xl prose-img:rounded-xl prose-blockquote:border-l-[#2347e8] prose-blockquote:text-surface-600">
+                <Markdown remarkPlugins={[remarkGfm]}>
+                  {currentPage.content || '*No content*'}
+                </Markdown>
+              </div>
             </div>
           </div>
 
           {/* Attached files */}
-          <div className="px-6 pb-6">
-            <div className="flex items-center justify-between mb-3 pt-4 border-t border-surface-100">
-              <h3 className="text-sm font-semibold text-surface-700 flex items-center gap-1.5">
-                <FileText className="w-4 h-4" /> Attached Files
-                {currentPage.files?.length > 0 && (
-                  <span className="text-xs font-normal text-surface-400">({currentPage.files.length})</span>
-                )}
-              </h3>
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2347e8] bg-transparent border border-[#2347e8]/30 rounded-lg hover:bg-[#2347e8]/5 transition-colors cursor-pointer disabled:opacity-50">
-                  <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Upload'}
-                </button>
-              </div>
-            </div>
-            {(!currentPage.files || currentPage.files.length === 0) ? (
-              <p className="text-xs text-surface-400">No files attached</p>
-            ) : (
-              <div className="space-y-1.5">
-                {currentPage.files.map(f => (
-                  <div key={f._id}
-                    className="flex items-center justify-between px-3 py-2 bg-surface-50 rounded-lg border border-surface-100">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <FileText className="w-4 h-4 text-surface-400 shrink-0" />
-                      <span className="text-xs font-medium text-surface-700 truncate">{f.originalName}</span>
-                      <span className="text-xs text-surface-400 shrink-0">({formatSize(f.size)})</span>
+          {currentPage.files?.length > 0 && (
+            <div className="px-8 pb-8">
+              <div className="max-w-3xl mx-auto pt-8 border-t border-surface-100">
+                <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-surface-400" />
+                  Attachments ({currentPage.files.length})
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {currentPage.files.map(f => (
+                    <div key={f._id}
+                      className="flex items-center justify-between px-4 py-3 bg-surface-50 rounded-xl border border-surface-100 hover:border-surface-200 hover:bg-white transition-all group">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-white border border-surface-200 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 text-surface-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-surface-700 truncate">{f.originalName}</p>
+                          <p className="text-[10px] text-surface-400">{formatSize(f.size)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <a href={`/uploads/${f.filename}`} target="_blank" rel="noreferrer"
+                          className="flex items-center justify-center w-8 h-8 text-surface-400 hover:text-[#2347e8] hover:bg-[#2347e8]/5 rounded-lg transition-all no-underline">
+                          <Download className="w-4 h-4" />
+                        </a>
+                        {canManage && (
+                          <button onClick={() => handleDeleteFile(f._id)}
+                            className="flex items-center justify-center w-8 h-8 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer bg-transparent border-none">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      <a href={`/uploads/${f.filename}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-surface-500 hover:text-[#2347e8] bg-transparent border border-surface-200 rounded-md hover:border-[#2347e8]/30 transition-colors no-underline">
-                        <Download className="w-3 h-3" />
-                      </a>
-                      {canManage && (
-                        <button onClick={() => handleDeleteFile(f._id)}
-                          className="flex items-center justify-center w-6 h-6 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer bg-transparent border-none">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Contributors */}
-          {currentPage.contributors?.length > 0 && (
-            <div className="px-6 pb-4">
-              <div className="flex items-center gap-2 pt-4 border-t border-surface-100">
-                <User className="w-4 h-4 text-surface-400" />
-                <span className="text-xs font-medium text-surface-500">Contributors:</span>
-                {currentPage.contributors.map((c, i) => (
-                  <span key={i} className="text-xs text-surface-600 bg-surface-50 px-2 py-0.5 rounded-full border border-surface-100">
-                    {c.name}
-                  </span>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          <div className="flex items-center gap-3 px-6 pb-4 text-xs text-surface-400">
-            {currentPage.department && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#2347e8]/10 text-[#2347e8] font-medium rounded-full">
-                {currentPage.department}
+          {/* Contributors */}
+          {currentPage.contributors?.length > 0 && (
+            <div className="px-8 pb-8">
+              <div className="max-w-3xl mx-auto pt-6 border-t border-surface-100">
+                <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
+                  <User className="w-4 h-4 text-surface-400" />
+                  Contributors ({currentPage.contributors.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentPage.contributors.map((c, i) => (
+                    <div key={i}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-xl border border-surface-100">
+                      <div className="w-6 h-6 rounded-full bg-[#2347e8]/10 flex items-center justify-center">
+                        <span className="text-[9px] font-bold text-[#2347e8]">{getInitials(c.name)}</span>
+                      </div>
+                      <span className="text-xs font-medium text-surface-600">{c.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer meta */}
+          <div className="px-8 pb-8">
+            <div className="max-w-3xl mx-auto pt-4 border-t border-surface-100 flex items-center gap-4 text-xs text-surface-400">
+              {currentPage.department && (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${getDeptColor(currentPage.department).badge}`}>
+                  {currentPage.department}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                Updated {new Date(currentPage.updatedAt).toLocaleDateString()}
               </span>
-            )}
-            <span>Updated {new Date(currentPage.updatedAt).toLocaleDateString()}</span>
-            {currentPage.updatedBy && <span>by {currentPage.updatedBy.name}</span>}
+              {currentPage.updatedBy && (
+                <span className="flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" />
+                  {currentPage.updatedBy.name}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Edit - Split pane with modern styling */}
       {view === 'edit' && currentPage && (
-        <div className="bg-white rounded-xl border border-surface-200">
-          <div className="flex items-center justify-between p-4 border-b border-surface-100">
+        <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100 bg-surface-50/50">
             <button onClick={() => { setView('view'); }}
-              className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-surface-700 transition-colors cursor-pointer bg-transparent border-none">
+              className="flex items-center gap-1.5 text-xs font-medium text-surface-500 hover:text-surface-700 transition-colors cursor-pointer bg-transparent border-none">
               <ArrowLeft className="w-4 h-4" /> Cancel
             </button>
-            <button onClick={saveEdit} disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none shadow-sm disabled:opacity-50">
-              {saving ? 'Saving...' : 'Save'}
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-surface-400 font-medium">Editing: {currentPage.title}</span>
+              <button onClick={saveEdit} disabled={saving}
+                className="flex items-center gap-1.5 px-5 py-2 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20 disabled:opacity-50">
+                {saving ? (
+                  <span className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Saving...
+                  </span>
+                ) : 'Save Changes'}
+              </button>
+            </div>
           </div>
-          <div className="p-4 space-y-4">
-            <input
-              type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
-              placeholder="Page title"
-              className="w-full px-4 py-2.5 text-lg font-semibold border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
-            />
-            <select
-              value={editDepartment} onChange={e => setEditDepartment(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
-            >
-              {departments.map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="p-6 space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <input
+                  type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                  placeholder="Article title"
+                  className="w-full px-5 py-3 text-xl font-bold border border-surface-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] transition-all placeholder:text-surface-300"
+                />
+              </div>
+              <select
+                value={editDepartment} onChange={e => setEditDepartment(e.target.value)}
+                className="px-5 py-3 text-sm font-medium border border-surface-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] transition-all cursor-pointer min-w-[160px]"
+              >
+                {departments.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-medium text-surface-500 mb-1.5">Markdown</label>
+                <label className="block text-xs font-semibold text-surface-500 mb-2 uppercase tracking-wider">Markdown</label>
                 <textarea
                   value={editContent} onChange={e => setEditContent(e.target.value)}
                   placeholder="Write in markdown..."
-                  rows={20}
-                  className="w-full px-4 py-3 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8] font-mono resize-y"
+                  rows={24}
+                  className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-surface-500 mb-1.5">Preview</label>
-                <div className="w-full px-4 py-3 text-sm border border-surface-200 rounded-lg bg-white min-h-[400px] prose prose-sm max-w-none overflow-auto">
+                <label className="block text-xs font-semibold text-surface-500 mb-2 uppercase tracking-wider">Preview</label>
+                <div className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-white min-h-[600px] prose prose-sm max-w-none overflow-auto">
                   <Markdown remarkPlugins={[remarkGfm]}>
                     {editContent || '*Nothing to preview*'}
                   </Markdown>
@@ -488,26 +630,32 @@ export default function Wiki() {
         </div>
       )}
 
+      {/* Create modal */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreate(false)}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-surface-100">
-              <h2 className="text-base font-semibold text-surface-900">New Wiki Page</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowCreate(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 border border-surface-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100">
+              <h2 className="text-base font-bold text-surface-900 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2347e8] to-[#1d3dcc] flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-white" />
+                </div>
+                New Article
+              </h2>
               <button onClick={() => setShowCreate(false)}
-                className="text-surface-400 hover:text-surface-600 cursor-pointer bg-transparent border-none">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                className="w-8 h-8 flex items-center justify-center text-surface-400 hover:text-surface-600 hover:bg-surface-100 rounded-lg transition-all cursor-pointer bg-transparent border-none">
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-6 space-y-4">
               <input
                 type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
-                placeholder="Page title"
-                className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
+                placeholder="Article title"
+                className="w-full px-5 py-3 text-lg font-bold border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all placeholder:text-surface-300"
                 autoFocus
               />
               <select
                 value={newDepartment} onChange={e => setNewDepartment(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
+                className="w-full px-5 py-3 text-sm font-medium border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all cursor-pointer"
               >
                 {departments.map(d => (
                   <option key={d} value={d}>{d}</option>
@@ -515,22 +663,27 @@ export default function Wiki() {
               </select>
               <textarea
                 value={newContent} onChange={e => setNewContent(e.target.value)}
-                placeholder="Page content (markdown)..."
-                rows={8}
-                className="w-full px-4 py-3 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8] font-mono resize-y"
+                placeholder="Write your article content in markdown..."
+                rows={12}
+                className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
               />
-              <div className="text-xs text-surface-400 border border-surface-100 rounded-lg p-3 bg-surface-50">
-                <strong>Markdown supported:</strong> # headings, **bold**, `code`, - lists, [links](url), etc.
+              <div className="flex items-center gap-3 text-xs text-surface-400 bg-surface-50 rounded-xl px-4 py-3 border border-surface-100">
+                <span className="font-semibold text-surface-500">Markdown:</span>
+                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200"># Heading</code>
+                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">**bold**</code>
+                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">`code`</code>
+                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">[link](url)</code>
+                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">- list</code>
               </div>
             </div>
-            <div className="flex justify-end gap-2 p-4 border-t border-surface-100">
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-surface-100">
               <button onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-xs font-medium text-surface-600 bg-transparent border border-surface-200 rounded-lg hover:bg-surface-50 transition-colors cursor-pointer">
+                className="px-5 py-2.5 text-xs font-semibold text-surface-600 bg-transparent border border-surface-200 rounded-xl hover:bg-surface-50 hover:border-surface-300 transition-all cursor-pointer">
                 Cancel
               </button>
               <button onClick={createPage} disabled={saving || !newTitle.trim()}
-                className="px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none shadow-sm disabled:opacity-50">
-                {saving ? 'Creating...' : 'Create'}
+                className="px-6 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20 disabled:opacity-50">
+                {saving ? 'Creating...' : 'Create Article'}
               </button>
             </div>
           </div>
