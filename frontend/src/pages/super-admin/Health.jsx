@@ -61,7 +61,7 @@ export default function Health() {
         </div>
         <div className="flex items-center gap-3">
           {lastChecked && <span className="text-xs text-surface-400">Checked: {lastChecked}</span>}
-          <button onClick={runCheck} disabled={checking}
+          <button data-voice="refresh-health" onClick={runCheck} disabled={checking}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-surface-200 bg-white text-surface-600 hover:bg-surface-50 transition-colors cursor-pointer disabled:opacity-50">
             <RefreshCw size={14} className={`${checking ? 'animate-spin' : ''}`} />
             {checking ? '...' : 'Refresh'}

@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: 'How is my data secured?',
-    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Enterprise plans include SAML SSO, on-premise deployment options, and SLA guarantees for data availability.',
+    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Enterprise plans include on-premise deployment options, and SLA guarantees for data availability.',
   },
   {
     q: 'Can I track time spent on tasks?',

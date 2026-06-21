@@ -61,7 +61,7 @@ export default function TemplateDetail() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <button onClick={() => navigate(-1)}
+      <button data-voice="back-marketplace" onClick={() => navigate(-1)}
         className="text-xs text-primary-600 font-semibold mb-4 hover:underline cursor-pointer bg-transparent border-none">
         ← Back to marketplace
       </button>
@@ -80,7 +80,7 @@ export default function TemplateDetail() {
             <div className="text-2xl font-bold text-surface-900">{template.price > 0 ? `$${template.price}` : 'Free'}</div>
             <div className="flex items-center justify-end gap-1 mt-1">
               {[1,2,3,4,5].map(star => (
-                <button key={star} onClick={() => rateTemplate(star)} disabled={rating}
+                <button key={star} data-voice={`rate-template-${star}`} onClick={() => rateTemplate(star)} disabled={rating}
                   onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}
                   className={`text-sm cursor-pointer border-none bg-transparent p-0 leading-none transition-colors ${star <= (hoverRating || template.rating) ? 'text-amber-400' : 'text-surface-300'} disabled:opacity-50`}>
                   ★
@@ -93,7 +93,7 @@ export default function TemplateDetail() {
         </div>
 
         <div className="flex gap-2 mb-6">
-          <button onClick={useTemplate} disabled={using}
+          <button data-voice="use-template" onClick={useTemplate} disabled={using}
             className="px-5 py-2 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] disabled:opacity-50 transition-colors cursor-pointer border-none">
             {using ? 'Creating...' : 'Use This Template'}
           </button>

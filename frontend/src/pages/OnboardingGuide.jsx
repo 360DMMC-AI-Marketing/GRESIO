@@ -611,7 +611,7 @@ export default function OnboardingGuide() {
         {acknowledged ? (
           <span style={{fontSize:12,color:'#22c55e',fontWeight:600}}>✅ You have acknowledged this guide</span>
         ) : allChecked && reachedBottom ? (
-          <button onClick={handleAcknowledge} className="btn btn-blue" style={{fontSize:11,padding:'8px 20px'}}>
+          <button data-voice="acknowledge-guide" onClick={handleAcknowledge} className="btn btn-blue" style={{fontSize:11,padding:'8px 20px'}}>
             ✅ I Acknowledge and Agree
           </button>
         ) : (

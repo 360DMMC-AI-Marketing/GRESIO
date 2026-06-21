@@ -108,7 +108,7 @@ export default function CreateTemplate() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-surface-900">Phases & Tasks</h2>
-            <button type="button" onClick={addPhase}
+            <button data-voice="add-phase" type="button" onClick={addPhase}
               className="px-3 py-1.5 bg-surface-100 text-surface-700 rounded-lg text-xs font-semibold hover:bg-surface-200 transition-colors cursor-pointer border-none">
               + Add Phase
             </button>
@@ -127,7 +127,7 @@ export default function CreateTemplate() {
               <div className="space-y-1.5">
                 {phase.tasks.map((task, taskIdx) => (
                   <div key={taskIdx} className="flex items-center gap-2">
-                    <input value={task.title} onChange={e => updateTask(phaseIdx, taskIdx, 'title', e.target.value)}
+                    <input data-voice="field-task-title" value={task.title} onChange={e => updateTask(phaseIdx, taskIdx, 'title', e.target.value)}
                       placeholder="Task title"
                       className="flex-1 text-xs border border-surface-200 rounded-lg px-2 py-1.5 outline-none focus:border-[#2347e8]" />
                     <input type="number" min="1" value={task.estimatedHours} onChange={e => updateTask(phaseIdx, taskIdx, 'estimatedHours', Number(e.target.value))}
@@ -139,7 +139,7 @@ export default function CreateTemplate() {
                 ))}
               </div>
 
-              <button type="button" onClick={() => addTask(phaseIdx)}
+              <button data-voice="add-task" type="button" onClick={() => addTask(phaseIdx)}
                 className="mt-2 text-[10px] text-primary-600 font-semibold hover:underline cursor-pointer bg-transparent border-none">
                 + Add Task
               </button>
@@ -148,11 +148,11 @@ export default function CreateTemplate() {
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button type="submit"
+          <button data-voice="publish-template" type="submit"
             className="px-5 py-2 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none">
             Publish Template
           </button>
-          <button type="button" onClick={() => navigate(-1)}
+          <button data-voice="cancel-create" type="button" onClick={() => navigate(-1)}
             className="px-5 py-2 bg-surface-100 text-surface-700 rounded-lg text-sm font-semibold hover:bg-surface-200 transition-colors cursor-pointer border-none">
             Cancel
           </button>

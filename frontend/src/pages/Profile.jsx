@@ -98,7 +98,7 @@ export default function Profile() {
                   {user?.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
-              <button type="button" onClick={() => fileRef.current?.click()}
+              <button data-voice="upload-avatar" type="button" onClick={() => fileRef.current?.click()}
                 className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-600 text-white rounded-full text-xs flex items-center justify-center border-2 border-white cursor-pointer hover:bg-primary-700">
                 📷
               </button>
@@ -156,11 +156,11 @@ export default function Profile() {
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <button type="submit" disabled={saving}
+            <button data-voice="save-profile" type="submit" disabled={saving}
               className="px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50">
               {saving ? 'Saving...' : 'Save changes'}
             </button>
-            <button type="button" onClick={() => setShowPassForm(!showPassForm)}
+            <button data-voice="change-password" type="button" onClick={() => setShowPassForm(!showPassForm)}
               className="px-5 py-2 border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50 transition-colors">
               Change password
             </button>
@@ -214,7 +214,7 @@ export default function Profile() {
           </div>
 
           {!user?.twoFactorEnabled && !twoFactor.qrCode && (
-            <button type="button" onClick={async () => {
+            <button data-voice="enable-2fa" type="button" onClick={async () => {
               setTwoFactor({ ...twoFactor, loading: true });
               try {
                 const res = await auth.setup2fa();
@@ -263,7 +263,7 @@ export default function Profile() {
           )}
 
           {user?.twoFactorEnabled && (
-            <button type="button" onClick={async () => {
+            <button data-voice="disable-2fa" type="button" onClick={async () => {
               const pwd = prompt('Enter your password to disable two-factor authentication:');
               if (!pwd) return;
               try {

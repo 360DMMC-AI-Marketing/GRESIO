@@ -32,7 +32,7 @@ export default function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-[#2347e8] flex items-center justify-center text-white text-xl font-bold">
             {form.name ? form.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'SA'}
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
+          <button data-voice="change-photo" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
             <Camera size={14} /> Change photo
           </button>
         </div>
@@ -72,7 +72,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <button onClick={handleSave}
+      <button data-voice="save-profile" onClick={handleSave}
         className="flex items-center gap-2 px-4 py-2.5 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] transition-colors w-fit border-none cursor-pointer">
         <Save size={16} /> Save Changes
       </button>

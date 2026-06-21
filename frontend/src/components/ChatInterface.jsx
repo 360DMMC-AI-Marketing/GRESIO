@@ -68,17 +68,13 @@ export default function ChatInterface() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.altKey && e.key === 'v') {
-        e.preventDefault();
-        toggle();
-      }
       if (open && e.key === 'Escape') {
         setOpen(false);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [toggle, open]);
+  }, [open]);
 
   const handleSubmit = () => {
     const text = input.trim();
@@ -86,11 +82,24 @@ export default function ChatInterface() {
     setInput('');
     setConversation(prev => [...prev, { role: 'user', text }]);
     setLoading(true);
-    setTimeout(() => {
-      const result = executeCommand(text);
+    const result = executeCommand(text);
+    if (result.isAi) {
+      const responseHandler = (e) => {
+        window.removeEventListener('voice-ai-response', responseHandler);
+        setLoading(false);
+        const msg = typeof e.detail === 'string' ? e.detail : e.detail?.message || 'Done';
+        const success = typeof e.detail === 'object' ? e.detail.success !== false : true;
+        setConversation(prev => [...prev, { role: 'system', text: msg, type: success ? 'success' : 'error' }]);
+      };
+      window.addEventListener('voice-ai-response', responseHandler);
+      setTimeout(() => {
+        window.removeEventListener('voice-ai-response', responseHandler);
+        setLoading(false);
+      }, 15000);
+    } else {
       setConversation(prev => [...prev, { role: 'system', text: result.message || 'Done', type: result.success ? 'success' : 'error' }]);
       setLoading(false);
-    }, 200);
+    }
   };
 
   return (
@@ -98,8 +107,8 @@ export default function ChatInterface() {
       <style>{STYLES}</style>
 
       {/* Toggle button */}
-      <button data-chat-toggle onClick={toggle}
-        title={open ? 'Close chat' : 'Open chat (Alt+V)'}
+      <button data-chat-toggle data-voice="open-chat" onClick={toggle}
+        title={open ? 'Close chat' : 'Open chat'}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 100000,
           width: 52, height: 52, borderRadius: 16,

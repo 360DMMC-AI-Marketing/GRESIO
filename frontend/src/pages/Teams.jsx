@@ -78,7 +78,7 @@ export default function Teams() {
               {syncRelative ? `Synced ${syncRelative}` : 'Connected'}
             </span>
           )}
-          <button onClick={handleSync} disabled={syncing || !isConfigured}
+          <button data-voice="sync-teams" onClick={handleSync} disabled={syncing || !isConfigured}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-neutral-300 disabled:cursor-not-allowed rounded-lg transition-colors cursor-pointer border-none">
             <svg className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10" />
@@ -176,9 +176,9 @@ export default function Teams() {
               )}
             </div>
           </div>
-          <a href="/admin"
+          <a data-voice="go-admin-integrations" href="/admin"
             className="shrink-0 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline transition-colors">
-            Admin \u2192 Integrations
+            Admin → Integrations
           </a>
         </div>
       </div>

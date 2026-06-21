@@ -88,11 +88,11 @@ const PLANS = [
       { label: 'Everything in Team', value: true, icon: '✅' },
       { label: 'Custom fields & workflows', value: true, icon: '⚙️' },
       { label: 'Dedicated account manager', value: true, icon: '👤' },
-      { label: 'SAML SSO', value: true, icon: '🔐' },
       { label: 'On-premise option', value: true, icon: '🖥️' },
       { label: 'White-label', value: 'Add-on', icon: '🏷️' },
       { label: 'API access', value: 'Add-on', icon: '🔌' },
       { label: 'SLA guarantee', value: true, icon: '📋' },
+      { label: 'AI Voice + Chat', value: true, icon: '🤖' },
     ],
   },
 ];
@@ -160,9 +160,15 @@ const FEATURES = [
       { label: 'Email + community support', starter: true, team: false, enterprise: false },
       { label: 'Priority support', starter: false, team: true, enterprise: false },
       { label: 'Dedicated account manager', starter: false, team: false, enterprise: true },
-      { label: 'SAML SSO', starter: false, team: false, enterprise: true },
       { label: 'On-premise deployment', starter: false, team: false, enterprise: true },
       { label: 'White-label / API add-ons', starter: false, team: false, enterprise: 'Add-on' },
+    ],
+  },
+  {
+    group: 'AI & Intelligence',
+    items: [
+      { label: 'AI Voice Assistant', starter: false, team: false, enterprise: true },
+      { label: 'AI Chatbot', starter: false, team: false, enterprise: true },
     ],
   },
 ];
@@ -189,7 +195,7 @@ const NEEDS = [
   { id: 'reports', label: 'PDF reports', plan: 'team' },
   { id: 'dna', label: 'WorkDNA archive', plan: 'team' },
   { id: 'capacity', label: 'Capacity planning', plan: 'team' },
-  { id: 'sso', label: 'SSO & enterprise', plan: 'enterprise' },
+  { id: 'ai', label: 'AI voice & chat', plan: 'enterprise' },
 ];
 
 export default function PricingPage() {
@@ -412,9 +418,9 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <div id={`plan-${plan.id}`} className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-all duration-300 ${
+                <div id={`plan-${plan.id}`} className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-shadow transition-colors duration-200 ${
                   plan.popular
-                    ? 'bg-primary-600 border-primary-600 shadow-xl shadow-primary-200 scale-[1.02] z-20'
+                    ? 'bg-primary-600 border-primary-600 shadow-xl shadow-primary-200 z-20'
                     : 'bg-white border-surface-200 hover:border-surface-300 shadow-sm hover:shadow-md'
                 }`}>
                   {/* Badge */}

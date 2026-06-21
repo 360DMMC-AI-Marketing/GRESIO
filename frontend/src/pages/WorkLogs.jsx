@@ -137,6 +137,7 @@ export default function WorkLogs() {
           <p className="text-sm text-surface-500 mt-0.5">Track your daily work across projects</p>
         </div>
         <button onClick={() => { openForm(); loadUserData(); }}
+          data-voice="log-work"
           className="btn btn-blue text-sm">
           + Log work
         </button>
@@ -145,10 +146,10 @@ export default function WorkLogs() {
       {/* Sub-nav */}
       <div className="flex gap-1 mb-5 bg-surface-100 rounded-lg p-1 w-fit">
         {[
-          { key:'my', label:`My Log (${myLogs.length})` },
-          { key:'history', label:'History (14d)' },
+          { key:'my', label:`My Log (${myLogs.length})`, voice:'tab-my-log' },
+          { key:'history', label:'History (14d)', voice:'tab-history' },
         ].map(tab => (
-          <button key={tab.key} onClick={() => { setView(tab.key); if (tab.key === 'history') loadHistory(); }}
+          <button key={tab.key} data-voice={tab.voice} onClick={() => { setView(tab.key); if (tab.key === 'history') loadHistory(); }}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer border-none ${
               view === tab.key ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700 bg-transparent'
             }`}>

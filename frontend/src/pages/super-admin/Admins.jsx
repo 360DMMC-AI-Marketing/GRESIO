@@ -73,7 +73,7 @@ export default function Admins() {
           <h1 className="text-2xl font-bold text-surface-900">Admins</h1>
           <p className="text-xs text-surface-400 mt-0.5">{filtered.length} admin accounts</p>
         </div>
-        <button onClick={() => setShowForm(true)}
+        <button data-voice="invite-admin" onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 px-3 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors">
           <Plus size={14} /> Invite Admin
         </button>
@@ -81,7 +81,7 @@ export default function Admins() {
 
       <div className="relative max-w-xs">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
-        <input type="text" placeholder="Search admins..." value={search} onChange={e => setSearch(e.target.value)}
+        <input data-voice="search-admin" type="text" placeholder="Search admins..." value={search} onChange={e => setSearch(e.target.value)}
           className="w-full pl-9 pr-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg placeholder-surface-400 focus:outline-none" />
       </div>
 

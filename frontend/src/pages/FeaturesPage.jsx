@@ -104,11 +104,12 @@ const CATEGORIES = [
   {
     icon: '🏢', title: 'Enterprise', desc: 'Advanced features for organizations that need security, customization, and dedicated support.',
     features: [
-      { title: 'SAML SSO', desc: 'Single sign-on for enterprise teams. One-click authentication with your identity provider.' },
       { title: 'On-Premise Deployment', desc: 'Deploy GRESIO on your own infrastructure. Full data control and compliance with internal policies.' },
       { title: 'Custom Fields & Workflows', desc: 'Tailor GRESIO to your processes. Add custom fields to projects/tasks. Define custom phase workflows.' },
       { title: 'SLA Guarantee', desc: 'Service Level Agreement with guaranteed uptime and response times for enterprise customers.' },
       { title: 'White-Label & API Access', desc: 'Remove GRESIO branding and add your own. Full API access for custom integrations and automation.' },
+      { title: 'AI Voice Assistant', desc: 'Voice-controlled project management — say "hey gresio" to create tasks, navigate pages, assign work, and run commands hands-free through the smart assistant panel.' },
+      { title: 'AI Chatbot', desc: 'Conversational AI assistant that understands your project context. Ask questions, generate reports, and execute commands through natural language chat — all inside the dashboard.' },
     ],
   },
 ];

@@ -95,7 +95,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-surface-900">Super Dashboard</h1>
           <p className="text-xs text-surface-400 mt-0.5">{dateTime.date} · {dateTime.time}</p>
         </div>
-        <button onClick={() => navigate('/super/health')}
+        <button data-voice="view-health" onClick={() => navigate('/super/health')}
           className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${healthOverall === 'pass' ? 'bg-green-50 border-green-200 text-green-700' : healthOverall === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
           {healthOverall === 'pass' ? <CheckCircle size={14} /> : healthOverall === 'warn' ? <AlertCircle size={14} /> : <XCircle size={14} />}
           <span>{healthCounts.pass}/{Object.keys(healthServices).length} services</span>
@@ -118,7 +118,7 @@ export default function Dashboard() {
               <TrendingUp size={15} className="text-surface-400" />
               <h2 className="text-sm font-semibold text-surface-900">Growth (6 months)</h2>
             </div>
-            <button onClick={() => navigate('/super/analytics')}
+            <button data-voice="view-analytics" onClick={() => navigate('/super/analytics')}
               className="text-[10px] font-medium text-primary-600 hover:text-primary-700 bg-transparent border-none cursor-pointer">
               Full analytics <ArrowRight size={10} className="inline" />
             </button>
@@ -204,7 +204,7 @@ export default function Dashboard() {
               <Plus size={14} className="text-surface-400" />
               <h2 className="text-sm font-semibold text-surface-900">Recent Registrations</h2>
             </div>
-            <button onClick={() => navigate('/super/companies')}
+            <button data-voice="view-companies" onClick={() => navigate('/super/companies')}
               className="text-[10px] font-medium text-primary-600 hover:text-primary-700 bg-transparent border-none cursor-pointer">
               View all <ArrowRight size={10} className="inline" />
             </button>

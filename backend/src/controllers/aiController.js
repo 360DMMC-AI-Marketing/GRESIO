@@ -25,9 +25,10 @@ exports.chat = async (req, res) => {
       await chatDoc.save();
     }
 
-    res.json({ reply: reply || 'AI is not configured. Set OPENAI_API_KEY in .env', history: chatDoc.messages.slice(-10) });
+    res.json({ reply: reply || 'AI not available. Set OPENAI_API_KEY.', history: chatDoc.messages.slice(-10) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('AI chat error:', err);
+    res.json({ reply: `Error: ${err.message}`, history: [] });
   }
 };
 
@@ -43,18 +44,18 @@ exports.history = async (req, res) => {
 exports.clearHistory = async (req, res) => {
   try {
     await ProjectChat.deleteOne({ project: req.params.projectId });
-    res.json({ message: 'Chat history cleared' });
+    res.json({ message: 'Chat history cleared.' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Could not clear history: ${err.message}` });
   }
 };
 
 exports.generateReportSummary = async (req, res) => {
   try {
     const summary = await aiService.generateReportSummary(req.params.id);
-    res.json({ summary: summary || 'AI not configured. Set OPENAI_API_KEY.' });
+    res.json({ summary: summary || 'Set OPENAI_API_KEY to generate summaries.' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Could not generate summary: ${err.message}` });
   }
 };
 
@@ -65,7 +66,7 @@ exports.estimateTask = async (req, res) => {
     const hours = await aiService.estimateTaskDuration(projectId, title, description);
     res.json({ estimatedHours: hours });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Could not estimate: ${err.message}` });
   }
 };
 
@@ -74,7 +75,7 @@ exports.detectRisks = async (req, res) => {
     const risks = await aiService.detectProjectRisks(req.params.projectId);
     res.json({ risks });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Could not detect risks: ${err.message}` });
   }
 };
 
@@ -85,6 +86,6 @@ exports.generateTemplate = async (req, res) => {
     const template = await aiService.generateProjectTemplate(companyType, goals);
     res.json({ template });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Could not generate template: ${err.message}` });
   }
 };

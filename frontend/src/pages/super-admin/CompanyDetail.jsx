@@ -61,7 +61,7 @@ export default function CompanyDetail() {
 
   return (
     <div className="flex flex-col gap-5">
-      <button onClick={() => navigate('/super/companies')}
+      <button data-voice="back-companies" onClick={() => navigate('/super/companies')}
         className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-surface-700 bg-transparent border-none cursor-pointer w-fit">
         <ArrowLeft size={14} /> Back to Companies
       </button>
@@ -79,7 +79,7 @@ export default function CompanyDetail() {
 
       <div className="flex gap-1 border-b border-surface-200">
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
+          <button key={t.key} data-voice={`tab-${t.key}`} onClick={() => setActiveTab(t.key)}
             className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors bg-transparent border-none cursor-pointer ${activeTab === t.key ? 'border-[#2347e8] text-[#2347e8]' : 'border-transparent text-surface-500 hover:text-surface-700'}`}>
             {t.label}
           </button>

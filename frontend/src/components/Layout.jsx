@@ -3,6 +3,8 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import VoiceController from './VoiceController';
+import AiAssistantPanel from './AiAssistantPanel';
 
 const SIDEBAR_EXPANDED = 260;
 const SIDEBAR_COLLAPSED = 64;
@@ -63,6 +65,8 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <VoiceController />
+      <AiAssistantPanel />
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-surface-200 z-20" style={{ paddingLeft: isMobile ? 0 : sidebarWidth }}>
         <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 max-w-7xl mx-auto text-xs">
           <div className="flex items-center gap-2.5">

@@ -1,11 +1,12 @@
 const { Router } = require('express');
 const { getBugs, getBugById, createBug, resolveBug, reopenBug, triggerRetest, updateBug, getBugStats } = require('../controllers/bugController');
 const { auth, authorize } = require('../middleware/auth');
+const validate = require('../middleware/validate');
 const router = Router();
 router.use(auth);
 router.get('/', getBugs);
 router.get('/stats/:projectId?', getBugStats);
-router.post('/', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), createBug);
+router.post('/', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), validate.bug.create, createBug);
 router.get('/:id', getBugById);
 router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), updateBug);
 router.post('/:id/resolve', authorize('admin', 'project_manager', 'team_lead'), resolveBug);

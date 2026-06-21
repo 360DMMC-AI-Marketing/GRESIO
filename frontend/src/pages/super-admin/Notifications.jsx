@@ -51,7 +51,7 @@ export default function Notifications() {
           <p className="text-xs text-surface-400 mt-0.5">{notifications.length} total</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={markAllRead}
+          <button data-voice="mark-all-read" onClick={markAllRead}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
             <CheckCheck size={14} /> Mark all read
           </button>

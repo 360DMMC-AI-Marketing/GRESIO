@@ -66,7 +66,7 @@ export default function Analytics() {
         </div>
         <div className="flex items-center gap-1 bg-white border border-surface-200 rounded-lg p-0.5">
           {['1m', '6m', '1y'].map(p => (
-            <button key={p} onClick={() => setPeriod(p)}
+            <button key={p} data-voice={`period-${p}`} onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border-none ${period === p ? 'bg-[#2347e8] text-white' : 'text-surface-500 hover:text-surface-700 bg-transparent'}`}>
               {p === '1m' ? '1 Month' : p === '6m' ? '6 Months' : '1 Year'}
             </button>

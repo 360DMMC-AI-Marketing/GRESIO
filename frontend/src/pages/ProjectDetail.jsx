@@ -1013,8 +1013,8 @@ export default function ProjectDetail() {
             <form onSubmit={handleCreateSprint} style={{background:'white',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
               <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>New Sprint</div>
               <div className="form-row">
-                <input className="select" value={sprintForm.name} onChange={e => setSprintForm({...sprintForm,name:e.target.value})} placeholder="Sprint name *" required style={{flex:1,minWidth:120}} />
-                <input className="select" value={sprintForm.goal} onChange={e => setSprintForm({...sprintForm,goal:e.target.value})} placeholder="Goal (optional)" style={{flex:2,minWidth:160}} />
+                <input data-voice="field-sprint-name" className="select" value={sprintForm.name} onChange={e => setSprintForm({...sprintForm,name:e.target.value})} placeholder="Sprint name *" required style={{flex:1,minWidth:120}} />
+                <input data-voice="field-sprint-goal" className="select" value={sprintForm.goal} onChange={e => setSprintForm({...sprintForm,goal:e.target.value})} placeholder="Goal (optional)" style={{flex:2,minWidth:160}} />
               </div>
               <div className="form-row">
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
@@ -1163,7 +1163,7 @@ export default function ProjectDetail() {
                       <div className={`add-task-form ${openTaskForm === s._id ? 'open' : ''}`}>
                         <div style={{fontSize:10,fontWeight:600,color:'#374151',marginBottom:6}}>Add task to {s.name}</div>
                         <div className="form-row">
-                          <input className="select" value={taskForm.title} onChange={e => setTaskForm({...taskForm,title:e.target.value})}
+                          <input data-voice="field-task-title" className="select" value={taskForm.title} onChange={e => setTaskForm({...taskForm,title:e.target.value})}
                             placeholder="Task title *" style={{flex:2,minWidth:140}} />
                           <Dropdown value={taskGroupFilter} onChange={v => setTaskGroupFilter(v)}
                             options={[{value:'', label:'All groups'}, ...groupedData.groups.map(g => ({value:g._id, label:`${g.icon} ${g.name}`}))]} />

@@ -70,7 +70,7 @@ export default function ProjectRelay() {
           </div>
         </div>
         {canManage && (
-          <button onClick={() => setShowCreate(true)}
+          <button data-voice="new-chain" onClick={() => setShowCreate(true)}
             style={{padding:'7px 14px',background:'#2347e8',color:'white',borderRadius:7,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>
             + New Chain
           </button>

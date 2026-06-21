@@ -1,11 +1,12 @@
 const { Router } = require('express');
 const c = require('../controllers/sprintController');
 const { auth, authorize } = require('../middleware/auth');
+const validate = require('../middleware/validate');
 const r = Router();
 r.use(auth);
 r.get('/', c.getSprints);
 r.get('/:id', c.getSprintById);
-r.post('/', authorize('admin', 'project_manager', 'team_lead'), c.createSprint);
+r.post('/', authorize('admin', 'project_manager', 'team_lead'), validate.sprint.create, c.createSprint);
 r.patch('/:id', c.updateSprint);
 r.post('/:id/tasks', authorize('admin', 'project_manager', 'team_lead'), c.addTaskToSprint);
 r.delete('/:id/tasks/:taskId', authorize('admin', 'project_manager', 'team_lead'), c.removeTaskFromSprint);

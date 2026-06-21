@@ -35,7 +35,7 @@ export default function TemplateMarketplace() {
           <h1 className="text-xl font-bold text-surface-900">Template Marketplace</h1>
           <p className="text-xs text-surface-500 mt-0.5">Use pre-built templates to start projects faster</p>
         </div>
-        <Link to="/templates/create"
+        <Link data-voice="create-template" to="/templates/create"
           className="px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors">
           + Create Template
         </Link>
@@ -43,14 +43,14 @@ export default function TemplateMarketplace() {
 
       <div className="flex gap-2 mb-4 flex-wrap">
         {['', 'software', 'design', 'business', 'content', 'research'].map(t => (
-          <button key={t} onClick={() => setType(t)}
+          <button key={t} data-voice={`filter-type-${t || 'all'}`} onClick={() => setType(t)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border-none ${
               type === t ? 'bg-[#2347e8] text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
             }`}>
             {t || 'All'}
           </button>
         ))}
-        <select value={sort} onChange={e => setSort(e.target.value)}
+        <select data-voice="sort-by" value={sort} onChange={e => setSort(e.target.value)}
           className="ml-auto text-xs border border-surface-200 rounded-lg px-3 py-1.5 outline-none bg-white">
           <option value="downloads">Most Downloaded</option>
           <option value="rating">Highest Rated</option>

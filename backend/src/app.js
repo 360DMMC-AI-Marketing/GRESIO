@@ -95,6 +95,15 @@ const registerLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', registerLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Try again later.' },
+});
+app.use('/api', globalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/users', userRoutes);
@@ -124,6 +133,7 @@ app.use('/api/ai-agent', require('./routes/aiAgent'));
 app.use('/api/v1', require('./routes/publicApi'));
 app.use('/api/api-keys', require('./routes/apiKeys'));
 app.use('/api/templates', require('./routes/templates'));
+app.use('/api/wiki', require('./routes/wiki'));
 
 app.use('/super-api', superAdminRoutes);
 

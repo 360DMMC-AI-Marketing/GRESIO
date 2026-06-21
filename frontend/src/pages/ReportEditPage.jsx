@@ -151,7 +151,7 @@ export default function ReportEditPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/projects/${projectId}`)}
+          <button data-voice="back-project" onClick={() => navigate(`/projects/${projectId}`)}
             className="p-1.5 text-surface-400 hover:text-surface-600 hover:bg-surface-100 rounded-lg transition-colors bg-transparent border-none cursor-pointer">
             <ArrowLeft size={16} />
           </button>
@@ -163,17 +163,17 @@ export default function ReportEditPage() {
 
         <div className="flex items-center gap-2">
           <div className="flex bg-surface-100 rounded-lg p-0.5">
-            <button onClick={() => setType('client')}
+            <button data-voice="type-client" onClick={() => setType('client')}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'client' ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
               Client Report
             </button>
-            <button onClick={() => setType('admin')}
+            <button data-voice="type-admin" onClick={() => setType('admin')}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'admin' ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
               Admin Report
             </button>
           </div>
 
-          <button onClick={() => setPreviewMode(!previewMode)}
+          <button data-voice="preview-report" onClick={() => setPreviewMode(!previewMode)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
             <Eye size={14} /> {previewMode ? 'Edit' : 'Preview'}
           </button>
@@ -184,7 +184,7 @@ export default function ReportEditPage() {
               View in Reports →
             </button>
           ) : (
-            <button onClick={handleSave} disabled={saving}
+            <button data-voice="save-report" onClick={handleSave} disabled={saving}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#2347e8] text-white rounded-lg hover:bg-[#1d3dcc] transition-colors border-none cursor-pointer disabled:opacity-50">
               <Save size={14} /> {saving ? 'Saving...' : 'Save Report'}
             </button>

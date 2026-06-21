@@ -344,10 +344,11 @@ export default function TestCaseDashboard() {
           )}
 
           {/* Tabs */}
-          <div className="card" style={{padding:0,marginBottom:12,overflow:'hidden'}}>
+            <div className="card" style={{padding:0,marginBottom:12,overflow:'hidden'}}>
             <div className="tabs" style={{background:'transparent',padding:0}}>
               {TABS.map(tab => (
                 <div key={tab.key} onClick={() => setActiveTab(tab.key)}
+                  data-voice={`tab-${tab.key}`}
                   className={`tab ${activeTab === tab.key ? 'active' : ''}`}
                   style={{fontSize:11,padding:'8px 12px'}}>
                   {tab.label}
@@ -452,9 +453,9 @@ export default function TestCaseDashboard() {
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-semibold text-surface-900">All Test Cases (0)</span>
             <div className="flex gap-1.5">
-              {canEdit && <button className="btn btn-green text-[10px]" onClick={() => setShowNewForm(true)}>+ New Test Case</button>}
-              {canEdit && <button className="btn btn-blue text-[10px]" onClick={handleGenerateTests}>Generate from Tasks</button>}
-              {canEdit && <button className="btn btn-amber text-[10px]" onClick={handleGenerateCompleted}>From Completed Sprints</button>}
+              {canEdit && <button data-voice="new-test-case" className="btn btn-green text-[10px]" onClick={() => setShowNewForm(true)}>+ New Test Case</button>}
+              {canEdit && <button data-voice="generate-tests" className="btn btn-blue text-[10px]" onClick={handleGenerateTests}>Generate from Tasks</button>}
+              {canEdit && <button data-voice="generate-completed" className="btn btn-amber text-[10px]" onClick={handleGenerateCompleted}>From Completed Sprints</button>}
             </div>
           </div>
           <div className="text-center py-10 text-[11px] text-surface-400">No test cases yet.</div>
@@ -559,7 +560,7 @@ export default function TestCaseDashboard() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
           <div style={{fontSize:12,fontWeight:600,color:'#111827'}}>Auto-Generated Tests ({autoList.length})</div>
           <div style={{display:'flex',gap:6}}>
-            {canEdit && <button className="btn btn-amber" onClick={handleRunFilter} style={{fontSize:10}}>🚩 Run Interest Filter</button>}
+            {canEdit && <button data-voice="run-filter" className="btn btn-amber" onClick={handleRunFilter} style={{fontSize:10}}>🚩 Run Interest Filter</button>}
           </div>
         </div>
         {autoList.length === 0 ? (
@@ -692,7 +693,7 @@ export default function TestCaseDashboard() {
       <div>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
           <div style={{fontSize:12,fontWeight:600,color:'#111827'}}>⚙️ Interest Configuration</div>
-          {canEdit && <button className="btn btn-blue" style={{fontSize:10}} onClick={handleSaveInterestConfig}>💾 Save</button>}
+          {canEdit && <button data-voice="save-config" className="btn btn-blue" style={{fontSize:10}} onClick={handleSaveInterestConfig}>💾 Save</button>}
         </div>
         <div style={{maxWidth:480,display:'flex',flexDirection:'column',gap:10}}>
           <div>

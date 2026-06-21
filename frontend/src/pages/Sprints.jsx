@@ -219,7 +219,7 @@ export default function Sprints() {
                       <div>
                         {showAddTask === s._id ? (
                           <div className="flex flex-col gap-1.5 bg-surface-50 rounded-lg p-2">
-                            <input value={taskForm.title} onChange={e => setTaskForm({...taskForm, title:e.target.value})} placeholder="Task title *" autoFocus
+                            <input data-voice="field-title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title:e.target.value})} placeholder="Task title *" autoFocus
                               className="w-full px-2 py-1 border border-surface-200 rounded text-[10px] bg-white outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 box-border" />
                             <div className="flex gap-1.5">
                               <Dropdown value={taskForm.priority} onChange={v => setTaskForm({...taskForm, priority:v})}

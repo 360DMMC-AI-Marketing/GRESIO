@@ -135,7 +135,7 @@ export default function WorkDNA() {
           <p className="text-sm text-surface-500 mt-0.5">Monthly project intelligence archive — analyzed and searchable</p>
         </div>
         {canAnalyze && (
-          <button onClick={handleAnalyzeAll} disabled={analyzing}
+          <button data-voice="monthly-analysis" onClick={handleAnalyzeAll} disabled={analyzing}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer border-none shadow-sm">
             {analyzing ? <RefreshCw size={13} className="animate-spin" /> : <Play size={13} fill="currentColor" />}
             {analyzing ? 'Analyzing...' : 'Monthly Analysis'}
@@ -160,13 +160,13 @@ export default function WorkDNA() {
       {/* Tabs */}
       <div className="flex gap-1 bg-surface-100 rounded-lg p-0.5">
         {[
-          {key: 'overview', label: 'Project Archive', icon: FolderOpen},
-          {key: 'decisions', label: 'Decision Journal', icon: BookOpen},
-          {key: 'dejavu', label: 'Déjà Vu', icon: Search},
+          {key: 'overview', label: 'Project Archive', icon: FolderOpen, voice: 'tab-archive'},
+          {key: 'decisions', label: 'Decision Journal', icon: BookOpen, voice: 'tab-decisions'},
+          {key: 'dejavu', label: 'Déjà Vu', icon: Search, voice: 'tab-dejavu'},
         ].map(t => {
           const Icon = t.icon;
           return (
-            <button key={t.key} onClick={() => setTab(t.key)}
+            <button key={t.key} data-voice={t.voice} onClick={() => setTab(t.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border-none cursor-pointer transition-all ${tab === t.key ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
               <Icon size={13} />
               {t.label}
@@ -343,7 +343,7 @@ export default function WorkDNA() {
               <h3 className="text-base font-semibold text-surface-900 mb-1">No decisions logged yet</h3>
               <p className="text-sm text-surface-500 mb-4">Record important project decisions to build your knowledge base.</p>
               {canManage && (
-                <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none">
+                <button data-voice="log-decision" onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none">
                   <Plus size={13} /> Log First Decision
                 </button>
               )}
@@ -384,7 +384,7 @@ export default function WorkDNA() {
             <div className="text-sm font-bold text-surface-900 mb-1">🔍 Search Archived Projects</div>
             <p className="text-xs text-surface-500 mb-3">Search by feature, tech, or project name — then choose one to find similar projects.</p>
             <div className="flex gap-2">
-              <input className="select flex-1 max-w-[350px] text-xs" value={dejaVuSearch}
+              <input data-voice="search-dejavu" className="select flex-1 max-w-[350px] text-xs" value={dejaVuSearch}
                 onChange={e => setDejaVuSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleDejaVuSearch()}
                 placeholder="e.g. payments, auth, API, dashboard..." />

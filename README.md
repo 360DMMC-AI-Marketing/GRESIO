@@ -131,7 +131,6 @@ Backend API: http://localhost:5000
 
 ### 🔒 Security & Enterprise
 - **JWT Authentication** — Token-based auth with role-based access control
-- **SAML SSO** — Enterprise single sign-on
 - **On-Premise Deployment** — Full data control on your infrastructure
 - **Custom Fields & Workflows** — Tailor to your processes (enterprise)
 

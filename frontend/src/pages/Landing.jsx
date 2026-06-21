@@ -24,8 +24,9 @@ export default function Landing() {
             The Internal OS for<br />Modern Teams
           </h1>
            <p className="text-xl md:text-2xl text-surface-500 max-w-3xl mx-auto mb-10 leading-relaxed">
-              From discovery to delivery — one platform for the entire project lifecycle.
-           </p>
+               From discovery to delivery — one platform for the entire project lifecycle.<br />
+               <span className="text-base md:text-lg text-surface-400 mt-2 block">AI-powered voice & chat for Enterprise plans.</span>
+            </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
               See Plans & Pricing
@@ -53,6 +54,7 @@ export default function Landing() {
             GRESIO is an internal operating system for teams that need more than task management. 
             It handles the full project lifecycle, adapts to any workflow, and generates 
             professional audit-ready reports at delivery — branded and exportable as PDF.
+            Enterprise plans include AI voice assistant and chatbot for hands-free project management.
           </p>
           <div className="mt-10 flex items-center justify-center gap-6 flex-wrap">
             <Link to="/features" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-base">

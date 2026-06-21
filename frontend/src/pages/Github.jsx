@@ -39,7 +39,7 @@ export default function Github() {
           Connect your GitHub repositories to automatically track commits, pull requests,
           and issues across your projects.
         </p>
-        <p className="text-sm text-surface-400">
+        <p data-voice="github-configure" className="text-sm text-surface-400">
           {repo ? `Watching: ${repo}` : 'Configure in Admin → Integrations'}
         </p>
       </div>

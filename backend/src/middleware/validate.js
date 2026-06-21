@@ -54,9 +54,40 @@ const integration = {
   ],
 };
 
+const sprint = {
+  create: [
+    body('name').trim().notEmpty().withMessage('Sprint name is required'),
+    body('project').isMongoId().withMessage('Valid project ID is required'),
+    handleErrors,
+  ],
+};
+
+const bug = {
+  create: [
+    body('title').trim().notEmpty().withMessage('Bug title is required'),
+    body('project').isMongoId().withMessage('Valid project ID is required'),
+    handleErrors,
+  ],
+};
+
+const workLog = {
+  create: [
+    body('hours').optional().isFloat({ min: 0 }).withMessage('Hours must be a positive number'),
+    body('date').optional().isISO8601().withMessage('Date must be valid'),
+    handleErrors,
+  ],
+};
+
 const idParam = [
   param('id').isMongoId().withMessage('Invalid ID format'),
   handleErrors,
 ];
 
-module.exports = { auth, project, task, user, integration, idParam };
+const wiki = {
+  create: [
+    body('title').trim().notEmpty().withMessage('Page title is required'),
+    handleErrors,
+  ],
+};
+
+module.exports = { auth, project, task, user, integration, sprint, bug, workLog, wiki, idParam };

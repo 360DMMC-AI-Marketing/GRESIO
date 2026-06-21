@@ -5,8 +5,6 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import SuperAdminLayout from './components/SuperAdminLayout';
 import AiCommandBar from './components/AiCommandBar';
-import VoiceController from './components/VoiceController';
-import ChatInterface from './components/ChatInterface';
 import MobileNav from './components/MobileNav';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -51,6 +49,7 @@ const PublicReport = lazy(() => import('./pages/PublicReport'));
 const TemplateMarketplace = lazy(() => import('./pages/TemplateMarketplace'));
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const CreateTemplate = lazy(() => import('./pages/CreateTemplate'));
+const Wiki = lazy(() => import('./pages/Wiki'));
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
 const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
 const SuperAdminCompanyDetail = lazy(() => import('./pages/super-admin/CompanyDetail'));
@@ -62,6 +61,7 @@ const SuperAdminProfile = lazy(() => import('./pages/super-admin/Profile'));
 const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
 import ScrollToTop from './components/ScrollToTop';
 import WelcomeWizard from './components/WelcomeWizard';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function SuspenseFallback() {
   return (
@@ -84,6 +84,7 @@ export default function App() {
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <BrowserRouter>
         <ScrollToTop />
+        <ErrorBoundary>
         <SuspenseWrapper>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -130,6 +131,7 @@ export default function App() {
               <Route path="/templates" element={<TemplateMarketplace />} />
               <Route path="/templates/:id" element={<TemplateDetail />} />
               <Route path="/templates/create" element={<CreateTemplate />} />
+              <Route path="/wiki" element={<Wiki />} />
             </Route>
             <Route element={<SuperAdminLayout />}>
               <Route path="/super/dashboard" element={<SuperAdminDashboard />} />
@@ -145,9 +147,8 @@ export default function App() {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </SuspenseWrapper>
+        </ErrorBoundary>
         <AiCommandBar />
-        <VoiceController />
-        <ChatInterface />
         <MobileNav />
         <WelcomeWizard />
       </BrowserRouter>

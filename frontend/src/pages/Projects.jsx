@@ -82,13 +82,13 @@ export default function Projects() {
         }>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           <div><label style={labelStyle}>Project name *</label>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Project name"
+            <input data-voice="field-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Project name"
               style={inputStyle} required /></div>
           <div><label style={labelStyle}>Description</label>
-            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description"
+            <input data-voice="field-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description"
               style={inputStyle} /></div>
           <div><label style={labelStyle}>Client name</label>
-            <input value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name"
+            <input data-voice="field-client" value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name"
               style={inputStyle} /></div>
           <div><label style={labelStyle}>Deadline</label>
             <input type="date" className="select" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}

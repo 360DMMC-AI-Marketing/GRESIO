@@ -448,12 +448,12 @@ function CreateSeparateTaskModal({ allUsers, onClose, onCreated }) {
       <div className="space-y-2.5">
         <div>
           <label className="text-[10px] font-medium text-surface-700 block mb-1">Task Title *</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Enter task title"
+          <input data-voice="field-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Enter task title"
             className="w-full px-2.5 py-1.5 border border-surface-300 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all box-border" />
         </div>
         <div>
           <label className="text-[10px] font-medium text-surface-700 block mb-1">Description</label>
-          <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description" rows={2}
+          <textarea data-voice="field-desc" value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description" rows={2}
             className="w-full px-2.5 py-1.5 border border-surface-300 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-vertical box-border" />
         </div>
         <div className="grid grid-cols-2 gap-2.5">

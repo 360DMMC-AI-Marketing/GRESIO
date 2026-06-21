@@ -12,12 +12,49 @@ function getCurrentPage() {
   if (path === '/analytics' || path.startsWith('/analytics')) return 'analytics';
   if (path === '/calendar' || path.startsWith('/calendar')) return 'calendar';
   if (path === '/admin' || path.startsWith('/admin')) return 'admin';
-  if (path === '/settings' || path.startsWith('/settings')) return 'settings';
+  if (path === '/work-logs' || path.startsWith('/work-logs')) return 'workLogs';
+  if (path === '/test-cases' || path.startsWith('/test-cases')) return 'testCases';
+  if (path === '/relay' || path.startsWith('/relay')) return 'projectRelay';
+  if (path === '/onboarding-guide' || path.startsWith('/onboarding-guide')) return 'onboardingGuide';
+  if (path === '/reports' || path.startsWith('/reports')) return 'reports';
+  if (path.match(/^\/projects\/[^/]+\/reports\/edit/)) return 'reportEdit';
+  if (path === '/profile' || path.startsWith('/profile')) return 'profile';
+  if (path === '/github' || path.startsWith('/github')) return 'github';
+  if (path === '/teams' || path.startsWith('/teams')) return 'teams';
+  if (path === '/outlook' || path.startsWith('/outlook')) return 'outlook';
+  if (path === '/work-dna' || path.startsWith('/work-dna')) return 'workDna';
+  if (path === '/templates/create') return 'createTemplate';
+  if (path.startsWith('/templates/')) return 'templateDetail';
+  if (path === '/templates' || path.startsWith('/templates?')) return 'templateMarketplace';
+  if (path === '/super/dashboard' || path.startsWith('/super/dashboard')) return 'superDashboard';
+  if (path === '/super/companies' || path.startsWith('/super/companies?')) return 'superCompanies';
+  if (path.startsWith('/super/companies/')) return 'superCompanyDetail';
+  if (path === '/super/admins' || path.startsWith('/super/admins')) return 'superAdmins';
+  if (path === '/super/analytics' || path.startsWith('/super/analytics')) return 'superAnalytics';
+  if (path === '/super/health' || path.startsWith('/super/health')) return 'superHealth';
+  if (path === '/super/notifications' || path.startsWith('/super/notifications')) return 'superNotifications';
+  if (path === '/super/profile' || path.startsWith('/super/profile')) return 'superProfile';
+  if (path === '/super/settings' || path.startsWith('/super/settings')) return 'superSettings';
   return 'dashboard';
 }
 
 function findElementByVoice(name) {
-  return document.querySelector(`[data-voice="${name}"]`);
+  let el = document.querySelector(`[data-voice="${name}"]`);
+  if (el) return el;
+  // Fallback: search by placeholder text
+  el = document.querySelector(`input[placeholder="${name}"], textarea[placeholder="${name}"]`);
+  if (el) return el;
+  // Fallback: search by associated label text
+  const label = document.querySelector(`label`);
+  if (label && label.textContent.trim().toLowerCase() === name.toLowerCase()) {
+    const id = label.getAttribute('for');
+    if (id) return document.getElementById(id);
+    const parent = label.parentElement;
+    if (parent) return parent.querySelector('input, textarea, select');
+  }
+  // Try partial placeholder match
+  el = document.querySelector(`input[placeholder*="${name}" i], textarea[placeholder*="${name}" i]`);
+  return el || null;
 }
 
 function executeClickAction(payload) {
@@ -46,6 +83,27 @@ function executeScrollAction(payload) {
   return { success: true, message: `Scrolled ${payload}` };
 }
 
+function executeFocusAction(payload) {
+  const el = findElementByVoice(payload);
+  if (el) { el.focus(); return { success: true, message: `Focused ${payload}` }; }
+  return { success: false, message: `Could not find ${payload}` };
+}
+
+function executeFillAction(payload, groups) {
+  const el = findElementByVoice(payload);
+  if (!el) return { success: false, message: `Could not find ${payload}` };
+  // Extract value from command — groups[1] is the captured value
+  const value = (groups && groups[1]) ? groups[1].trim() : '';
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    nativeSetter.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return { success: true, message: `Set "${value}"` };
+  }
+  return { success: false, message: 'Element is not an input' };
+}
+
 // -------------------------------------------------- //
 //  SMARTER TEXT UNDERSTANDING (like a human assistant) //
 // -------------------------------------------------- //
@@ -61,7 +119,7 @@ function stripNoise(text) {
 // 2. Fix phonetic/accent transcriptions — map how people SAY words to how they're spelled
 const PHONETIC_MAP = [
   // "vocier/vociere/vocie" → "voice"
-  { from: /\bvoci(?:er|ere|e|al|ce)?\b/gi, to: 'voice' },
+  { from: /\bvoci(?:er|ere|e|al|ce|s)?\b/gi, to: 'voice' },
   // "dispare/disapear/disapeer" → "disappear"
   { from: /\bdis(?:apear|apeer|apare|paer|pere)\b/gi, to: 'disappear' },
   // "disactivation/desactivation" → "deactivation"
@@ -75,7 +133,7 @@ const PHONETIC_MAP = [
   // "yu/ou" → "you"
   { from: /\b(?:yu|ou|yuo|u)\b/gi, to: 'you' },
   // "wt/wh" → "what"
-  { from: /\b(?:wt|waht|whta|whta)\b/gi, to: 'what' },
+  { from: /\b(?:wt|waht|whta|whta|whhat)\b/gi, to: 'what' },
   // "teh" → "the"
   { from: /\bteh\b/gi, to: 'the' },
   // "wierd" → "weird"
@@ -89,7 +147,7 @@ const PHONETIC_MAP = [
   // "wont" → "won't"
   { from: /\bwont\b/gi, to: "won't" },
   // "cann/ccan" → "can"
-  { from: /\b(?:ccan|cann|caan)\b/gi, to: 'can' },
+  { from: /\b(?:ccan|cann|caan|kann)\b/gi, to: 'can' },
   // "wanna" → "want to"
   { from: /\bwanna\b/gi, to: 'want to' },
   // "gonna" → "going to"
@@ -100,8 +158,8 @@ const PHONETIC_MAP = [
   { from: /\bhezar\b/gi, to: 'hear' },
   // "prbelm" → "problem"
   { from: /\bprbelm\b/gi, to: 'problem' },
-  // "maek" → "make"
-  { from: /\bmaek\b/gi, to: 'make' },
+  // "maek/mk" → "make"
+  { from: /\b(?:maek|mak|mke)\b/gi, to: 'make' },
   // "thsoen" → "those"
   { from: /\bthsoen\b/gi, to: 'those' },
   // "tjhem" → "them"
@@ -110,44 +168,142 @@ const PHONETIC_MAP = [
   { from: /\bfoirst\b/gi, to: 'first' },
   // "doen" → "done"
   { from: /\bdoen\b/gi, to: 'done' },
-  // "likc" → "like" / "lick" → "like" / "likc" → "like"
-  { from: /\blik[ck]\b/gi, to: 'like' },
+  // "lidk/likc" → "like"
+  { from: /\bl(?:ik[ck]|idk|iek)\b/gi, to: 'like' },
   // "clcik" → "click"
-  { from: /\bclcik\b/gi, to: 'click' },
+  { from: /\b(?:clcik|clik|klick|klic)\b/gi, to: 'click' },
   // "manully" → "manually"
   { from: /\bmanull[ey]\b/gi, to: 'manually' },
   // "seolon" → "so only"
   { from: /\bseolon\b/gi, to: 'so only' },
   // "nwço" → "now"
-  { from: /\bnw[çc]o?\b/gi, to: 'now' },
+  { from: /\b(?:nw[çc]o?|no[w])\b/gi, to: 'now' },
   // "e cna" → "I can"
   { from: /\be\s+cna\b/gi, to: 'I can' },
   // "cna" → "can"
   { from: /\bcna\b/gi, to: 'can' },
   // "wha(t" → "what"
   { from: /\bwha\(?\b/gi, to: 'what' },
-  // "ir" → "it" (when likely a typo for "it")
+  // "ir" → "it"
   { from: /\b(?:irt|iit|ti)\b/gi, to: 'it' },
   // "annd" → "and"
-  { from: /\bannd\b/gi, to: 'and' },
+  { from: /\b(?:annd|adn|nd)\b/gi, to: 'and' },
   // "typpe/typing/typngh" → "type/typing"
   { from: /\btyp(?:e|ing|ngh|ng)\b/gi, to: 'typing' },
-  // "liem" → "like"
-  { from: /\bliem\b/gi, to: 'like' },
-  // "hçma" → "hmm"
+  // "hçma/hmm" → "hmm"
   { from: /\bh[çc]ma\b/gi, to: 'hmm' },
   // "promtou" → "prompt to"
   { from: /\bpromtou?\b/gi, to: 'prompt to' },
   // "iodreea" → "idea"
-  { from: /\biodre+a\b/gi, to: 'idea' },
-  // "oerk" → "work"
-  { from: /\boerk\b/gi, to: 'work' },
+  { from: /\b(?:iodre+a|idear)\b/gi, to: 'idea' },
+  // "oerk/wrok" → "work"
+  { from: /\b(?:oerk|wrok|wrk)\b/gi, to: 'work' },
   // "fveryone" → "everyone"
-  { from: /\bfver(?:yone|y|)\b/gi, to: 'everyone' },
+  { from: /\b(?:fver(?:yone|y)|everione)\b/gi, to: 'everyone' },
   // "separet" → "separate"
   { from: /\bsepar(?:et|ret|ate|etly)\b/gi, to: 'separate' },
   // "whaty" → "what"
   { from: /\bwhaty\b/gi, to: 'what' },
+  // --- NEW: Project management speech fixes ---
+  // "projeck/projec/projet" → "project"
+  { from: /\bproj(?:eck|ec|et|ct)\b/gi, to: 'project' },
+  // "dasboard/dashbord" → "dashboard"
+  { from: /\bd(?:asboard|ashbord|eshboard)\b/gi, to: 'dashboard' },
+  // "calender/calandar/calendr" → "calendar"
+  { from: /\bcal(?:ender|andar|endr|ender)\b/gi, to: 'calendar' },
+  // "analytics/analitics" → "analytics"
+  { from: /\banal(?:ytics|itics|ysis)\b/gi, to: 'analytics' },
+  // "sprint/sprnt" → "sprint"
+  { from: /\bspr(?:int|nt|ent|rint)\b/gi, to: 'sprint' },
+  // "setting/seting/settng" → "settings"
+  { from: /\bs(?:etting|eting|ettng|eting)\b/gi, to: 'settings' },
+  // "profile/profil/profiel" → "profile"
+  { from: /\bpro(?:file|fil|fiel|phile)\b/gi, to: 'profile' },
+  // "member/memmber" → "member"
+  { from: /\bm(?:ember|emmber|eber)\b/gi, to: 'member' },
+  // "department/dept" → "department"
+  { from: /\bd(?:epartment|ept|epartmnt)\b/gi, to: 'department' },
+  // "asign/assigne" → "assign"
+  { from: /\b(?:asign|assigne|asin)\b/gi, to: 'assign' },
+  // "task/tsk" → "task"
+  { from: /\bt(?:ask|sk|aks)\b/gi, to: 'task' },
+  // "notification/notif" → "notification"
+  { from: /\b(?:notif(?:ication)?|notfication)\b/gi, to: 'notification' },
+  // "overview/overviw" → "overview"
+  { from: /\bover(?:view|viw|vew)\b/gi, to: 'overview' },
+  // "create/creat/cretae" → "create"
+  { from: /\b(?:creat|cretae|crate|kreate)\b/gi, to: 'create' },
+  // "generate/genrate" → "generate"
+  { from: /\b(?:generate|genrate|gen)\b/gi, to: 'generate' },
+  // "filter/filtr" → "filter"
+  { from: /\bf(?:ilter|iltr|lter)\b/gi, to: 'filter' },
+  // "search/serch" → "search"
+  { from: /\b(?:serch|sarch|searsh)\b/gi, to: 'search' },
+  // "refresh/refres" → "refresh"
+  { from: /\br(?:efresh|efres|fesh)\b/gi, to: 'refresh' },
+  // "template/templat" → "template"
+  { from: /\bt(?:emplate|emplat|amplat)\b/gi, to: 'template' },
+  // "assignee/asignee" → "assignee"
+  { from: /\b(?:assignee|asignee|assigne)\b/gi, to: 'assignee' },
+  // "deadline/deadlne" → "deadline"
+  { from: /\bdead(?:line|lne|lin)\b/gi, to: 'deadline' },
+  // "priority/priorit" → "priority"
+  { from: /\bpriori(?:ty|t|te)\b/gi, to: 'priority' },
+  // "comment/coment" → "comment"
+  { from: /\bc(?:omment|oment|omme)\b/gi, to: 'comment' },
+  // "submit/subit" → "submit"
+  { from: /\b(?:submit|subit|sbmt)\b/gi, to: 'submit' },
+  // "invite/invit" → "invite"
+  { from: /\bin(?:vite|vit|vte)\b/gi, to: 'invite' },
+  // --- NEW: Common misrecognitions from speech ---
+  // "for" → "four" (but keep as "for" if context)
+  // "to" → "two" / "too"
+  { from: /\btwo\s+(?:project|task|sprint)\b/gi, to: 'to $&' },
+  // "a new" → slipped "a" before everything
+  // "i want" / "i need" / "i would like" are stripped by stripNoise already
+  // "pleace/pls/plz" → stripped by stripNoise
+  // "creaction" → "creation"
+  { from: /\bcreaction\b/gi, to: 'creation' },
+  // "delett" → "delete"
+  { from: /\bdelet(?:e|t|ting)\b/gi, to: 'delete' },
+  // "mouve" → "move"
+  { from: /\bm(?:ouve|uve|oove)\b/gi, to: 'move' },
+  // "reop" → "report"
+  { from: /\bre(?:op|port|po)\b/gi, to: 'report' },
+  // "descro" → "description"
+  { from: /\bdesc(?:ro|ription|rip)\b/gi, to: 'description' },
+  // "stauts" → "status"
+  { from: /\bst(?:auts|atus|tus)\b/gi, to: 'status' },
+  // "assigne" → "assigned"
+  { from: /\bassign(?:e|ed|ing)\b/gi, to: 'assigned' },
+  // "compleet" → "complete"
+  { from: /\bcomple(?:et|te|t)\b/gi, to: 'complete' },
+  // "progress/progres" → "progress"
+  { from: /\bpro(?:gress|gres)\b/gi, to: 'progress' },
+  // "overdue/overdue" → "overdue"
+  { from: /\bover(?:due|du|dew)\b/gi, to: 'overdue' },
+  // "blocker/blockr" → "blocker"
+  { from: /\bblock(?:er|r|ed|ing)\b/gi, to: 'blocked' },
+  // "shedjule" → "schedule"
+  { from: /\bs(?:chedule|hedjule|kedjule)\b/gi, to: 'schedule' },
+  // "collab" → "collaboration"
+  { from: /\bcollab(?:oration|orat|)\b/gi, to: 'collaboration' },
+  // "feedbak" → "feedback"
+  { from: /\bfeed(?:back|bak|bac)\b/gi, to: 'feedback' },
+  // "resouse" → "resource"
+  { from: /\bres(?:ource|ouse|ouce)\b/gi, to: 'resource' },
+  // "delivry" → "delivery"
+  { from: /\bdeliv(?:ery|ry|er)\b/gi, to: 'delivery' },
+  // "relase" → "release"
+  { from: /\bre(?:lease|lese|las)\b/gi, to: 'release' },
+  // "deply" → "deploy"
+  { from: /\bdep(?:loy|ly|pley)\b/gi, to: 'deploy' },
+  // "integraion" → "integration"
+  { from: /\bintegra(?:tion|ion)\b/gi, to: 'integration' },
+  // "authntication" → "authentication"
+  { from: /\bauth(?:entication|ntication)\b/gi, to: 'authentication' },
+  // "dashbord" → "dashboard" (repeated for emphasis)
+  { from: /\bdash\s*b[o0]rd\b/gi, to: 'dashboard' },
 ];
 
 function fixPhonetic(text) {
@@ -299,7 +455,7 @@ function findBestAction(text, page) {
   const t = text.toLowerCase();
   const words = t.split(/\s+/).filter(w => w.length > 2);
 
-  const allPages = ['dashboard', 'users', 'projectDetail', 'projects', 'sprints', 'tasks', 'myTasks', 'analytics', 'calendar', 'admin', 'settings'];
+  const allPages = ALL_PAGES;
 
   let bestAction = null;
   let bestScore = 0;
@@ -366,21 +522,95 @@ function buildSmartPrompt(text, page, closestHint) {
     .slice(0, 20);
   const hint = closestHint ? `\nClosest match found: "${closestHint.action.match}". Score: ${closestHint.score}/100.` : '';
 
-  return JSON.stringify({
+      return JSON.stringify({
     user_said: text,
-    context: `User is on the "${page}" page.`,
+    context: `User is on the "${page}" page. URL: ${window.location.href}`,
     available_commands: cmdList.join('\n'),
     hint: hint || 'No command matched exactly.',
     instructions: [
-      'You are a smart project management assistant for GRESIO.',
-      'The user may have typos, heavy accents, or unclear phrasing.',
-      'UNDERSTAND what they MEAN, not just what they SAY.',
-      'If their intent is clear, respond with the action you think they want.',
-      'If unsure, ask ONE clarifying question with options.',
-      'When you understand, say something like: "I think you want to [action]. Say yes to proceed."',
-      'Be helpful, concise, and proactive.',
-    ].join(' '),
+      'You are GRESIO AI — a command execution engine. Your ONLY job is to do EXACTLY what the user asked. Do NOT add extra steps.',
+      '',
+      'CRITICAL RULE: ONLY do what the user literally said. Nothing more.',
+      '  BAD: User says "go to projects" → AI navigates AND shows project details',
+      '  GOOD: User says "go to projects" → AI only navigates to /projects',
+      '',
+      '🔹 ACTION EXECUTION:',
+      'If the user asks you to DO something, respond with ACTION: lines.',
+      '  ACTION: navigate /projects',
+      '  ACTION: click new-project',
+      '  ACTION: fill field-name "the value"',
+      '  ACTION: focus element-name',
+      '',
+      'Examples:',
+      '  User: "go to projects"',
+      '  AI: ACTION: navigate /projects',
+      '      Going to projects.',
+      '',
+      '  User: "create a project called testing"',
+      '  AI: ACTION: navigate /projects',
+      '      ACTION: click new-project',
+      '      ACTION: fill field-name "testing"',
+      '      Done.',
+      '',
+      '  User: "what is this app"',
+      '  AI: This is GRESIO - a project management platform.',
+      '',
+      '  User: "go to calendar"',
+      '  AI: ACTION: navigate /calendar',
+      '',
+      '  User: "show my tasks"',
+      '  AI: ACTION: navigate /tasks',
+      '',
+      'Rules:',
+      '- ONLY respond with ACTION: lines if the user ASKED for an action',
+      '- If the user just asked a question, answer it directly — do NOT take actions',
+      '- NEVER add extra actions the user did not ask for',
+      '- If you cannot do exactly what was asked, say what is missing in one sentence',
+      '- Do NOT suggest follow-up actions unless the user asks "what next?"',
+    ].join('\n'),
   });
+}
+
+function executeActionFromLine(line) {
+  const trimmed = line.trim();
+  const navMatch = trimmed.match(/^navigate\s+(.+)/i);
+  if (navMatch) return executeNavigateAction(navMatch[1].trim());
+  const clickMatch = trimmed.match(/^click\s+(.+)/i);
+  if (clickMatch) return executeClickAction(clickMatch[1].trim());
+  const fillMatch = trimmed.match(/^fill\s+(\S+)\s+"(.+)"$/i);
+  if (fillMatch) {
+    const groups = [null, null, fillMatch[2]];
+    return executeFillAction(fillMatch[1], groups);
+  }
+  const focusMatch = trimmed.match(/^focus\s+(.+)/i);
+  if (focusMatch) return executeFocusAction(focusMatch[1].trim());
+  const scrollMatch = trimmed.match(/^scroll\s+(up|down)/i);
+  if (scrollMatch) return executeScrollAction(scrollMatch[1]);
+  const refreshMatch = trimmed.match(/^refresh/i);
+  if (refreshMatch) return executeRefreshAction();
+  return null;
+}
+
+function processAiReply(reply) {
+  const lines = reply.split('\n');
+  const actionLines = [];
+  const messageLines = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('ACTION:')) {
+      actionLines.push(trimmed.replace(/^ACTION:\s*/i, ''));
+    } else {
+      messageLines.push(line);
+    }
+  }
+  // Execute all action lines sequentially
+  let lastResult = null;
+  for (const actionLine of actionLines) {
+    lastResult = executeActionFromLine(actionLine);
+    if (lastResult && lastResult.stopListening) break;
+  }
+  const message = messageLines.join('\n').trim();
+  return { message: message || (lastResult ? lastResult.message : 'Done'), success: lastResult ? lastResult.success !== false : true, stopListening: lastResult ? lastResult.stopListening : false };
 }
 
 function executeAiAction(text) {
@@ -389,39 +619,49 @@ function executeAiAction(text) {
   const projectId = projectMatch ? projectMatch[1] : null;
   const page = getCurrentPage();
 
-  const normalized = fullyNormalize(text);
-  const closest = findBestAction(text, page);
-
-  const body = buildSmartPrompt(text, page, closest.score > 0 ? closest : null);
+  const fetchOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('gresio_token') },
+  };
 
   if (projectId) {
     fetch('/api/ai/chat/' + projectId, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('gresio_token') },
-      body,
+      ...fetchOptions,
+      body: JSON.stringify({
+        message: text,
+        page,
+        url: window.location.href,
+      }),
     }).then(r => r.json()).then(data => {
       const msg = data.reply || data.message || 'No response';
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: msg }));
+      const result = processAiReply(msg);
+      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: result.message, success: result.success, isAi: true } }));
     }).catch(() => {
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: 'AI service unavailable' }));
+      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: 'AI service unavailable.', success: false, isAi: true } }));
     });
   } else {
     fetch('/api/ai-agent/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('gresio_token') },
-      body,
+      ...fetchOptions,
+      body: JSON.stringify({ command: text, projectId, page }),
     }).then(r => r.json()).then(data => {
-      const msg = data.message || data.result || JSON.stringify(data);
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: msg }));
+      const msg = data.message || data.result || 'Could not process command.';
+      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: msg, success: data.success !== false, isAi: true } }));
     }).catch(() => {
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: 'AI service unavailable' }));
+      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: 'AI service unavailable.', success: false, isAi: true } }));
     });
   }
 
   return { success: true, message: 'Processing...', isAi: true };
 }
 
-const ALL_PAGES = ['dashboard', 'users', 'projectDetail', 'projects', 'sprints', 'tasks', 'myTasks', 'analytics', 'calendar', 'admin', 'settings'];
+const ALL_PAGES = [
+  'dashboard', 'users', 'projectDetail', 'projects', 'sprints', 'tasks', 'myTasks',
+  'analytics', 'calendar', 'admin', 'workLogs', 'testCases', 'projectRelay',
+  'onboardingGuide', 'reports', 'reportEdit', 'profile', 'github', 'teams', 'outlook',
+  'workDna', 'templateMarketplace', 'templateDetail', 'createTemplate',
+  'superDashboard', 'superCompanies', 'superCompanyDetail', 'superAdmins',
+  'superAnalytics', 'superHealth', 'superNotifications', 'superProfile', 'superSettings',
+];
 
 const PAGE_PATHS = {
   dashboard: '/',
@@ -434,12 +674,33 @@ const PAGE_PATHS = {
   analytics: '/analytics',
   calendar: '/calendar',
   admin: '/admin',
-  settings: '/settings',
+  workLogs: '/work-logs',
+  testCases: '/test-cases',
+  projectRelay: '/relay',
+  onboardingGuide: '/onboarding-guide',
+  reports: '/reports',
+  reportEdit: '/reports',
+  profile: '/profile',
+  github: '/github',
+  teams: '/teams',
+  outlook: '/outlook',
+  workDna: '/work-dna',
+  templateMarketplace: '/templates',
+  templateDetail: '/templates',
+  createTemplate: '/templates/create',
+  superDashboard: '/super/dashboard',
+  superCompanies: '/super/companies',
+  superCompanyDetail: '/super/companies',
+  superAdmins: '/super/admins',
+  superAnalytics: '/super/analytics',
+  superHealth: '/super/health',
+  superNotifications: '/super/notifications',
+  superProfile: '/super/profile',
+  superSettings: '/super/settings',
 };
 
 export default function executeCommand(text) {
   const page = getCurrentPage();
-
   // Step 1: Exact match on current page
   let action = matchAction(text, page);
 
@@ -517,6 +778,10 @@ export default function executeCommand(text) {
       return executeRefreshAction();
     case 'scroll':
       return executeScrollAction(action.payload);
+    case 'focus':
+      return executeFocusAction(action.payload);
+    case 'fill':
+      return executeFillAction(action.payload, action.groups);
     case 'stop':
       return { success: true, message: '', stopListening: true };
     default:

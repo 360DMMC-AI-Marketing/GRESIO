@@ -38,6 +38,7 @@ export default function useSpeechRecognition() {
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setIsSupported(!!SpeechRecognition);
+    console.log('🎤 SpeechRecognition API supported:', !!SpeechRecognition);
   }, []);
 
   const resetSilenceTimer = useCallback(() => {
@@ -50,11 +51,15 @@ export default function useSpeechRecognition() {
     }, SILENCE_TIMEOUT);
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback((skipWake = false) => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    if (recognitionRef.current) recognitionRef.current.stop();
+    if (recognitionRef.current) {
+      listeningRef.current = false;
+      recognitionRef.current.stop();
+    }
+    wakeRef.current = skipWake;
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -101,7 +106,7 @@ export default function useSpeechRecognition() {
       }
     };
 
-    recognition.onerror = () => {};
+    recognition.onerror = (e) => { /* SpeechRecognition error handled silently */ };
 
     recognition.onend = () => {
       if (listeningRef.current) {

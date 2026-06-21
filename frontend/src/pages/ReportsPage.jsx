@@ -133,14 +133,14 @@ export default function ReportsPage() {
       ) : (
         <>
           <div className="flex items-center border-b border-surface-200 mb-6">
-            <button onClick={() => setTab('admin')}
+            <button data-voice="tab-admin-reports" onClick={() => setTab('admin')}
               className={`relative px-4 py-2 text-sm font-medium transition-colors border-none bg-transparent cursor-pointer ${
                 tab === 'admin' ? 'text-primary-600' : 'text-surface-500 hover:text-surface-700'
               }`}>
               Admin Reports
               {tab === 'admin' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 rounded-full" />}
             </button>
-            <button onClick={() => setTab('client')}
+            <button data-voice="tab-client-reports" onClick={() => setTab('client')}
               className={`relative px-4 py-2 text-sm font-medium transition-colors border-none bg-transparent cursor-pointer ${
                 tab === 'client' ? 'text-primary-600' : 'text-surface-500 hover:text-surface-700'
               }`}>
@@ -151,7 +151,7 @@ export default function ReportsPage() {
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search project..."
+              <input data-voice="search-reports" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search project..."
                 className="w-44 pl-8 pr-6 py-1.5 text-xs border border-surface-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors" />
               {search && (
                 <button onClick={() => setSearch('')}

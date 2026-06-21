@@ -307,6 +307,21 @@ export const templates = {
   my: () => api.get('/templates/my'),
 };
 
+export const wiki = {
+  getAll: (params) => api.get('/wiki', { params }),
+  getById: (id) => api.get(`/wiki/${id}`),
+  getBySlug: (slug) => api.get(`/wiki/slug/${slug}`),
+  create: (data) => api.post('/wiki', data),
+  update: (id, data) => api.patch(`/wiki/${id}`, data),
+  delete: (id) => api.delete(`/wiki/${id}`),
+  uploadFile: (id, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post(`/wiki/${id}/upload`, fd);
+  },
+  deleteFile: (id, fileId) => api.delete(`/wiki/${id}/files/${fileId}`),
+};
+
 export const reportShare = {
   share: (id, data) => api.post(`/reports/${id}/share`, data),
   getSettings: (id) => api.get(`/reports/${id}/share`),
