@@ -72,7 +72,8 @@ exports.createPage = async (req, res, next) => {
 
 exports.updatePage = async (req, res, next) => {
   try {
-    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    const filter = { _id: req.params.id, domain: req.user.domain };
+    const page = await Wiki.findOne(filter).lean();
     if (!page) return res.status(404).json({ message: 'Page not found' });
     const updates = { ...req.body, updatedBy: req.user._id };
     if (updates.title) {
@@ -80,15 +81,22 @@ exports.updatePage = async (req, res, next) => {
     }
     delete updates.files;
     delete updates.contributors;
-    await Wiki.updateOne({ _id: page._id }, { $set: updates });
-    // Track contributor
     const already = page.contributors.some(c => c.user?.toString() === req.user._id.toString());
+    let updated;
     if (already) {
-      await Wiki.updateOne({ _id: page._id, 'contributors.user': req.user._id }, { $set: { 'contributors.$.updatedAt': new Date() } });
+      updated = await Wiki.findOneAndUpdate(
+        { ...filter, 'contributors.user': req.user._id },
+        { $set: { ...updates, 'contributors.$.updatedAt': new Date() } },
+        { new: true }
+      );
     } else {
-      await Wiki.updateOne({ _id: page._id }, { $push: { contributors: { user: req.user._id, name: req.user.name, updatedAt: new Date() } } });
+      updated = await Wiki.findOneAndUpdate(
+        filter,
+        { $set: updates, $push: { contributors: { user: req.user._id, name: req.user.name, updatedAt: new Date() } } },
+        { new: true }
+      );
     }
-    res.json(await populateRefs(Wiki.findById(page._id)));
+    res.json(await populateRefs(Wiki.findById(updated._id)));
   } catch (e) { next(e); }
 };
 
