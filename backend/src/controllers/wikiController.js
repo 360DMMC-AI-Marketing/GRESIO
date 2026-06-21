@@ -72,8 +72,9 @@ exports.createPage = async (req, res, next) => {
 
 exports.updatePage = async (req, res, next) => {
   try {
-    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    const page = await Wiki.findById(req.params.id);
     if (!page) return res.status(404).json({ message: 'Page not found' });
+    if (page.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
 
     if (req.body.title !== undefined) {
       page.title = req.body.title;
@@ -99,8 +100,9 @@ exports.updatePage = async (req, res, next) => {
 
 exports.deletePage = async (req, res, next) => {
   try {
-    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    const page = await Wiki.findById(req.params.id);
     if (!page) return res.status(404).json({ message: 'Page not found' });
+    if (page.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
     // Clean up attached files
     for (const f of page.files) {
       const filePath = path.join(__dirname, '../../uploads', f.filename);
@@ -115,8 +117,9 @@ exports.deletePage = async (req, res, next) => {
 exports.uploadFile = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    const page = await Wiki.findById(req.params.id);
     if (!page) return res.status(404).json({ message: 'Page not found' });
+    if (page.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
     page.files.push({
       originalName: req.file.originalname,
       filename: req.file.filename,
@@ -131,8 +134,9 @@ exports.uploadFile = async (req, res, next) => {
 
 exports.deleteFile = async (req, res, next) => {
   try {
-    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    const page = await Wiki.findById(req.params.id);
     if (!page) return res.status(404).json({ message: 'Page not found' });
+    if (page.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
     const file = page.files.id(req.params.fileId);
     if (!file) return res.status(404).json({ message: 'File not found' });
     const filePath = path.join(__dirname, '../../uploads', file.filename);

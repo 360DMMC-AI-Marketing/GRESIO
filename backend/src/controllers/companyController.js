@@ -183,8 +183,9 @@ exports.addWikiDepartment = async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ message: 'Department name is required' });
-    const company = await Company.findOne({ _id: req.params.id, domain: req.user.domain });
+    const company = await Company.findById(req.params.id);
     if (!company) return res.status(404).json({ message: 'Company not found' });
+    if (company.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
     if (company.wikiDepartments.includes(name.trim())) {
       return res.status(400).json({ message: 'Department already exists' });
     }
