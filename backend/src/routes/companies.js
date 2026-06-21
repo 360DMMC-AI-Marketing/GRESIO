@@ -9,4 +9,5 @@ r.post('/', authorize('admin'), c.createCompany);
 r.patch('/:id', authorize('admin'), c.updateCompany);
 r.patch('/:id/plan', authorize('admin'), c.updatePlan);
 r.post('/:id/import', authorize('admin'), c.importCompanyUsers);
+r.patch('/:id/wiki-department', authorize('admin', 'project_manager', 'manager', 'team_lead'), c.addWikiDepartment);
 module.exports = r;

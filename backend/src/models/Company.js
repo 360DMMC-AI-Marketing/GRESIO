@@ -12,6 +12,10 @@ const companySchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isActive: { type: Boolean, default: true },
   billingStatus: { type: String, enum: ['active', 'past_due', 'cancelled', 'trial'], default: 'trial' },
+  wikiDepartments: {
+    type: [String],
+    default: ['General', 'Engineering', 'Product', 'Design', 'QA', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'],
+  },
   trialEndsAt: { type: Date, default: () => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) },
   mrr: { type: Number, default: 0 },
   billingEmail: { type: String, default: '' },

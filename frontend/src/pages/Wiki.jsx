@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { wiki } from '../services/api';
+import { wiki, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X } from 'lucide-react';
+import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X, FileUp } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const DEFAULT_DEPARTMENTS = ['General', 'Engineering', 'Product', 'Design', 'QA', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'];
 
 function formatSize(bytes) {
   if (!bytes) return '0 B';
@@ -15,8 +17,9 @@ function formatSize(bytes) {
 }
 
 export default function Wiki() {
-  const { user } = useAuth();
+  const { user, company, updateCompany } = useAuth();
   const fileInputRef = useRef(null);
+  const importRef = useRef(null);
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,9 +29,15 @@ export default function Wiki() {
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newDepartment, setNewDepartment] = useState('General');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [activeDepartment, setActiveDepartment] = useState('All');
+
+  const departments = company?.wikiDepartments?.length ? company.wikiDepartments : DEFAULT_DEPARTMENTS;
 
   const canManage = ['admin', 'project_manager', 'team_lead', 'manager'].includes(user?.role);
   const canEdit = user && ['admin','team_lead','project_manager','manager','qa_tester','developer','intern','other'].includes(user.role);
@@ -59,6 +68,7 @@ export default function Wiki() {
   const startEdit = () => {
     setEditTitle(currentPage.title);
     setEditContent(currentPage.content);
+    setEditDepartment(currentPage.department || 'General');
     setView('edit');
   };
 
@@ -66,7 +76,7 @@ export default function Wiki() {
     if (!editTitle.trim()) return toast.error('Title is required');
     setSaving(true);
     try {
-      const res = await wiki.update(currentPage._id, { title: editTitle.trim(), content: editContent });
+      const res = await wiki.update(currentPage._id, { title: editTitle.trim(), content: editContent, department: editDepartment });
       setCurrentPage(res.data);
       setView('view');
       toast.success('Page updated');
@@ -97,9 +107,10 @@ export default function Wiki() {
     if (!newTitle.trim()) return toast.error('Title is required');
     setSaving(true);
     try {
-      const res = await wiki.create({ title: newTitle.trim(), content: newContent });
+      const res = await wiki.create({ title: newTitle.trim(), content: newContent, department: newDepartment });
       setNewTitle('');
       setNewContent('');
+      setNewDepartment('General');
       setShowCreate(false);
       toast.success('Page created');
       loadPages();
@@ -128,6 +139,50 @@ export default function Wiki() {
     }
   };
 
+  const handleAddDepartment = async () => {
+    const name = prompt('Enter new department name:');
+    if (!name || !name.trim()) return;
+    try {
+      const res = await companies.addWikiDepartment(company._id, name.trim());
+      updateCompany(res.data);
+      toast.success(`Department "${name.trim()}" added`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to add department');
+    }
+  };
+
+  const handleImport = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setImporting(true);
+    let imported = 0, failed = 0;
+    const toastId = toast.loading(`Importing ${files.length} file(s)...`);
+    for (const file of files) {
+      try {
+        const text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+        const name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').trim() || 'Untitled';
+        await wiki.create({ title: name, content: text, department: newDepartment });
+        imported++;
+      } catch {
+        failed++;
+      }
+    }
+    toast.dismiss(toastId);
+    if (failed === 0) {
+      toast.success(`Imported ${imported} page(s)`);
+    } else {
+      toast(`${imported} imported, ${failed} failed`);
+    }
+    setImporting(false);
+    if (importRef.current) importRef.current.value = '';
+    loadPages();
+  };
+
   const handleDeleteFile = async (fileId) => {
     if (!confirm('Remove this file?')) return;
     try {
@@ -139,9 +194,11 @@ export default function Wiki() {
     }
   };
 
-  const filtered = pages.filter(p =>
-    !searchQuery || p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = pages.filter(p => {
+    if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (activeDepartment !== 'All' && p.department !== activeDepartment) return false;
+    return true;
+  });
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -172,9 +229,44 @@ export default function Wiki() {
               />
             </div>
             {canManage && (
-              <button onClick={() => setShowCreate(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none shadow-sm">
-                <Plus className="w-4 h-4" /> New Page
+              <>
+                <button onClick={() => setShowCreate(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none shadow-sm">
+                  <Plus className="w-4 h-4" /> New Page
+                </button>
+                <input ref={importRef} type="file" multiple accept=".md,.txt" onChange={handleImport} className="hidden" />
+                <button onClick={() => importRef.current?.click()} disabled={importing}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-white text-surface-700 border border-surface-200 rounded-lg text-xs font-semibold hover:bg-surface-50 hover:border-surface-300 transition-colors cursor-pointer disabled:opacity-50 shadow-sm">
+                  <FileUp className="w-4 h-4" /> {importing ? 'Importing...' : 'Import'}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Department filter tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button onClick={() => setActiveDepartment('All')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                activeDepartment === 'All'
+                  ? 'bg-[#2347e8] text-white border-[#2347e8]'
+                  : 'bg-white text-surface-600 border-surface-200 hover:border-surface-300'
+              }`}>
+              All
+            </button>
+            {departments.map(d => (
+              <button key={d} onClick={() => setActiveDepartment(d)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                  activeDepartment === d
+                    ? 'bg-[#2347e8] text-white border-[#2347e8]'
+                    : 'bg-white text-surface-600 border-surface-200 hover:border-surface-300'
+                }`}>
+                {d}
+              </button>
+            ))}
+            {canManage && (
+              <button onClick={handleAddDepartment}
+                className="px-2.5 py-1.5 text-xs font-medium text-[#2347e8] bg-transparent border border-dashed border-[#2347e8]/40 rounded-lg hover:bg-[#2347e8]/5 transition-colors cursor-pointer flex items-center gap-1">
+                <Plus className="w-3 h-3" /> New
               </button>
             )}
           </div>
@@ -201,7 +293,14 @@ export default function Wiki() {
                 <div key={page._id}
                   onClick={() => openPage(page._id)}
                   className="bg-white rounded-xl border border-surface-200 p-4 hover:border-surface-300 transition-colors cursor-pointer">
-                  <h3 className="text-sm font-semibold text-surface-900">{page.title}</h3>
+                  <h3 className="text-sm font-semibold text-surface-900">
+                    {page.title}
+                    {page.department && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-surface-100 text-surface-500 rounded-full">
+                        {page.department}
+                      </span>
+                    )}
+                  </h3>
                   {page.content && (
                     <p className="text-xs text-surface-500 mt-1 line-clamp-2">
                       {page.content.replace(/[#*`\[\]]/g, '').slice(0, 200)}
@@ -329,6 +428,11 @@ export default function Wiki() {
           )}
 
           <div className="flex items-center gap-3 px-6 pb-4 text-xs text-surface-400">
+            {currentPage.department && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#2347e8]/10 text-[#2347e8] font-medium rounded-full">
+                {currentPage.department}
+              </span>
+            )}
             <span>Updated {new Date(currentPage.updatedAt).toLocaleDateString()}</span>
             {currentPage.updatedBy && <span>by {currentPage.updatedBy.name}</span>}
           </div>
@@ -353,6 +457,14 @@ export default function Wiki() {
               placeholder="Page title"
               className="w-full px-4 py-2.5 text-lg font-semibold border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
             />
+            <select
+              value={editDepartment} onChange={e => setEditDepartment(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
+            >
+              {departments.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-surface-500 mb-1.5">Markdown</label>
@@ -393,6 +505,14 @@ export default function Wiki() {
                 className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
                 autoFocus
               />
+              <select
+                value={newDepartment} onChange={e => setNewDepartment(e.target.value)}
+                className="w-full px-4 py-2.5 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/20 focus:border-[#2347e8]"
+              >
+                {departments.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
               <textarea
                 value={newContent} onChange={e => setNewContent(e.target.value)}
                 placeholder="Page content (markdown)..."

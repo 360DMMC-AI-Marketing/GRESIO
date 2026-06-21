@@ -179,6 +179,21 @@ exports.importCompanyUsers = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+exports.addWikiDepartment = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ message: 'Department name is required' });
+    const company = await Company.findOne({ _id: req.params.id, domain: req.user.domain });
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+    if (company.wikiDepartments.includes(name.trim())) {
+      return res.status(400).json({ message: 'Department already exists' });
+    }
+    company.wikiDepartments.push(name.trim());
+    await company.save();
+    res.json(company);
+  } catch (e) { next(e); }
+};
+
 exports.updatePlan = async (req, res, next) => {
   try {
     const { plan } = req.body;

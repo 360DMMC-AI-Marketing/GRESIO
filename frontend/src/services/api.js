@@ -147,6 +147,7 @@ export const companies = {
   update: (id, data) => api.patch(`/companies/${id}`, data),
   updatePlan: (id, plan) => api.patch(`/companies/${id}/plan`, { plan }),
   importUsers: (id, data) => api.post(`/companies/${id}/import`, data),
+  addWikiDepartment: (id, name) => api.patch(`/companies/${id}/wiki-department`, { name }),
 };
 
 export const notifications = {

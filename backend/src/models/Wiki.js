@@ -24,6 +24,7 @@ const wikiSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isActive: { type: Boolean, default: true },
+  department: { type: String, default: 'General', trim: true },
 }, { timestamps: true });
 
 wikiSchema.index({ domain: 1 });

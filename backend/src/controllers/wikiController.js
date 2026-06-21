@@ -25,8 +25,9 @@ async function uniqueSlug(title, domain, excludeId) {
 
 exports.getPages = async (req, res, next) => {
   try {
-    const { search } = req.query;
+    const { search, department } = req.query;
     const filter = { domain: req.user.domain, isActive: true };
+    if (department) filter.department = department;
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -56,11 +57,11 @@ exports.getPageBySlug = async (req, res, next) => {
 
 exports.createPage = async (req, res, next) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, department } = req.body;
     const slug = await uniqueSlug(title, req.user.domain);
     const data = {
       title, content, slug, domain: req.user.domain,
-      createdBy: req.user._id, updatedBy: req.user._id,
+      createdBy: req.user._id, updatedBy: req.user._id, department: department || 'General',
       contributors: [{ user: req.user._id, name: req.user.name, updatedAt: new Date() }],
     };
     let page = await Wiki.create(data);
@@ -71,26 +72,22 @@ exports.createPage = async (req, res, next) => {
 
 exports.updatePage = async (req, res, next) => {
   try {
+    const page = await Wiki.findOne({ _id: req.params.id, domain: req.user.domain });
+    if (!page) return res.status(404).json({ message: 'Page not found' });
     const updates = { ...req.body, updatedBy: req.user._id };
     if (updates.title) {
       updates.slug = await uniqueSlug(updates.title, req.user.domain, req.params.id);
     }
     delete updates.files;
     delete updates.contributors;
-    const page = await Wiki.findOneAndUpdate(
-      { _id: req.params.id, domain: req.user.domain },
-      updates,
-      { new: true, runValidators: true }
-    );
-    if (!page) return res.status(404).json({ message: 'Page not found' });
+    await Wiki.updateOne({ _id: page._id }, { $set: updates });
     // Track contributor
-    const already = page.contributors.find(c => c.user?.toString() === req.user._id.toString());
-    if (!already) {
-      page.contributors.push({ user: req.user._id, name: req.user.name, updatedAt: new Date() });
+    const already = page.contributors.some(c => c.user?.toString() === req.user._id.toString());
+    if (already) {
+      await Wiki.updateOne({ _id: page._id, 'contributors.user': req.user._id }, { $set: { 'contributors.$.updatedAt': new Date() } });
     } else {
-      already.updatedAt = new Date();
+      await Wiki.updateOne({ _id: page._id }, { $push: { contributors: { user: req.user._id, name: req.user.name, updatedAt: new Date() } } });
     }
-    await page.save();
     res.json(await populateRefs(Wiki.findById(page._id)));
   } catch (e) { next(e); }
 };
