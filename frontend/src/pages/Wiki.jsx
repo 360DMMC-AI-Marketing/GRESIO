@@ -365,18 +365,28 @@ export default function Wiki() {
                     {/* Color accent bar */}
                     <div className={`h-1.5 bg-gradient-to-r ${c.gradient}`} />
                     <div className="p-5">
-                      {/* Category badge */}
-                      <div className="flex items-center gap-2 mb-2">
-                        {page.department && (
-                          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${c.badge}`}>
-                            {page.department}
-                          </span>
-                        )}
-                        {page.files?.length > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] text-surface-400 font-medium">
-                            <FileText className="w-3 h-3" />
-                            {page.files.length}
-                          </span>
+                      {/* Top row: badge left, rating right */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          {page.department && (
+                            <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${c.badge}`}>
+                              {page.department}
+                            </span>
+                          )}
+                          {page.files?.length > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] text-surface-400 font-medium">
+                              <FileText className="w-3 h-3" />
+                              {page.files.length}
+                            </span>
+                          )}
+                        </div>
+                        {/* Rating badge - top right */}
+                        {page.ratings?.length > 0 && (
+                          <div className="flex items-center gap-1 bg-surface-50 rounded-lg px-2 py-1 border border-surface-100 shrink-0">
+                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span className="text-[10px] font-bold text-surface-600">{page.averageRating}</span>
+                            <span className="text-[9px] text-surface-400">({page.ratings.length})</span>
+                          </div>
                         )}
                       </div>
 
@@ -384,16 +394,6 @@ export default function Wiki() {
                       <h3 className="text-xl font-black text-surface-900 leading-tight mb-1 group-hover:text-[#2347e8] transition-colors">
                         {page.title}
                       </h3>
-
-                      {/* Rating stars */}
-                      {page.ratings?.length > 0 && (
-                        <div className="flex items-center gap-0.5 mb-2">
-                          {[1, 2, 3, 4, 5].map(s => (
-                            <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(page.averageRating) ? 'text-amber-400 fill-amber-400' : 'text-surface-200'}`} />
-                          ))}
-                          <span className="text-[10px] text-surface-400 ml-1 font-medium">{page.averageRating} ({page.ratings.length})</span>
-                        </div>
-                      )}
 
                       {/* Highlights - bullet points */}
                       {page.highlights?.length > 0 && (
@@ -412,20 +412,20 @@ export default function Wiki() {
                         </div>
                       )}
 
-                      {/* Footer */}
+                      {/* Footer - creator */}
                       <div className="flex items-center justify-between pt-3 border-t border-surface-100">
                         <div className="flex items-center gap-2.5">
                           <div className={`w-7 h-7 rounded-full ${c.light} flex items-center justify-center`}>
                             <span className={`text-[10px] font-bold ${c.text}`}>
-                              {page.updatedBy?.name ? getInitials(page.updatedBy.name) : '?'}
+                              {page.createdBy?.name ? getInitials(page.createdBy.name) : '?'}
                             </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[11px] font-semibold text-surface-700 leading-tight">
-                              {page.updatedBy?.name || 'Unknown'}
+                              {page.createdBy?.name || 'Unknown'}
                             </span>
                             <span className="text-[10px] text-surface-400 leading-tight">
-                              {new Date(page.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              Created {new Date(page.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                           </div>
                         </div>
@@ -473,13 +473,13 @@ export default function Wiki() {
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                     <span className="text-xs font-bold text-white">
-                      {currentPage.updatedBy?.name ? getInitials(currentPage.updatedBy.name) : '?'}
+                      {currentPage.createdBy?.name ? getInitials(currentPage.createdBy.name) : '?'}
                     </span>
                   </div>
                   <div>
-                    <span className="font-semibold text-white/90">{currentPage.updatedBy?.name || 'Unknown'}</span>
+                    <span className="font-semibold text-white/90">{currentPage.createdBy?.name || 'Unknown'}</span>
                     <div className="flex items-center gap-2 text-[11px] text-white/60">
-                      <span>Updated {new Date(currentPage.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                      <span>Created {new Date(currentPage.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                   </div>
                 </div>
