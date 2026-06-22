@@ -15,5 +15,6 @@ router.patch('/:id', c.updatePage);
 router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), c.deletePage);
 router.post('/:id/upload', authorize('admin', 'project_manager', 'team_lead', 'manager'), upload.single('file'), c.uploadFile);
 router.delete('/:id/files/:fileId', authorize('admin', 'project_manager', 'team_lead'), c.deleteFile);
+router.post('/:id/rate', c.ratePage);
 
 module.exports = router;

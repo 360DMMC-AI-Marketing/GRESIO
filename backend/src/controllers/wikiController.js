@@ -147,3 +147,23 @@ exports.deleteFile = async (req, res, next) => {
     res.json(updated);
   } catch (e) { next(e); }
 };
+
+exports.ratePage = async (req, res, next) => {
+  try {
+    const { value } = req.body;
+    if (!value || value < 1 || value > 5) return res.status(400).json({ message: 'Rating must be 1-5' });
+    const page = await Wiki.findById(req.params.id);
+    if (!page) return res.status(404).json({ message: 'Page not found' });
+    if (page.domain !== req.user.domain) return res.status(403).json({ message: 'Access denied' });
+
+    const existingIdx = page.ratings.findIndex(r => r.user?.toString() === req.user._id.toString());
+    if (existingIdx !== -1) {
+      page.ratings[existingIdx].value = value;
+    } else {
+      page.ratings.push({ user: req.user._id, value });
+    }
+    await page.save();
+    const updated = await populateRefs(Wiki.findById(page._id));
+    res.json(updated);
+  } catch (e) { next(e); }
+};

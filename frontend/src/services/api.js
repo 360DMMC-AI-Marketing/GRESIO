@@ -321,6 +321,7 @@ export const wiki = {
     return api.post(`/wiki/${id}/upload`, fd);
   },
   deleteFile: (id, fileId) => api.delete(`/wiki/${id}/files/${fileId}`),
+  rate: (id, value) => api.post(`/wiki/${id}/rate`, { value }),
 };
 
 export const reportShare = {

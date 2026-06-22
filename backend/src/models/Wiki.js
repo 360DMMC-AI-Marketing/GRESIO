@@ -25,7 +25,14 @@ const wikiSchema = new mongoose.Schema({
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isActive: { type: Boolean, default: true },
   department: { type: String, default: 'General', trim: true },
-}, { timestamps: true });
+  ratings: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, value: { type: Number, min: 1, max: 5 } }],
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
+
+wikiSchema.virtual('averageRating').get(function () {
+  if (!this.ratings?.length) return 0;
+  const sum = this.ratings.reduce((a, r) => a + r.value, 0);
+  return Math.round((sum / this.ratings.length) * 10) / 10;
+});
 
 wikiSchema.index({ domain: 1 });
 wikiSchema.index({ slug: 1, domain: 1 }, { unique: true });

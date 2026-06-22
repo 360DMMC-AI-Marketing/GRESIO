@@ -3,7 +3,7 @@ import { wiki, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X, FileUp, Calendar, Hash, Eye } from 'lucide-react';
+import { BookOpen, Plus, Search, ArrowLeft, Edit3, Trash2, Clock, User, Upload, FileText, Download, X, FileUp, Calendar, Hash, Eye, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DEFAULT_DEPARTMENTS = ['General', 'Engineering', 'Product', 'Design', 'QA', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'];
@@ -220,11 +220,22 @@ export default function Wiki() {
     }
   };
 
+  const handleRate = async (value) => {
+    try {
+      const res = await wiki.rate(currentPage._id, value);
+      setCurrentPage(res.data);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to rate');
+    }
+  };
+
   const filtered = pages.filter(p => {
     if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (activeDepartment !== 'All' && p.department !== activeDepartment) return false;
     return true;
-  });
+  }).sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+
+  const displayPages = activeDepartment === 'All' && !searchQuery ? filtered.slice(0, 8) : filtered;
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -248,9 +259,24 @@ export default function Wiki() {
               <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Knowledge Base</h1>
             </div>
             <p className="text-sm text-surface-400 ml-[52px]">Company wiki & documentation</p>
-          </div>
-        </div>
-      </div>
+                </div>
+              </div>
+              {/* Star rating */}
+              <div className="flex items-center justify-center gap-1 mt-5">
+                {[1, 2, 3, 4, 5].map(s => {
+                  const userRating = currentPage.ratings?.find(r => r.user === user?._id)?.value || 0;
+                  return (
+                    <button key={s} onClick={() => handleRate(s)}
+                      className="cursor-pointer bg-transparent border-none p-0.5 transition-transform hover:scale-110">
+                      <Star className={`w-6 h-6 ${s <= (userRating || Math.round(currentPage.averageRating || 0)) ? 'text-amber-300 fill-amber-300' : 'text-white/30'}`} />
+                    </button>
+                  );
+                })}
+                {currentPage.averageRating > 0 && (
+                  <span className="text-sm text-white/60 ml-2 font-medium">({currentPage.averageRating})</span>
+                )}
+              </div>
+            </div>
 
       {view === 'list' && (
         <>
@@ -316,14 +342,14 @@ export default function Wiki() {
           {/* Page count */}
           <div className="flex items-center gap-2 mb-4 px-1">
             <Hash className="w-3.5 h-3.5 text-surface-400" />
-            <span className="text-xs font-medium text-surface-400">{filtered.length} article{filtered.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs font-medium text-surface-400">{displayPages.length} article{displayPages.length !== 1 ? 's' : ''}</span>
             {activeDepartment !== 'All' && (
               <span className="text-xs text-surface-300">in <span className="font-semibold text-surface-400">{activeDepartment}</span></span>
             )}
           </div>
 
           {/* Blog-style cards */}
-          {filtered.length === 0 ? (
+          {displayPages.length === 0 ? (
             <div className="bg-white rounded-2xl border border-surface-200 p-16 text-center shadow-sm">
               <div className="w-16 h-16 bg-gradient-to-br from-surface-100 to-surface-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
                 <BookOpen className="w-8 h-8 text-surface-400" />
@@ -345,7 +371,7 @@ export default function Wiki() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {filtered.map(page => {
+              {displayPages.map(page => {
                 const c = getDeptColor(page.department);
                 const excerpt = stripMd(page.content).slice(0, 160);
                 return (
@@ -371,13 +397,23 @@ export default function Wiki() {
                       </div>
 
                       {/* Title - most prominent */}
-                      <h3 className="text-xl font-black text-surface-900 leading-tight mb-3 group-hover:text-[#2347e8] transition-colors">
+                      <h3 className="text-xl font-black text-surface-900 leading-tight mb-1 group-hover:text-[#2347e8] transition-colors">
                         {page.title}
                       </h3>
 
+                      {/* Rating stars */}
+                      {page.averageRating > 0 && (
+                        <div className="flex items-center gap-0.5 mb-2">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(page.averageRating) ? 'text-amber-400 fill-amber-400' : 'text-surface-200'}`} />
+                          ))}
+                          <span className="text-[10px] text-surface-400 ml-1 font-medium">({page.averageRating})</span>
+                        </div>
+                      )}
+
                       {/* Excerpt */}
                       {excerpt && (
-                        <p className="text-sm text-surface-500 leading-relaxed line-clamp-2 mb-4">
+                        <p className="text-sm text-surface-500 leading-relaxed line-clamp-3 mb-4 bg-surface-50 rounded-xl px-3 py-2 border border-surface-100">
                           {excerpt}
                         </p>
                       )}
