@@ -83,7 +83,7 @@ exports.updatePage = async (req, res, next) => {
     }
     if (req.body.content !== undefined) page.content = req.body.content;
     if (req.body.department !== undefined) page.department = req.body.department;
-    if (req.body.highlights !== undefined) page.highlights = req.body.highlights;
+    if (req.body.highlights !== undefined) { page.highlights = req.body.highlights; page.markModified('highlights'); }
     page.updatedBy = req.user._id;
 
     const already = page.contributors.some(c => c.user?.toString() === req.user._id.toString());
