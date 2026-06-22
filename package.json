@@ -3,6 +3,30 @@
   "private": true,
   "scripts": {
     "start": "node backend/src/app.js",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "dev:server": "cd backend && npm run dev",
+    "dev:client": "cd frontend && npm run dev",
     "build": "cd backend && npm install"
-  }
+  },
+  "version": "1.0.0",
+  "description": "Full-stack internal platform connecting project management, sprints, tasks, QA testing, team analytics, and external integrations — all in one place.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/360DMMC-AI-Marketing/GRESIO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/360DMMC-AI-Marketing/GRESIO/issues"
+  },
+  "homepage": "https://github.com/360DMMC-AI-Marketing/GRESIO#readme"
 }
