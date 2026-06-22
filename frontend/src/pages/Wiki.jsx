@@ -37,10 +37,6 @@ function getInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function stripMd(text) {
-  return (text || '').replace(/[#*`\[\]>|~_\-]/g, '').replace(/\s+/g, ' ').trim();
-}
-
 export default function Wiki() {
   const { user, company, updateCompany } = useAuth();
   const fileInputRef = useRef(null);
@@ -59,7 +55,9 @@ export default function Wiki() {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newDepartment, setNewDepartment] = useState('General');
+  const [newHighlights, setNewHighlights] = useState('');
   const [editDepartment, setEditDepartment] = useState('');
+  const [editHighlights, setEditHighlights] = useState('');
   const [activeDepartment, setActiveDepartment] = useState('All');
 
   const departments = company?.wikiDepartments?.length ? company.wikiDepartments : DEFAULT_DEPARTMENTS;
@@ -94,6 +92,7 @@ export default function Wiki() {
     setEditTitle(currentPage.title);
     setEditContent(currentPage.content);
     setEditDepartment(currentPage.department || 'General');
+    setEditHighlights((currentPage.highlights || []).join('\n'));
     setView('edit');
   };
 
@@ -101,7 +100,7 @@ export default function Wiki() {
     if (!editTitle.trim()) return toast.error('Title is required');
     setSaving(true);
     try {
-      const res = await wiki.update(currentPage._id, { title: editTitle.trim(), content: editContent, department: editDepartment });
+      const res = await wiki.update(currentPage._id, { title: editTitle.trim(), content: editContent, department: editDepartment, highlights: editHighlights.split('\n').filter(Boolean).map(s => s.trim()) });
       setCurrentPage(res.data);
       setView('view');
       toast.success('Page updated');
@@ -132,10 +131,11 @@ export default function Wiki() {
     if (!newTitle.trim()) return toast.error('Title is required');
     setSaving(true);
     try {
-      const res = await wiki.create({ title: newTitle.trim(), content: newContent, department: newDepartment });
+      const res = await wiki.create({ title: newTitle.trim(), content: newContent, department: newDepartment, highlights: newHighlights.split('\n').filter(Boolean).map(s => s.trim()) });
       setNewTitle('');
       setNewContent('');
       setNewDepartment('General');
+      setNewHighlights('');
       setShowCreate(false);
       toast.success('Page created');
       loadPages();
@@ -358,7 +358,6 @@ export default function Wiki() {
             <div className="grid gap-4 md:grid-cols-2">
               {displayPages.map(page => {
                 const c = getDeptColor(page.department);
-                const excerpt = stripMd(page.content).slice(0, 160);
                 return (
                   <article key={page._id}
                     onClick={() => openPage(page._id)}
@@ -396,11 +395,21 @@ export default function Wiki() {
                         </div>
                       )}
 
-                      {/* Excerpt */}
-                      {excerpt && (
-                        <p className="text-sm text-surface-500 leading-relaxed line-clamp-3 mb-4 bg-surface-50 rounded-xl px-3 py-2 border border-surface-100">
-                          {excerpt}
-                        </p>
+                      {/* Highlights - bullet points */}
+                      {page.highlights?.length > 0 && (
+                        <div className="mb-4">
+                          <ul className="space-y-1">
+                            {page.highlights.slice(0, 3).map((h, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-surface-500 leading-relaxed">
+                                <span className="w-1 h-1 rounded-full bg-surface-400 mt-1.5 shrink-0" />
+                                <span className="line-clamp-1">{h}</span>
+                              </li>
+                            ))}
+                            {page.highlights.length > 3 && (
+                              <li className="text-[10px] text-surface-400 font-medium ml-3">+{page.highlights.length - 3} more</li>
+                            )}
+                          </ul>
+                        </div>
                       )}
 
                       {/* Footer */}
@@ -494,6 +503,25 @@ export default function Wiki() {
               )}
             </div>
           </div>
+
+          {/* Highlights section */}
+          {currentPage.highlights?.length > 0 && (
+            <div className="px-8 pt-8">
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-surface-50 rounded-2xl border border-surface-200 p-6">
+                  <h3 className="text-xs font-bold text-surface-500 uppercase tracking-wider mb-4">Highlights</h3>
+                  <ul className="space-y-3">
+                    {currentPage.highlights.map((h, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-surface-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2347e8] mt-2 shrink-0" />
+                        {h}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Article content */}
           <div className="px-8 py-8">
@@ -631,6 +659,12 @@ export default function Wiki() {
                 ))}
               </select>
             </div>
+            <textarea
+              value={editHighlights} onChange={e => setEditHighlights(e.target.value)}
+              placeholder="Highlights (one per line)"
+              rows={3}
+              className="w-full px-5 py-3 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+            />
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-surface-500 mb-2 uppercase tracking-wider">Markdown</label>
@@ -685,6 +719,12 @@ export default function Wiki() {
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
+              <textarea
+                value={newHighlights} onChange={e => setNewHighlights(e.target.value)}
+                placeholder="Highlights (one per line)&#10;e.g.&#10;User authentication with JWT&#10;Role-based access control&#10;Real-time notifications"
+                rows={3}
+                className="w-full px-5 py-3 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+              />
               <textarea
                 value={newContent} onChange={e => setNewContent(e.target.value)}
                 placeholder="Write your article content in markdown..."

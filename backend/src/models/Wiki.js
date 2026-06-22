@@ -25,6 +25,7 @@ const wikiSchema = new mongoose.Schema({
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isActive: { type: Boolean, default: true },
   department: { type: String, default: 'General', trim: true },
+  highlights: { type: [String], default: [] },
   ratings: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, value: { type: Number, min: 1, max: 5 } }],
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 

@@ -57,12 +57,13 @@ exports.getPageBySlug = async (req, res, next) => {
 
 exports.createPage = async (req, res, next) => {
   try {
-    const { title, content, department } = req.body;
+    const { title, content, department, highlights } = req.body;
     const slug = await uniqueSlug(title, req.user.domain);
     const data = {
       title, content, slug, domain: req.user.domain,
       createdBy: req.user._id, updatedBy: req.user._id, department: department || 'General',
       contributors: [{ user: req.user._id, name: req.user.name, updatedAt: new Date() }],
+      highlights: req.body.highlights || [],
     };
     let page = await Wiki.create(data);
     page = await populateRefs(Wiki.findById(page._id));
@@ -82,6 +83,7 @@ exports.updatePage = async (req, res, next) => {
     }
     if (req.body.content !== undefined) page.content = req.body.content;
     if (req.body.department !== undefined) page.department = req.body.department;
+    if (req.body.highlights !== undefined) page.highlights = req.body.highlights;
     page.updatedBy = req.user._id;
 
     const already = page.contributors.some(c => c.user?.toString() === req.user._id.toString());
