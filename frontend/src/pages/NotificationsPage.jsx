@@ -18,7 +18,7 @@ const timeAgo = (date) => {
 const getColumn = (n) => {
   if (['project_update', 'project_invite'].includes(n.type)) return 'projects';
   if (['task_assigned', 'task_updated'].includes(n.type)) return 'tasks';
-  if (['mention', 'system', 'meeting_reminder', 'deadline_alert', 'warning', 'worklog_added', 'project_relay'].includes(n.type)) return 'other';
+  if (['mention', 'system', 'meeting_reminder', 'deadline_alert', 'warning', 'worklog_added', 'project_relay', 'wiki_created'].includes(n.type)) return 'other';
   if (n.type === 'status_change') {
     if (/project/i.test(n.title)) return 'projects';
     return 'tasks';
@@ -47,6 +47,7 @@ const getOtherIcon = (n) => {
   if (n.type === 'meeting_reminder') return '📅';
   if (n.type === 'deadline_alert' || /overdue/.test(n.title)) return '⏰';
   if (n.type === 'project_relay') return '🎯';
+  if (n.type === 'wiki_created') return '📄';
   return '🔔';
 };
 

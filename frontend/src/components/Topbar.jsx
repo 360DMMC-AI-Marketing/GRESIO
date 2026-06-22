@@ -164,7 +164,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
       return 'projects';
     }
     if (['task_assigned', 'task_updated', 'task_update', 'status_change'].includes(n.type)) return 'tasks';
-    if (['mention', 'system', 'meeting_reminder', 'deadline_alert'].includes(n.type)) return 'other';
+    if (['mention', 'system', 'meeting_reminder', 'deadline_alert', 'warning', 'worklog_added', 'project_relay', 'wiki_created'].includes(n.type)) return 'other';
     return 'other';
   };
 
@@ -188,6 +188,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
     if (n.type === 'mention' || /mentioned/.test(n.message)) return '💬';
     if (n.type === 'meeting_reminder') return '📅';
     if (n.type === 'deadline_alert' || /overdue/.test(n.title)) return '⏰';
+    if (n.type === 'wiki_created') return '📄';
     return '🔔';
   };
 

@@ -1,4 +1,7 @@
 const Wiki = require('../models/Wiki');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
+const { getIO } = require('../socket/ioProvider');
 const fs = require('fs');
 const path = require('path');
 
@@ -67,6 +70,26 @@ exports.createPage = async (req, res, next) => {
     };
     let page = await Wiki.create(data);
     page = await populateRefs(Wiki.findById(page._id));
+
+    // Notify all company users about the new wiki page
+    try {
+      const users = await User.find({ domain: req.user.domain, isActive: true }).select('_id');
+      if (users.length) {
+        const notifDocs = users.map(u => ({
+          user: u._id,
+          domain: req.user.domain,
+          type: 'wiki_created',
+          title: `New wiki article: ${title}`,
+          message: `${req.user.name} created "${title}" in ${department || 'General'}`,
+          link: `/wiki`,
+          metadata: { pageId: page._id, department: department || 'General' },
+        }));
+        const notifs = await Notification.insertMany(notifDocs);
+        const io = getIO();
+        notifs.forEach(n => { try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} });
+      }
+    } catch (e) { console.error('Failed to notify wiki creation:', e.message); }
+
     res.status(201).json(page);
   } catch (e) { next(e); }
 };
