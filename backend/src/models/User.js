@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
   role: {
     type: String,
-    enum: ['super_admin', 'admin', 'team_lead', 'project_manager', 'manager', 'qa_tester', 'developer', 'intern', 'other'],
+    enum: ['super_admin', 'admin', 'team_lead', 'project_manager', 'manager', 'qa_tester', 'developer', 'designer', 'business_analyst', 'intern', 'other'],
     default: 'developer',
   },
   status: { type: String, enum: ['active', 'idle', 'in_meeting', 'inactive', 'offline'], default: 'offline' },

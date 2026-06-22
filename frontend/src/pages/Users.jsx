@@ -40,10 +40,23 @@ const ROLE_CATEGORIES = [
   { label:'Developer', roles:['developer','frontend_developer','backend_developer','full_stack_developer','mobile_developer','devops_engineer'] },
   { label:'QA', roles:['qa_tester','automation_tester','qa_lead'] },
   { label:'Design', roles:['designer','ui_designer','ux_designer','product_designer'] },
-  { label:'Management', roles:['project_manager','team_leader','scrum_master'] },
+  { label:'Management', roles:['project_manager','team_leader','scrum_master','manager'] },
   { label:'Business', roles:['business_analyst','product_owner','business_developer'] },
   { label:'Intern', roles:['intern','development_intern','qa_intern','design_intern','business_intern'] },
   { label:'Admin', roles:['admin','company_owner'] },
+];
+
+const USER_ROLES = [
+  { value:'admin', label:'Admin' },
+  { value:'project_manager', label:'Project Manager' },
+  { value:'team_lead', label:'Team Lead' },
+  { value:'manager', label:'Manager' },
+  { value:'designer', label:'Designer' },
+  { value:'business_analyst', label:'Business Analyst' },
+  { value:'developer', label:'Developer' },
+  { value:'qa_tester', label:'QA Tester' },
+  { value:'intern', label:'Intern' },
+  { value:'other', label:'Other' },
 ];
 
 export default function Users() {
@@ -68,6 +81,9 @@ export default function Users() {
   const [wlForm, setWlForm] = useState({ date:new Date().toISOString().split('T')[0], hours:1, project:'', description:'', tags:'' });
   const [selectedWLDetail, setSelectedWLDetail] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ show:false, message:'', onConfirm:null });
+  const [savingRole, setSavingRole] = useState(false);
+
+  const canChangeRole = user?.role === 'admin';
 
   const fetchData = async () => {
     try {
@@ -81,6 +97,22 @@ export default function Users() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleRoleChange = async (userId, newRole) => {
+    setSavingRole(true);
+    try {
+      await api.patch(`/users/${userId}`, { role: newRole });
+      toast.success('Role updated');
+      setSelectedMember(prev => prev ? {
+        ...prev,
+        user: { ...prev.user, role: newRole },
+      } : null);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to update role');
+    } finally {
+      setSavingRole(false);
+    }
+  };
 
   useEffect(() => {
     if (!addForm.project) { setProjectGroups([]); return; }
@@ -437,6 +469,26 @@ export default function Users() {
                 <div>
                   <div className="text-[15px] font-bold text-surface-900">{selectedMember.user?.name || selectedMember.user?.email}</div>
                   <div className="text-[10px] text-surface-500 mt-[1px]">{selectedMember.user?.email}</div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span style={{ fontSize:9, background:ROLE_STYLES[selectedMember.user?.role]?.bg||'#f3f4f6', color:ROLE_STYLES[selectedMember.user?.role]?.clr||'#6b7280', padding:'1px 6px', borderRadius:3, fontWeight:500 }}>
+                      {selectedMember.user?.role?.replace(/_/g, ' ') || '—'}
+                    </span>
+                    {canChangeRole && selectedMember.user?.role !== 'super_admin' && (
+                      <div style={{ position:'relative', display:'inline-flex', alignItems:'center' }}>
+                        <select
+                          value={selectedMember.user?.role || ''}
+                          onChange={e => handleRoleChange(selectedMember.user?._id, e.target.value)}
+                          disabled={savingRole}
+                          style={{ fontSize:9, padding:'1px 4px', borderRadius:3, border:'1px solid #d1d5db', background:'white', color:'#374151', cursor:'pointer', outline:'none', maxWidth:100 }}
+                        >
+                          {USER_ROLES.map(r => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                          ))}
+                        </select>
+                        {savingRole && <span style={{ fontSize:8, color:'#6b7280', marginLeft:4 }}>...</span>}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <button onClick={() => setSelectedMember(null)}
