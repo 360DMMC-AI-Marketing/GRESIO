@@ -59,7 +59,7 @@ const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
-app.post('/api/seed-demo', async (req, res) => {
+app.post('/api/seed-demo', auth, authorize('admin'), async (req, res) => {
   try {
     const User = require('./models/User');
     const exists = await User.countDocuments({ email: 'admin@gresio.com' });
@@ -149,7 +149,7 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-app.get('/api/seed', async (req, res) => {
+app.get('/api/seed', auth, authorize('admin'), async (req, res) => {
   try {
     const User = require('./models/User');
     const Company = require('./models/Company');
