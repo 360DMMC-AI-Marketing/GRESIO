@@ -73,15 +73,6 @@ const CATEGORIES = [
     ],
   },
   {
-    icon: '🧬', title: 'WorkDNA — Company Brain', desc: 'Every project makes your team smarter. WorkDNA captures decisions, surfaces past patterns, and warns before mistakes repeat.',
-    features: [
-      { title: 'Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team.' },
-      { title: 'Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.' },
-      { title: 'Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn.' },
-      { title: 'Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost.' },
-    ],
-  },
-  {
     icon: '🔗', title: 'Integrations', desc: 'Connect the tools your team already uses — GitHub, Microsoft 365, Teams, Outlook, and more.',
     features: [
       { title: 'Microsoft 365 / Azure AD', desc: 'One-click import of all company users. Auto-infer roles from job titles. Send welcome emails with temp passwords.' },
@@ -115,13 +106,17 @@ const CATEGORIES = [
   {
     icon: '📚', title: 'Knowledge Base', desc: 'A central hub that brings together your company wiki, WorkDNA archives, and project templates — searchable, editable, and always up to date.',
     features: [
-      { title: 'Markdown Wiki Articles', desc: 'Create and edit documentation with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
-      { title: 'Department Organization', desc: 'Organize articles by department with color-coded filter pills. Custom departments supported.' },
-      { title: 'Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
-      { title: 'File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
-      { title: 'Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
-      { title: 'Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
-      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article or template is created in your company. Never miss important knowledge.' },
+      { title: '📝 Markdown Wiki Articles', desc: 'Create and edit documentation with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
+      { title: '📂 Department Organization', desc: 'Organize articles by department with color-coded filter pills. Custom departments supported.' },
+      { title: '⭐ Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
+      { title: '📎 File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
+      { title: '📥 Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
+      { title: '🧬 Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team.' },
+      { title: '🧬 Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.' },
+      { title: '🧬 Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn.' },
+      { title: '🧬 Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost.' },
+      { title: '📋 Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
+      { title: '🔔 Real-Time Notifications', desc: 'Get notified when a new wiki article or template is created in your company. Never miss important knowledge.' },
     ],
   },
 ];
