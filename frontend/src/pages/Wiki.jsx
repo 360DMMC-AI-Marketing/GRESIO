@@ -387,12 +387,12 @@ export default function Wiki() {
                       </h3>
 
                       {/* Rating stars */}
-                      {page.averageRating > 0 && (
+                      {page.ratings?.length > 0 && (
                         <div className="flex items-center gap-0.5 mb-2">
                           {[1, 2, 3, 4, 5].map(s => (
                             <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(page.averageRating) ? 'text-amber-400 fill-amber-400' : 'text-surface-200'}`} />
                           ))}
-                          <span className="text-[10px] text-surface-400 ml-1 font-medium">({page.averageRating})</span>
+                          <span className="text-[10px] text-surface-400 ml-1 font-medium">{page.averageRating} ({page.ratings.length})</span>
                         </div>
                       )}
 
@@ -443,6 +443,14 @@ export default function Wiki() {
               className="absolute top-4 left-4 flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
+            {/* Professional rating badge - top right */}
+            {currentPage.ratings?.length > 0 && (
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10">
+                <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span className="text-xs font-bold text-white/90">{currentPage.averageRating}</span>
+                <span className="text-[10px] text-white/50">({currentPage.ratings.length})</span>
+              </div>
+            )}
             <div className="max-w-4xl mx-auto">
               {currentPage.department && (
                 <span className={`inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-6`}>
@@ -466,21 +474,6 @@ export default function Wiki() {
                     </div>
                   </div>
                 </div>
-              </div>
-              {/* Star rating */}
-              <div className="flex items-center justify-center gap-1 mt-5">
-                {[1, 2, 3, 4, 5].map(s => {
-                  const userRating = currentPage.ratings?.find(r => r.user === user?._id)?.value || 0;
-                  return (
-                    <button key={s} onClick={() => handleRate(s)}
-                      className="cursor-pointer bg-transparent border-none p-0.5 transition-transform hover:scale-110">
-                      <Star className={`w-6 h-6 ${s <= (userRating || Math.round(currentPage.averageRating || 0)) ? 'text-amber-300 fill-amber-300' : 'text-white/30'}`} />
-                    </button>
-                  );
-                })}
-                {currentPage.averageRating > 0 && (
-                  <span className="text-sm text-white/60 ml-2 font-medium">({currentPage.averageRating})</span>
-                )}
               </div>
             </div>
             {/* Action buttons */}
