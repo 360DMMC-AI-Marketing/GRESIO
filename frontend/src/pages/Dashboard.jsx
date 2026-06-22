@@ -480,7 +480,7 @@ export default function Dashboard() {
                 const allTasks = (u.periods || []).flatMap(p => p.tasks || []);
                 const sprintHours = (capacityData.sprints || []).map(s => {
                   const st = allTasks.filter(t => t.sprint && t.sprint.toString() === s._id.toString());
-                  return { ...s, totalHours: st.reduce((sum, t) => sum + (t.estimatedHours || 0), 0), taskCount: st.length };
+                  return { ...s, totalHours: st.reduce((sum, t) => sum + (t.hours || t.estimatedHours || 0), 0), taskCount: st.length };
                 }).filter(s => s.totalHours > 0 || s.taskCount > 0);
 
                 return (
@@ -592,7 +592,7 @@ export default function Dashboard() {
                   {hoveredCell.period.tasks.map(t => (
                     <div key={t._id} className="flex justify-between gap-2">
                       <span className="text-neutral-300 truncate">{t.title}</span>
-                      <span className="font-semibold text-amber-300 shrink-0">{t.estimatedHours}h</span>
+                      <span className="font-semibold text-amber-300 shrink-0">{t.hours || t.estimatedHours || 0}h</span>
                     </div>
                   ))}
                   <div className="border-t border-neutral-700 mt-0.5 pt-0.5 flex justify-between text-[10px]">
@@ -640,8 +640,8 @@ export default function Dashboard() {
                             <div className="text-[10px] text-surface-400 mt-0.5">{t.project}</div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-sm font-bold text-surface-900">{t.estimatedHours}h</div>
-                            <div className="text-[9px] text-surface-400 capitalize">{t.status?.replace(/_/g, ' ')}</div>
+                            <div className="text-sm font-bold text-surface-900">{t.hours || t.estimatedHours || 0}h</div>
+                            <div className="text-[9px] text-surface-400 capitalize">{t.status ? t.status.replace(/_/g, ' ') : t.category || 'worklog'}</div>
                           </div>
                         </div>
                       ))}

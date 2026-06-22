@@ -1,9 +1,7 @@
 const User = require('../models/User');
 const Company = require('../models/Company');
 const Activity = require('../models/Activity');
-const Task = require('../models/Task');
-const Project = require('../models/Project');
-const Sprint = require('../models/Sprint');
+const WorkLog = require('../models/WorkLog');
 const { enforceUserLimit } = require('../config/planLimits');
 
 exports.getUsers = async (req, res, next) => {
@@ -188,21 +186,18 @@ exports.getCapacity = async (req, res, next) => {
     const sixWeeksFromNow = new Date(weekStarts[weekStarts.length - 1]);
     sixWeeksFromNow.setDate(sixWeeksFromNow.getDate() + 7);
 
-    const activeSprints = await Sprint.find({
-      domain, status: 'active',
-      startDate: { $lte: sixWeeksFromNow }, endDate: { $gte: now },
-    }).select('name startDate endDate').lean();
+    const userIds = users.map(u => u._id.toString());
 
-    const tasks = await Task.find({
-      domain,
-      assignee: { $ne: null },
-      status: { $ne: 'done' },
-      isActive: true,
-    }).select('title estimatedHours deadline sprint assignee project status priority')
+    const startStr = weekStarts[0].toISOString().split('T')[0];
+    const endStr = sixWeeksFromNow.toISOString().split('T')[0];
+
+    const worklogs = await WorkLog.find({
+      user: { $in: userIds },
+      date: { $gte: startStr, $lt: endStr },
+    })
       .populate('project', 'name')
       .lean();
 
-    const userIds = users.map(u => u._id.toString());
     const capacityMap = {};
     for (const uid of userIds) {
       const periods = [];
@@ -212,37 +207,26 @@ exports.getCapacity = async (req, res, next) => {
         const we = new Date(ws);
         we.setDate(we.getDate() + 7);
 
-        const weekTasks = tasks.filter(t => {
-          if (t.assignee?.toString() !== uid) return false;
-          if (t.deadline) {
-            const d = new Date(t.deadline);
-            return d >= ws && d < we;
-          }
-          if (t.sprint) {
-            const sp = activeSprints.find(s => s._id.toString() === t.sprint.toString());
-            if (sp) {
-              const sd = new Date(sp.startDate);
-              const ed = new Date(sp.endDate);
-              return sd < we && ed >= ws;
-            }
-          }
-          return false;
-        });
+        const wsStr = ws.toISOString().split('T')[0];
+        const weStr = we.toISOString().split('T')[0];
 
-        const totalHours = weekTasks.reduce((s, t) => s + (t.estimatedHours || 0), 0);
+        const weekLogs = worklogs.filter(wl =>
+          wl.user.toString() === uid && wl.date >= wsStr && wl.date < weStr
+        );
+
+        const totalHours = weekLogs.reduce((s, w) => s + (w.hours || 0), 0);
         periods.push({
           label: ws.toLocaleDateString('en', { month: 'short', day: 'numeric' }),
           start: ws.toISOString(),
           totalHours: Math.round(totalHours * 10) / 10,
           capacity: 40,
-          tasks: weekTasks.map(t => ({
-            _id: t._id,
-            title: t.title,
-            estimatedHours: t.estimatedHours || 0,
-            project: t.project?.name || 'No project',
-            sprint: t.sprint,
-            status: t.status,
-            priority: t.priority,
+          tasks: weekLogs.map(w => ({
+            _id: w._id,
+            title: w.taskTitle || w.description || 'Worklog entry',
+            hours: w.hours || 0,
+            project: w.project?.name || 'No project',
+            category: w.category,
+            date: w.date,
           })),
         });
       }
@@ -260,7 +244,7 @@ exports.getCapacity = async (req, res, next) => {
       periods: capacityMap[u._id.toString()],
     }));
 
-    res.json({ users: result, sprints: activeSprints, weekStarts: weekStarts.map(w => w.toISOString()) });
+    res.json({ users: result, sprints: [], weekStarts: weekStarts.map(w => w.toISOString()) });
   } catch (error) {
     next(error);
   }
