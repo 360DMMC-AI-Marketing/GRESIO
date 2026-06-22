@@ -120,9 +120,8 @@ const CATEGORIES = [
       { title: 'Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
       { title: 'File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
       { title: 'Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
-      { title: 'WorkDNA Archive Access', desc: 'Browse archived monthly snapshots of every project — features, tech stack, decisions, risks, repos, and stats. All from the Knowledge Base.' },
       { title: 'Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
-      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article, archive, or template is created in your company. Never miss important knowledge.' },
+      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article or template is created in your company. Never miss important knowledge.' },
     ],
   },
 ];
