@@ -77,6 +77,7 @@ export default function OnboardingGuide() {
             ['Report Generation','Generate admin (full audit) and client (summary) PDF reports for completed/delivered projects'],
             ['Automated Status Flow','Smart phase transitions based on project data and type'],
             ['Manual Gates','Admin/PM/Team Lead approval for critical milestones'],
+            ['Knowledge Base','Company-wide wiki with markdown articles, department organization, star ratings, file attachments, and .md/.txt import'],
           ]} />
         </Section>
 
@@ -454,6 +455,7 @@ export default function OnboardingGuide() {
               {k:'calendar',l:'I know how to use the Calendar to track deadlines and events'},
               {k:'relay',l:'I understand how Project Relay chains work'},
               {k:'workdna',l:'I understand WorkDNA and how to log decisions'},
+              {k:'kb',l:'I know how to use the Knowledge Base to find documentation and guides'},
               {k:'help',l:'I know where to find help if I\'m stuck'},
             ].map(({k,l}) => (
               <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
@@ -582,6 +584,33 @@ export default function OnboardingGuide() {
           <p style={{fontSize:11}}>Go to <strong>Workspace → Project Relay</strong> from the sidebar. From there you can view all chains, create new ones, and click into any chain to see its pipeline visualization. Each chain is also visible from its member projects' <strong>Relay</strong> tab in the project detail page.</p>
         </Section>
 
+        <Section title="17. Knowledge Base">
+          <p style={{fontSize:11}}>The Knowledge Base is a company-wide wiki where your team can create, organize, and share documentation — from onboarding guides and technical specs to process docs and best practices.</p>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Features</h4>
+          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
+            <li><strong>Markdown Articles</strong> — Create and edit wiki pages with live markdown preview. Full GFM support (tables, code blocks, task lists, etc.).</li>
+            <li><strong>Department Organization</strong> — Filter articles by department using color-coded pills. Custom departments can be added by managers.</li>
+            <li><strong>Star Rating System</strong> — Rate articles 1–5 stars. Average ratings are displayed on cards and articles to highlight the best content.</li>
+            <li><strong>File Attachments</strong> — Attach files (PDFs, images, documents) to any article using the attach button or drag-drop.</li>
+            <li><strong>Import Existing Docs</strong> — Import <code>.md</code> and <code>.txt</code> files directly as new wiki pages — perfect for migrating existing documentation.</li>
+            <li><strong>Real-Time Notifications</strong> — Get notified in-app when a new wiki article is created in your company.</li>
+          </ul>
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Do What</h4>
+          <InfoTable rows={[
+            ['Action','Admin / PM / Team Lead / Manager','Others'],
+            ['Create articles','✅','❌'],
+            ['Edit any article','✅','✅'],
+            ['Delete articles','✅','❌'],
+            ['Add departments','✅','❌'],
+            ['Rate articles','✅','✅'],
+          ]} />
+
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Accessing the Knowledge Base</h4>
+          <p style={{fontSize:11}}>Go to <strong>Workspace → Knowledge Base</strong> from the sidebar. Use the search bar to find articles by title, filter by department, or browse all articles sorted by rating.</p>
+        </Section>
+
         <Section title="System Administrator Contact">
           <p style={{fontSize:11}}>
             If you encounter issues not covered in this guide:<br />
@@ -603,6 +632,7 @@ export default function OnboardingGuide() {
             ['1.7','June 2026','Added dedicated Calendar (11) and Project Relay (12) sections to the guide; updated checklist with relay item'],
             ['2.0','June 2026','🧬 Added WorkDNA — Company Brain: Decision Journal, Project Déjà Vu, Pattern Detection, Invisible Work Map. New WorkDNA page under Insights. Added to Landing page and Onboarding guide as section 10.'],
             ['2.1','June 2026','🤖 Added AI Roadmap section to Onboarding (section 11). Created stub AI provider + embeddings services. Ready for API key activation.'],
+            ['2.2','June 2026','📚 Added Knowledge Base section to Onboarding (section 17). Featured on Landing, Features, and Pricing pages.'],
           ]} />
         </Section>
       </div>

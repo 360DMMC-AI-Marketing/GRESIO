@@ -31,6 +31,7 @@ const PLANS = [
       { label: 'Auto status flow', value: false, icon: '🔄' },
       { label: 'WorkDNA', value: false, icon: '🧬' },
       { label: 'Advanced reports', value: false, icon: '📊' },
+      { label: 'Knowledge Base', value: false, icon: '📚' },
     ],
   },
   {
@@ -64,6 +65,7 @@ const PLANS = [
       { label: 'Advanced analytics', value: true, icon: '📈' },
       { label: 'MS Teams + Outlook', value: true, icon: '🔗' },
       { label: 'Priority support', value: true, icon: '🎯' },
+      { label: 'Knowledge Base', value: true, icon: '📚' },
     ],
   },
   {
@@ -93,6 +95,7 @@ const PLANS = [
       { label: 'API access', value: 'Add-on', icon: '🔌' },
       { label: 'SLA guarantee', value: true, icon: '📋' },
       { label: 'AI Voice + Chat', value: true, icon: '🤖' },
+      { label: 'Knowledge Base', value: true, icon: '📚' },
     ],
   },
 ];
@@ -171,6 +174,16 @@ const FEATURES = [
       { label: 'AI Chatbot', starter: false, team: false, enterprise: true },
     ],
   },
+  {
+    group: 'Knowledge Base',
+    items: [
+      { label: 'Markdown wiki articles', starter: false, team: true, enterprise: true },
+      { label: 'Department organization', starter: false, team: true, enterprise: true },
+      { label: 'File attachments', starter: false, team: true, enterprise: true },
+      { label: 'Star rating system', starter: false, team: true, enterprise: true },
+      { label: 'Import .md / .txt files', starter: false, team: true, enterprise: true },
+    ],
+  },
 ];
 
 function Capability({ cap, planId }) {
@@ -196,6 +209,7 @@ const NEEDS = [
   { id: 'dna', label: 'WorkDNA archive', plan: 'team' },
   { id: 'capacity', label: 'Capacity planning', plan: 'team' },
   { id: 'ai', label: 'AI voice & chat', plan: 'enterprise' },
+  { id: 'kb', label: 'Knowledge Base', plan: 'team' },
 ];
 
 export default function PricingPage() {
