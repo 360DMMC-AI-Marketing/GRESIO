@@ -1,28 +1,37 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import CONTENT_INDEX from '../data/contentIndex';
 
-const SEARCH_INDEX = [
-  { to: '/', title: 'Home', desc: 'Welcome to GRESIO — platform overview and getting started', icon: '🏠' },
-  { to: '/features', title: 'Features', desc: 'Explore all 180+ features across project management, sprints, testing, analytics, and more', icon: '🚀' },
-  { to: '/how-it-works', title: 'How It Works', desc: 'Understand the 8-phase lifecycle, auto status flow, and 5 project types', icon: '⚙️' },
-  { to: '/pricing', title: 'Pricing', desc: 'View plans — Starter (free), Team, and Enterprise', icon: '💳' },
-  { to: '/contact', title: 'Contact', desc: 'Get in touch with our team for support and inquiries', icon: '✉️' },
-  { to: '/about', title: 'About', desc: 'Learn about GRESIO, 360 DMMC, and our mission', icon: 'ℹ️' },
-  { to: '/blog', title: 'Blog', desc: 'Read the latest updates, articles, and product news', icon: '📝' },
-  { to: '/faq', title: 'FAQ', desc: 'Find answers to frequently asked questions about the platform', icon: '❓' },
-  { to: '/guides', title: 'Guides', desc: 'Step-by-step tutorials and documentation for getting the most out of GRESIO', icon: '📖' },
-  { to: '/privacy', title: 'Privacy Policy', desc: 'Our commitment to data protection, GDPR compliance, and security', icon: '🔒' },
-  { to: '/careers', title: 'Careers', desc: 'Join our team — current openings and hiring information', icon: '💼' },
-];
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
+const SEARCH_ICONS = {
+  Wiki: { icon: '📄', color: '#7C3AED' },
+  Template: { icon: '📋', color: '#DC2626' },
+};
 
 export default function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [backendResults, setBackendResults] = useState([]);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (!query.trim()) { setBackendResults([]); return; }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/search/public`, { params: { q: query.trim() } });
+        setBackendResults(res.data.results || []);
+      } catch { setBackendResults([]); }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -54,10 +63,10 @@ export default function PublicNavbar() {
   }, [searchOpen]);
 
   const results = query.trim()
-    ? SEARCH_INDEX.filter(item =>
+    ? CONTENT_INDEX.filter(item =>
         item.title.toLowerCase().includes(query.toLowerCase()) ||
         item.desc.toLowerCase().includes(query.toLowerCase())
-      )
+      ).slice(0, 8)
     : [];
 
   const handleSelect = (to) => {
@@ -100,22 +109,45 @@ export default function PublicNavbar() {
                   onChange={e => setQuery(e.target.value)}
                   className="flex-1 border-none outline-none text-sm text-surface-900 placeholder:text-surface-400 bg-transparent" />
                 <span className="text-[10px] font-medium text-surface-300 bg-surface-200/60 px-1.5 py-0.5 rounded">ESC</span>
-                {query.trim() && results.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 overflow-hidden max-h-80 overflow-y-auto">
-                    <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400">Pages</div>
-                    {results.map((item, i) => (
-                      <button key={i} onClick={() => handleSelect(item.to)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 transition-colors text-left cursor-pointer bg-transparent border-none">
-                        <span className="text-base shrink-0">{item.icon}</span>
-                        <div>
-                          <p className="text-sm font-medium text-surface-900">{item.title}</p>
-                          <p className="text-[11px] text-surface-400 leading-snug line-clamp-1">{item.desc}</p>
-                        </div>
-                      </button>
-                    ))}
+                {query.trim() && (results.length > 0 || backendResults.length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 overflow-hidden max-h-96 overflow-y-auto">
+                    {results.length > 0 && (
+                      <>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400">Pages & Content</div>
+                        {results.map((item, i) => (
+                          <button key={`page-${i}`} onClick={() => handleSelect(item.url)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 transition-colors text-left cursor-pointer bg-transparent border-none">
+                            <span className="text-base shrink-0">{item.icon}</span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-surface-900 truncate">{item.title}</p>
+                              <p className="text-[11px] text-surface-400 leading-snug line-clamp-1">{item.desc}</p>
+                              <p className="text-[9px] text-surface-300 mt-0.5">{item.page}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    )}
+                    {backendResults.length > 0 && (
+                      <>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400 border-t border-surface-100">Knowledge Base</div>
+                        {backendResults.map((item, i) => {
+                          const meta = SEARCH_ICONS[item.type] || { icon: '📄', color: '#6B7280' };
+                          return (
+                            <button key={`be-${i}`} onClick={() => handleSelect(item.to)}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 transition-colors text-left cursor-pointer bg-transparent border-none">
+                              <span className="text-base shrink-0">{meta.icon}</span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-surface-900 truncate">{item.label}</p>
+                                <p className="text-[11px] text-surface-400 leading-snug">{item.type}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 )}
-                {query.trim() && results.length === 0 && (
+                {query.trim() && results.length === 0 && backendResults.length === 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 p-6 text-center">
                     <span className="text-2xl block mb-2">🔍</span>
                     <p className="text-sm font-medium text-surface-700 mb-0.5">No results for "{query}"</p>

@@ -37,5 +37,6 @@ wikiSchema.virtual('averageRating').get(function () {
 
 wikiSchema.index({ domain: 1 });
 wikiSchema.index({ slug: 1, domain: 1 }, { unique: true });
+wikiSchema.index({ title: 'text', content: 'text' });
 
 module.exports = mongoose.model('Wiki', wikiSchema);

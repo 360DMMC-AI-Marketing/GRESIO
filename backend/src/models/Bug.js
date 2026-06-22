@@ -29,5 +29,6 @@ const bugSchema = new mongoose.Schema({
 
 bugSchema.index({ project: 1, status: 1 });
 bugSchema.index({ testCase: 1 });
+bugSchema.index({ title: 'text', description: 'text', feature: 'text' });
 
 module.exports = mongoose.model('Bug', bugSchema);

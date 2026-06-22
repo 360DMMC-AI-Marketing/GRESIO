@@ -101,5 +101,6 @@ testCaseSchema.pre('save', async function (next) {
 
 testCaseSchema.index({ project: 1, status: 1 });
 testCaseSchema.index({ project: 1, testCaseId: 1 });
+testCaseSchema.index({ title: 'text', description: 'text', feature: 'text' });
 
 module.exports = mongoose.model('TestCase', testCaseSchema);

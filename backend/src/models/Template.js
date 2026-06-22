@@ -28,5 +28,6 @@ const templateSchema = new mongoose.Schema({
 templateSchema.index({ domain: 1, approved: 1 });
 templateSchema.index({ tags: 1 });
 templateSchema.index({ downloads: -1 });
+templateSchema.index({ name: 'text', description: 'text' });
 
 module.exports = mongoose.model('Template', templateSchema);

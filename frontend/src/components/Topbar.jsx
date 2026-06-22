@@ -2,10 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api, { notifications } from '../services/api';
+import CONTENT_INDEX from '../data/contentIndex';
 
 const STATUS_DOT = {
   active: 'bg-success-500', idle: 'bg-warning-500',
   in_meeting: 'bg-info-500', inactive: 'bg-neutral-400', offline: 'bg-neutral-300',
+};
+
+const SEARCH_ICONS = {
+  Project: { icon: '📁', color: '#2563EB' },
+  Task: { icon: '✅', color: '#059669' },
+  Sprint: { icon: '⚡', color: '#D97706' },
+  User: { icon: '👤', color: '#6B7280' },
+  Wiki: { icon: '📄', color: '#7C3AED' },
+  'Work Log': { icon: '⏱️', color: '#0891B2' },
+  Template: { icon: '📋', color: '#DC2626' },
+  Decision: { icon: '🧠', color: '#9333EA' },
+  Bug: { icon: '🐛', color: '#EF4444' },
+  'Test Case': { icon: '🧪', color: '#0D9488' },
+  Report: { icon: '📊', color: '#4F46E5' },
+  Chain: { icon: '🔗', color: '#A855F7' },
 };
 
 const PLAN_INFO = {
@@ -52,12 +68,20 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
     debounceRef.current = setTimeout(async () => {
       if (!mountedRef.current) return;
       try {
-        const q = searchQuery.trim();
-        const res = await api.get('/search', { params: { q } });
+        const q = searchQuery.trim().toLowerCase();
+        // local content index results
+        const local = CONTENT_INDEX.filter(item =>
+          item.title.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+        ).slice(0, 5).map(item => ({
+          type: item.page, label: item.title, to: item.url, _local: true,
+        }));
+        // backend results
+        const res = await api.get('/search', { params: { q: searchQuery.trim() } });
         if (!mountedRef.current) return;
-        const results = res.data.results || [];
-        setSearchResults(results);
-        setShowSearch(results.length > 0);
+        const backend = (res.data.results || []).map(r => ({ ...r, _local: false }));
+        const merged = [...local, ...backend].slice(0, 20);
+        setSearchResults(merged);
+        setShowSearch(merged.length > 0);
       } catch (e) { console.error(e); }
     }, 250);
     return () => clearTimeout(debounceRef.current);
@@ -299,19 +323,26 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-400 shrink-0">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
-          <input type="text" placeholder="Search projects, tasks..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (!e.target.value.trim()) { setShowSearch(false); } }}
+          <input type="text" placeholder="Search projects, tasks, wiki..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (!e.target.value.trim()) { setShowSearch(false); } }}
             onFocus={() => { if (searchResults.length > 0) setShowSearch(true); }}
             className="bg-transparent border-none outline-none text-xs text-neutral-700 w-full placeholder:text-neutral-400" />
         </div>
         {showSearch && (
-          <div className="absolute top-10 left-0 w-[320px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 max-h-72 overflow-y-auto animate-fade-in">
-            {searchResults.map((r, i) => (
-              <div key={i} onClick={() => { navigate(r.to); setShowSearch(false); setSearchQuery(''); }}
-                className="flex items-center gap-2 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
-                <span className="text-[10px] font-semibold text-neutral-400 w-14 shrink-0">{r.type}</span>
-                <span className="text-xs text-neutral-800 truncate">{r.label}</span>
-              </div>
-            ))}
+          <div className="absolute top-10 left-0 w-[400px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 max-h-96 overflow-y-auto animate-fade-in">
+            {searchResults.map((r, i) => {
+              const meta = SEARCH_ICONS[r.type] || { icon: '🔍', color: '#6B7280' };
+              return (
+                <div key={i} onClick={() => { navigate(r.to); setShowSearch(false); setSearchQuery(''); }}
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
+                  <span className="text-xs shrink-0">{meta.icon}</span>
+                  <span className="text-[10px] font-semibold shrink-0 w-14" style={{color: meta.color}}>{r.type}</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs text-neutral-800 truncate block">{r.label}</span>
+                    {r._local && <span className="text-[9px] text-neutral-400 truncate block">{r.to}</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

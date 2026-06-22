@@ -77,10 +77,15 @@ exports.register = async (req, res, next) => {
     const existingCompany = await Company.findOne({ domain: bareDomain });
     if (!existingCompany) {
       await Company.create({
-        name: name + "'s Company",
+        name: req.body.companyName || name + "'s Company",
         domain: bareDomain,
         plan: validPlans.includes(plan) ? plan : 'starter',
         createdBy: user._id,
+        industry: req.body.industry || '',
+        country: req.body.country || '',
+        timezone: req.body.timezone || '',
+        website: req.body.website || '',
+        tagline: req.body.tagline || '',
       });
     }
 

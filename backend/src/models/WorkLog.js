@@ -20,5 +20,6 @@ const workLogSchema = new mongoose.Schema({
 
 workLogSchema.index({ user: 1, date: 1 });
 workLogSchema.index({ user: 1, date: 1, task: 1 }, { unique: true });
+workLogSchema.index({ description: 'text', taskTitle: 'text' });
 
 module.exports = mongoose.model('WorkLog', workLogSchema);

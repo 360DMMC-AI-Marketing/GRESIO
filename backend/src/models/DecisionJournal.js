@@ -17,5 +17,6 @@ decisionJournalSchema.index({ refType: 1, refId: 1 });
 decisionJournalSchema.index({ project: 1 });
 decisionJournalSchema.index({ domain: 1, createdAt: -1 });
 decisionJournalSchema.index({ tags: 1 });
+decisionJournalSchema.index({ decision: 'text', rationale: 'text' });
 
 module.exports = mongoose.model('DecisionJournal', decisionJournalSchema);

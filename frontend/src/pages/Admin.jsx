@@ -26,6 +26,68 @@ export default function Admin() {
   const [importResult, setImportResult] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
   const [alertModal, setAlertModal] = useState(null);
+  const [profileForm, setProfileForm] = useState(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const INDUSTRIES = [
+    'Technology / Software', 'Healthcare / Medical', 'Finance / Banking',
+    'Education / E-Learning', 'E-commerce / Retail', 'Marketing / Advertising',
+    'Consulting / Professional Services', 'Real Estate / Construction',
+    'Manufacturing / Industrial', 'Media / Entertainment', 'Telecommunications',
+    'Transportation / Logistics', 'Energy / Utilities', 'Non-profit / NGO',
+    'Government / Public Sector', 'Hospitality / Tourism', 'Food & Beverage',
+    'Agriculture', 'Legal / Law', 'Other',
+  ];
+
+  const COUNTRIES = [
+    'France', 'United States', 'Canada', 'United Kingdom', 'Germany',
+    'Italy', 'Spain', 'Netherlands', 'Belgium', 'Switzerland',
+    'Sweden', 'Norway', 'Denmark', 'Finland', 'Australia',
+    'New Zealand', 'Japan', 'South Korea', 'Singapore', 'India',
+    'Brazil', 'Mexico', 'Argentina', 'UAE', 'Saudi Arabia',
+    'South Africa', 'Morocco', 'Algeria', 'Tunisia', 'Nigeria',
+    'China', 'Portugal', 'Ireland', 'Austria', 'Poland',
+    'Turkey', 'Russia', 'Israel', 'Egypt', 'Other',
+  ];
+
+  const TIMEZONES = [
+    'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00 (PST)',
+    'UTC-07:00 (MST)', 'UTC-06:00 (CST)', 'UTC-05:00 (EST)', 'UTC-04:00',
+    'UTC-03:00', 'UTC-02:00', 'UTC-01:00', 'UTC+00:00 (GMT)', 'UTC+01:00 (CET)',
+    'UTC+02:00 (EET)', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
+    'UTC+05:30 (IST)', 'UTC+06:00', 'UTC+07:00', 'UTC+08:00 (CST)',
+    'UTC+09:00 (JST)', 'UTC+10:00 (AEST)', 'UTC+11:00', 'UTC+12:00',
+  ];
+
+  const inputCls = "w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder-surface-400 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white";
+  const selCls = "w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white appearance-none cursor-pointer";
+
+  useEffect(() => {
+    if (company && !profileForm) {
+      setProfileForm({
+        name: company.name || '',
+        industry: company.industry || '',
+        country: company.country || '',
+        timezone: company.timezone || '',
+        website: company.website || '',
+        tagline: company.tagline || '',
+      });
+    }
+  }, [company]);
+
+  const handleSaveProfile = async () => {
+    if (!company || !profileForm) return;
+    setSavingProfile(true);
+    try {
+      const res = await companies.update(company._id, profileForm);
+      updateCompany(res.data);
+      setAlertModal({ title: 'Saved', message: 'Company profile updated successfully', type: 'success' });
+    } catch (e) {
+      setAlertModal({ title: 'Error', message: e.response?.data?.message || e.message, type: 'error' });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
   useEffect(() => {
     Promise.all([
       integrations.getAll(),
@@ -171,6 +233,63 @@ export default function Admin() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Company Profile */}
+      {company && profileForm && (
+        <div className="bg-white rounded-xl border border-surface-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-surface-900">Company Profile</h2>
+              <p className="text-xs text-surface-400 mt-0.5">Info visible to everyone in your workspace</p>
+            </div>
+            <button onClick={handleSaveProfile} disabled={savingProfile}
+              className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
+              {savingProfile ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-surface-700 mb-1">Company name</label>
+              <input value={profileForm.name} onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))}
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-surface-700 mb-1">Industry</label>
+              <select value={profileForm.industry} onChange={e => setProfileForm(p => ({ ...p, industry: e.target.value }))}
+                className={selCls}>
+                <option value="">Not set</option>
+                {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-surface-700 mb-1">Country</label>
+              <select value={profileForm.country} onChange={e => setProfileForm(p => ({ ...p, country: e.target.value }))}
+                className={selCls}>
+                <option value="">Not set</option>
+                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-surface-700 mb-1">Timezone</label>
+              <select value={profileForm.timezone} onChange={e => setProfileForm(p => ({ ...p, timezone: e.target.value }))}
+                className={selCls}>
+                <option value="">Not set</option>
+                {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-surface-700 mb-1">Website</label>
+              <input type="url" value={profileForm.website} onChange={e => setProfileForm(p => ({ ...p, website: e.target.value }))}
+                className={inputCls} placeholder="https://" />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-surface-700 mb-1">Tagline</label>
+              <input value={profileForm.tagline} onChange={e => setProfileForm(p => ({ ...p, tagline: e.target.value }))}
+                className={inputCls} placeholder="What does your company do?" />
             </div>
           </div>
         </div>

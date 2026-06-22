@@ -20,6 +20,11 @@ const companySchema = new mongoose.Schema({
   mrr: { type: Number, default: 0 },
   billingEmail: { type: String, default: '' },
   paymentFailedAt: { type: Date },
+  industry: { type: String, default: '' },
+  country: { type: String, default: '' },
+  timezone: { type: String, default: '' },
+  website: { type: String, default: '' },
+  tagline: { type: String, default: '' },
 }, { timestamps: true, toJSON: { getters: true } });
 
 companySchema.pre('save', function (next) {
