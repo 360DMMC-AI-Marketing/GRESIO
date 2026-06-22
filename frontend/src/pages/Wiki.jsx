@@ -356,7 +356,7 @@ export default function Wiki() {
                     <div className={`h-1.5 bg-gradient-to-r ${c.gradient}`} />
                     <div className="p-5">
                       {/* Category badge */}
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-2">
                         {page.department && (
                           <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${c.badge}`}>
                             {page.department}
@@ -370,14 +370,14 @@ export default function Wiki() {
                         )}
                       </div>
 
-                      {/* Title */}
-                      <h3 className="text-base font-bold text-surface-900 leading-snug mb-2 group-hover:text-[#2347e8] transition-colors line-clamp-2">
+                      {/* Title - most prominent */}
+                      <h3 className="text-xl font-black text-surface-900 leading-tight mb-3 group-hover:text-[#2347e8] transition-colors">
                         {page.title}
                       </h3>
 
                       {/* Excerpt */}
                       {excerpt && (
-                        <p className="text-xs text-surface-500 leading-relaxed line-clamp-2 mb-4">
+                        <p className="text-sm text-surface-500 leading-relaxed line-clamp-2 mb-4">
                           {excerpt}
                         </p>
                       )}
@@ -416,41 +416,22 @@ export default function Wiki() {
       {view === 'currentPage' && currentPage}
       {view === 'view' && currentPage && (
         <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
-          {/* Article header */}
-          <div className={`bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-8 pb-16`}>
-            <div className="flex items-center justify-between mb-6">
-              <button onClick={() => { setCurrentPage(null); setView('list'); }}
-                className="flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
-                <ArrowLeft className="w-4 h-4" /> Back to articles
-              </button>
-              <div className="flex items-center gap-2">
-                <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50">
-                  <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Attach'}
-                </button>
-                <button onClick={startEdit}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer">
-                  <Edit3 className="w-3.5 h-3.5" /> Edit
-                </button>
-                {canManage && (
-                  <button onClick={() => deletePage(currentPage._id)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-red-200 bg-red-500/10 hover:bg-red-500/20 rounded-xl border border-red-500/10 backdrop-blur-sm transition-all cursor-pointer">
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="max-w-3xl">
+          {/* Article header - clean minimal */}
+          <div className={`bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-12 pb-20 text-center`}>
+            <button onClick={() => { setCurrentPage(null); setView('list'); }}
+              className="absolute top-4 left-4 flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <div className="max-w-4xl mx-auto">
               {currentPage.department && (
-                <span className={`inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-4`}>
+                <span className={`inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-6`}>
                   {currentPage.department}
                 </span>
               )}
-              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-3 mb-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mt-3 mb-6">
                 {currentPage.title}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-white/70">
+              <div className="flex items-center justify-center gap-4 text-sm text-white/70">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                     <span className="text-xs font-bold text-white">
@@ -461,13 +442,27 @@ export default function Wiki() {
                     <span className="font-semibold text-white/90">{currentPage.updatedBy?.name || 'Unknown'}</span>
                     <div className="flex items-center gap-2 text-[11px] text-white/60">
                       <span>Updated {new Date(currentPage.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                      {currentPage.createdAt !== currentPage.updatedAt && (
-                        <span>· Created {new Date(currentPage.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                      )}
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+            {/* Action buttons */}
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50">
+                <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Attach'}
+              </button>
+              <button onClick={startEdit}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer">
+                <Edit3 className="w-3.5 h-3.5" /> Edit
+              </button>
+              {canManage && (
+                <button onClick={() => deletePage(currentPage._id)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-red-200 bg-red-500/10 hover:bg-red-500/20 rounded-xl border border-red-500/10 backdrop-blur-sm transition-all cursor-pointer">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              )}
             </div>
           </div>
 
