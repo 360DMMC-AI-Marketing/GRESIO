@@ -39,12 +39,12 @@ const PLANS = [
     name: 'Team',
     tagline: 'For growing teams that ship fast',
     price: { monthly: 29, semiannual: 23, annual: 17 },
-    badge: 'Most popular',
+    badge: 'Best value',
     cta: 'Start Free Trial',
     color: 'from-primary-600 to-primary-800',
     border: 'border-primary-600',
     accent: 'text-white',
-    popular: true,
+    popular: false,
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
         <rect x="2" y="2" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="1.5" className="text-primary-200" />
@@ -73,11 +73,12 @@ const PLANS = [
     name: 'Enterprise',
     tagline: 'For organizations with advanced needs',
     price: { monthly: 99, semiannual: 79, annual: 59 },
-    badge: 'Full power',
+    badge: 'Most popular',
     cta: 'Contact Sales',
     color: 'from-amber-500 to-amber-700',
     border: 'border-amber-500',
     accent: 'text-white',
+    popular: true,
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
         <path d="M4 28V8l8-4 8 4v20H4z" stroke="currentColor" strokeWidth="1.5" className="text-amber-200" />
@@ -476,14 +477,20 @@ export default function PricingPage() {
 
                   {/* CTA */}
                   {plan.cta === 'Contact Sales' ? (
-                    <Link to="/contact"
-                      className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-5 ${
-                        plan.popular
-                          ? 'bg-white text-primary-700 hover:bg-primary-50'
-                          : 'bg-surface-900 text-white hover:bg-surface-800'
-                      }`}>
-                      Contact Sales
-                    </Link>
+                    <>
+                      <Link to="/contact"
+                        className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-2 ${
+                          plan.popular
+                            ? 'bg-white text-primary-700 hover:bg-primary-50'
+                            : 'bg-surface-900 text-white hover:bg-surface-800'
+                        }`}>
+                        Contact Sales
+                      </Link>
+                      <Link to="/register?plan=enterprise"
+                        className="block text-center text-xs font-medium py-2 rounded-lg border border-dashed border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all mb-5">
+                        Choose this plan →
+                      </Link>
+                    </>
                   ) : (
                     <Link to={`/register${plan.price.monthly === 0 ? '' : '?plan=' + plan.id}`}
                       className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-5 ${
