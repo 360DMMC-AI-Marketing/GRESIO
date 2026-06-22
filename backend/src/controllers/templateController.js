@@ -3,7 +3,7 @@ const Template = require('../models/Template');
 exports.list = async (req, res) => {
   try {
     const { type, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
-    const filter = { approved: true, author: req.user._id };
+    const filter = { approved: true, domain: req.user.domain };
     if (type) filter.projectType = type;
     if (category) filter.category = category;
     if (minPrice || maxPrice) {
@@ -33,7 +33,7 @@ exports.list = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const template = await Template.findOne({ _id: req.params.id, author: req.user._id }).populate('author', 'name email').lean();
+    const template = await Template.findOne({ _id: req.params.id, domain: req.user.domain }).populate('author', 'name email').lean();
     if (!template) return res.status(404).json({ error: 'Template not found' });
     res.json({ data: template });
   } catch (err) {
@@ -95,7 +95,7 @@ exports.remove = async (req, res) => {
 exports.download = async (req, res) => {
   try {
     const template = await Template.findOneAndUpdate(
-      { _id: req.params.id, author: req.user._id },
+      { _id: req.params.id, domain: req.user.domain },
       { $inc: { downloads: 1 } },
       { new: true }
     ).lean();
@@ -108,7 +108,7 @@ exports.download = async (req, res) => {
 
 exports.apply = async (req, res) => {
   try {
-    const template = await Template.findOne({ _id: req.params.id, author: req.user._id }).lean();
+    const template = await Template.findOne({ _id: req.params.id, domain: req.user.domain }).lean();
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
     const Project = require('../models/Project');
@@ -231,7 +231,7 @@ exports.rate = async (req, res) => {
     const { rating } = req.body;
     if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Rating must be 1-5' });
 
-    const template = await Template.findOne({ _id: req.params.id, author: req.user._id });
+    const template = await Template.findOne({ _id: req.params.id, domain: req.user.domain });
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
     const total = template.rating * template.ratingCount + rating;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const TYPE_COLORS = {
   software: 'bg-primary-50 text-primary-600',
@@ -9,7 +10,10 @@ const TYPE_COLORS = {
   research: 'bg-cyan-50 text-cyan-600',
 };
 
+const CAN_CREATE = ['admin', 'project_manager', 'team_lead', 'manager'];
+
 export default function TemplateMarketplace() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState('');
@@ -35,10 +39,12 @@ export default function TemplateMarketplace() {
           <h1 className="text-xl font-bold text-surface-900">Template Marketplace</h1>
           <p className="text-xs text-surface-500 mt-0.5">Use pre-built templates to start projects faster</p>
         </div>
-        <Link data-voice="create-template" to="/templates/create"
-          className="px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors">
-          + Create Template
-        </Link>
+        {CAN_CREATE.includes(user?.role) && (
+          <Link data-voice="create-template" to="/templates/create"
+            className="px-4 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors">
+            + Create Template
+          </Link>
+        )}
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
