@@ -261,21 +261,6 @@ export default function Wiki() {
             <p className="text-sm text-surface-400 ml-[52px]">Company wiki & documentation</p>
                 </div>
               </div>
-              {/* Star rating */}
-              <div className="flex items-center justify-center gap-1 mt-5">
-                {[1, 2, 3, 4, 5].map(s => {
-                  const userRating = currentPage.ratings?.find(r => r.user === user?._id)?.value || 0;
-                  return (
-                    <button key={s} onClick={() => handleRate(s)}
-                      className="cursor-pointer bg-transparent border-none p-0.5 transition-transform hover:scale-110">
-                      <Star className={`w-6 h-6 ${s <= (userRating || Math.round(currentPage.averageRating || 0)) ? 'text-amber-300 fill-amber-300' : 'text-white/30'}`} />
-                    </button>
-                  );
-                })}
-                {currentPage.averageRating > 0 && (
-                  <span className="text-sm text-white/60 ml-2 font-medium">({currentPage.averageRating})</span>
-                )}
-              </div>
             </div>
 
       {view === 'list' && (
@@ -481,6 +466,21 @@ export default function Wiki() {
                     </div>
                   </div>
                 </div>
+              </div>
+              {/* Star rating */}
+              <div className="flex items-center justify-center gap-1 mt-5">
+                {[1, 2, 3, 4, 5].map(s => {
+                  const userRating = currentPage.ratings?.find(r => r.user === user?._id)?.value || 0;
+                  return (
+                    <button key={s} onClick={() => handleRate(s)}
+                      className="cursor-pointer bg-transparent border-none p-0.5 transition-transform hover:scale-110">
+                      <Star className={`w-6 h-6 ${s <= (userRating || Math.round(currentPage.averageRating || 0)) ? 'text-amber-300 fill-amber-300' : 'text-white/30'}`} />
+                    </button>
+                  );
+                })}
+                {currentPage.averageRating > 0 && (
+                  <span className="text-sm text-white/60 ml-2 font-medium">({currentPage.averageRating})</span>
+                )}
               </div>
             </div>
             {/* Action buttons */}
