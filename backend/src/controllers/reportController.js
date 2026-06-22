@@ -506,11 +506,11 @@ exports.getSharedReport = async (req, res) => {
       if (!valid) return res.status(403).json({ error: 'Invalid password' });
     }
 
-    const data = report.data;
     res.json({
+      ...report.data,
       projectName: report.project?.name || 'Project',
-      clientSummary: data.clientSummary || data.client,
-      sections: data.sections || data.clientSections || [],
+      _id: report._id,
+      type: report.type,
       generatedAt: report.generatedAt,
     });
   } catch (err) {
