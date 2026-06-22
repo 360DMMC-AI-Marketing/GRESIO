@@ -417,7 +417,7 @@ export default function Wiki() {
       {view === 'view' && currentPage && (
         <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
           {/* Article header - clean minimal */}
-          <div className={`bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-12 pb-20 text-center`}>
+          <div className={`relative bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-12 pb-20 text-center`}>
             <button onClick={() => { setCurrentPage(null); setView('list'); }}
               className="absolute top-4 left-4 flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
               <ArrowLeft className="w-4 h-4" /> Back
