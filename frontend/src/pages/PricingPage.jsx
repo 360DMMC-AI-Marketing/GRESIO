@@ -182,6 +182,8 @@ const FEATURES = [
       { label: 'File attachments', starter: false, team: true, enterprise: true },
       { label: 'Star rating system', starter: false, team: true, enterprise: true },
       { label: 'Import .md / .txt files', starter: false, team: true, enterprise: true },
+      { label: 'WorkDNA archive & search', starter: false, team: true, enterprise: true },
+      { label: 'Template marketplace', starter: false, team: true, enterprise: true },
     ],
   },
 ];

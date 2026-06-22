@@ -77,7 +77,7 @@ export default function OnboardingGuide() {
             ['Report Generation','Generate admin (full audit) and client (summary) PDF reports for completed/delivered projects'],
             ['Automated Status Flow','Smart phase transitions based on project data and type'],
             ['Manual Gates','Admin/PM/Team Lead approval for critical milestones'],
-            ['Knowledge Base','Company-wide wiki with markdown articles, department organization, star ratings, file attachments, and .md/.txt import'],
+            ['Knowledge Base','Central hub for company wiki (markdown articles, ratings, file attachments), WorkDNA archives, and reusable project templates'],
           ]} />
         </Section>
 
@@ -585,30 +585,29 @@ export default function OnboardingGuide() {
         </Section>
 
         <Section title="17. Knowledge Base">
-          <p style={{fontSize:11}}>The Knowledge Base is a company-wide wiki where your team can create, organize, and share documentation — from onboarding guides and technical specs to process docs and best practices.</p>
+          <p style={{fontSize:11}}>The Knowledge Base is the central hub that brings together your <strong>company wiki</strong>, <strong>WorkDNA archives</strong>, and <strong>project templates</strong> — everything your team needs to document, learn from, and reuse past work.</p>
 
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Features</h4>
+          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What's Included</h4>
           <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li><strong>Markdown Articles</strong> — Create and edit wiki pages with live markdown preview. Full GFM support (tables, code blocks, task lists, etc.).</li>
-            <li><strong>Department Organization</strong> — Filter articles by department using color-coded pills. Custom departments can be added by managers.</li>
-            <li><strong>Star Rating System</strong> — Rate articles 1–5 stars. Average ratings are displayed on cards and articles to highlight the best content.</li>
-            <li><strong>File Attachments</strong> — Attach files (PDFs, images, documents) to any article using the attach button or drag-drop.</li>
-            <li><strong>Import Existing Docs</strong> — Import <code>.md</code> and <code>.txt</code> files directly as new wiki pages — perfect for migrating existing documentation.</li>
-            <li><strong>Real-Time Notifications</strong> — Get notified in-app when a new wiki article is created in your company.</li>
+            <li><strong>📝 Wiki Articles</strong> — Create and edit markdown documentation with live preview. Organize by department, rate articles, attach files, and import existing <code>.md</code>/<code>.txt</code> files.</li>
+            <li><strong>🧬 WorkDNA Archive</strong> — Browse monthly archived snapshots of every project: features, tech stack, decisions, risks, repos, and stats. Search past projects to learn before starting something new.</li>
+            <li><strong>📋 Template Marketplace</strong> — Browse, rate, and download reusable project templates for Software, Design, Business, Content, and Research. Templates include predefined phases and tasks.</li>
           </ul>
 
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Do What</h4>
           <InfoTable rows={[
             ['Action','Admin / PM / Team Lead / Manager','Others'],
-            ['Create articles','✅','❌'],
-            ['Edit any article','✅','✅'],
-            ['Delete articles','✅','❌'],
+            ['Create wiki articles','✅','❌'],
+            ['Edit wiki articles','✅','✅'],
+            ['Delete wiki articles','✅','❌'],
             ['Add departments','✅','❌'],
-            ['Rate articles','✅','✅'],
+            ['Rate articles / templates','✅','✅'],
+            ['Create templates','✅','❌'],
+            ['Access WorkDNA','✅','✅'],
           ]} />
 
           <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Accessing the Knowledge Base</h4>
-          <p style={{fontSize:11}}>Go to <strong>Workspace → Knowledge Base</strong> from the sidebar. Use the search bar to find articles by title, filter by department, or browse all articles sorted by rating.</p>
+          <p style={{fontSize:11}}>Go to <strong>Workspace → Knowledge Base</strong> from the sidebar to browse wiki articles. WorkDNA is available under <strong>Insights → WorkDNA</strong>, and Templates under <strong>Workspace → Templates</strong> — all accessible from the Knowledge Base section of the sidebar.</p>
         </Section>
 
         <Section title="System Administrator Contact">

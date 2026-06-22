@@ -113,14 +113,16 @@ const CATEGORIES = [
     ],
   },
   {
-    icon: '📚', title: 'Knowledge Base', desc: 'A company-wide wiki to document processes, decisions, and knowledge — searchable, editable, and always up to date.',
+    icon: '📚', title: 'Knowledge Base', desc: 'A central hub that brings together your company wiki, WorkDNA archives, and project templates — searchable, editable, and always up to date.',
     features: [
-      { title: 'Markdown Articles', desc: 'Create and edit wiki pages with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
+      { title: 'Markdown Wiki Articles', desc: 'Create and edit documentation with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
       { title: 'Department Organization', desc: 'Organize articles by department with color-coded filter pills. Custom departments supported.' },
       { title: 'Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
       { title: 'File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
       { title: 'Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
-      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article is created in your company. Never miss important documentation.' },
+      { title: 'WorkDNA Archive Access', desc: 'Browse archived monthly snapshots of every project — features, tech stack, decisions, risks, repos, and stats. All from the Knowledge Base.' },
+      { title: 'Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
+      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article, archive, or template is created in your company. Never miss important knowledge.' },
     ],
   },
 ];
