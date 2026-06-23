@@ -38,9 +38,8 @@ exports.getMembers = async (req, res, next) => {
 
 exports.addMember = async (req, res, next) => {
   try {
-    const { email, projectRole, teamGroup, message: inviteMessage } = req.body;
+    const { email, userId, userIds, projectRole, teamGroup, message: inviteMessage } = req.body;
     const role = req.body.role || projectRole || 'developer';
-    if (!email) return res.status(400).json({ message: 'Email is required' });
 
     const projectIds = await getDomainProjectIds(req.user.domain);
     if (!projectIds.some(id => id === req.params.projectId)) {
@@ -52,14 +51,61 @@ exports.addMember = async (req, res, next) => {
       if (!group) return res.status(400).json({ message: 'Team group not found' });
     }
 
+    const project = await Project.findById(req.params.projectId).select('name');
+
+    // Batch add by user IDs (from department selector)
+    if (userIds && Array.isArray(userIds)) {
+      const results = [];
+      for (const uid of userIds) {
+        const user = await User.findById(uid);
+        if (!user) continue;
+        const exists = await ProjectMember.findOne({ project: req.params.projectId, user: uid });
+        if (exists) continue;
+        const member = await ProjectMember.create({
+          project: req.params.projectId,
+          domain: req.user.domain,
+          user: uid,
+          email: user.email,
+          projectRole: role,
+          teamGroup: teamGroup || undefined,
+          status: 'active',
+          invitedBy: req.user._id,
+        });
+        const pop = await populate(ProjectMember.findById(member._id));
+        results.push(pop);
+      }
+      return res.status(201).json(results);
+    }
+
+    // Single add by userId (from department selector)
+    if (userId) {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      const exists = await ProjectMember.findOne({ project: req.params.projectId, user: userId });
+      if (exists) return res.status(400).json({ message: 'Already a member' });
+      const member = await ProjectMember.create({
+        project: req.params.projectId,
+        domain: req.user.domain,
+        user: userId,
+        email: user.email,
+        projectRole: role,
+        teamGroup: teamGroup || undefined,
+        status: 'active',
+        invitedBy: req.user._id,
+      });
+      const result = (await populate(ProjectMember.findById(member._id))).toObject();
+      return res.status(201).json(result);
+    }
+
+    // Existing email flow
+    if (!email) return res.status(400).json({ message: 'Email or userId is required' });
+
     const existingMember = await ProjectMember.findOne({ project: req.params.projectId, email: email.toLowerCase() });
     if (existingMember) return res.status(400).json({ message: 'Already invited or member' });
 
     let user = await User.findOne({ email: email.toLowerCase() });
     let accountCreated = false;
     let tempPassword = null;
-
-    const project = await Project.findById(req.params.projectId).select('name');
 
     // Auto-create account if user doesn't exist yet
     if (!user) {

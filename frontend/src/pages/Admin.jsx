@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { integrations, users, companies } from '../services/api';
+import { integrations, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { InputModal, ConfirmModal, AlertModal } from '../components/Modal';
 
@@ -18,84 +18,27 @@ export default function Admin() {
   const { user, company, updateCompany } = useAuth();
   const [loading, setLoading] = useState(true);
   const [syncingPlatform, setSyncingPlatform] = useState(null);
-  const [outlookUsers, setOutlookUsers] = useState([]);
   const [teamIdInput, setTeamIdInput] = useState('');
   const [savingTeamId, setSavingTeamId] = useState(false);
-  const [importDomain, setImportDomain] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
   const [alertModal, setAlertModal] = useState(null);
-  const [profileForm, setProfileForm] = useState(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-
-  const INDUSTRIES = [
-    'Technology / Software', 'Healthcare / Medical', 'Finance / Banking',
-    'Education / E-Learning', 'E-commerce / Retail', 'Marketing / Advertising',
-    'Consulting / Professional Services', 'Real Estate / Construction',
-    'Manufacturing / Industrial', 'Media / Entertainment', 'Telecommunications',
-    'Transportation / Logistics', 'Energy / Utilities', 'Non-profit / NGO',
-    'Government / Public Sector', 'Hospitality / Tourism', 'Food & Beverage',
-    'Agriculture', 'Legal / Law', 'Other',
-  ];
-
-  const COUNTRIES = [
-    'France', 'United States', 'Canada', 'United Kingdom', 'Germany',
-    'Italy', 'Spain', 'Netherlands', 'Belgium', 'Switzerland',
-    'Sweden', 'Norway', 'Denmark', 'Finland', 'Australia',
-    'New Zealand', 'Japan', 'South Korea', 'Singapore', 'India',
-    'Brazil', 'Mexico', 'Argentina', 'UAE', 'Saudi Arabia',
-    'South Africa', 'Morocco', 'Algeria', 'Tunisia', 'Nigeria',
-    'China', 'Portugal', 'Ireland', 'Austria', 'Poland',
-    'Turkey', 'Russia', 'Israel', 'Egypt', 'Other',
-  ];
-
-  const TIMEZONES = [
-    'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00 (PST)',
-    'UTC-07:00 (MST)', 'UTC-06:00 (CST)', 'UTC-05:00 (EST)', 'UTC-04:00',
-    'UTC-03:00', 'UTC-02:00', 'UTC-01:00', 'UTC+00:00 (GMT)', 'UTC+01:00 (CET)',
-    'UTC+02:00 (EET)', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
-    'UTC+05:30 (IST)', 'UTC+06:00', 'UTC+07:00', 'UTC+08:00 (CST)',
-    'UTC+09:00 (JST)', 'UTC+10:00 (AEST)', 'UTC+11:00', 'UTC+12:00',
-  ];
-
-  const inputCls = "w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder-surface-400 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white";
-  const selCls = "w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white appearance-none cursor-pointer";
-
-  useEffect(() => {
-    if (company && !profileForm) {
-      setProfileForm({
-        name: company.name || '',
-        industry: company.industry || '',
-        country: company.country || '',
-        timezone: company.timezone || '',
-        website: company.website || '',
-        tagline: company.tagline || '',
-      });
-    }
-  }, [company]);
-
-  const handleSaveProfile = async () => {
-    if (!company || !profileForm) return;
-    setSavingProfile(true);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const handleDeleteCompany = async () => {
     try {
-      const res = await companies.update(company._id, profileForm);
-      updateCompany(res.data);
-      setAlertModal({ title: 'Saved', message: 'Company profile updated successfully', type: 'success' });
+      await companies.remove(deleteConfirm);
+      setAlertModal({ title: 'Deleted', message: 'Company deleted successfully. Refreshing...', type: 'success' });
+      setTimeout(() => window.location.reload(), 2000);
     } catch (e) {
-      setAlertModal({ title: 'Error', message: e.response?.data?.message || e.message, type: 'error' });
+      setAlertModal({ title: 'Delete Failed', message: e.response?.data?.message || e.message, type: 'error' });
     } finally {
-      setSavingProfile(false);
+      setDeleteConfirm(null);
     }
   };
+
   useEffect(() => {
-    Promise.all([
-      integrations.getAll(),
-      users.getAll({ hasOutlook: 'true' }),
-    ]).then(([intRes, ouRes]) => {
+    integrations.getAll().then((intRes) => {
       const msft = intRes.data.find(i => i.name === 'microsoft_graph');
       if (msft?.config?.teamsTeamId) setTeamIdInput(msft.config.teamsTeamId);
-      setOutlookUsers(ouRes.data);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -116,7 +59,7 @@ export default function Admin() {
   const handlePlatformSync = async (platform) => {
     setSyncingPlatform(platform);
     try {
-      const name = platform === 'github' ? 'github' : 'microsoft_graph';
+      const name = platform === 'github' ? 'github' : platform === 'clickup' ? 'clickup' : 'microsoft_graph';
       const res = platform === 'github'
         ? await integrations.sync(name)
         : await integrations.syncPlatform(name, platform);
@@ -125,27 +68,6 @@ export default function Admin() {
       setAlertModal({ title: 'Sync Failed', message: err.response?.data?.message || err.message, type: 'error' });
     } finally {
       setSyncingPlatform(null);
-    }
-  };
-
-  const handleImport = async () => {
-    const domain = importDomain.trim().toLowerCase().replace(/^@/, '');
-    if (!domain) return;
-    setImporting(true);
-    setImportResult(null);
-    try {
-      const allCompanies = (await companies.getAll()).data || [];
-      let company = allCompanies.find(c => c.domain === domain);
-      if (!company) {
-        company = (await companies.create({ name: domain.split('.')[0], domain })).data;
-      }
-      const res = await companies.importUsers(company._id);
-      setImportResult({ type: 'success', imported: res.data.imported, skipped: res.data.skipped, total: res.data.total });
-      users.getAll({ hasOutlook: 'true' }).then(r => setOutlookUsers(r.data)).catch(() => {});
-    } catch (e) {
-      setImportResult({ type: 'error', message: e.response?.data?.message || 'Import failed' });
-    } finally {
-      setImporting(false);
     }
   };
 
@@ -168,9 +90,12 @@ export default function Admin() {
                 {company.domain} — {company.name}
               </p>
             </div>
-            <span className={`text-sm font-bold px-3 py-1 rounded-full ${PLAN_INFO[company.usage?.plan || company.plan]?.textColor || 'text-surface-700'} ${PLAN_INFO[company.usage?.plan || company.plan]?.color || 'bg-surface-200'} bg-opacity-20`}>
-              {PLAN_INFO[company.usage?.plan || company.plan]?.label || 'Starter'}
-            </span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDeleteConfirm(company._id)} className="text-xs text-red-500 hover:text-red-700 underline">Delete</button>
+              <span className={`text-sm font-bold px-3 py-1 rounded-full ${PLAN_INFO[company.usage?.plan || company.plan]?.textColor || 'text-surface-700'} ${PLAN_INFO[company.usage?.plan || company.plan]?.color || 'bg-surface-200'} bg-opacity-20`}>
+                {PLAN_INFO[company.usage?.plan || company.plan]?.label || 'Starter'}
+              </span>
+            </div>
           </div>
           {(() => {
             const plan = company.usage?.plan || company.plan || 'starter';
@@ -238,62 +163,6 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Company Profile */}
-      {company && profileForm && (
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-surface-900">Company Profile</h2>
-              <p className="text-xs text-surface-400 mt-0.5">Info visible to everyone in your workspace</p>
-            </div>
-            <button onClick={handleSaveProfile} disabled={savingProfile}
-              className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
-              {savingProfile ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Company name</label>
-              <input value={profileForm.name} onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))}
-                className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Industry</label>
-              <select value={profileForm.industry} onChange={e => setProfileForm(p => ({ ...p, industry: e.target.value }))}
-                className={selCls}>
-                <option value="">Not set</option>
-                {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Country</label>
-              <select value={profileForm.country} onChange={e => setProfileForm(p => ({ ...p, country: e.target.value }))}
-                className={selCls}>
-                <option value="">Not set</option>
-                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Timezone</label>
-              <select value={profileForm.timezone} onChange={e => setProfileForm(p => ({ ...p, timezone: e.target.value }))}
-                className={selCls}>
-                <option value="">Not set</option>
-                {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-surface-700 mb-1">Website</label>
-              <input type="url" value={profileForm.website} onChange={e => setProfileForm(p => ({ ...p, website: e.target.value }))}
-                className={inputCls} placeholder="https://" />
-            </div>
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="block text-xs font-medium text-surface-700 mb-1">Tagline</label>
-              <input value={profileForm.tagline} onChange={e => setProfileForm(p => ({ ...p, tagline: e.target.value }))}
-                className={inputCls} placeholder="What does your company do?" />
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -305,39 +174,6 @@ export default function Admin() {
             <div className="space-y-3">
               <ApiKeySection />
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-surface-200 p-5">
-            <h2 className="text-lg font-semibold text-surface-900 mb-4">👥 Import from Microsoft 365</h2>
-            <p className="text-xs text-surface-500 mb-4">Enter your company email domain to import all users from Azure AD. Each user's role is inferred from their Azure AD job title / department, and they are automatically placed in the correct department team group across all projects.</p>
-            <div className="flex gap-3 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-surface-700 mb-1">Company domain</label>
-                <div className="flex items-center border border-surface-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-500">
-                  <span className="px-3 text-sm text-surface-400 bg-surface-50 py-2 border-r border-surface-300">@</span>
-                  <input type="text" value={importDomain} onChange={e => setImportDomain(e.target.value)}
-                    placeholder="yourcompany.com" className="flex-1 px-3 py-2 text-sm outline-none bg-white" />
-                </div>
-              </div>
-              <button data-voice="import-users" onClick={handleImport} disabled={importing || !importDomain.trim()}
-                className="px-5 py-2 text-sm font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                <svg viewBox="0 0 21 21" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="8" height="8" fill="#F25022"/>
-                  <rect x="12" y="1" width="8" height="8" fill="#7FBA00"/>
-                  <rect x="1" y="12" width="8" height="8" fill="#00A4EF"/>
-                  <rect x="12" y="12" width="8" height="8" fill="#FFB900"/>
-                </svg>
-                {importing ? 'Importing...' : 'Import Users'}
-              </button>
-            </div>
-            {importResult && (
-              <div className={`mt-4 p-3 rounded-lg text-sm ${importResult.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                {importResult.type === 'success'
-                  ? `✅ ${importResult.imported} users imported, ${importResult.skipped} skipped (${importResult.total} found in Azure AD)`
-                  : `❌ ${importResult.message}`}
-                <button onClick={() => setImportResult(null)} className="ml-3 text-xs underline">Dismiss</button>
-              </div>
-            )}
           </div>
 
           <div className="bg-white rounded-xl border border-surface-200 p-5">
@@ -445,31 +281,6 @@ export default function Admin() {
         </div>
 
         <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">📧 Outlook Users</h2>
-          {outlookUsers.length === 0 ? (
-            <div className="text-center py-10 text-surface-400">
-              <p className="text-3xl mb-2">📧</p>
-              <p className="text-sm">No users with Outlook email configured.</p>
-              <p className="text-xs text-surface-400 mt-1">Set outlookEmail when creating/editing users.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {outlookUsers.map((u) => (
-                <div key={u._id} className="flex items-center justify-between p-3 border border-surface-200 rounded-lg">
-                  <div>
-                    <p className="font-medium text-surface-900 text-sm">{u.name}</p>
-                    <p className="text-xs text-surface-400">{u.outlookEmail} · {u.role}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-surface-100 text-surface-500'}`}>
-                    {u.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
           <h2 className="text-lg font-semibold text-surface-900 mb-4">⚙️ System Settings</h2>
           <div className="space-y-4">
             <div className="p-3 bg-surface-50 rounded-lg">
@@ -491,7 +302,16 @@ export default function Admin() {
           </div>
         </div>
 
-      </div>
+        </div>
+
+      <ConfirmModal
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDeleteCompany}
+        title="Delete Company"
+        message="This will permanently delete this company and ALL its data (users, projects, tasks, sprints). Are you sure?"
+        confirmText="Delete Everything"
+      />
       <AlertModal
         open={!!alertModal}
         onClose={() => setAlertModal(null)}

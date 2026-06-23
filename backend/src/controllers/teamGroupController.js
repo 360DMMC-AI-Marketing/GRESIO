@@ -66,89 +66,90 @@ exports.archiveGroup = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+const ROLE_TO_DEPT = {
+  super_admin: 'Administration Team', admin: 'Administration Team',
+  team_lead: 'Project Management Team', project_manager: 'Project Management Team', manager: 'Project Management Team',
+  qa_tester: 'QA & Testing Team',
+  developer: 'Development Team',
+  designer: 'Design Team',
+  business_analyst: 'Business Team',
+  intern: 'Interns',
+};
+
 exports.getAllDomainGrouped = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
-    const ProjectMember = require('../models/ProjectMember');
-
+    const isAdmin = req.user.role === 'admin';
+    const projectIds = isAdmin
+      ? (await require('../models/Project').find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      : await getDomainProjectIds(req.user.domain);
+    const User = require('../models/User');
+    const { DEFAULT_GROUPS } = require('../models/TeamGroup');
     const mongoose = require('mongoose');
     const projectObjectIds = projectIds.map(id => new mongoose.Types.ObjectId(id));
-    const mergedGroups = await TeamGroup.aggregate([
+
+    const userFilter = { isActive: true };
+    if (!isAdmin) userFilter.domain = req.user.domain;
+    const allUsers = await User.find(userFilter).select('name email role department').lean();
+
+    // Group users by department — each user can appear in multiple groups
+    const groupedMap = {};
+    const processedIds = new Set();
+    for (const u of allUsers) {
+      const deptNames = Array.isArray(u.department) && u.department.length > 0
+        ? u.department
+        : [ROLE_TO_DEPT[u.role] || 'Development Team'];
+      for (const deptName of deptNames) {
+        if (!groupedMap[deptName]) {
+          groupedMap[deptName] = { members: [] };
+        }
+        groupedMap[deptName].members.push({
+          user: { _id: u._id, name: u.name, email: u.email, role: u.role, department: u.department },
+          memberships: [],
+          assignmentCounts: { tasks: 0, testCases: 0, bugs: 0 },
+        });
+      }
+      processedIds.add(String(u._id));
+    }
+
+    // Get existing department groups for icons/order
+    const existingGroups = await TeamGroup.aggregate([
       { $match: { project: { $in: projectObjectIds }, isArchived: false } },
-      { $group: { _id: '$name', icon: { $first: '$icon' }, order: { $first: '$order' }, roles: { $first: '$roles' }, groupIds: { $addToSet: '$_id' }, projects: { $addToSet: '$project' } } },
+      { $group: { _id: '$name', icon: { $first: '$icon' }, order: { $first: '$order' }, roles: { $first: '$roles' } } },
       { $sort: { order: 1 } },
     ]);
+    const egMap = Object.fromEntries(existingGroups.map(g => [g._id, g]));
 
-    const allGroupIds = mergedGroups.flatMap(g => g.groupIds);
-    const members = await ProjectMember.find({ teamGroup: { $in: allGroupIds }, status: { $ne: 'inactive' } })
-      .populate('user', 'name email avatar role isActive')
-      .populate('invitedBy', 'name email')
-      .populate('project', 'name')
-      .sort({ createdAt: -1 }).lean();
-
-    const activeMembers = members.filter(m => !m.user || m.user.isActive !== false);
-
-    const grouped = mergedGroups.map(g => {
-      const groupMembers = activeMembers.filter(m => m.teamGroup && g.groupIds.some(gid => String(gid) === String(m.teamGroup._id || m.teamGroup)));
-      const byUser = {};
-      groupMembers.forEach(m => {
-        const uid = m.user?._id ? String(m.user._id) : m.email;
-        if (!byUser[uid]) {
-          byUser[uid] = {
-            user: m.user || { email: m.email },
-            memberships: [],
-          };
-        }
-        byUser[uid].memberships.push({
-          project: m.project || null,
-          projectRole: m.projectRole,
-          status: m.status,
-          memberId: m._id,
-        });
-      });
+    // Build group list
+    const grouped = Object.entries(groupedMap).map(([name, data]) => {
+      const info = egMap[name] || DEFAULT_GROUPS.find(d => d.name === name) || {};
       return {
-        name: g._id,
-        icon: g.icon,
-        order: g.order,
-        roles: g.roles,
-        groupIds: g.groupIds,
-        projects: g.projects,
-        members: Object.values(byUser),
+        name,
+        icon: info.icon || '👥',
+        order: info.order ?? 99,
+        roles: info.roles || [],
+        members: data.members,
       };
     });
 
-    const usedIds = new Set(mergedGroups.flatMap(g => g.groupIds.map(id => String(id))));
-    const ungrouped = activeMembers.filter(m => !m.teamGroup || !usedIds.has(String(m.teamGroup._id || m.teamGroup)));
+    // Add empty groups that exist in DB but have no users
+    for (const g of existingGroups) {
+      if (!grouped.some(gr => gr.name === g._id)) {
+        grouped.push({
+          name: g._id, icon: g.icon, order: g.order, roles: g.roles, members: [],
+        });
+      }
+    }
 
-    // Include users with NO project memberships at all (free/unassigned)
-    const User = require('../models/User');
-    const domainUserIds = new Set();
-    grouped.forEach(g => g.members.forEach(m => { if (m.user?._id) domainUserIds.add(String(m.user._id)); }));
-    ungrouped.forEach(m => { if (m.user?._id) domainUserIds.add(String(m.user._id)); });
-    // Also collect user IDs from ALL ProjectMember records in this domain
-    const allDomainMembers = await ProjectMember.find({ project: { $in: projectObjectIds }, status: { $ne: 'inactive' } }).select('user email').lean();
-    allDomainMembers.forEach(m => { if (m.user) domainUserIds.add(String(m.user)); });
+    grouped.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
 
-    const allDomainUsers = await User.find({ domain: req.user.domain, isActive: true }).select('name email role').lean();
-    const freeUsers = allDomainUsers.filter(u => !domainUserIds.has(String(u._id)));
-    freeUsers.forEach(u => {
-      ungrouped.push({
-        user: { _id: u._id, name: u.name, email: u.email, role: u.role },
-        email: u.email,
-        projectRole: u.role || 'developer',
-        status: 'active',
-        _id: u._id,
-      });
-    });
+    // Ungrouped = users whose role didn't map to any department
+    const ungrouped = [];
 
-    // Attach assignment counts (tasks, test cases, bugs) to each member
+    // Attach assignment counts
     const Task = require('../models/Task');
     const TestCase = require('../models/TestCase');
     const Bug = require('../models/Bug');
-
-    const allUserIds = [];
-    grouped.forEach(g => g.members.forEach(m => { if (m.user?._id) allUserIds.push(m.user._id); }));
-    ungrouped.forEach(m => { if (m.user?._id) allUserIds.push(m.user._id); });
+    const allUserIds = allUsers.map(u => u._id);
 
     if (allUserIds.length > 0) {
       const [taskCounts, testCaseCounts, bugCounts] = await Promise.all([
@@ -181,11 +182,35 @@ exports.getAllDomainGrouped = async (req, res, next) => {
 
       grouped.forEach(g => g.members.forEach(attachCounts));
       ungrouped.forEach(attachCounts);
-    } else {
-      const attachZero = m => { m.assignmentCounts = { tasks: 0, testCases: 0, bugs: 0 }; };
-      grouped.forEach(g => g.members.forEach(attachZero));
-      ungrouped.forEach(attachZero);
     }
+
+    // Attach real project memberships
+    const ProjectMember = require('../models/ProjectMember');
+    const allPMs = await ProjectMember.find({
+      user: { $in: allUserIds },
+      project: { $in: projectObjectIds },
+      status: { $ne: 'inactive' },
+    }).populate('project', 'name').lean();
+
+    const membershipsByUser = {};
+    for (const pm of allPMs) {
+      const uid = String(pm.user);
+      if (!membershipsByUser[uid]) membershipsByUser[uid] = [];
+      membershipsByUser[uid].push({
+        project: pm.project || null,
+        projectRole: pm.projectRole,
+        status: pm.status,
+        memberId: pm._id,
+      });
+    }
+
+    const attachMemberships = m => {
+      const uid = m.user?._id ? String(m.user._id) : null;
+      m.memberships = uid ? (membershipsByUser[uid] || []) : [];
+    };
+
+    grouped.forEach(g => g.members.forEach(attachMemberships));
+    ungrouped.forEach(attachMemberships);
 
     res.json({ groups: grouped, ungrouped });
   } catch (e) { next(e); }

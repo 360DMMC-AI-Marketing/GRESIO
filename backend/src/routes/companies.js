@@ -7,6 +7,7 @@ r.get('/', c.getCompanies);
 r.get('/:id', c.getCompanyById);
 r.post('/', authorize('admin'), c.createCompany);
 r.patch('/:id', authorize('admin'), c.updateCompany);
+r.delete('/:id', authorize('admin'), c.deleteCompany);
 r.patch('/:id/plan', authorize('admin'), c.updatePlan);
 r.post('/:id/import', authorize('admin'), c.importCompanyUsers);
 r.patch('/:id/wiki-department', authorize('admin', 'project_manager', 'manager', 'team_lead'), c.addWikiDepartment);

@@ -613,6 +613,30 @@ function processAiReply(reply) {
   return { message: message || (lastResult ? lastResult.message : 'Done'), success: lastResult ? lastResult.success !== false : true, stopListening: lastResult ? lastResult.stopListening : false };
 }
 
+function getChatHistory() {
+  try {
+    const stored = sessionStorage.getItem('gresio_chat_history');
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
+function appendChatHistory(entry) {
+  try {
+    const history = getChatHistory();
+    history.push(entry);
+    if (history.length > 50) history.splice(0, history.length - 50);
+    sessionStorage.setItem('gresio_chat_history', JSON.stringify(history));
+  } catch {}
+}
+
+function getPageContext() {
+  return {
+    page: getCurrentPage(),
+    url: window.location.href,
+    pathname: window.location.pathname,
+  };
+}
+
 function executeAiAction(text) {
   const { pathname } = window.location;
   const projectMatch = pathname.match(/\/projects\/([^/]+)/);
@@ -624,34 +648,102 @@ function executeAiAction(text) {
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('gresio_token') },
   };
 
+  const dispatchResponse = (detail) => {
+    window.dispatchEvent(new CustomEvent('voice-ai-response', { detail }));
+  };
+
+  // Step 1: Try action execution via /api/ai-agent/command
+  fetch('/api/ai-agent/command', {
+    ...fetchOptions,
+    body: JSON.stringify({
+      command: text,
+      projectId: projectId || undefined,
+      page,
+    }),
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      appendChatHistory({ role: 'user', content: text });
+      appendChatHistory({ role: 'assistant', content: data.message, metadata: { action: true, entities: data.entities, navigateTo: data.navigateTo } });
+
+      // Navigate if requested
+      if (data.navigateTo && window.location.pathname !== data.navigateTo) {
+        dispatchResponse({ message: data.message || 'Done', success: true, isAi: true, action: true });
+        if (data.navigateTo !== -1) {
+          setTimeout(() => { window.location.href = data.navigateTo; }, 400);
+        } else {
+          window.history.back();
+        }
+        return;
+      }
+
+      dispatchResponse({ message: data.message || 'Done', success: true, isAi: true, action: true });
+      return;
+    }
+
+    // Command failed or unknown — fall back to conversational chat
+    fallbackToChat(text, projectId, page, fetchOptions, dispatchResponse);
+  }).catch(() => {
+    // Network error — fall back to chat
+    fallbackToChat(text, projectId, page, fetchOptions, dispatchResponse);
+  });
+
+  return { success: true, message: 'Processing...', isAi: true };
+}
+
+function fallbackToChat(text, projectId, page, fetchOptions, dispatchResponse) {
+  const history = getChatHistory();
+  const context = getPageContext();
+
   if (projectId) {
+    // Project-specific chat
     fetch('/api/ai/chat/' + projectId, {
       ...fetchOptions,
       body: JSON.stringify({
         message: text,
-        page,
-        url: window.location.href,
+        page: context.page,
+        url: context.url,
+        history: history.slice(-10),
       }),
     }).then(r => r.json()).then(data => {
-      const msg = data.reply || data.message || 'No response';
+      const msg = data.reply || data.message || '';
+      appendChatHistory({ role: 'user', content: text });
+      if (msg) appendChatHistory({ role: 'assistant', content: msg });
+
       const result = processAiReply(msg);
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: result.message, success: result.success, isAi: true } }));
+      dispatchResponse({ message: result.message || msg, success: result.success, isAi: true });
     }).catch(() => {
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: 'AI service unavailable.', success: false, isAi: true } }));
+      dispatchResponse({ message: 'AI service unavailable.', success: false, isAi: true });
     });
   } else {
-    fetch('/api/ai-agent/command', {
+    // App-wide chat
+    fetch('/api/ai-agent/chat', {
       ...fetchOptions,
-      body: JSON.stringify({ command: text, projectId, page }),
+      body: JSON.stringify({
+        message: text,
+        page: context.page,
+        url: context.url,
+        history: history.slice(-10),
+      }),
     }).then(r => r.json()).then(data => {
-      const msg = data.message || data.result || 'Could not process command.';
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: msg, success: data.success !== false, isAi: true } }));
+      let msg = data.reply || data.message || '';
+      appendChatHistory({ role: 'user', content: text });
+      if (msg) appendChatHistory({ role: 'assistant', content: msg });
+
+      const navMatch = msg.match(/NAVIGATE:\s*(\/\S*)/i);
+      if (navMatch) {
+        const path = navMatch[1];
+        msg = msg.replace(/NAVIGATE:\s*\/\S*/i, '').trim();
+        dispatchResponse({ message: msg || 'Navigating...', success: true, isAi: true });
+        if (window.location.pathname !== path) {
+          setTimeout(() => { window.location.href = path; }, 500);
+        }
+      } else {
+        dispatchResponse({ message: msg || 'Got it. What else?', success: true, isAi: true });
+      }
     }).catch(() => {
-      window.dispatchEvent(new CustomEvent('voice-ai-response', { detail: { message: 'AI service unavailable.', success: false, isAi: true } }));
+      dispatchResponse({ message: 'AI service unavailable.', success: false, isAi: true });
     });
   }
-
-  return { success: true, message: 'Processing...', isAi: true };
 }
 
 const ALL_PAGES = [
@@ -664,7 +756,7 @@ const ALL_PAGES = [
 ];
 
 const PAGE_PATHS = {
-  dashboard: '/',
+  dashboard: '/dashboard',
   users: '/users',
   projects: '/projects',
   projectDetail: window?.location?.pathname || '',

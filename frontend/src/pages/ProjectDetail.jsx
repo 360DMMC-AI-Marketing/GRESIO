@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api, { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -86,6 +86,10 @@ export default function ProjectDetail() {
   const [confirmState, setConfirmState] = useState(null); // { title, message, onConfirm }
   const [showAddMember, setShowAddMember] = useState(false);
   const [addMemberForm, setAddMemberForm] = useState({ email:'', role:'developer', teamGroup:'', message:'' });
+  const [addMemberMode, setAddMemberMode] = useState('department');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [domainUsers, setDomainUsers] = useState(null);
   const [showNewDeptForm, setShowNewDeptForm] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptIcon, setNewDeptIcon] = useState('👥');
@@ -495,7 +499,29 @@ export default function ProjectDetail() {
     } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
   };
 
+  const existingMemberIds = useMemo(() => new Set(members.map(m => String(m.user?._id || m.user))), [members]);
+  const availableUsers = useMemo(() => {
+    if (!domainUsers || !deptFilter) return [];
+    const group = domainUsers.groups.find(g => g.name === deptFilter);
+    if (!group) return [];
+    return group.members.filter(m => m.user?._id && !existingMemberIds.has(String(m.user._id)));
+  }, [domainUsers, deptFilter, existingMemberIds]);
+
   const handleAddMember = async () => {
+    if (addMemberMode === 'department') {
+      if (selectedUserIds.length === 0) return;
+      try {
+        const selectedGroup = groupedData.groups.find(g => g.name === deptFilter);
+        await projects.addTeamMember(id, { userIds: selectedUserIds, role: addMemberForm.role, teamGroup: selectedGroup?._id });
+        setShowAddMember(false);
+        setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' });
+        const [membersRes, groupedRes] = await Promise.all([projects.getTeam(id), projects.getGroupedMembers(id)]);
+        if (membersRes.data) setMembers(membersRes.data);
+        if (groupedRes.data) setGroupedData(groupedRes.data);
+        setModalAlert({ title:'Success', message:`${selectedUserIds.length} member(s) added to the project.`, type:'success' });
+      } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
+      return;
+    }
     if (!addMemberForm.email.trim()) return;
     try {
       const payload = { email: addMemberForm.email.trim(), role: addMemberForm.role, message: addMemberForm.message };
@@ -1217,7 +1243,7 @@ export default function ProjectDetail() {
             {canManage && (
               <div style={{ display:'flex', gap:6 }}>
                 <button data-voice="create-department" className="btn btn-blue" onClick={() => setShowNewDeptForm(!showNewDeptForm)}>+ Create department</button>
-                <button data-voice="add-member" className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setShowAddMember(true); }}>+ Add Member</button>
+                <button data-voice="add-member" className="btn btn-blue" onClick={() => { setAddMemberForm({ email:'', role:'developer', teamGroup:'', message:'' }); setAddMemberMode('department'); setDeptFilter(''); setSelectedUserIds([]); setShowAddMember(true); if (!domainUsers) projects.getAllDomainTeamGroups().then(r => setDomainUsers(r.data)).catch(()=>{}); }}>+ Add Member</button>
               </div>
             )}
           </div>
@@ -2186,18 +2212,73 @@ export default function ProjectDetail() {
         )}
       </Modal>
 
-      <InputModal
+      <Modal
         open={showAddMember} onClose={() => setShowAddMember(false)}
-        title="Add member" icon="👥" submitText="Send invitation"
-        onSubmit={handleAddMember}
-        fields={[
-          { key:'email', label:'Email address', type:'email', placeholder:'user@company.com', value:addMemberForm.email, onChange:e => setAddMemberForm({...addMemberForm,email:e.target.value}) },
-          { key:'teamGroup', label:'Department', type:'select', value:addMemberForm.teamGroup, onChange:v => setAddMemberForm({...addMemberForm,teamGroup:v}), options:[{value:'',label:'— Select department —'}, ...groupedData.groups.map(g => ({value:g._id,label:`${g.icon} ${g.name}`}))] },
-          { key:'role', label:'Project role', type:'select', value:addMemberForm.role, onChange:v => setAddMemberForm({...addMemberForm,role:v}), options:[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}] },
-          { key:'message', label:'Invitation message (optional)', type:'textarea', placeholder:'Welcome to the project!', value:addMemberForm.message, onChange:e => setAddMemberForm({...addMemberForm,message:e.target.value}) },
-        ]}
-      >
-      </InputModal>
+        title="Add member" icon="👥"
+        footer={
+          <div style={{display:'flex', gap:6}}>
+            <button onClick={() => setShowAddMember(false)} className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none">Cancel</button>
+            <button onClick={handleAddMember} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-colors cursor-pointer border-none"
+              style={{background: addMemberMode === 'department' && selectedUserIds.length === 0 ? '#9ca3af' : '#2347e8'}}>
+              {addMemberMode === 'department' ? `Add (${selectedUserIds.length})` : 'Send invitation'}
+            </button>
+          </div>
+        }>
+        <div style={{display:'flex', gap:3, marginBottom:16, background:'#f3f4f6', borderRadius:8, padding:3}}>
+          <button onClick={() => setAddMemberMode('department')}
+            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'department' ? '#fff' : 'transparent', color: addMemberMode === 'department' ? '#111827' : '#6b7280', boxShadow: addMemberMode === 'department' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
+            From department
+          </button>
+          <button onClick={() => setAddMemberMode('email')}
+            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'email' ? '#fff' : 'transparent', color: addMemberMode === 'email' ? '#111827' : '#6b7280', boxShadow: addMemberMode === 'email' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
+            Invite by email
+          </button>
+        </div>
+        {addMemberMode === 'department' ? (
+          <>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Department</label>
+            <Dropdown value={deptFilter} onChange={v => { setDeptFilter(v); setSelectedUserIds([]); }}
+              options={[{value:'', label:'— Select department —'}, ...(domainUsers?.groups || []).map(g => ({value:g.name, label:`${g.icon} ${g.name}`}))]}
+            />
+            {deptFilter && (
+              <div style={{marginTop:8, maxHeight:200, overflowY:'auto', border:'0.5px solid #e5e7eb', borderRadius:6, padding:'2px 0'}}>
+                {availableUsers.length === 0 ? (
+                  <div style={{textAlign:'center', color:'#9ca3af', fontSize:10, padding:16}}>All members of this department are already in the project</div>
+                ) : availableUsers.map(m => (
+                  <label key={m.user._id} onClick={() => { setSelectedUserIds(prev => prev.includes(m.user._id) ? prev.filter(id => id !== m.user._id) : [...prev, m.user._id]); }}
+                    style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px', cursor:'pointer', background: selectedUserIds.includes(m.user._id) ? '#f0f4ff' : 'transparent', borderRadius:4, margin:'2px 4px'}}>
+                    <input type="checkbox" checked={selectedUserIds.includes(m.user._id)} readOnly style={{accentColor:'#2347e8'}} />
+                    <div style={{width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:600, background:'#e5e7eb', color:'#374151', flexShrink:0}}>
+                      {(m.user.name || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:10, fontWeight:500, color:'#111827'}}>{m.user.name}</div>
+                      <div style={{fontSize:9, color:'#9ca3af', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{m.user.email}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginTop:10, marginBottom:4}}>Default project role</label>
+            <Dropdown value={addMemberForm.role} onChange={v => setAddMemberForm({...addMemberForm, role:v})}
+              options={[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}]}
+            />
+          </>
+        ) : (
+          <>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Email address</label>
+            <input type="email" value={addMemberForm.email} onChange={e => setAddMemberForm({...addMemberForm,email:e.target.value})} placeholder="user@company.com"
+              style={{width:'100%', padding:'6px 10px', fontSize:11, border:'0.5px solid #d1d5db', borderRadius:6, outline:'none', boxSizing:'border-box', marginBottom:8}} />
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Project role</label>
+            <Dropdown value={addMemberForm.role} onChange={v => setAddMemberForm({...addMemberForm, role:v})}
+              options={[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}]}
+            />
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginTop:8, marginBottom:4}}>Invitation message (optional)</label>
+            <textarea value={addMemberForm.message} onChange={e => setAddMemberForm({...addMemberForm,message:e.target.value})} placeholder="Welcome to the project!"
+              style={{width:'100%', padding:'6px 10px', fontSize:11, border:'0.5px solid #d1d5db', borderRadius:6, outline:'none', boxSizing:'border-box', resize:'vertical', minHeight:50}} />
+          </>
+        )}
+      </Modal>
       <InputModal
         open={showTcForm} onClose={() => { setShowTcForm(false); setEditingTc(null); }}
         title={editingTc ? 'Edit Test Case' : 'New Test Case'} icon="🧪" submitText={editingTc ? 'Save' : 'Create'}

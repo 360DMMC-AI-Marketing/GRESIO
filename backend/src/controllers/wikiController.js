@@ -29,7 +29,8 @@ async function uniqueSlug(title, domain, excludeId) {
 exports.getPages = async (req, res, next) => {
   try {
     const { search, department } = req.query;
-    const filter = { domain: req.user.domain, isActive: true };
+    const filter = { isActive: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
     if (department) filter.department = department;
     if (search) {
       filter.$or = [
@@ -44,7 +45,9 @@ exports.getPages = async (req, res, next) => {
 
 exports.getPageById = async (req, res, next) => {
   try {
-    const page = await populateRefs(Wiki.findOne({ _id: req.params.id, domain: req.user.domain, isActive: true }));
+    const filter = { _id: req.params.id, isActive: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const page = await populateRefs(Wiki.findOne(filter));
     if (!page) return res.status(404).json({ message: 'Page not found' });
     res.json(page);
   } catch (e) { next(e); }

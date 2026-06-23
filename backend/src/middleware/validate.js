@@ -32,7 +32,7 @@ const project = {
 const task = {
   create: [
     body('title').trim().notEmpty().withMessage('Task title is required'),
-    body('project').isMongoId().withMessage('Valid project ID is required'),
+    body('projectId').isMongoId().withMessage('Valid project ID is required'),
     handleErrors,
   ],
 };

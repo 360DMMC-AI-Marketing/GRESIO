@@ -3,7 +3,8 @@ const Template = require('../models/Template');
 exports.list = async (req, res) => {
   try {
     const { type, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
-    const filter = { approved: true, domain: req.user.domain };
+    const filter = { approved: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
     if (type) filter.projectType = type;
     if (category) filter.category = category;
     if (minPrice || maxPrice) {
@@ -33,7 +34,9 @@ exports.list = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const template = await Template.findOne({ _id: req.params.id, domain: req.user.domain }).populate('author', 'name email').lean();
+    const filter = { _id: req.params.id };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const template = await Template.findOne(filter).populate('author', 'name email').lean();
     if (!template) return res.status(404).json({ error: 'Template not found' });
     res.json({ data: template });
   } catch (err) {

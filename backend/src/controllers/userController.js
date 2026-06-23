@@ -1,8 +1,47 @@
 const User = require('../models/User');
 const Company = require('../models/Company');
+const ProjectMember = require('../models/ProjectMember');
+const TeamGroup = require('../models/TeamGroup');
 const Activity = require('../models/Activity');
 const WorkLog = require('../models/WorkLog');
 const { enforceUserLimit } = require('../config/planLimits');
+
+const GROUP_BY_USER_ROLE = {
+  super_admin: { groupName: 'Administration Team', projectRole: 'admin' },
+  admin: { groupName: 'Administration Team', projectRole: 'admin' },
+  team_lead: { groupName: 'Project Management Team', projectRole: 'team_leader' },
+  project_manager: { groupName: 'Project Management Team', projectRole: 'project_manager' },
+  manager: { groupName: 'Project Management Team', projectRole: 'project_manager' },
+  qa_tester: { groupName: 'QA & Testing Team', projectRole: 'qa_tester' },
+  developer: { groupName: 'Development Team', projectRole: 'developer' },
+  designer: { groupName: 'Design Team', projectRole: 'designer' },
+  business_analyst: { groupName: 'Business Team', projectRole: 'business_analyst' },
+  intern: { groupName: 'Interns', projectRole: 'intern' },
+  other: { groupName: 'Development Team', projectRole: 'developer' },
+};
+
+async function moveUserToRoleDepartment(userId, newRole, domain) {
+  const mapping = GROUP_BY_USER_ROLE[newRole] || GROUP_BY_USER_ROLE.other;
+  const memberships = await ProjectMember.find({ user: userId });
+  for (const m of memberships) {
+    let group = await TeamGroup.findOne({ project: m.project, name: mapping.groupName });
+    if (!group) {
+      const def = TeamGroup.DEFAULT_GROUPS.find(d => d.name === mapping.groupName);
+      group = await TeamGroup.create({
+        project: m.project,
+        domain,
+        name: mapping.groupName,
+        icon: def?.icon || '👥',
+        roles: def?.roles || [],
+        isDefault: true,
+        order: def?.order || 0,
+      });
+    }
+    m.projectRole = mapping.projectRole;
+    m.teamGroup = group._id;
+    await m.save();
+  }
+}
 
 exports.getUsers = async (req, res, next) => {
   try {
@@ -99,7 +138,50 @@ exports.updateUser = async (req, res, next) => {
       updates,
       { new: true, runValidators: true }
     );
+    if (updates.role && updates.role !== target.role) {
+      await moveUserToRoleDepartment(user._id, updates.role, req.user.domain);
+    }
     res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.moveUserDepartment = async (req, res, next) => {
+  try {
+    let { groupNames } = req.body;
+    if (!groupNames || !Array.isArray(groupNames)) return res.status(400).json({ message: 'groupNames array is required' });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Save departments on the user model
+    user.department = groupNames;
+    await user.save();
+
+    const roleToProjectRole = {
+      'Administration Team': 'admin',
+      'Project Management Team': 'project_manager',
+      'Development Team': 'developer',
+      'QA & Testing Team': 'qa_tester',
+      'Design Team': 'designer',
+      'Business Team': 'business_analyst',
+      'Interns': 'intern',
+    };
+
+    // Update existing memberships where the new departments include the membership's group
+    const memberships = await ProjectMember.find({ user: user._id }).populate('teamGroup', 'name');
+    for (const m of memberships) {
+      const groupName = m.teamGroup?.name;
+      if (!groupName) continue;
+      if (groupNames.includes(groupName)) {
+        // Membership's group is still valid
+        m.projectRole = roleToProjectRole[groupName] || 'developer';
+        await m.save();
+      }
+    }
+
+    res.json({ message: `Departments updated`, departments: groupNames });
   } catch (error) {
     next(error);
   }
@@ -107,13 +189,20 @@ exports.updateUser = async (req, res, next) => {
 
 exports.deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findOneAndUpdate(
-      { _id: req.params.id, domain: req.user.domain },
-      { isActive: false },
-      { new: true }
-    );
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ message: 'User deactivated' });
+    // Never allow deleting yourself
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(403).json({ message: 'Cannot delete your own account' });
+    }
+    // Never allow deleting the primary admin account
+    if (user.email === 'admin@gresio.com') {
+      return res.status(403).json({ message: 'Cannot delete the primary admin account' });
+    }
+    await ProjectMember.deleteMany({ user: user._id });
+    await Activity.deleteMany({ user: user._id });
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: 'User permanently deleted' });
   } catch (error) {
     next(error);
   }

@@ -41,7 +41,7 @@ class MicrosoftGraphService {
       this._tokenCache.set(key, { token, expiry: Date.now() + data.expires_in * 1000 });
       return token;
     } catch (error) {
-      console.error('Microsoft Graph auth error:', error.message);
+      console.error('Microsoft Graph auth error:', error.response?.data?.error_description || error.message);
       return null;
     }
   }

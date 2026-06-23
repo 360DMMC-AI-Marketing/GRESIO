@@ -19,6 +19,8 @@ const Sprints = lazy(() => import('./pages/Sprints'));
 const Users = lazy(() => import('./pages/Users'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Admin = lazy(() => import('./pages/Admin'));
+const ClickupImport = lazy(() => import('./pages/ClickupImport'));
+const AzureADImport = lazy(() => import('./pages/AzureADImport'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Github = lazy(() => import('./pages/Github'));
 const Teams = lazy(() => import('./pages/Teams'));
@@ -125,6 +127,8 @@ export default function App() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/projects/:projectId/reports/edit" element={<ReportEditPage />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/clickup-import" element={<ClickupImport />} />
+              <Route path="/admin/azure-import" element={<AzureADImport />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/work-dna" element={<WorkDNA />} />

@@ -130,6 +130,7 @@ app.use('/api/chains', chainRoutes);
 app.use('/api/work-dna', require('./routes/workDna'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/ai-agent', require('./routes/aiAgent'));
+app.use('/api/clickup-import', require('./routes/clickupImport'));
 app.use('/api/v1', require('./routes/publicApi'));
 app.use('/api/api-keys', require('./routes/apiKeys'));
 app.use('/api/templates', require('./routes/templates'));

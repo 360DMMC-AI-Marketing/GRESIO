@@ -12,8 +12,9 @@ const ProjectChain = require('../models/ProjectChain');
 
 exports.getProjects = async (req, res, next) => {
   try {
-    const filter = { domain: req.user.domain, isActive: true };
+    const filter = { isActive: true };
     if (req.user.role !== 'admin') {
+      filter.domain = req.user.domain;
       const taskProjectIds = await Task.distinct('project', { assignee: req.user._id, isActive: true, scope: 'project' });
       filter.$or = [
         { members: req.user._id },
@@ -58,7 +59,9 @@ exports.getProjects = async (req, res, next) => {
 
 exports.getProjectById = async (req, res, next) => {
   try {
-    const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain, isActive: true })
+    const filter = { _id: req.params.id, isActive: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const project = await Project.findOne(filter)
       .populate('members', 'name email avatar role activityScore status')
       .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role outlookEmail' } });
     if (!project) return res.status(404).json({ message: 'Project not found' });
@@ -174,7 +177,9 @@ exports.deleteProject = async (req, res, next) => {
 
 exports.getProjectAnalytics = async (req, res, next) => {
   try {
-    const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain, isActive: true }).populate('tasks');
+    const filter = { _id: req.params.id, isActive: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const project = await Project.findOne(filter).populate('tasks');
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
     const totalTasks = project.tasks.length;

@@ -94,71 +94,206 @@ const GROUP_BY_USER_ROLE = {
   other: { groupName: 'Development Team', projectRole: 'developer' },
 };
 
-async function assignUserToProjectGroups(user, companyDomain, invitedBy) {
-  const Project = require('../models/Project');
-  const TeamGroup = require('../models/TeamGroup');
-  const ProjectMember = require('../models/ProjectMember');
-  const mapping = GROUP_BY_USER_ROLE[user.role] || GROUP_BY_USER_ROLE.other;
-  const projects = await Project.find({ domain: companyDomain });
-  for (const project of projects) {
-    const group = await TeamGroup.findOne({ project: project._id, name: mapping.groupName });
-    const exists = await ProjectMember.findOne({ project: project._id, user: user._id });
-    if (!exists) {
-      await ProjectMember.create({
-        project: project._id,
-        domain: companyDomain,
-        user: user._id,
-        email: user.email,
-        projectRole: mapping.projectRole,
-        teamGroup: group?._id || null,
-        status: 'active',
-        invitedBy,
-        invitedAt: new Date(),
-        acceptedAt: new Date(),
-      });
-    }
-  }
-}
-
 exports.importCompanyUsers = async (req, res, next) => {
   try {
     const company = await Company.findById(req.params.id);
     if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    // Use domain from request body, or fall back to company domain
+    const importDomain = (req.body?.domain || company.domain || '').toLowerCase().replace(/^@/, '');
+    if (!importDomain) return res.status(400).json({ message: 'Domain is required' });
+
     const microsoftGraphService = require('../services/microsoftGraphService');
     const crypto = require('crypto');
     const env = require('../config/env');
-    const client = await microsoftGraphService.getClient();
-    if (!client) return res.status(503).json({ message: 'Microsoft Graph not connected' });
-    const { data } = await client.get('/users', {
-      params: { $filter: `endswith(mail,'@${company.domain}')`, $select: 'displayName,mail,id,jobTitle,department', $top: 999 }
+
+    // Check credentials are actually configured
+    const creds = company.outlookTenantId ? {
+      tenantId: company.outlookTenantId,
+      clientId: company.outlookClientId,
+      clientSecret: company.getDecryptedOutlookSecret(),
+    } : null;
+
+    const hasGlobalCreds = env.MICROSOFT_TENANT_ID && env.MICROSOFT_CLIENT_ID && env.MICROSOFT_CLIENT_SECRET;
+    const hasCompanyCreds = !!(creds?.tenantId && creds?.clientId && creds?.clientSecret);
+
+    if (!hasGlobalCreds && !hasCompanyCreds) {
+      return res.status(503).json({
+        message: 'Microsoft Graph not configured. Set MICROSOFT_TENANT_ID, MICROSOFT_CLIENT_ID, and MICROSOFT_CLIENT_SECRET in your .env file, or save Outlook credentials in Company settings.',
+      });
+    }
+
+    const client = await microsoftGraphService.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+    if (!client) return res.status(503).json({
+      message: 'Microsoft Graph authentication failed. Check your Azure AD credentials are correct and the app has User.Read.All permission.',
     });
-    const graphUsers = data.value || [];
+
+    // Try mail filter first, fall back to userPrincipalName
+    let graphUsers = [];
+    const queryOpts = { $top: 999, $select: 'displayName,mail,userPrincipalName,id,jobTitle,department' };
+    const eventualHeader = { headers: { ConsistencyLevel: 'eventual' } };
+
+    // Try the company domain on mail
+    try {
+      const response = await client.get('/users', {
+        ...eventualHeader,
+        params: { ...queryOpts, $filter: `endswith(mail,'@${importDomain}')` }
+      });
+      graphUsers = response.data?.value || [];
+    } catch (e) {
+      console.error('Graph users query (mail) failed:', e.message);
+    }
+
+    // Fallback: try company domain on userPrincipalName
+    if (graphUsers.length === 0) {
+      try {
+        const response = await client.get('/users', {
+          ...eventualHeader,
+          params: { ...queryOpts, $filter: `endswith(userPrincipalName,'@${importDomain}')` }
+        });
+        graphUsers = response.data?.value || [];
+      } catch (e) {
+        console.error('Graph users query (UPN) failed:', e.message);
+      }
+    }
+
+    // Fallback: try onmicrosoft.com variant of the domain
+    if (graphUsers.length === 0 && !importDomain.endsWith('.onmicrosoft.com')) {
+      const onMicrosoftDomain = `${importDomain.split('.')[0].toUpperCase()}.onmicrosoft.com`;
+      try {
+        const response = await client.get('/users', {
+          ...eventualHeader,
+          params: { ...queryOpts, $filter: `endswith(mail,'@${onMicrosoftDomain}')` }
+        });
+        graphUsers = response.data?.value || [];
+      } catch (e) {
+        console.error('Graph users query (onmicrosoft mail) failed:', e.message);
+      }
+    }
+
+    // Fallback: onmicrosoft.com on userPrincipalName
+    if (graphUsers.length === 0 && !importDomain.endsWith('.onmicrosoft.com')) {
+      const onMicrosoftDomain = `${importDomain.split('.')[0].toUpperCase()}.onmicrosoft.com`;
+      try {
+        const response = await client.get('/users', {
+          ...eventualHeader,
+          params: { ...queryOpts, $filter: `endswith(userPrincipalName,'@${onMicrosoftDomain}')` }
+        });
+        graphUsers = response.data?.value || [];
+      } catch (e) {
+        console.error('Graph users query (onmicrosoft UPN) failed:', e.message);
+      }
+    }
+
+    // Last resort: get all users and filter client-side by domain
+    if (graphUsers.length === 0) {
+      try {
+        const response = await client.get('/users', {
+          ...eventualHeader,
+          params: { ...queryOpts, $top: 999 }
+        });
+        graphUsers = (response.data?.value || []).filter(u =>
+          (u.mail || u.userPrincipalName || '').toLowerCase().endsWith(`@${company.domain.toLowerCase()}`)
+        );
+        if (graphUsers.length > 0) {
+          console.log(`Found ${graphUsers.length} users via client-side filter for @${company.domain}`);
+        }
+      } catch (e) {
+        console.error('Graph users query (no filter) failed:', e.message);
+      }
+    }
+
+    // Filter out service accounts (only keep real people)
+    const SERVICE_KEYWORDS = [
+      'booking', 'appointment', 'reservation', 'signup', 'register',
+      'n8n', 'ai', 'bot', 'helpdesk', 'support', 'mailbox',
+      'firebase', 'twilio', 'hubspot', 'supabase', 'claude', 'elevenlabs',
+      'newsletter', 'careers', 'contact', 'esign', 'esignature',
+      'devops', 'github', 'instagram', 'linkedin',
+      'freshstock', 'uscis', 'internship', 'marketing', 'order',
+      'cartesia', 'gusto', 'copy', 'figma',
+      'vpn', 'service', 'system', 'noreply', 'nobody', 'guest',
+      'alert', 'notification', 'digest', 'report', 'analytics',
+      'kimi', 'chatgpt', 'openai', 'anthropic', 'claude',
+      'test', 'demo', 'sample', 'temp', 'temporary',
+      'scanner', 'printer', 'fax', 'scanner',
+      'zoom', 'teams', 'slack', 'discord', 'webex',
+      'mailer', 'sendgrid', 'postmark', 'mailgun', 'ses',
+      'hostmaster', 'postmaster', 'webmaster', 'abuse',
+    ];
+    const isServiceAccount = (gu) => {
+      const name = (gu.displayName || '').toLowerCase().trim();
+      const localPart = (gu.mail || gu.userPrincipalName || '').toLowerCase().split('@')[0];
+      const combined = `${name} ${localPart}`;
+      // Normalize: remove hyphens, underscores, dots for keyword matching
+      const normalized = combined.replace(/[-_.]/g, '');
+      // 1) Keyword match anywhere in name or email local part
+      const keywordMatch = SERVICE_KEYWORDS.some(k => normalized.includes(k));
+      if (keywordMatch) {
+        console.log(`Filtered by keyword: ${gu.displayName || gu.mail || gu.userPrincipalName}`);
+        return true;
+      }
+      // 2) Single-word display names (no space) → service account
+      const nameWords = name.split(/\s+/).filter(Boolean);
+      if (nameWords.length < 2) {
+        console.log(`Filtered by single-word name: ${gu.displayName || gu.mail || gu.userPrincipalName}`);
+        return true;
+      }
+      // 3) Email local part is all numbers or UUID-like (e.g. "a1b2c3d4") → service
+      if (/^[a-f0-9-]{8,}$/i.test(localPart.replace(/[-_.]/g, ''))) {
+        console.log(`Filtered by UUID-like email: ${gu.displayName || gu.mail || gu.userPrincipalName}`);
+        return true;
+      }
+      return false;
+    };
+    graphUsers = graphUsers.filter(gu => !isServiceAccount(gu));
+
     const planLimit = getPlanLimit(company.plan, 'users');
     const currentActive = await User.countDocuments({ domain: company.domain, isActive: true });
     const adminUser = await User.findById(req.user._id);
     let imported = 0, skipped = 0;
     const newUsers = [];
     for (const gu of graphUsers) {
-      if (!gu.mail) { skipped++; continue; }
-      const existing = await User.findOne({ outlookEmail: gu.mail.toLowerCase() });
-      if (existing) { skipped++; continue; }
+      const email = (gu.mail || gu.userPrincipalName || '').toLowerCase();
+      if (!email) { skipped++; continue; }
+      const existing = await User.findOne({
+        $or: [{ outlookEmail: email }, { email }],
+      });
+      const userRole = inferRoleFromJobTitle(gu.jobTitle, gu.department);
+      if (existing) {
+        // Update existing user's role and outlookEmail if we have better data
+        let updated = false;
+        if (userRole !== 'developer' && existing.role !== userRole) {
+          existing.role = userRole;
+          updated = true;
+        }
+        if (!existing.outlookEmail && email.includes('@')) {
+          existing.outlookEmail = email;
+          updated = true;
+        }
+        if (updated) {
+          await existing.save();
+        }
+        skipped++;
+        continue;
+      }
       if (planLimit !== Infinity && (currentActive + imported) >= planLimit) {
         skipped++;
         continue;
       }
-      const userRole = inferRoleFromJobTitle(gu.jobTitle, gu.department);
       const tempPassword = crypto.randomBytes(8).toString('hex') + 'Aa1!';
+      const deptFromRole = GROUP_BY_USER_ROLE[userRole]?.groupName || 'Development Team';
       const created = await User.create({
-        name: gu.displayName || gu.mail.split('@')[0],
-        email: gu.mail.toLowerCase(),
+        name: gu.displayName || email.split('@')[0],
+        email: email,
         password: tempPassword,
         role: userRole,
-        outlookEmail: gu.mail.toLowerCase(),
+        department: [deptFromRole],
+        outlookEmail: email,
         teamsId: gu.id || '',
         domain: company.domain,
         isActive: true,
       });
-      await assignUserToProjectGroups(created, company.domain, adminUser?._id || req.user._id);
       newUsers.push({ user: created, tempPassword });
       imported++;
     }
@@ -207,6 +342,22 @@ exports.updatePlan = async (req, res, next) => {
     if (!company) return res.status(404).json({ message: 'Company not found' });
     const usage = await getCompanyUsage(company.domain);
     res.json({ ...company.toObject(), usage });
+  } catch (e) { next(e); }
+};
+
+exports.deleteCompany = async (req, res, next) => {
+  try {
+    const company = await Company.findOne({ _id: req.params.id, domain: req.user.domain });
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+    const Task = require('../models/Task');
+    const Project = require('../models/Project');
+    const Sprint = require('../models/Sprint');
+    await User.deleteMany({ domain: company.domain });
+    await Project.deleteMany({ domain: company.domain });
+    await Sprint.deleteMany({ domain: company.domain });
+    await Task.deleteMany({ domain: company.domain });
+    await Company.deleteOne({ _id: company._id });
+    res.json({ message: `Company "${company.domain}" and all associated data deleted` });
   } catch (e) { next(e); }
 };
 

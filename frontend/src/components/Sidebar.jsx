@@ -6,6 +6,7 @@ import {
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
   Building2, Bell as BellIcon, Activity, Workflow, ClipboardList, BrainCircuit, Library,
+  Download,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -62,6 +63,15 @@ const sidebarGroups = [
     items: [
       { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics', roles: MANAGERS },
       { id: 'reports', label: 'Reports', icon: FileText, path: '/reports', roles: MANAGERS },
+    ],
+  },
+  {
+    id: 'importation',
+    label: 'Importation',
+    icon: Download,
+    items: [
+      { id: 'azure-import', label: 'Azure AD', icon: Users, path: '/admin/azure-import', roles: ['admin'] },
+      { id: 'clickup-import', label: 'ClickUp', icon: ClipboardList, path: '/admin/clickup-import', roles: ['admin'] },
     ],
   },
 ];
@@ -208,21 +218,6 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
             </button>
           </div>
           <nav className="flex-1 py-3 overflow-y-auto px-3">
-            {company && (
-              <div className="px-1 mb-3">
-                <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5">
-                  <p className="text-xs font-semibold text-slate-200 truncate">{company.name}</p>
-                  {company.tagline && (
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{company.tagline}</p>
-                  )}
-                  {company.industry && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-400 truncate max-w-[120px] inline-block mt-1">
-                      {company.industry}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
             {filteredStandalone.map(item => (
               <NavLink key={item.id} to={item.path} onClick={onMobileClose}
                 className={({ isActive }) =>
@@ -323,28 +318,6 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
 
       {/* Navigation */}
       <nav className="flex-1 py-3 overflow-y-auto px-3">
-
-        {/* Company Info */}
-        {company && (
-          <div className="px-1 mb-3">
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5">
-              <p className="text-xs font-semibold text-slate-200 truncate">{company.name}</p>
-              {company.tagline && (
-                <p className="text-[10px] text-slate-500 truncate mt-0.5">{company.tagline}</p>
-              )}
-              <div className="flex items-center gap-2 mt-1.5">
-                {company.industry && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-400 truncate max-w-[120px]">
-                    {company.industry}
-                  </span>
-                )}
-                {company.country && (
-                  <span className="text-[9px] text-slate-600">{company.country}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Dashboard */}
         {filteredStandalone.map(item => (

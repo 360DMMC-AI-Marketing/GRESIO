@@ -148,6 +148,7 @@ export const companies = {
   updatePlan: (id, plan) => api.patch(`/companies/${id}/plan`, { plan }),
   importUsers: (id, data) => api.post(`/companies/${id}/import`, data),
   addWikiDepartment: (id, name) => api.patch(`/companies/${id}/wiki-department`, { name }),
+  remove: (id) => api.delete(`/companies/${id}`),
 };
 
 export const notifications = {
@@ -295,6 +296,17 @@ export const ai = {
 export const aiAgent = {
   command: (command) => api.post('/ai-agent/command', { command }),
   suggestions: () => api.get('/ai-agent/suggestions'),
+  chat: (message) => api.post('/ai-agent/chat', { message }),
+};
+
+export const clickupImport = {
+  getTeams: () => api.get('/clickup-import/teams'),
+  getSpaces: (teamId) => api.get('/clickup-import/spaces', { params: { teamId } }),
+  getFolders: (spaceId) => api.get('/clickup-import/folders', { params: { spaceId } }),
+  getLists: (params) => api.get('/clickup-import/lists', { params }),
+  getTasks: (listId) => api.get('/clickup-import/tasks', { params: { listId } }),
+  analyze: (lists) => api.post('/clickup-import/analyze', { lists }),
+  execute: (plan) => api.post('/clickup-import/import', { plan }),
 };
 
 export const templates = {

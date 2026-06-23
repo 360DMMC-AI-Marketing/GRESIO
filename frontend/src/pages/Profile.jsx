@@ -1,11 +1,41 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../services/api';
+import { auth, companies } from '../services/api';
 import toast from 'react-hot-toast';
 import { AlertModal } from '../components/Modal';
 
+const INDUSTRIES = [
+  'Technology / Software', 'Healthcare / Medical', 'Finance / Banking',
+  'Education / E-Learning', 'E-commerce / Retail', 'Marketing / Advertising',
+  'Consulting / Professional Services', 'Real Estate / Construction',
+  'Manufacturing / Industrial', 'Media / Entertainment', 'Telecommunications',
+  'Transportation / Logistics', 'Energy / Utilities', 'Non-profit / NGO',
+  'Government / Public Sector', 'Hospitality / Tourism', 'Food & Beverage',
+  'Agriculture', 'Legal / Law', 'Other',
+];
+
+const COUNTRIES = [
+  'France', 'United States', 'Canada', 'United Kingdom', 'Germany',
+  'Italy', 'Spain', 'Netherlands', 'Belgium', 'Switzerland',
+  'Sweden', 'Norway', 'Denmark', 'Finland', 'Australia',
+  'New Zealand', 'Japan', 'South Korea', 'Singapore', 'India',
+  'Brazil', 'Mexico', 'Argentina', 'UAE', 'Saudi Arabia',
+  'South Africa', 'Morocco', 'Algeria', 'Tunisia', 'Nigeria',
+  'China', 'Portugal', 'Ireland', 'Austria', 'Poland',
+  'Turkey', 'Russia', 'Israel', 'Egypt', 'Other',
+];
+
+const TIMEZONES = [
+  'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00 (PST)',
+  'UTC-07:00 (MST)', 'UTC-06:00 (CST)', 'UTC-05:00 (EST)', 'UTC-04:00',
+  'UTC-03:00', 'UTC-02:00', 'UTC-01:00', 'UTC+00:00 (GMT)', 'UTC+01:00 (CET)',
+  'UTC+02:00 (EET)', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
+  'UTC+05:30 (IST)', 'UTC+06:00', 'UTC+07:00', 'UTC+08:00 (CST)',
+  'UTC+09:00 (JST)', 'UTC+10:00 (AEST)', 'UTC+11:00', 'UTC+12:00',
+];
+
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, company, updateCompany } = useAuth();
   const [form, setForm] = useState({ name: '', githubUsername: '', clickupId: '', teamsId: '', outlookEmail: '', figmaUsername: '', lovableUsername: '' });
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -14,6 +44,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [showPassForm, setShowPassForm] = useState(false);
   const [twoFactor, setTwoFactor] = useState({ loading: false, qrCode: null, secret: '', code: '', backupCodes: null, showBackup: false });
+  const [companyForm, setCompanyForm] = useState(null);
+  const [savingCompany, setSavingCompany] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -28,6 +60,33 @@ export default function Profile() {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (company && !companyForm) {
+      setCompanyForm({
+        name: company.name || '',
+        industry: company.industry || '',
+        country: company.country || '',
+        timezone: company.timezone || '',
+        website: company.website || '',
+        tagline: company.tagline || '',
+      });
+    }
+  }, [company]);
+
+  const handleSaveCompany = async () => {
+    if (!company || !companyForm) return;
+    setSavingCompany(true);
+    try {
+      const res = await companies.update(company._id, companyForm);
+      updateCompany(res.data);
+      toast.success('Company profile updated');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update company');
+    } finally {
+      setSavingCompany(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -280,6 +339,62 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {user?.role === 'admin' && company && companyForm && (
+        <div className="bg-white rounded-xl border border-surface-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-surface-900">Company</h2>
+              <p className="text-sm text-surface-500 mt-0.5">Manage your company details visible to the workspace</p>
+            </div>
+            <button onClick={handleSaveCompany} disabled={savingCompany}
+              className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors cursor-pointer border-none">
+              {savingCompany ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Company name</label>
+              <input value={companyForm.name} onChange={e => setCompanyForm(p => ({ ...p, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Industry</label>
+              <select value={companyForm.industry} onChange={e => setCompanyForm(p => ({ ...p, industry: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                <option value="">Not set</option>
+                {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Country</label>
+              <select value={companyForm.country} onChange={e => setCompanyForm(p => ({ ...p, country: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                <option value="">Not set</option>
+                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Timezone</label>
+              <select value={companyForm.timezone} onChange={e => setCompanyForm(p => ({ ...p, timezone: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                <option value="">Not set</option>
+                {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Website</label>
+              <input type="url" value={companyForm.website} onChange={e => setCompanyForm(p => ({ ...p, website: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" placeholder="https://" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-surface-700 mb-1">Tagline</label>
+              <input value={companyForm.tagline} onChange={e => setCompanyForm(p => ({ ...p, tagline: e.target.value }))}
+                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" placeholder="What does your company do?" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <AlertModal open={twoFactor.showBackup} onClose={() => setTwoFactor({ ...twoFactor, showBackup: false })}
         title="Save your backup codes" message={

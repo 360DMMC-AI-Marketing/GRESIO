@@ -1,0 +1,4 @@
+GRESIO backend starting...
+MongoDB Connected: localhost
+Migration: No SuperUser collection found — nothing to migrate.
+GRESIO backend running on port 5000

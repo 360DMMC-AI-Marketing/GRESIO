@@ -10,22 +10,28 @@ const { getDomainProjectIds } = require('../config/planLimits');
 
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    const domain = req.user.domain;
-    const domainFilter = { domain };
-    const projectIds = await getDomainProjectIds(domain);
+    const isAdmin = req.user.role === 'admin';
+    const domainFilter = isAdmin ? {} : { domain: req.user.domain };
+    const projectIds = isAdmin
+      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      : await getDomainProjectIds(req.user.domain);
 
-    const totalUsers = await User.countDocuments({ isActive: true, domain });
-    const activeUsers = await User.countDocuments({ status: 'active', domain });
-    const idleUsers = await User.countDocuments({ status: 'idle', domain });
-    const inactiveUsers = await User.countDocuments({ isActive: true, status: { $in: ['inactive', 'offline'] }, domain });
-    const totalProjects = await Project.countDocuments({ isActive: true, domain });
-    const completedProjects = await Project.countDocuments({ status: 'completed', domain });
-    const inProgressProjects = await Project.countDocuments({ isActive: true, status: { $in: ['on_track', 'ready_to_test'] }, domain });
+    const userFilter = { isActive: true, ...domainFilter };
+    const totalUsers = await User.countDocuments(userFilter);
+    const activeUsers = await User.countDocuments({ ...userFilter, status: 'active' });
+    const idleUsers = await User.countDocuments({ ...userFilter, status: 'idle' });
+    const inactiveUsers = await User.countDocuments({ ...userFilter, status: { $in: ['inactive', 'offline'] } });
+
+    const projFilter = { isActive: true, ...domainFilter };
+    const totalProjects = await Project.countDocuments(projFilter);
+    const completedProjects = await Project.countDocuments({ status: 'completed', ...domainFilter });
+    const inProgressProjects = await Project.countDocuments({ isActive: true, status: { $in: ['on_track', 'ready_to_test'] }, ...domainFilter });
+    const atRiskProjects = await Project.countDocuments({ status: 'at_risk', ...domainFilter });
+    const blockedProjects = await Project.countDocuments({ status: 'blocked', ...domainFilter });
+    const delayedProjects = await Project.countDocuments({ status: 'delayed', ...domainFilter });
+
     const totalTasks = await Task.countDocuments({ isActive: true, project: { $in: projectIds } });
     const completedTasks = await Task.countDocuments({ status: 'done', project: { $in: projectIds } });
-    const atRiskProjects = await Project.countDocuments({ status: 'at_risk', domain });
-    const blockedProjects = await Project.countDocuments({ status: 'blocked', domain });
-    const delayedProjects = await Project.countDocuments({ status: 'delayed', domain });
 
     const totalTestingItems = await TestingItem.countDocuments({ isActive: true, project: { $in: projectIds } });
     const passedTesting = await TestingItem.countDocuments({ status: 'passed', isActive: true, project: { $in: projectIds } });
@@ -33,7 +39,7 @@ exports.getDashboardStats = async (req, res, next) => {
     const blockedTesting = await TestingItem.countDocuments({ status: 'blocked', isActive: true, project: { $in: projectIds } });
     const overdueTesting = await TestingItem.countDocuments({ isActive: true, deadline: { $lt: new Date() }, status: { $nin: ['passed', 'completed'] }, project: { $in: projectIds } });
 
-    const domainUsers = await User.find({ domain }).select('_id');
+    const domainUsers = await User.find(userFilter).select('_id');
     const domainUserIds = domainUsers.map(u => u._id);
     const recentActivity = await Activity.find({ user: { $in: domainUserIds } })
       .populate('user', 'name email avatar')
@@ -41,7 +47,7 @@ exports.getDashboardStats = async (req, res, next) => {
       .limit(20);
 
     const avgActivityScore = await User.aggregate([
-      { $match: { isActive: true, domain } },
+      { $match: { isActive: true, ...(isAdmin ? {} : { domain: req.user.domain }) } },
       { $group: { _id: null, avg: { $avg: '$activityScore' } } },
     ]);
 
@@ -66,7 +72,9 @@ exports.getProductivityTrends = async (req, res, next) => {
     const { days = 30 } = req.query;
     const since = new Date();
     since.setDate(since.getDate() - parseInt(days));
-    const domainUsers = await User.find({ domain: req.user.domain }).select('_id');
+    const userFilter = { isActive: true };
+    if (req.user.role !== 'admin') userFilter.domain = req.user.domain;
+    const domainUsers = await User.find(userFilter).select('_id');
     const domainUserIds = domainUsers.map(u => u._id);
     const activities = await Activity.aggregate([
       { $match: { createdAt: { $gte: since }, user: { $in: domainUserIds } } },
@@ -79,9 +87,12 @@ exports.getProductivityTrends = async (req, res, next) => {
 
 exports.getWorkloadBalance = async (req, res, next) => {
   try {
-    const domain = req.user.domain;
-    const projectIds = await getDomainProjectIds(domain);
-    const users = await User.find({ isActive: true, domain }).populate('assignedProjects');
+    const isAdmin = req.user.role === 'admin';
+    const domainFilter = isAdmin ? {} : { domain: req.user.domain };
+    const projectIds = isAdmin
+      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      : await getDomainProjectIds(req.user.domain);
+    const users = await User.find({ isActive: true, ...domainFilter }).populate('assignedProjects');
     const workload = users.map((u) => ({
       userId: u._id, name: u.name, role: u.role, activityScore: u.activityScore,
       projectCount: u.assignedProjects?.length || 0, taskCount: 0, status: u.status,
@@ -98,7 +109,9 @@ exports.getWorkloadBalance = async (req, res, next) => {
 
 exports.getProjectPredictions = async (req, res, next) => {
   try {
-    const projects = await Project.find({ isActive: true, domain: req.user.domain }).populate('tasks');
+    const filter = { isActive: true };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const projects = await Project.find(filter).populate('tasks');
     const predictions = projects.map((p) => {
       const total = p.tasks.length;
       const done = p.tasks.filter((t) => t.status === 'done').length;
@@ -118,10 +131,14 @@ exports.getProjectPredictions = async (req, res, next) => {
 
 exports.getCompanyAnalytics = async (req, res, next) => {
   try {
-    const domain = req.user.domain;
-    const projectIds = await getDomainProjectIds(domain);
+    const isAdmin = req.user.role === 'admin';
+    const domainFilter = isAdmin ? {} : { domain: req.user.domain };
+    const projectIds = isAdmin
+      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      : await getDomainProjectIds(req.user.domain);
+
     // ── Company Overview ──
-    const allProjects = await Project.find({ domain }).lean();
+    const allProjects = await Project.find(domainFilter).lean();
     const totalProjects = allProjects.length;
     const activeOnly = allProjects.filter(p => p.isActive !== false);
     const activeProjects = activeOnly.filter(p => ['on_track','at_risk','ready_to_test'].includes(p.status)).length;
@@ -140,7 +157,7 @@ exports.getCompanyAnalytics = async (req, res, next) => {
     allProjects.forEach(p => { const pri = p.settings?.priority; if (pri && projectsByPriority[pri] !== undefined) projectsByPriority[pri]++; });
 
     // ── Employees ──
-    const users = await User.find({ isActive: true, domain }).populate('assignedProjects').lean();
+    const users = await User.find({ isActive: true, ...domainFilter }).populate('assignedProjects').lean();
     const allTasks = await Task.find({ isActive: true, project: { $in: projectIds } }).lean();
     const allTestCases = await TestCase.find({ project: { $in: projectIds }, isActive: true }).lean();
     const allSprints = await Sprint.find({ project: { $in: projectIds } }).populate('tasks').lean();

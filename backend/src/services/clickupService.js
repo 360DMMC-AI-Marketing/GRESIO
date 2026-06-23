@@ -15,6 +15,111 @@ class ClickUpService {
     });
   }
 
+  // ---- HIERARCHY BROWSING ---- //
+
+  async getAuthorizedTeams() {
+    const { data } = await this.api.get('/team');
+    return data.teams || [];
+  }
+
+  async getTeamSpaces(teamId) {
+    const { data } = await this.api.get(`/team/${teamId}/space`);
+    return data.spaces || [];
+  }
+
+  async getSpaceFolders(spaceId) {
+    const { data } = await this.api.get(`/space/${spaceId}/folder`);
+    return data.folders || [];
+  }
+
+  async getFolderLists(folderId) {
+    const { data } = await this.api.get(`/folder/${folderId}/list`);
+    return data.lists || [];
+  }
+
+  async getSpaceLists(spaceId) {
+    const { data } = await this.api.get(`/space/${spaceId}/list`);
+    return data.lists || [];
+  }
+
+  async getListTasks(listId, opts = {}) {
+    const { data } = await this.api.get(`/list/${listId}/task`, {
+      params: { include_closed: opts.includeClosed ?? true, subtasks: opts.subtasks ?? false, page: opts.page ?? 0 },
+    });
+    return data.tasks || [];
+  }
+
+  async getTask(taskId) {
+    const { data } = await this.api.get(`/task/${taskId}`);
+    return data;
+  }
+
+  // ---- AI-POWERED IMPORT ---- //
+
+  async analyzeForImport(selection) {
+    const aiService = require('./aiService');
+    return aiService.analyzeClickupForImport(selection);
+  }
+
+  async executeImportPlan(plan, userId) {
+    const User = require('../models/User');
+    const Project = require('../models/Project');
+    const domain = (await User.findById(userId))?.domain || 'unknown';
+    const results = { projects: [], totalTasks: 0, errors: [] };
+
+    for (const item of plan) {
+      if (item.action === 'skip') continue;
+
+      try {
+        if (item.action === 'create_project') {
+          const project = await Project.create({
+            name: item.projectName || 'Imported Project',
+            description: item.description || '',
+            projectType: item.projectType || 'software',
+            phase: item.phase || 'planning',
+            domain,
+            isActive: true,
+            members: [userId],
+            clickupListId: item.clickupListId || '',
+          });
+
+          const tasks = await this.getListTasks(item.clickupListId, { includeClosed: true, subtasks: false });
+          let taskCount = 0;
+
+          for (const t of tasks) {
+            const taskType = item.taskTypes?.[t.id] || 'task';
+            const taskStatus = item.statusMapping?.[t.status?.status] || mapClickUpStatus(t.status?.status);
+            try {
+              await Task.create({
+                title: t.name,
+                description: t.description || '',
+                status: taskStatus,
+                type: taskType,
+                clickupTaskId: t.id,
+                project: project._id,
+                domain,
+                priority: mapPriorityFromClickUp(t.priority),
+                deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+              });
+              taskCount++;
+            } catch (e) {
+              results.errors.push(`Task "${t.name}": ${e.message}`);
+            }
+          }
+
+          results.projects.push({ id: project._id, name: project.name, taskCount });
+          results.totalTasks += taskCount;
+        }
+      } catch (e) {
+        results.errors.push(`Project "${item.projectName}": ${e.message}`);
+      }
+    }
+
+    return results;
+  }
+
+  // ---- SYNC (existing) ---- //
+
   async syncTasks(listId, projectId) {
     try {
       const { data } = await this.api.get(`/list/${listId}/task`, {
@@ -79,6 +184,12 @@ function mapClickUpStatus(status) {
 function mapPriority(priority) {
   const map = { low: 4, medium: 3, high: 2, urgent: 1 };
   return map[priority] || 3;
+}
+
+function mapPriorityFromClickUp(priority) {
+  if (!priority || !priority.priority) return 'medium';
+  const map = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
+  return map[priority.priority] || 'medium';
 }
 
 ClickUpService.prototype.sync = async function() {

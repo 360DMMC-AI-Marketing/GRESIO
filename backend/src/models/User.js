@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
   twoFactorEnabled: { type: Boolean, default: false },
   twoFactorSecret: { type: String, default: '' },
   backupCodes: [{ type: String }],
+  department: { type: [String], default: ['Development Team'] },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

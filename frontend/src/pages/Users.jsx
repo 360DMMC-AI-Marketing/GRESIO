@@ -107,6 +107,8 @@ export default function Users() {
         ...prev,
         user: { ...prev.user, role: newRole },
       } : null);
+      const groupedRes = await api.get('/projects/teams/grouped');
+      setGroupedData(groupedRes.data);
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to update role');
     } finally {
@@ -213,11 +215,11 @@ export default function Users() {
   if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
 
   const renderMemberRow = (member, groupIcon) => {
-    const first = member.memberships?.[0] || {};
-    const rs = ROLE_STYLES[first.projectRole] || ROLE_STYLES.developer;
+    const userRole = member.user?.role || 'developer';
+    const rs = ROLE_STYLES[userRole] || ROLE_STYLES.developer;
     const counts = member.assignmentCounts || { tasks: 0, testCases: 0, bugs: 0 };
     const totalWork = counts.tasks + counts.testCases + counts.bugs;
-    const assignState = member.memberships?.length > 0 || totalWork > 0 ? 'assigned' : 'free';
+    const assignState = totalWork > 0 ? 'assigned' : 'free';
     const assignColor = assignState === 'assigned' ? '#16a34a' : '#9ca3af';
     const assignLabel = assignState === 'assigned' ? 'Assigned' : 'Free';
     const barFill = assignState === 'assigned' ? 100 : 0;
@@ -245,7 +247,7 @@ export default function Users() {
         </div>
         <div>
           <span style={{ fontSize:10, background:rs.bg, color:rs.clr, padding:'2px 8px', borderRadius:4, fontWeight:500, whiteSpace:'nowrap' }}>
-            {first.projectRole?.replace(/_/g, ' ') || 'developer'}
+            {userRole.replace(/_/g, ' ')}
           </span>
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
@@ -486,6 +488,48 @@ export default function Users() {
                           ))}
                         </select>
                         {savingRole && <span style={{ fontSize:8, color:'#6b7280', marginLeft:4 }}>...</span>}
+                      </div>
+                    )}
+                    {canChangeRole && selectedMember.user?._id && (
+                      <div style={{ marginTop:6 }}>
+                        <span style={{ fontSize:9, color:'#6b7280' }}>Departments:</span>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:4 }}>
+                          {groupedData.groups.map(g => {
+                            const depts = Array.isArray(selectedMember.user?.department)
+                              ? selectedMember.user.department
+                              : (selectedMember.user?.department ? [selectedMember.user.department] : []);
+                            const isChecked = depts.includes(g.name);
+                            return (
+                              <label key={g.name}
+                                style={{ display:'flex', alignItems:'center', gap:3, padding:'2px 6px', borderRadius:4, fontSize:10, cursor:'pointer', background:isChecked?'#2347e8':'#f3f4f6', color:isChecked?'white':'#374151', border:'1px solid', borderColor:isChecked?'#2347e8':'#e5e7eb', userSelect:'none' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={async () => {
+                                    const newDepts = isChecked
+                                      ? depts.filter(d => d !== g.name)
+                                      : [...depts, g.name];
+                                    try {
+                                      await api.patch(`/users/${selectedMember.user._id}/department`, { groupNames: newDepts });
+                                      setSelectedMember(prev => prev ? {
+                                        ...prev,
+                                        user: { ...prev.user, department: newDepts },
+                                      } : null);
+                                      toast.success(`Departments updated`);
+                                      const groupedRes = await api.get('/projects/teams/grouped');
+                                      setGroupedData(groupedRes.data);
+                                    } catch (err) {
+                                      toast.error(err.response?.data?.message || 'Failed to update departments');
+                                    }
+                                  }}
+                                  style={{ display:'none' }}
+                                />
+                                <span>{g.icon}</span>
+                                <span>{g.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

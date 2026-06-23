@@ -1,4 +1,5 @@
-const config = { apiKey: process.env.OPENAI_API_KEY };
+const env = require('../config/env');
+const config = { apiKey: env.OPENAI_API_KEY, baseURL: env.OPENAI_BASE_URL || undefined };
 
 function isReady() {
   return !!config.apiKey;
@@ -10,7 +11,7 @@ async function embed(text) {
   }
   try {
     const OpenAI = (await import('openai')).default;
-    const openai = new OpenAI({ apiKey: config.apiKey });
+    const openai = new OpenAI(config);
     const response = await openai.embeddings.create({
       model: 'text-embedding-3-small',
       input: text,
@@ -27,7 +28,7 @@ async function embedBatch(texts) {
   }
   try {
     const OpenAI = (await import('openai')).default;
-    const openai = new OpenAI({ apiKey: config.apiKey });
+    const openai = new OpenAI(config);
     const response = await openai.embeddings.create({
       model: 'text-embedding-3-small',
       input: texts,

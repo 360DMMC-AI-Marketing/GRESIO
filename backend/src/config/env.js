@@ -21,6 +21,8 @@ const env = {
   SMTP_PASS: process.env.SMTP_PASS || '',
   SMTP_FROM: process.env.SMTP_FROM || '',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || '',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
   GRAPH_SENDER_EMAIL: process.env.GRAPH_SENDER_EMAIL || '',

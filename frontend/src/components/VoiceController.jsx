@@ -126,6 +126,17 @@ export default function VoiceController() {
     return () => window.removeEventListener('voice-chat-opened', handler);
   }, [stop]);
 
+  // Assistant panel opened = stop VoiceController's SR (panel has its own)
+  useEffect(() => {
+    const handler = () => {
+      stop();
+      activatedRef.current = false;
+      deactivatedAtRef.current = Date.now();
+    };
+    window.addEventListener('assistant-opened', handler);
+    return () => window.removeEventListener('assistant-opened', handler);
+  }, [stop]);
+
   // AI response feedback
   useEffect(() => {
     const handler = (e) => {

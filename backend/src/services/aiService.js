@@ -17,7 +17,11 @@ function getClient() {
     return null;
   }
   _mockMode = false;
-  if (!_openai) _openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  if (!_openai) {
+    const config = { apiKey: env.OPENAI_API_KEY };
+    if (env.OPENAI_BASE_URL) config.baseURL = env.OPENAI_BASE_URL;
+    _openai = new OpenAI(config);
+  }
   return _openai;
 }
 
@@ -118,14 +122,16 @@ async function chat(messages, options = {}) {
     if (_mockMode) return mockChat(messages, options);
     return null;
   }
-  const { data } = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const isKimi = env.OPENAI_BASE_URL?.includes('moonshot');
+  const response = await client.chat.completions.create({
+    model: env.OPENAI_MODEL || 'gpt-4o-mini',
     messages,
-    temperature: options.temperature ?? 0.3,
+    temperature: isKimi ? 0.6 : (options.temperature ?? 0.3),
     max_tokens: options.maxTokens ?? 2000,
     response_format: options.responseFormat ? { type: 'json_object' } : undefined,
+    ...(isKimi ? { thinking: { type: 'disabled' } } : {}),
   });
-  return data.choices[0].message.content;
+  return response.choices?.[0]?.message?.content || '';
 }
 
 // -------------------------------------------------- //
@@ -565,6 +571,199 @@ RULES:
 }
 
 // -------------------------------------------------- //
+//  APP-WIDE CHAT (full GRESIO knowledge)             //
+// -------------------------------------------------- //
+
+async function buildAppContext(userId, domain) {
+  const user = await User.findById(userId).select('name email role domain').lean();
+  const projects = await Project.find({ domain }).sort({ createdAt: -1 }).lean();
+  const activeSprints = await Sprint.find({ domain, status: 'active' }).sort({ startDate: -1 }).lean();
+  const tasks = await Task.find({ domain, status: { $ne: 'done' } }).sort({ dueDate: 1 }).lean();
+  const allUsers = await User.find({ domain, isActive: true }).select('name email role').lean();
+  const recentActivity = await Activity.find({ domain }).sort({ createdAt: -1 }).limit(20).populate('user', 'name').lean();
+  const roleLabels = { admin:'Admin', team_lead:'Team Lead', project_manager:'Proj. Manager', manager:'Manager', qa_tester:'QA Tester', developer:'Developer', intern:'Intern' };
+
+  const projectsSummary = projects.map(p => ({
+    _id: p._id, name: p.name, phase: p.phase, status: p.status, progress: p.progress,
+    client: p.client || '-', deadline: p.deadline ? new Date(p.deadline).toLocaleDateString() : '-',
+  }));
+
+  const sprintsSummary = activeSprints.map(s => ({
+    name: s.name, goal: s.goal || '-',
+    period: `${new Date(s.startDate).toLocaleDateString()} – ${new Date(s.endDate).toLocaleDateString()}`,
+    projectId: s.project?.toString() || '-',
+  }));
+
+  const recentActivityStr = recentActivity.slice(0, 10).map(a => {
+    const name = a.user?.name || 'Someone';
+    return `- ${name}: ${a.description}`;
+  }).join('\n');
+
+  const now = new Date();
+  const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < now);
+  const upcomingTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) >= now && new Date(t.dueDate) <= new Date(now.getTime() + 7 * 86400000));
+
+  const tasksByStatus = await Task.aggregate([
+    { $match: { domain } },
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+  ]);
+  const statusSummary = {};
+  for (const s of tasksByStatus) statusSummary[s._id] = s.count;
+
+  const assigneeLoad = {};
+  for (const t of tasks) {
+    if (t.assignee) {
+      const key = t.assignee.toString();
+      assigneeLoad[key] = (assigneeLoad[key] || 0) + 1;
+    }
+  }
+  const loadArr = await User.find({ _id: { $in: Object.keys(assigneeLoad) } }).select('name').lean();
+  const teamLoad = loadArr.map(u => ({ name: u.name, tasks: assigneeLoad[u._id.toString()] })).sort((a, b) => b.tasks - a.tasks);
+  const overloaded = teamLoad.filter(m => m.tasks > 5);
+
+  const atRiskProjects = projectsSummary.filter(p => {
+    if (p.status === 'blocked' || p.phase === 'delayed') return true;
+    if (p.deadline !== '-') {
+      const d = new Date(p.deadline);
+      return d < new Date(now.getTime() + 7 * 86400000) && p.progress < 80;
+    }
+    return false;
+  });
+
+  const membersByRole = {};
+  for (const u of allUsers) {
+    const r = roleLabels[u.role] || u.role;
+    if (!membersByRole[r]) membersByRole[r] = [];
+    membersByRole[r].push(u.name);
+  }
+
+  return {
+    user, projectsSummary, sprintsSummary, totalTasks: tasks.length + Object.values(statusSummary).reduce((a, b) => a + b, 0),
+    totalUsers: allUsers.length, recentActivityStr, overdueCount: overdueTasks.length,
+    statusSummary, projectCount: projects.length,
+    overdueTasks: overdueTasks.map(t => ({ title: t.title, projectId: t.project, dueDate: t.dueDate })),
+    upcomingTasks: upcomingTasks.map(t => ({ title: t.title, projectId: t.project, dueDate: t.dueDate })),
+    teamLoad, overloaded, atRiskProjects, membersByRole, roleLabels,
+  };
+}
+
+function formatAppContext(ctx) {
+  const { user, projectsSummary, sprintsSummary, totalTasks, totalUsers, recentActivityStr, overdueCount, statusSummary, projectCount, overdueTasks, upcomingTasks, teamLoad, overloaded, atRiskProjects, membersByRole, roleLabels } = ctx;
+  const statusBreakdown = Object.entries(statusSummary).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join(', ');
+  const projLines = projectsSummary.map(p =>
+    `- "${p.name}" [${p.status}] Phase: ${p.phase} | Progress: ${p.progress}% | Client: ${p.client} | Deadline: ${p.deadline}`
+  ).join('\n');
+
+  const overloadLines = overloaded.length > 0 ? overloaded.map(m => `- ${m.name}: ${m.tasks} open tasks`).join('\n') : 'None';
+  const riskLines = atRiskProjects.length > 0 ? atRiskProjects.map(p => `- "${p.name}" (${p.status}, ${p.progress}%, due ${p.deadline})`).join('\n') : 'None';
+
+  const teamByRole = Object.entries(membersByRole).map(([role, names]) => `- ${role}: ${names.join(', ')}`).join('\n');
+
+  return `
+## Company Overview
+- Projects: ${projectCount} | Tasks: ${totalTasks} (${statusBreakdown}) | Team: ${totalUsers}
+- Overdue: ${overdueCount} | Overloaded: ${overloaded.length}
+
+## Your Profile
+- Name: ${user.name} | Role: ${roleLabels[user.role] || user.role}
+
+## Team by Role
+${teamByRole}
+
+## All Projects
+${projLines}
+
+## Active Sprints
+${sprintsSummary.length > 0 ? sprintsSummary.map(s => `- "${s.name}" (${s.period}) Goal: ${s.goal}`).join('\n') : 'None'}
+
+## At-Risk Projects
+${riskLines}
+
+## Team Workload (heaviest first)
+${teamLoad.map(m => `- ${m.name}: ${m.tasks} open tasks`).join('\n') || 'No data'}
+
+## Overloaded Members
+${overloadLines}
+
+## Due This Week
+${upcomingTasks.length > 0 ? upcomingTasks.map(t => `- "${t.title}"`).join('\n') : 'None'}
+
+## Recent Activity
+${recentActivityStr || 'No recent activity'}
+`;
+}
+
+async function chatWithApp(message, userId, domain, conversationHistory = [], pageContext = '') {
+  const ctx = await buildAppContext(userId, domain);
+  const contextStr = formatAppContext(ctx);
+
+  const systemPrompt = `You are GRESIO AI — the intelligent assistant for GRESIO Internal OS. You are a senior product/engineering leader who knows everything about the company's projects, team, and operations.
+
+## YOUR PERSONALITY
+- You are smart, proactive, and conversational. You think ahead and connect dots.
+- You NEVER give vague answers like "please specify" or "I need more details." Always offer specific suggestions based on available data.
+- If the user's request is ambiguous, make a smart guess based on context and offer it.
+- You are warm and direct. Use natural language. You're a colleague, not a FAQ bot.
+
+## WHAT YOU CAN DO AUTOMATICALLY
+- Answer questions about ANY data in the context below
+- Navigate to any section: put "NAVIGATE: /path" on its own line
+- Execute actions: create/update/launch projects/tasks/sprints, assign, generate reports
+- Suggest proactive actions based on what you see (overdue tasks, overloaded team, at-risk projects)
+- Log everything to the activity feed
+
+## ALL PATHS (use these for NAVIGATE:)
+Dashboard=/dashboard | Projects=/projects | Sprints=/sprints | Tasks=/tasks | My Tasks=/my-tasks
+Tests=/test-cases | Calendar=/calendar | Work Log=/work-logs | Team=/users | Wiki=/wiki
+WorkDNA=/work-dna | Templates=/templates | Analytics=/analytics | Reports=/reports
+Relay=/relay | Admin=/admin | Profile=/profile | Guide=/onboarding-guide
+GitHub=/github | Teams Integration=/teams | Outlook=/outlook
+Super Dashboard=/super/dashboard | Super Companies=/super/companies
+
+## CURRENT DATA
+${contextStr}
+
+## USER'S CURRENT PAGE
+${pageContext ? `The user is currently on the "${pageContext}" page.` : 'Page context not available.'}
+
+## CRITICAL RULES (follow these exactly)
+1. NEVER say "please specify", "I need more details", "could not understand", or anything that shifts burden to the user. Instead, make a smart guess from available data and offer it.
+2. If asked to navigate, respond with NAVIGATE: /path immediately with a brief explanation.
+3. If asked a question, answer concisely using the data. Include numbers and specifics.
+4. If you spot problems (overdue, overloaded, at-risk), mention them proactively.
+5. If the user seems lost or says "help", suggest 2-3 concrete things you can do.
+6. Use the user's name (${ctx.user.name}) naturally.
+7. Keep responses 2-4 sentences — punchy, not verbose.`;
+
+  const priorMessages = conversationHistory.map(msg => ({
+    role: msg.role === 'assistant' ? 'assistant' : msg.role === 'user' ? 'user' : 'system',
+    content: typeof msg.content === 'string' ? msg.content : typeof msg === 'string' ? msg : JSON.stringify(msg),
+  })).filter(m => m.content && m.content.length > 0);
+
+  const apiMessages = [
+    { role: 'system', content: systemPrompt },
+    ...priorMessages.slice(-10),
+    { role: 'user', content: message },
+  ];
+
+  const result = await chat(apiMessages, { temperature: 0.6, maxTokens: 3000 });
+
+  try {
+    await Activity.create({
+      user: userId,
+      domain,
+      type: 'agent_action',
+      source: 'agent',
+      description: `AI Chat: ${message.substring(0, 100)}`,
+      metadata: { action: 'chat', message: message.substring(0, 200), reply: (result || '').substring(0, 200) },
+      score: 1,
+    });
+  } catch (_) {}
+
+  return result || 'Got it. What else can I help with?';
+}
+
+// -------------------------------------------------- //
 //  TEMPLATE GENERATION                               //
 // -------------------------------------------------- //
 
@@ -612,11 +811,14 @@ Command: "${command}"
 
 Return JSON:
 {
-  "action": "create"|"update"|"launch"|"report"|"add"|"assign"|"unknown",
+  "action": "create"|"update"|"launch"|"report"|"add"|"assign"|"navigate"|"unknown",
   "entity": "project"|"task"|"sprint"|"report"|"member"|"unknown",
   "params": { ... },
   "summary": "brief description"
 }
+
+For "navigate" action, params.path should be one of:
+/dashboard /projects /sprints /tasks /my-tasks /test-cases /calendar /work-logs /users /wiki /work-dna /templates /analytics /reports /relay /admin /profile /onboarding-guide
 
 Extract these params when present:
 - name / title: the item name (project name, task title, sprint name)
@@ -630,6 +832,7 @@ Extract these params when present:
 - goal: sprint goal
 - status: status to set (todo/in_progress/review/done/delayed)
 - type: task type (task/bug/test_case)
+- path: navigation path (for navigate action)
 
 Examples:
 - "create a project called website redesign for acme" → {"action":"create","entity":"project","params":{"name":"website redesign","client":"acme"}}
@@ -639,7 +842,9 @@ Examples:
 - "create sprint sprint 5 with goal launch mvp" → {"action":"create","entity":"sprint","params":{"name":"sprint 5","goal":"launch mvp"}}
 - "create task implement api for project x due next friday" → {"action":"create","entity":"task","params":{"title":"implement api","projectId":"project x","deadline":"next friday"}}
 - "mark task fix login as done" → {"action":"update","entity":"task","params":{"title":"fix login","status":"done"}}
-- "what tasks are overdue" → {"action":"unknown","entity":"unknown","params":{},"summary":"question about overdue tasks"}`;
+- "go to the projects page" → {"action":"navigate","entity":"unknown","params":{"path":"/projects"}}
+- "take me to dashboard" → {"action":"navigate","entity":"unknown","params":{"path":"/dashboard"}}
+- "show me the team" → {"action":"navigate","entity":"unknown","params":{"path":"/users"}}`;
 
   const result = await chat([
     { role: 'system', content: 'You parse project management commands into JSON. Return only valid JSON.' },
@@ -909,6 +1114,10 @@ async function executeAction(actionPlan, userId) {
       }
       break;
     }
+    case 'navigate': {
+      const path = params.path || '/dashboard';
+      return { success: true, message: `Navigating...`, navigateTo: path };
+    }
   }
 
   // If we get here, the action/entity combination is unsupported
@@ -923,6 +1132,68 @@ async function generateReportInternal(projectId, type) {
   } catch { return null; }
 }
 
+// -------------------------------------------------- //
+//  CLICKUP IMPORT ANALYSIS (AI-powered)              //
+// -------------------------------------------------- //
+
+async function analyzeClickupForImport(clickupData) {
+  const systemPrompt = `You are a project migration expert. Your job is to analyze ClickUp workspace data and convert it into structured project plans.
+
+RULES:
+1. Determine the project type from task content (software/design/business/content/research)
+2. Map ClickUp statuses to our statuses: todo, in_progress, review, done, delayed
+3. Categorize tasks by type (task/bug/test_case) based on tags, names, and descriptions
+4. Suggest which lists become projects vs sprints vs skipped
+5. Suggest phases based on task content and status distribution
+6. Match assignees to existing users by name similarity when possible
+7. Return ONLY valid JSON - no extra text`;
+
+  const prompt = `Analyze this ClickUp workspace data and return a structured conversion plan.
+
+DATA:
+${JSON.stringify(clickupData, null, 2)}
+
+Return a JSON array where each element represents a ClickUp list and what to do with it:
+[
+  {
+    "clickupListId": "list_id",
+    "clickupListName": "List name",
+    "action": "create_project" | "skip",
+    "projectName": "Suggested project name",
+    "projectType": "software" | "design" | "business" | "content" | "research",
+    "phase": "discovery" | "planning" | "development" | "testing" | "review" | "launched",
+    "description": "Project description",
+    "statusMapping": {
+      "clickup_status_name": "todo" | "in_progress" | "review" | "done" | "delayed"
+    },
+    "taskTypes": {
+      "clickup_task_id": "task" | "bug" | "test_case"
+    },
+    "summary": "Why this conversion makes sense"
+  }
+]
+
+Be smart about it:
+- If a list is called "bugs" or "issues", mark tasks as type "bug"
+- If a list is called "QA" or "Testing", mark tasks as type "test_case"
+- Map statuses intelligently (e.g., "QA Pass" -> "done", "In Development" -> "in_progress")
+- Skip empty lists or meta lists
+- Suggest project names that make sense from list/folder/space context`;
+
+  const result = await chat([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: prompt },
+  ], { responseFormat: true, temperature: 0.3, maxTokens: 4000 });
+
+  if (!result) return null;
+  try {
+    const parsed = JSON.parse(result);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   generateReportSummary,
   estimateTaskDuration,
@@ -934,4 +1205,8 @@ module.exports = {
   generateProactiveSuggestions,
   buildProjectContext,
   formatProjectContext,
+  chatWithApp,
+  buildAppContext,
+  formatAppContext,
+  analyzeClickupForImport,
 };
