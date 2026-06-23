@@ -82,7 +82,7 @@ export default function ClickupImport() {
     setSelectedLists([]);
     setAiPlan(null);
     loadSpaces(team.id);
-    setStep(0);
+    setStep(1);
   };
 
   const handleSelectSpace = (space) => {
