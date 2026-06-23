@@ -364,16 +364,15 @@ export default function Dashboard() {
       )}
 
       {/* ── Projects at Risk ── */}
-      {sections.atRisk && predictions.filter(p => p.status !== 'completed' && p.status !== 'delivered').length > 0 && (
+      {sections.atRisk && (highRisk.length > 0 || mediumRisk.length > 0) && (
         <div className="card" style={{ marginBottom: 12, padding: 14, borderLeft: '3px solid #ef4444' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <span style={{ fontSize: 16 }}>🚨</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Projects at Risk</span>
             <span className="status-badge bg-danger-50 text-danger-700" style={{ fontSize: 10 }}>{highRisk.length} high · {mediumRisk.length} medium</span>
-            <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 'auto' }}>{predictions.length} projects monitored</span>
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, flexWrap: 'nowrap' }}>
-            {predictions.filter(p => p.status !== 'completed' && p.status !== 'delivered').sort((a, b) => {
+            {[...highRisk, ...mediumRisk].sort((a, b) => {
               const order = { high: 0, medium: 1, low: 2 };
               return (order[a.risk] || 3) - (order[b.risk] || 3);
             }).map(p => (

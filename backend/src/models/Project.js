@@ -16,6 +16,8 @@ const projectSchema = new mongoose.Schema({
   teamChannel: { type: String, default: '' },
   teamsTeamId: { type: String, default: '' },
   teamsChannelId: { type: String, default: '' },
+  clickupFolderId: { type: String, default: '' },
+  clickupListId: { type: String, default: '' },
   reviewCall: {
     date: { type: Date },
     time: { type: String, default: '' },

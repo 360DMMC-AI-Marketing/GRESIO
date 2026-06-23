@@ -10,5 +10,6 @@ const sprintSchema = new mongoose.Schema({
   testingItems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TestingItem' }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   completedAt: { type: Date },
+  clickupListId: { type: String, default: '' },
 }, { timestamps: true });
 module.exports = mongoose.model('Sprint', sprintSchema);

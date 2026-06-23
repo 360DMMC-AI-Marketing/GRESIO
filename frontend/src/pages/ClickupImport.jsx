@@ -3,8 +3,8 @@ import { clickupImport, integrations } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const STEPS = ['Browse', 'Select', 'Analyze', 'Import'];
-const STEP_ICONS = ['📋', '✅', '🧠', '🚀'];
+const STEPS = ['Browse', 'Select', 'Import'];
+const STEP_ICONS = ['📋', '✅', '🚀'];
 
 export default function ClickupImport() {
   const { user } = useAuth();
@@ -18,26 +18,28 @@ export default function ClickupImport() {
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [selectedLists, setSelectedLists] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [aiPlan, setAiPlan] = useState(null);
-  const [editingPlan, setEditingPlan] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
   const [viewMode, setViewMode] = useState('folder');
+  const [importAllActive, setImportAllActive] = useState(false);
+  const [importAllResult, setImportAllResult] = useState(null);
+  const [importAllLoading, setImportAllLoading] = useState(false);
+  const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
-    loadTeams();
-  }, []);
+    if (!apiKey) setTeams([]);
+  }, [apiKey]);
 
-  const loadTeams = async () => {
+  const loadTeams = async (key) => {
     setLoading(true);
     try {
-      const { data } = await clickupImport.getTeams();
+      const { data } = await clickupImport.getTeams(key);
       setTeams(data.teams || []);
       if (data.teams?.length === 1) {
         setSelectedTeam(data.teams[0]);
       }
     } catch (e) {
-      toast.error('ClickUp API key not configured. Set CLICKUP_API_KEY in .env');
+      toast.error('Connection failed: ' + (e.response?.data?.error || e.message));
     }
     setLoading(false);
   };
@@ -45,7 +47,7 @@ export default function ClickupImport() {
   const loadSpaces = async (teamId) => {
     setLoading(true);
     try {
-      const { data } = await clickupImport.getSpaces(teamId);
+      const { data } = await clickupImport.getSpaces(teamId, apiKey);
       setSpaces(data.spaces || []);
     } catch (e) { toast.error('Failed to load spaces'); }
     setLoading(false);
@@ -54,7 +56,7 @@ export default function ClickupImport() {
   const loadFolders = async (spaceId) => {
     setLoading(true);
     try {
-      const { data } = await clickupImport.getFolders(spaceId);
+      const { data } = await clickupImport.getFolders(spaceId, apiKey);
       setFolders(data.folders || []);
     } catch (e) { toast.error('Failed to load folders'); }
     setLoading(false);
@@ -66,7 +68,7 @@ export default function ClickupImport() {
       const params = {};
       if (folderId) params.folderId = folderId;
       else params.spaceId = spaceId;
-      const { data } = await clickupImport.getLists(params);
+      const { data } = await clickupImport.getLists(params, apiKey);
       setLists(data.lists || []);
     } catch (e) { toast.error('Failed to load lists'); }
     setLoading(false);
@@ -80,7 +82,6 @@ export default function ClickupImport() {
     setFolders([]);
     setLists([]);
     setSelectedLists([]);
-    setAiPlan(null);
     loadSpaces(team.id);
     setStep(1);
   };
@@ -91,7 +92,6 @@ export default function ClickupImport() {
     setFolders([]);
     setLists([]);
     setSelectedLists([]);
-    setAiPlan(null);
     loadFolders(space.id);
     setViewMode('folder');
   };
@@ -100,7 +100,6 @@ export default function ClickupImport() {
     setSelectedFolder(folder);
     setLists([]);
     setSelectedLists([]);
-    setAiPlan(null);
     loadLists(selectedSpace.id, folder.id);
   };
 
@@ -126,43 +125,40 @@ export default function ClickupImport() {
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleImportSelected = async () => {
     if (!selectedLists.length) return toast.error('Select at least one list');
-    setLoading(true);
-    setStep(2);
-    try {
-      const { data } = await clickupImport.analyze(selectedLists);
-      if (data.plan) {
-        setAiPlan(data.plan);
-        setEditingPlan(JSON.parse(JSON.stringify(data.plan)));
-      } else {
-        toast.error('AI returned no plan');
-        setStep(1);
-      }
-    } catch (e) {
-      toast.error('Analysis failed: ' + (e.response?.data?.error || e.message));
-      setStep(1);
-    }
-    setLoading(false);
-  };
-
-  const updatePlanItem = (index, field, value) => {
-    const updated = [...editingPlan];
-    updated[index] = { ...updated[index], [field]: value };
-    setEditingPlan(updated);
-  };
-
-  const handleImport = async () => {
     setImporting(true);
     try {
-      const { data } = await clickupImport.execute(editingPlan);
+      const plan = selectedLists.map(list => ({
+        clickupListId: list.id,
+        clickupListName: list.name,
+        projectName: list.name,
+        action: 'create_project',
+        projectType: 'software',
+        phase: 'development',
+        description: `Imported from ClickUp list: ${list.name}`,
+        statusMapping: {},
+      }));
+      const { data } = await clickupImport.execute(plan, apiKey);
       setImportResult(data);
-      setStep(3);
+      setStep(2);
       toast.success(`Imported ${data.totalTasks} tasks into ${data.projects.length} projects`);
     } catch (e) {
       toast.error('Import failed: ' + (e.response?.data?.error || e.message));
     }
     setImporting(false);
+  };
+
+  const handleImportAll = async (team) => {
+    setImportAllLoading(true);
+    try {
+      await clickupImport.cleanupImport();
+      const { data } = await clickupImport.importAll({ teamId: team.id, force: true }, apiKey);
+      setImportAllResult(data);
+    } catch (e) {
+      toast.error('Import All failed: ' + (e.response?.data?.error || e.message));
+    }
+    setImportAllLoading(false);
   };
 
   const resetAll = () => {
@@ -171,13 +167,14 @@ export default function ClickupImport() {
     setSelectedSpace(null);
     setSelectedFolder(null);
     setSelectedLists([]);
-    setAiPlan(null);
-    setEditingPlan(null);
     setImportResult(null);
     setSpaces([]);
     setFolders([]);
     setLists([]);
-    loadTeams();
+    setImportAllActive(false);
+    setImportAllResult(null);
+    setImportAllLoading(false);
+    setTeams([]);
   };
 
   return (
@@ -185,7 +182,7 @@ export default function ClickupImport() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-surface-900">📋 ClickUp Import Wizard</h1>
-          <p className="text-sm text-surface-500 mt-1">Browse your ClickUp workspace and import projects with AI</p>
+          <p className="text-sm text-surface-500 mt-1">Browse your ClickUp workspace and import projects directly</p>
         </div>
         {selectedTeam && (
           <button onClick={resetAll} className="text-xs text-surface-400 hover:text-surface-600 underline">
@@ -213,27 +210,147 @@ export default function ClickupImport() {
 
       {/* Step 0: Browse Teams */}
       {step === 0 && (
-        <div className="bg-white rounded-xl border border-surface-200 p-5">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">Select a ClickUp Workspace</h2>
-          {loading ? (
-            <div className="text-center py-8 text-surface-400">Loading workspaces...</div>
-          ) : teams.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-surface-400 mb-3">No workspaces found. Make sure your ClickUp API key is set.</p>
-              <p className="text-xs text-surface-400">Set <code className="bg-surface-100 px-1 rounded">CLICKUP_API_KEY</code> in your backend .env file</p>
+        <div className="space-y-4">
+          {/* API Key Input */}
+          <div className="bg-white rounded-xl border border-surface-200 p-5">
+            <h2 className="text-lg font-semibold text-surface-900 mb-3">Enter your ClickUp API Key</h2>
+            <p className="text-sm text-surface-500 mb-4">
+              Paste your ClickUp API key below to connect to your workspace.
+            </p>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                placeholder="pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                className="s-input flex-1 text-sm font-mono"
+              />
+              <button onClick={() => loadTeams(apiKey)} disabled={loading || !apiKey.trim()}
+                className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
+                {loading ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Connecting...</>
+                ) : (
+                  <><span>🔗</span> Connect</>
+                )}
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {teams.map(team => (
-                <button key={team.id} onClick={() => handleSelectTeam(team)}
-                  className="p-4 border-2 border-surface-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/30 text-left transition-all">
-                  <span className="text-2xl block mb-2">🏢</span>
-                  <p className="font-semibold text-surface-900">{team.name}</p>
-                  <p className="text-xs text-surface-400 mt-1">ID: {team.id}</p>
-                </button>
-              ))}
+          </div>
+
+          {/* Workspace list */}
+          {teams.length > 0 && (
+            <div className="bg-white rounded-xl border border-surface-200 p-5">
+              <h2 className="text-lg font-semibold text-surface-900 mb-4">Select a Workspace</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {teams.map(team => (
+                  <div key={team.id} className="border-2 border-surface-200 rounded-xl divide-y divide-surface-200 overflow-hidden">
+                    <button onClick={() => handleSelectTeam(team)}
+                      className="p-4 text-left w-full hover:bg-primary-50/30 transition-all">
+                      <span className="text-2xl block mb-2">🏢</span>
+                      <p className="font-semibold text-surface-900">{team.name}</p>
+                      <p className="text-xs text-surface-400 mt-1">ID: {team.id}</p>
+                    </button>
+                    <button onClick={() => { setImportAllActive(true); setSelectedTeam(team); }}
+                      className="w-full p-2.5 text-sm font-medium text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-1">
+                      🚀 Import All
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Import All: Confirmation Modal */}
+      {step === 0 && importAllActive && !importAllLoading && !importAllResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-surface-900 mb-2">🚀 Import All</h3>
+            <p className="text-sm text-surface-600 mb-1">
+              This will import <strong>all folders, lists, and tasks</strong> from
+            </p>
+            <p className="text-sm font-semibold text-primary-700 mb-4">{selectedTeam?.name}</p>
+            <ul className="text-xs text-surface-500 space-y-1 mb-4">
+              <li>📁 Each ClickUp folder → Project</li>
+              <li>📋 Each list → Sprint</li>
+              <li>✅ Each task → Task (assignee mapped by email)</li>
+              <li>⚠️ Previously imported items will be deleted and re-imported</li>
+            </ul>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setImportAllActive(false); setSelectedTeam(null); }}
+                className="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200">
+                Cancel
+              </button>
+              <button onClick={() => handleImportAll(selectedTeam)}
+                className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
+                🚀 Start Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import All: Loading */}
+      {importAllLoading && (
+        <div className="bg-white rounded-xl border border-surface-200 p-12 text-center">
+          <div className="w-12 h-12 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-surface-600 font-medium">🚀 Importing all data from ClickUp...</p>
+          <p className="text-xs text-surface-400 mt-2">Creating projects, sprints, and tasks</p>
+        </div>
+      )}
+
+      {/* Import All: Results */}
+      {importAllResult && (
+        <div className="space-y-4">
+          <div className={`rounded-xl border p-8 text-center ${
+            importAllResult.errors?.length ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+          }`}>
+            <span className="text-5xl block mb-4">{importAllResult.errors?.length ? '⚠️' : '🎉'}</span>
+            <h2 className="text-2xl font-bold text-surface-900 mb-2">Import All Complete</h2>
+            <p className="text-surface-600 mb-6">
+              {importAllResult.tasks} tasks imported across {importAllResult.projects} projects and {importAllResult.sprints} sprints
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mb-6">
+              <div className="bg-white rounded-xl p-4 border border-surface-200">
+                <p className="text-2xl font-bold text-primary-600">{importAllResult.projects}</p>
+                <p className="text-xs text-surface-500">Projects</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-surface-200">
+                <p className="text-2xl font-bold text-indigo-600">{importAllResult.sprints}</p>
+                <p className="text-xs text-surface-500">Sprints</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-surface-200">
+                <p className="text-2xl font-bold text-emerald-600">{importAllResult.tasks}</p>
+                <p className="text-xs text-surface-500">Tasks</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-surface-200">
+                <p className="text-2xl font-bold text-amber-600">
+                  {importAllResult.skipped?.projects + importAllResult.skipped?.sprints + importAllResult.skipped?.tasks || 0}
+                </p>
+                <p className="text-xs text-surface-500">Skipped</p>
+              </div>
+            </div>
+            {importAllResult.errors?.length > 0 && (
+              <details className="max-w-lg mx-auto text-left">
+                <summary className="text-sm text-red-600 cursor-pointer font-medium">View {importAllResult.errors.length} error(s)</summary>
+                <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                  {importAllResult.errors.map((err, i) => (
+                    <p key={i} className="text-xs text-red-500 bg-red-50 p-2 rounded">{err}</p>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={resetAll}
+              className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+              Import Another
+            </button>
+            <a href="/projects"
+              className="px-5 py-2 text-sm font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200">
+              Go to Project Lists →
+            </a>
+          </div>
         </div>
       )}
 
@@ -385,9 +502,13 @@ export default function ClickupImport() {
                           className="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200">
                           Back
                         </button>
-                        <button onClick={handleAnalyze}
-                          className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
-                          🧠 Analyze with AI
+                        <button onClick={handleImportSelected} disabled={importing}
+                          className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
+                          {importing ? (
+                            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Importing...</>
+                          ) : (
+                            <><span>🚀</span> Import Selected</>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -399,134 +520,8 @@ export default function ClickupImport() {
         </div>
       )}
 
-      {/* Step 2: AI Analysis Review */}
-      {step === 2 && (
-        <div className="space-y-4">
-          {loading ? (
-            <div className="bg-white rounded-xl border border-surface-200 p-12 text-center">
-              <div className="w-12 h-12 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-surface-600 font-medium">🧠 AI is analyzing your ClickUp data...</p>
-              <p className="text-xs text-surface-400 mt-2">Analyzing task content, statuses, tags, and structure</p>
-            </div>
-          ) : editingPlan ? (
-            <>
-              <div className="bg-white rounded-xl border border-surface-200 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-surface-900">🧠 AI Suggestion — Review & Edit</h2>
-                  <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full font-medium">
-                    {editingPlan.length} project(s)
-                  </span>
-                </div>
-                <p className="text-sm text-surface-500 mb-5">
-                  The AI analyzed your selected lists. Review the plan below — you can edit anything before importing.
-                </p>
-                {editingPlan.map((item, i) => (
-                  <div key={i} className="mb-4 p-4 border border-surface-200 rounded-xl">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium bg-surface-100 text-surface-500 px-2 py-0.5 rounded-full">{i + 1}</span>
-                        <h3 className="font-semibold text-surface-900">{item.clickupListName}</h3>
-                      </div>
-                      <select value={item.action} onChange={e => updatePlanItem(i, 'action', e.target.value)}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-lg border ${
-                          item.action === 'skip' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        }`}>
-                        <option value="create_project">📦 Create Project</option>
-                        <option value="skip">⏭️ Skip</option>
-                      </select>
-                    </div>
-                    {item.action !== 'skip' && (
-                      <div className="space-y-3 ml-6">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-surface-500 mb-1">Project Name</label>
-                            <input value={item.projectName} onChange={e => updatePlanItem(i, 'projectName', e.target.value)}
-                              className="s-input w-full text-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-surface-500 mb-1">Project Type</label>
-                            <select value={item.projectType} onChange={e => updatePlanItem(i, 'projectType', e.target.value)}
-                              className="s-input w-full text-sm">
-                              <option value="software">Software</option>
-                              <option value="design">Design</option>
-                              <option value="business">Business</option>
-                              <option value="content">Content</option>
-                              <option value="research">Research</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-surface-500 mb-1">Description</label>
-                          <textarea value={item.description || ''} onChange={e => updatePlanItem(i, 'description', e.target.value)}
-                            className="s-input w-full text-sm" rows={2} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-surface-500 mb-1">Phase</label>
-                            <select value={item.phase} onChange={e => updatePlanItem(i, 'phase', e.target.value)}
-                              className="s-input w-full text-sm">
-                              <option value="discovery">Discovery</option>
-                              <option value="planning">Planning</option>
-                              <option value="development">Development</option>
-                              <option value="testing">Testing</option>
-                              <option value="review">Review</option>
-                              <option value="launched">Launched</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-surface-500 mb-1">Status Mapping</label>
-                            {item.statusMapping && Object.keys(item.statusMapping).length > 0 ? (
-                              <div className="space-y-1 max-h-24 overflow-y-auto">
-                                {Object.entries(item.statusMapping).map(([ck, val]) => (
-                                  <div key={ck} className="flex items-center gap-2 text-xs">
-                                    <span className="text-surface-500">{ck}:</span>
-                                    <span className="text-surface-900 font-medium">{val}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-surface-400">Default mapping applied</p>
-                            )}
-                          </div>
-                        </div>
-                        {item.summary && (
-                          <div className="bg-surface-50 rounded-lg p-3">
-                            <p className="text-xs text-surface-500 italic">{item.summary}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between">
-                <button onClick={() => setStep(1)}
-                  className="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200">
-                  ← Back to Selection
-                </button>
-                <button onClick={handleImport} disabled={importing}
-                  className="px-6 py-2.5 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-                  {importing ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Importing...</>
-                  ) : (
-                    <><span>🚀</span> Confirm & Import</>
-                  )}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
-              <p className="text-surface-400">AI analysis returned no results. Try selecting different lists.</p>
-              <button onClick={() => setStep(1)} className="mt-4 text-primary-600 hover:underline text-sm font-medium">
-                ← Go back
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Import Results */}
-      {step === 3 && importResult && (
+      {/* Step 2: Import Results */}
+      {step === 2 && importResult && (
         <div className="space-y-4">
           <div className={`rounded-xl border p-8 text-center ${
             importResult.errors?.length ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
@@ -577,9 +572,9 @@ export default function ClickupImport() {
               className="px-5 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700">
               Import Another
             </button>
-            <a href="/admin"
+            <a href="/projects"
               className="px-5 py-2 text-sm font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200">
-              ← Back to Admin
+              Go to Project Lists →
             </a>
           </div>
         </div>

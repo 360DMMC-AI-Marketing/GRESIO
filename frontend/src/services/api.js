@@ -299,14 +299,19 @@ export const aiAgent = {
   chat: (message) => api.post('/ai-agent/chat', { message }),
 };
 
+function addApiKey(apiKey) {
+  return apiKey ? { headers: { 'x-clickup-api-key': apiKey } } : {};
+}
+
 export const clickupImport = {
-  getTeams: () => api.get('/clickup-import/teams'),
-  getSpaces: (teamId) => api.get('/clickup-import/spaces', { params: { teamId } }),
-  getFolders: (spaceId) => api.get('/clickup-import/folders', { params: { spaceId } }),
-  getLists: (params) => api.get('/clickup-import/lists', { params }),
-  getTasks: (listId) => api.get('/clickup-import/tasks', { params: { listId } }),
-  analyze: (lists) => api.post('/clickup-import/analyze', { lists }),
-  execute: (plan) => api.post('/clickup-import/import', { plan }),
+  getTeams: (apiKey) => api.get('/clickup-import/teams', addApiKey(apiKey)),
+  getSpaces: (teamId, apiKey) => api.get('/clickup-import/spaces', { params: { teamId }, ...addApiKey(apiKey) }),
+  getFolders: (spaceId, apiKey) => api.get('/clickup-import/folders', { params: { spaceId }, ...addApiKey(apiKey) }),
+  getLists: (params, apiKey) => api.get('/clickup-import/lists', { params, ...addApiKey(apiKey) }),
+  getTasks: (listId, apiKey) => api.get('/clickup-import/tasks', { params: { listId }, ...addApiKey(apiKey) }),
+  execute: (plan, apiKey) => api.post('/clickup-import/import', { plan }, addApiKey(apiKey)),
+  importAll: (data, apiKey) => api.post('/clickup-import/import-all', data, addApiKey(apiKey)),
+  cleanupImport: () => api.post('/clickup-import/cleanup'),
 };
 
 export const templates = {
