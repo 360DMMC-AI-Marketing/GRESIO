@@ -11,27 +11,20 @@ const PLANS = [
     price: { monthly: 0, semiannual: 0, annual: 0 },
     badge: 'Free forever',
     cta: 'Get Started',
-    color: 'from-surface-50 to-surface-100',
-    border: 'border-surface-200',
-    accent: 'text-surface-500',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" className="text-surface-300" />
-        <path d="M12 16l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-surface-400" />
-      </svg>
-    ),
+    icon: '🚀',
+    savings: '',
     capabilities: [
-      { label: 'Members', value: 'Up to 10', icon: '👥' },
-      { label: 'Active projects', value: '3', icon: '📁' },
-      { label: 'Sprint management', value: true, icon: '⚡' },
-      { label: 'Kanban boards', value: true, icon: '📋' },
-      { label: 'Test cases', value: true, icon: '🧪' },
-      { label: 'GitHub integration', value: true, icon: '🔗' },
-      { label: 'Work logs', value: true, icon: '⏱️' },
-      { label: 'Auto status flow', value: false, icon: '🔄' },
-      { label: 'WorkDNA', value: false, icon: '🧬' },
-      { label: 'Advanced reports', value: false, icon: '📊' },
-      { label: 'Knowledge Base', value: false, icon: '📚' },
+      { label: 'Up to 10 members', included: true },
+      { label: '3 active projects', included: true },
+      { label: 'Sprint management', included: true },
+      { label: 'Kanban boards', included: true },
+      { label: 'GitHub integration', included: true },
+      { label: 'Test case management', included: true },
+      { label: 'Work logs', included: true },
+      { label: 'Auto status flow', included: false },
+      { label: 'WorkDNA archives', included: false },
+      { label: 'Advanced reports', included: false },
+      { label: 'Knowledge Base', included: false },
     ],
   },
   {
@@ -41,32 +34,22 @@ const PLANS = [
     price: { monthly: 29, semiannual: 23, annual: 17 },
     badge: 'Best value',
     cta: 'Start Free Trial',
-    color: 'from-primary-600 to-primary-800',
-    border: 'border-primary-600',
-    accent: 'text-white',
-    popular: false,
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <rect x="3" y="3" width="26" height="26" rx="6" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="16" cy="11" r="3" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M11 23.5c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: '⚡',
+    savings: 'Save 40%',
     capabilities: [
-      { label: 'Members', value: 'Up to 50', icon: '👥' },
-      { label: 'Active projects', value: 'Unlimited', icon: '📁' },
-      { label: 'Sprint management', value: true, icon: '⚡' },
-      { label: 'Kanban boards', value: true, icon: '📋' },
-      { label: 'Test cases', value: true, icon: '🧪' },
-      { label: 'Auto status flow', value: true, icon: '🔄' },
-      { label: 'WorkDNA archive + journal', value: true, icon: '🧬' },
-      { label: 'Workload heatmap', value: true, icon: '📊' },
-      { label: 'Admin PDF reports', value: true, icon: '📄' },
-      { label: 'Client PDF reports', value: true, icon: '📑' },
-      { label: 'Advanced analytics', value: true, icon: '📈' },
-      { label: 'MS Teams + Outlook', value: true, icon: '🔗' },
-      { label: 'Priority support', value: true, icon: '🎯' },
-      { label: 'Knowledge Base', value: true, icon: '📚' },
+      { label: 'Up to 50 members', included: true },
+      { label: 'Unlimited projects', included: true },
+      { label: 'Sprint management', included: true },
+      { label: 'Kanban boards', included: true },
+      { label: 'GitHub integration', included: true },
+      { label: 'Auto status flow', included: true },
+      { label: 'WorkDNA archives', included: true },
+      { label: 'Workload heatmap', included: true },
+      { label: 'Admin & client PDF reports', included: true },
+      { label: 'Advanced analytics', included: true },
+      { label: 'MS Teams + Outlook', included: true },
+      { label: 'Priority support', included: true },
+      { label: 'Knowledge Base', included: true },
     ],
   },
   {
@@ -76,36 +59,28 @@ const PLANS = [
     price: { monthly: 99, semiannual: 79, annual: 59 },
     badge: 'Most popular',
     cta: 'Contact Sales',
-    color: 'from-amber-500 to-amber-700',
-    border: 'border-amber-500',
-    accent: 'text-white',
-    popular: true,
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <path d="M4 28V8l8-4 8 4v20H4z" stroke="currentColor" strokeWidth="1.5" className="text-amber-200" />
-        <path d="M12 28v-8h8v8M12 12h8M12 16h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-white" />
-      </svg>
-    ),
+    icon: '🏢',
+    savings: 'Save 40%',
     capabilities: [
-      { label: 'Members', value: 'Unlimited', icon: '👥' },
-      { label: 'Active projects', value: 'Unlimited', icon: '📁' },
-      { label: 'Everything in Team', value: true, icon: '✅' },
-      { label: 'Custom fields & workflows', value: true, icon: '⚙️' },
-      { label: 'Dedicated account manager', value: true, icon: '👤' },
-      { label: 'On-premise option', value: true, icon: '🖥️' },
-      { label: 'White-label', value: 'Add-on', icon: '🏷️' },
-      { label: 'API access', value: 'Add-on', icon: '🔌' },
-      { label: 'SLA guarantee', value: true, icon: '📋' },
-      { label: 'AI Voice + Chat', value: true, icon: '🤖' },
-      { label: 'Knowledge Base', value: true, icon: '📚' },
+      { label: 'Unlimited members', included: true },
+      { label: 'Unlimited projects', included: true },
+      { label: 'Everything in Team', included: true },
+      { label: 'Custom fields & workflows', included: true },
+      { label: 'Dedicated account manager', included: true },
+      { label: 'AI Voice + Chat', included: true },
+      { label: 'On-premise option', included: true },
+      { label: 'White-label branding', included: 'Add-on' },
+      { label: 'API access', included: 'Add-on' },
+      { label: 'SLA guarantee', included: true },
+      { label: 'Knowledge Base', included: true },
     ],
   },
 ];
 
 const BILLING = [
   { value: 'monthly', label: 'Monthly' },
-  { value: 'semiannual', label: '6 months', save: '20%' },
-  { value: 'annual', label: 'Yearly', save: '40%' },
+  { value: 'semiannual', label: '6 Months' },
+  { value: 'annual', label: 'Annual', save: '−40%' },
 ];
 
 const FEATURES = [
@@ -113,8 +88,7 @@ const FEATURES = [
     group: 'Team & Access',
     items: [
       { label: 'Members', starter: '10', team: '50', enterprise: '∞' },
-      { label: 'Projects', starter: '3', team: '∞', enterprise: '∞' },
-      { label: 'Roles (Admin, PM, Lead, Dev, QA, Viewer)', starter: true, team: true, enterprise: true },
+      { label: 'Active projects', starter: '3', team: '∞', enterprise: '∞' },
       { label: 'Role-based permissions', starter: true, team: true, enterprise: true },
       { label: 'Azure AD / M365 import', starter: false, team: true, enterprise: true },
     ],
@@ -122,7 +96,7 @@ const FEATURES = [
   {
     group: 'Project Management',
     items: [
-      { label: '8-step lifecycle (5 project types)', starter: true, team: true, enterprise: true },
+      { label: '8-step lifecycle', starter: true, team: true, enterprise: true },
       { label: 'Sprint management + burndown', starter: true, team: true, enterprise: true },
       { label: 'Kanban task board', starter: true, team: true, enterprise: true },
       { label: 'Calendar view', starter: true, team: true, enterprise: true },
@@ -180,30 +154,18 @@ const FEATURES = [
     group: 'Knowledge Base',
     items: [
       { label: 'Markdown wiki articles', starter: false, team: true, enterprise: true },
-      { label: 'Department organization', starter: false, team: true, enterprise: true },
       { label: 'File attachments', starter: false, team: true, enterprise: true },
-      { label: 'Star rating system', starter: false, team: true, enterprise: true },
-      { label: 'Import .md / .txt files', starter: false, team: true, enterprise: true },
-      { label: 'WorkDNA archive & search', starter: false, team: true, enterprise: true },
       { label: 'Template marketplace', starter: false, team: true, enterprise: true },
     ],
   },
 ];
 
-function Capability({ cap, planId }) {
-  const isStarter = planId === 'starter';
-  const textCls = isStarter ? 'text-surface-600' : 'text-white/90';
-  if (cap.value === true) return <span className={`${textCls}`}>✓</span>;
-  if (cap.value === false) return <span className={`${isStarter ? 'text-surface-300' : 'text-white/30'}`}>—</span>;
-  return <span className={`font-semibold ${isStarter ? 'text-surface-900' : 'text-white'}`}>{cap.value}</span>;
-}
-
 const PROJECT_TYPES = [
-  { id: 'software', label: 'Software', desc: 'Dev, code, deploy' },
-  { id: 'design', label: 'Design', desc: 'UX, brand, creative' },
-  { id: 'business', label: 'Business', desc: 'Ops, strategy' },
-  { id: 'content', label: 'Content', desc: 'Writing, media' },
-  { id: 'research', label: 'Research', desc: 'Analysis, data' },
+  { id: 'software', label: 'Software' },
+  { id: 'design', label: 'Design' },
+  { id: 'business', label: 'Business' },
+  { id: 'content', label: 'Content' },
+  { id: 'research', label: 'Research' },
 ];
 
 const NEEDS = [
@@ -217,7 +179,7 @@ const NEEDS = [
 ];
 
 export default function PricingPage() {
-  const [billing, setBilling] = useState('semiannual');
+  const [billing, setBilling] = useState('annual');
   const [activeGroup, setActiveGroup] = useState(0);
   const [teamSize, setTeamSize] = useState(5);
   const [projectTypes, setProjectTypes] = useState([]);
@@ -228,154 +190,284 @@ export default function PricingPage() {
   const recommended = (() => {
     const hasEnterpriseNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'enterprise');
     const hasTeamNeed = keyNeeds.some(n => NEEDS.find(nd => nd.id === n)?.plan === 'team');
-    if (teamSize > 50 || hasEnterpriseNeed) return { id: 'enterprise', label: 'Enterprise', reason: hasEnterpriseNeed ? 'Your security and compliance requirements' : 'Your team size requires unlimited seats' };
-    if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return { id: 'team', label: 'Team', reason: hasTeamNeed ? `Includes ${keyNeeds.filter(n => NEEDS.find(nd => nd.id === n)?.plan === 'team').map(n => NEEDS.find(nd => nd.id === n)?.label).join(', ')}` : 'Your team is ready to scale' };
-    return { id: 'starter', label: 'Starter', reason: 'Suitable for small departments getting started' };
+    if (teamSize > 50 || hasEnterpriseNeed) return 'enterprise';
+    if (teamSize >= 5 || hasTeamNeed || projectTypes.length >= 3) return 'team';
+    return 'starter';
   })();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
 
-      {/* HERO */}
-      <section className="pt-36 pb-14 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#f0f4ff_0%,_transparent_70%)]" />
+      <section className="pt-36 pb-16 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--brand-primary)_0%,_transparent_70%)] opacity-[0.12]" />
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--brand-primary)]/5 rounded-full blur-[120px]" />
         <div className="relative max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-50 border border-primary-200 rounded-full text-xs font-semibold text-primary-700 mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/25 rounded-full text-xs font-semibold text-[var(--brand-primary)] mb-6 animate-fade-in">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)] animate-pulse" />
             Save up to 40% with annual billing
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-surface-900 tracking-tight mb-3">
-            One platform,<br />three ways to grow
+          <h1 className="text-5xl md:text-6xl font-bold text-[var(--text-primary)] tracking-tight mb-4 animate-fade-in">
+            Simple pricing.<br />No surprises.
           </h1>
-          <p className="text-lg text-surface-500 max-w-2xl mx-auto">
-            Start with everything you need. Scale with more power. Upgrade when you outgrow.
+          <p className="text-lg text-[var(--text-tertiary)] max-w-xl mx-auto animate-fade-in">
+            Start free. Upgrade when you need more power. All plans include a 14-day free trial.
           </p>
 
-          {/* Plan Match + Features — side by side */}
-          <div className="mt-7 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* Left: Plan Match */}
-            <div className="text-left">
-              <div className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-primary-200 rounded-full text-sm font-medium text-primary-700 shadow-sm w-fit">
-                <span className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-600">?</span>
-                <span>Match me to a plan</span>
-              </div>
+          <div className="mt-8 flex justify-center animate-fade-in">
+            <div className="inline-flex items-center bg-[var(--bg-secondary)] rounded-2xl p-1 gap-1 border border-[var(--glass-border)] shadow-sm">
+              {BILLING.map(b => (
+                <button key={b.value} onClick={() => setBilling(b.value)}
+                  className={`relative px-5 py-2.5 text-sm font-semibold rounded-xl transition-all cursor-pointer border-none ${
+                    billing === b.value
+                      ? 'glass-panel text-[var(--text-primary)] shadow-sm'
+                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                  }`}>
+                  {b.label}
+                  {b.save && (
+                    <span className={`ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded transition-all ${
+                      billing === b.value
+                        ? 'bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]'
+                        : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                    }`}>
+                      {b.save}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="mt-3 bg-white rounded-2xl border border-surface-200 shadow-xl shadow-primary-100/20 overflow-hidden">
-                  <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
-                    <p className="text-sm font-semibold text-white">Find your plan</p>
-                    <p className="text-[12px] text-primary-200 mt-0.5">Tell us about your team and we'll match you</p>
+      <section className="px-5 pb-16">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5">
+          {PLANS.map((plan, i) => {
+            const price = plan.price[billing];
+            const periodLabel = billing === 'monthly' ? '/mo' : billing === 'semiannual' ? '/mo, billed 6mo' : '/mo, billed annual';
+
+            return (
+              <div key={plan.id} id={`plan-${plan.id}`}
+                className={`relative flex flex-col rounded-2xl border p-6 transition-all duration-300 animate-fade-in ${
+                  plan.id === 'enterprise'
+                    ? 'bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-tertiary)] border-[var(--brand-primary)]/40 shadow-lg shadow-[var(--brand-primary)]/10 scale-[1.02] z-10'
+                    : 'bg-[var(--bg-secondary)]/50 border-[var(--glass-border)] hover:border-[var(--brand-primary)]/30 hover:shadow-md'
+                }`}
+                style={{ animationDelay: `${i * 0.1}s` }}>
+
+                {plan.id === 'enterprise' && (
+                  <>
+                    <div className="absolute inset-0 rounded-2xl border-2 border-[var(--brand-primary)]/30 pointer-events-none" />
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white shadow-xl shadow-[var(--brand-primary)]/40 whitespace-nowrap border border-white/15 z-10">
+                      Most popular
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center justify-between mb-4 mt-1">
+                  <div>
+                    <h3 className={`text-lg font-bold ${plan.id === 'enterprise' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{plan.tagline}</p>
                   </div>
+                  <span className="text-2xl">{plan.icon}</span>
+                </div>
 
-                  <div className="p-5 space-y-5">
+                <div className="mb-5">
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-[10px] font-medium text-[var(--text-muted)] self-start mt-1.5">$</span>
+                    <span className={`num-mono text-5xl font-black tracking-tight ${plan.id === 'enterprise' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                      {price}
+                    </span>
+                    <span className="text-sm text-[var(--text-tertiary)] ml-1">
+                      {price === 0 ? '' : periodLabel}
+                    </span>
+                  </div>
+                  {price === 0 && (
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">Free forever, no credit card</p>
+                  )}
+                  {plan.savings && price > 0 && billing === 'annual' && (
+                    <p className="text-xs text-[var(--brand-primary)] font-semibold mt-1">
+                      Save 40% vs monthly billing
+                    </p>
+                  )}
+                </div>
+
+                {plan.cta === 'Contact Sales' ? (
+                  <div className="mb-5 space-y-2">
+                    <Link to="/contact"
+                      className="block text-center text-sm font-semibold py-3 rounded-xl transition-all btn-premium">
+                      Contact Sales
+                    </Link>
+                    <Link to="/register?plan=enterprise"
+                      className="block text-center text-xs font-medium py-2.5 rounded-xl border border-dashed border-[var(--brand-primary)]/40 text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 hover:bg-[var(--brand-primary)]/15 transition-all">
+                      Choose this plan →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mb-5">
+                    <Link to={`/register${plan.price.monthly === 0 ? '' : '?plan=' + plan.id}`}
+                      className={`block text-center text-sm font-semibold py-3 rounded-xl transition-all ${
+                        plan.id === 'enterprise'
+                          ? 'btn-premium'
+                          : 'border-2 border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] bg-transparent'
+                      }`}>
+                      {plan.cta}
+                    </Link>
+                  </div>
+                )}
+
+                <div className="space-y-2 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">What's included</p>
+                  {plan.capabilities.map((cap, ci) => (
+                    <div key={ci} className="flex items-center gap-2.5 text-xs">
+                      <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
+                        cap.included === true
+                          ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
+                          : cap.included === false
+                            ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                            : 'bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]'
+                      }`}>
+                        <span className="text-[9px] font-bold">
+                          {cap.included === true ? '✓' : cap.included === false ? '−' : '±'}
+                        </span>
+                      </span>
+                      <span className={`${
+                        cap.included === true
+                          ? plan.id === 'enterprise' ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)]'
+                          : 'text-[var(--text-muted)]'
+                      }`}>
+                        {cap.label}
+                        {typeof cap.included === 'string' && (
+                          <span className="text-[var(--brand-primary)] font-semibold ml-1">{cap.included}</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="px-5 pb-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Compare plans in detail</h2>
+            <p className="text-sm text-[var(--text-tertiary)] mt-2">See exactly what you get with each plan</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="glass-panel rounded-2xl p-6">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] flex items-center justify-center text-xs font-bold">?</span>
+                Find your perfect plan
+              </h3>
+              <div className="space-y-5">
+                <div>
+                  <p className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Team size</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                      className="w-8 h-8 rounded-xl border border-[var(--glass-border)] hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-all text-sm font-bold cursor-pointer bg-[var(--bg-tertiary)]">−</button>
+                    <input type="number" min="1" max="200" value={teamSize}
+                      onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
+                      className="num-mono w-16 text-center text-sm font-bold text-[var(--text-primary)] border border-[var(--glass-border)] focus:border-[var(--brand-primary)] rounded-xl py-2 outline-none bg-[var(--bg-tertiary)]/50" />
+                    <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
+                      className="w-8 h-8 rounded-xl border border-[var(--glass-border)] hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-all text-sm font-bold cursor-pointer bg-[var(--bg-tertiary)]">+</button>
+                    <span className="text-xs text-[var(--text-muted)]">members</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Project types</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PROJECT_TYPES.map(pt => (
+                      <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all cursor-pointer ${
+                          projectTypes.includes(pt.id)
+                            ? 'bg-[var(--brand-primary)]/15 border-[var(--brand-primary)]/40 text-[var(--brand-primary)]'
+                            : 'bg-[var(--bg-tertiary)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--brand-primary)]/30'
+                        }`}>
+                        {pt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Key needs</p>
+                  <div className="flex flex-wrap gap-2">
+                    {NEEDS.map(nd => (
+                      <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all cursor-pointer ${
+                          keyNeeds.includes(nd.id)
+                            ? 'bg-[var(--brand-primary)]/15 border-[var(--brand-primary)]/40 text-[var(--brand-primary)]'
+                            : 'bg-[var(--bg-tertiary)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--brand-primary)]/30'
+                        }`}>
+                        {nd.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-[var(--glass-border)] pt-4">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">1</span>
-                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Team size</span>
-                      </div>
-                      <div className="flex items-center gap-3 pl-7">
-                        <button onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
-                          className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">−</button>
-                        <input type="number" min="1" max="200" value={teamSize}
-                          onChange={e => setTeamSize(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
-                          className="w-16 text-center text-sm font-bold text-surface-800 border-2 border-surface-200 focus:border-primary-400 rounded-xl py-2 outline-none bg-surface-50/50" />
-                        <button onClick={() => setTeamSize(Math.min(200, teamSize + 1))}
-                          className="w-8 h-8 rounded-xl border-2 border-surface-200 hover:border-primary-300 hover:bg-primary-50 flex items-center justify-center text-surface-500 hover:text-primary-600 transition-all text-sm font-bold cursor-pointer">+</button>
-                        <span className="text-xs text-surface-400 ml-1">members</span>
-                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Recommended</p>
+                      <p className="text-sm font-bold text-[var(--brand-primary)] mt-0.5">
+                        {recommended === 'team' ? 'Team' : recommended === 'enterprise' ? 'Enterprise' : 'Starter'}
+                      </p>
                     </div>
-
-                    <div className="border-t border-surface-100 pt-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">2</span>
-                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Project type</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pl-7">
-                        {PROJECT_TYPES.map(pt => (
-                          <button key={pt.id} onClick={() => setProjectTypes(toggleArray(projectTypes, pt.id))}
-                            className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
-                              projectTypes.includes(pt.id)
-                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
-                                : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
-                            }`}>
-                            {pt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border-t border-surface-100 pt-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center">3</span>
-                        <span className="text-[11px] font-semibold text-surface-600 uppercase tracking-wider">Key features</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pl-7">
-                        {NEEDS.map(nd => (
-                          <button key={nd.id} onClick={() => setKeyNeeds(toggleArray(keyNeeds, nd.id))}
-                            className={`px-3.5 py-2 text-xs font-medium rounded-xl border-2 transition-all cursor-pointer ${
-                              keyNeeds.includes(nd.id)
-                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm shadow-primary-200'
-                                : 'bg-white border-surface-200 text-surface-500 hover:border-primary-300 hover:text-primary-600'
-                            }`}>
-                            {nd.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={`border-t pt-4 ${recommended.id === 'starter' ? 'border-surface-100' : recommended.id === 'team' ? 'border-primary-200' : 'border-amber-200'}`}>
-                      <div className="flex items-center justify-between pl-7">
-                        <div>
-                          <span className="text-[10px] text-surface-400 uppercase tracking-wider font-semibold">Your match</span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-lg font-bold ${recommended.id === 'team' ? 'text-primary-600' : recommended.id === 'enterprise' ? 'text-amber-600' : 'text-surface-600'}`}>{recommended.label}</span>
-                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${recommended.id === 'team' ? 'bg-primary-50 text-primary-700' : recommended.id === 'enterprise' ? 'bg-amber-50 text-amber-700' : 'bg-surface-100 text-surface-600'}`}>{recommended.reason}</span>
-                          </div>
-                        </div>
-                        <a href={`#plan-${recommended.id}`}
-                          className={`text-xs font-semibold px-5 py-2 rounded-xl transition-all ${recommended.id === 'team' ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' : recommended.id === 'enterprise' ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' : 'bg-surface-800 text-white hover:bg-surface-900 shadow-sm'}`}>
-                          View {recommended.label}
-                        </a>
-                      </div>
-                    </div>
+                    <a href={`#plan-${recommended}`}
+                      className="text-xs font-semibold px-4 py-2 rounded-xl bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)] transition-all shadow-sm">
+                      View Plan
+                    </a>
                   </div>
                 </div>
               </div>
+            </div>
 
-            {/* Right: Everything compared */}
-            <div className="text-left">
-              <div className="mb-3">
-                <h3 className="text-sm font-bold text-surface-800">Everything compared</h3>
-                <p className="text-[11px] text-surface-400">Click a category to see what each plan includes</p>
+            <div className="glass-panel rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-[var(--glass-border)]">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] flex items-center justify-center text-xs font-bold">☰</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">Full feature comparison</h3>
+                    <p className="text-[11px] text-[var(--text-muted)]">Click a category to expand</p>
+                  </div>
+                </div>
               </div>
-              <div className="bg-surface-50 rounded-xl border border-surface-200 overflow-hidden max-h-[500px] overflow-y-auto">
+              <div className="max-h-[420px] overflow-y-auto">
                 {FEATURES.map((section, si) => (
-                  <div key={si} className="border-b border-surface-200 last:border-b-0">
+                  <div key={si} className="border-b border-[var(--glass-border)] last:border-b-0">
                     <button onClick={() => setActiveGroup(activeGroup === si ? -1 : si)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface-100 transition-colors cursor-pointer border-none">
-                      <span className="text-[11px] font-semibold text-surface-600">{section.group}</span>
-                      <svg className={`w-3 h-3 text-surface-400 transition-transform ${activeGroup === si ? 'rotate-180' : ''}`}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer border-none">
+                      <span className="text-[11px] font-semibold text-[var(--text-secondary)]">{section.group}</span>
+                      <svg className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${activeGroup === si ? 'rotate-180' : ''}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {activeGroup === si && (
                       <div className="px-4 pb-3">
-                        <div className="flex items-center gap-2 py-1.5 mb-1 border-b border-surface-200">
-                          <span className="flex-1 text-[9px] font-bold text-surface-400 uppercase tracking-widest">Feature</span>
-                          <span className="w-14 text-center text-[9px] font-bold text-surface-400 uppercase tracking-widest">Starter</span>
-                          <span className="w-14 text-center text-[9px] font-bold text-primary-600 uppercase tracking-widest bg-primary-50 py-0.5 rounded">Team</span>
-                          <span className="w-14 text-center text-[9px] font-bold text-amber-600 uppercase tracking-widest">Enterprise</span>
+                        <div className="flex items-center gap-2 py-1.5 mb-1 border-b border-[var(--glass-border)]">
+                          <span className="flex-1 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Feature</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Starter</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-[var(--brand-primary)] uppercase tracking-widest bg-[var(--brand-primary)]/10 py-0.5 rounded">Team</span>
+                          <span className="w-14 text-center text-[9px] font-bold text-[var(--brand-primary)] uppercase tracking-widest">Enterprise</span>
                         </div>
                         {section.items.map((item, ri) => (
-                          <div key={ri} className="flex items-center gap-2 py-2 border-b border-surface-100 last:border-b-0">
-                            <span className="flex-1 text-[11px] text-surface-500">{item.label}</span>
-                            <span className={`w-14 text-center text-[10px] font-medium ${item.starter === true ? 'text-green-600' : item.starter === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                          <div key={ri} className="flex items-center gap-2 py-2 border-b border-[var(--glass-border)] last:border-b-0">
+                            <span className="flex-1 text-[11px] text-[var(--text-tertiary)]">{item.label}</span>
+                            <span className={`w-14 text-center text-[10px] font-medium ${item.starter === true ? 'text-[var(--brand-primary)]' : item.starter === false ? 'text-[var(--text-muted)]' : 'text-[var(--text-tertiary)]'}`}>
                               {item.starter === true ? '✓' : item.starter === false ? '—' : item.starter}
                             </span>
-                            <span className={`w-14 text-center text-[10px] font-medium bg-primary-50 py-0.5 rounded ${item.team === true ? 'text-primary-700' : item.team === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                            <span className={`w-14 text-center text-[10px] font-medium bg-[var(--brand-primary)]/10 py-0.5 rounded ${item.team === true ? 'text-[var(--brand-primary)]' : item.team === false ? 'text-[var(--text-muted)]' : 'text-[var(--text-tertiary)]'}`}>
                               {item.team === true ? '✓' : item.team === false ? '—' : item.team}
                             </span>
-                            <span className={`w-14 text-center text-[10px] font-medium ${item.enterprise === true ? 'text-amber-600' : item.enterprise === false ? 'text-surface-300' : 'text-surface-600'}`}>
+                            <span className={`w-14 text-center text-[10px] font-medium ${item.enterprise === true ? 'text-[var(--brand-primary)]' : item.enterprise === false ? 'text-[var(--text-muted)]' : 'text-[var(--text-tertiary)]'}`}>
                               {item.enterprise === true ? '✓' : item.enterprise === false ? '—' : item.enterprise}
                             </span>
                           </div>
@@ -387,156 +479,29 @@ export default function PricingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Billing toggle */}
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center bg-surface-100 rounded-xl p-1 gap-0.5">
-              {BILLING.map(b => (
-                <button key={b.value} onClick={() => setBilling(b.value)}
-                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer border-none ${
-                    billing === b.value ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'
-                  }`}>
-                  {b.label}
-                  {b.save && billing === b.value && (
-                    <span className="ml-1 text-[10px] font-bold text-green-600">−{b.save}</span>
-                  )}
-                </button>
-              ))}
+      <section className="pb-20 px-5">
+        <div className="max-w-3xl mx-auto relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/20 via-[var(--brand-primary)]/10 to-[var(--brand-primary)]/20 rounded-3xl blur-3xl" />
+          <div className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[#0f172a] rounded-3xl p-12 text-center shadow-2xl overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />
+            <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to transform your workflow?</h2>
+            <p className="text-white/80 mb-8 max-w-md mx-auto relative text-sm">
+              No credit card required. Start your free trial today and see why teams love GRESIO.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
+              <Link to="/register"
+                className="px-10 py-3.5 bg-white text-[var(--brand-secondary)] font-bold rounded-xl hover:bg-white/90 hover:scale-105 transition-all shadow-lg text-sm">
+                Start Free Trial
+              </Link>
+              <Link to="/contact"
+                className="px-10 py-3.5 border-2 border-white/30 text-white font-semibold rounded-xl hover:bg-white/10 transition-all text-sm">
+                Talk to Sales
+              </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PLAN CARDS — JOURNEY LAYOUT */}
-      <section className="px-5 pb-10">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-0 md:gap-4 items-stretch">
-          {PLANS.map((plan, i) => {
-            const price = plan.price[billing];
-            const monthlyEquiv = billing === 'semiannual' ? price : billing === 'annual' ? price : price;
-            const periodLabel = billing === 'monthly' ? '/month' : billing === 'semiannual' ? '/mo billed semi' : '/mo billed yearly';
-
-            return (
-              <div key={plan.id} className={`relative flex flex-col ${
-                i === 0 ? '' : i === 1 ? '-mt-4 md:mt-0' : 'mt-4 md:mt-0'
-              }`}>
-                {/* Connector line */}
-                {i > 0 && (
-                  <div className="hidden md:block absolute -left-2 top-1/2 -translate-y-1/2 z-10">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8h10M9 4l4 4-4 4" stroke="#2347e8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                )}
-
-                <div id={`plan-${plan.id}`} className={`relative rounded-2xl border-2 p-6 flex flex-col h-full transition-shadow transition-colors duration-200 ${
-                  plan.popular
-                    ? 'bg-gradient-to-br from-surface-900 to-surface-800 border-amber-500 shadow-xl shadow-amber-900/20 z-20'
-                    : 'bg-white border-surface-200 hover:border-surface-300 shadow-sm hover:shadow-md'
-                }`}>
-                  {/* Badge */}
-                  <div className={`absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    plan.popular
-                      ? 'bg-amber-400 text-amber-900'
-                      : 'bg-surface-100 text-surface-500'
-                  }`}>
-                    {plan.badge}
-                  </div>
-
-                  {/* Header */}
-                  <div className="flex items-start gap-3 mb-4 mt-1">
-                    <div className={plan.popular ? 'text-white' : 'text-primary-600'}>
-                      {plan.icon}
-                    </div>
-                    <div>
-                      <h3 className={`text-lg font-bold ${plan.popular ? 'text-white' : 'text-surface-900'}`}>{plan.name}</h3>
-                      <p className={`text-xs ${plan.popular ? 'text-amber-300/70' : 'text-surface-400'}`}>{plan.tagline}</p>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-4">
-                    <span className={`text-4xl font-black tracking-tight ${plan.popular ? 'text-white' : 'text-surface-900'}`}>
-                      ${price}
-                    </span>
-                    <span className={`text-sm ml-1 ${plan.popular ? 'text-amber-300/70' : 'text-surface-400'}`}>
-                      {price === 0 ? 'forever' : periodLabel}
-                    </span>
-                    {billing !== 'monthly' && price > 0 && (
-                      <p className={`text-[11px] mt-0.5 ${plan.popular ? 'text-amber-300/70' : 'text-surface-400'}`}>
-                        ${monthlyEquiv}/mo — ${price * (billing === 'semiannual' ? 6 : 12)} {billing === 'semiannual' ? 'every 6 months' : 'yearly'}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* CTA */}
-                  {plan.cta === 'Contact Sales' ? (
-                    <>
-                      <Link to="/contact"
-                        className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-2 ${
-                          plan.popular
-                            ? 'bg-white text-primary-700 hover:bg-primary-50'
-                            : 'bg-surface-900 text-white hover:bg-surface-800'
-                        }`}>
-                        Contact Sales
-                      </Link>
-                      <Link to="/register?plan=enterprise"
-                        className="block text-center text-xs font-medium py-2 rounded-lg border border-dashed border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all mb-5">
-                        Choose this plan →
-                      </Link>
-                    </>
-                  ) : (
-                    <Link to={`/register${plan.price.monthly === 0 ? '' : '?plan=' + plan.id}`}
-                      className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all mb-5 ${
-                        plan.popular
-                          ? 'bg-white text-primary-700 hover:bg-primary-50'
-                          : 'bg-surface-900 text-white hover:bg-surface-800'
-                      }`}>
-                      {plan.cta}
-                    </Link>
-                  )}
-
-                  {/* Capabilities grid */}
-                  <div className="space-y-1.5 flex-1">
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider mb-2 ${plan.popular ? 'text-amber-300/70' : 'text-surface-400'}`}>
-                      What's included
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                      {plan.capabilities.map((cap, ci) => (
-                        <div key={ci} className="flex items-center gap-2 text-xs">
-                          <span className="shrink-0 text-[10px]">{cap.icon}</span>
-                          <span className={`truncate ${plan.popular ? 'text-white/80' : 'text-surface-500'}`}>{cap.label}</span>
-                          <span className="ml-auto shrink-0">
-                            <Capability cap={cap} planId={plan.id} />
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-
-
-      {/* CTA */}
-      <section className="py-20 px-5">
-        <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-12 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-36 h-36 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-          <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to build something great?</h2>
-          <p className="text-primary-200 mb-8 max-w-lg mx-auto relative">No credit card. No setup cost. Just you and a platform that works the way you do.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
-            <Link to="/register"
-              className="px-10 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 hover:scale-105 transition-all shadow-md text-base">
-              Start Free — No CC Required
-            </Link>
-            <Link to="/contact"
-              className="px-10 py-4 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-all text-base">
-              Talk to Sales
-            </Link>
           </div>
         </div>
       </section>

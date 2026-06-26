@@ -76,10 +76,10 @@ export default function PublicNavbar() {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-surface-200' : 'bg-white/0'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'glass-panel' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-5 h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center group">
-          <span className="text-3xl font-bold text-surface-900 tracking-tight">GRESIO</span>
+          <span className="text-3xl font-bold tracking-tight" style={{ background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08))' }}>GRESIO</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
           {[
@@ -89,11 +89,11 @@ export default function PublicNavbar() {
             { to: '/contact', label: 'Contact' },
           ].map(({ to, label }) => (
             <Link key={to} to={to} className="relative py-1 group">
-              <span className={`transition-colors ${location.pathname === to ? 'text-surface-900 font-semibold' : 'text-surface-500 group-hover:text-surface-900'}`}>
+              <span className={`transition-colors ${location.pathname === to ? 'text-page-text font-semibold' : 'text-page-muted group-hover:text-page-text'}`}>
                 {label}
               </span>
               {location.pathname === to && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary-600" />
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-brand-600" />
               )}
             </Link>
           ))}
@@ -101,27 +101,27 @@ export default function PublicNavbar() {
         <div className="flex items-center gap-2" ref={containerRef}>
           <div className="relative">
             {searchOpen ? (
-              <div className="flex items-center gap-2.5 bg-surface-100/80 backdrop-blur-sm rounded-xl px-3.5 py-2 border border-surface-200 shadow-sm transition-all min-w-[240px]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-surface-400 shrink-0">
+              <div className="flex items-center gap-2.5 bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl px-3.5 py-2 border border-[var(--glass-border)] shadow-[var(--glass-shadow)] transition-all min-w-[240px]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-page-muted shrink-0">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
                 </svg>
                 <input ref={inputRef} type="text" placeholder="Search..." value={query}
                   onChange={e => setQuery(e.target.value)}
-                  className="flex-1 border-none outline-none text-sm text-surface-900 placeholder:text-surface-400 bg-transparent" />
-                <span className="text-[10px] font-medium text-surface-300 bg-surface-200/60 px-1.5 py-0.5 rounded">ESC</span>
+                  className="flex-1 border-none outline-none text-sm text-page-text placeholder:text-page-muted bg-transparent" />
+                <span className="text-[10px] font-medium text-page-muted bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded">ESC</span>
                 {query.trim() && (results.length > 0 || backendResults.length > 0) && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 overflow-hidden max-h-96 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 glass-panel rounded-2xl overflow-hidden max-h-96 overflow-y-auto">
                     {results.length > 0 && (
                       <>
-                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400">Pages & Content</div>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-page-muted">Pages & Content</div>
                         {results.map((item, i) => (
                           <button key={`page-${i}`} onClick={() => handleSelect(item.url)}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 transition-colors text-left cursor-pointer bg-transparent border-none">
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--bg-tertiary)] transition-colors text-left cursor-pointer bg-transparent border-none">
                             <span className="text-base shrink-0">{item.icon}</span>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-surface-900 truncate">{item.title}</p>
-                              <p className="text-[11px] text-surface-400 leading-snug line-clamp-1">{item.desc}</p>
-                              <p className="text-[9px] text-surface-300 mt-0.5">{item.page}</p>
+                              <p className="text-sm font-medium text-page-text truncate">{item.title}</p>
+                              <p className="text-[11px] text-page-muted leading-snug line-clamp-1">{item.desc}</p>
+                              <p className="text-[9px] text-[var(--text-tertiary)] mt-0.5">{item.page}</p>
                             </div>
                           </button>
                         ))}
@@ -129,16 +129,16 @@ export default function PublicNavbar() {
                     )}
                     {backendResults.length > 0 && (
                       <>
-                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-400 border-t border-surface-100">Knowledge Base</div>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-page-muted border-t border-page-border">Knowledge Base</div>
                         {backendResults.map((item, i) => {
                           const meta = SEARCH_ICONS[item.type] || { icon: '📄', color: '#6B7280' };
                           return (
                             <button key={`be-${i}`} onClick={() => handleSelect(item.to)}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-50 transition-colors text-left cursor-pointer bg-transparent border-none">
+                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--bg-tertiary)] transition-colors text-left cursor-pointer bg-transparent border-none">
                               <span className="text-base shrink-0">{meta.icon}</span>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-surface-900 truncate">{item.label}</p>
-                                <p className="text-[11px] text-surface-400 leading-snug">{item.type}</p>
+                                <p className="text-sm font-medium text-page-text truncate">{item.label}</p>
+                                <p className="text-[11px] text-page-muted leading-snug">{item.type}</p>
                               </div>
                             </button>
                           );
@@ -148,16 +148,16 @@ export default function PublicNavbar() {
                   </div>
                 )}
                 {query.trim() && results.length === 0 && backendResults.length === 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/5 border border-surface-200 p-6 text-center">
+                  <div className="absolute top-full left-0 right-0 mt-2 glass-panel rounded-2xl p-6 text-center">
                     <span className="text-2xl block mb-2">🔍</span>
-                    <p className="text-sm font-medium text-surface-700 mb-0.5">No results for "{query}"</p>
-                    <p className="text-xs text-surface-400">Try a different search term</p>
+                    <p className="text-sm font-medium text-page-text mb-0.5">No results for "{query}"</p>
+                    <p className="text-xs text-page-muted">Try a different search term</p>
                   </div>
                 )}
               </div>
             ) : (
               <button onClick={() => setSearchOpen(true)}
-                className="flex items-center justify-center w-9 h-9 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 transition-all cursor-pointer bg-transparent border-none"
+                className="flex items-center justify-center w-9 h-9 rounded-xl text-page-muted hover:text-page-text hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer bg-transparent border-none"
                 aria-label="Search">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
@@ -165,7 +165,7 @@ export default function PublicNavbar() {
               </button>
             )}
           </div>
-          <Link to="/login" className="flex items-center gap-1.5 text-sm font-medium text-surface-600 hover:text-surface-900 px-4 py-2 rounded-lg hover:bg-surface-100 transition-colors">
+          <Link to="/login" className="btn-premium inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
             </svg>

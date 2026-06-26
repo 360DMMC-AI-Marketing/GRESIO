@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
@@ -12,7 +13,6 @@ const CATEGORIES = [
       { title: 'Project Health Dashboard', desc: 'Completion %, overdue tasks, risk level, and days remaining — all visible at a glance.' },
       { title: 'Client & Tech Stack Mgmt', desc: 'Client name, tech stack tags, repos, staging/production URLs — everything in one place.' },
       { title: 'Archive & Restore', desc: 'Archive completed projects and restore them when needed. Full project history preserved.' },
-      { title: 'Project Relay — Chain Projects', desc: 'Link multiple projects into ordered pipelines. When one project is delivered, the next team is auto-notified. Tracks completion (3/5 done) with visual pipeline cards, green completion badges, and branching support (A → [B, C]).' },
     ],
   },
   {
@@ -106,52 +106,54 @@ const CATEGORIES = [
   {
     icon: '📚', title: 'Knowledge Base', desc: 'A central hub that brings together your company wiki, WorkDNA archives, and project templates — searchable, editable, and always up to date.',
     features: [
-      { title: '📝 Markdown Wiki Articles', desc: 'Create and edit documentation with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
-      { title: '📂 Department Organization', desc: 'Organize articles by department with color-coded filter pills. Custom departments supported.' },
-      { title: '⭐ Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
-      { title: '📎 File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
-      { title: '📥 Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
-      { title: '🧬 Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team.' },
-      { title: '🧬 Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.' },
-      { title: '🧬 Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn.' },
-      { title: '🧬 Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost.' },
-      { title: '📋 Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
-      { title: '🔔 Real-Time Notifications', desc: 'Get notified when a new wiki article or template is created in your company. Never miss important knowledge.' },
+      { title: 'Markdown Wiki Articles', desc: 'Create and edit documentation with live markdown preview. Full GFM support including tables, code blocks, and task lists.' },
+      { title: 'Department Organization', desc: 'Organize articles by department with color-coded filter pills. Custom departments supported.' },
+      { title: 'Star Rating System', desc: 'Rate articles 1–5 stars. See average ratings at a glance and sort by rating to find the best content.' },
+      { title: 'File Attachments', desc: 'Attach files and documents to any wiki article. Upload via drag-drop or the attach button.' },
+      { title: 'Import from .md / .txt', desc: 'Import existing markdown or text files directly as new wiki pages — perfect for migrating documentation.' },
+      { title: 'Monthly Project Archive', desc: 'Every project auto-archived each month with full technical snapshot: features, tech stack, risks, repos, documents, stats, and team.' },
+      { title: 'Decision Journal', desc: 'Every decision, alternative considered, and rationale — logged and searchable. Never ask "why did we do this?" again.' },
+      { title: 'Déjà Vu Search', desc: 'Search archived projects and past decisions by keyword. Before starting something new, find similar past work and learn.' },
+      { title: 'Pattern Detection', desc: 'Auto-detects overdue tasks, bug density, sprint cadence issues across all projects — rule-based, instant, no AI cost.' },
+      { title: 'Template Marketplace', desc: 'Browse, rate, and download project templates for Software, Design, Business, Content, and Research — built by your team, for your team.' },
+      { title: 'Real-Time Notifications', desc: 'Get notified when a new wiki article or template is created in your company. Never miss important knowledge.' },
     ],
   },
 ];
 
 export default function FeaturesPage() {
+  const [openId, setOpenId] = useState(null);
+
+  const toggle = (id) => setOpenId(openId === id ? null : id);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
 
-      {/* HERO */}
-      <section className="pt-36 pb-20 px-5 bg-gradient-to-br from-white via-blue-50/30 to-white">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-50 border border-primary-200 rounded-full text-sm font-medium text-primary-700 mb-6">
+      <section className="pt-36 pb-20 px-5 gradient-wave" style={{ background: 'linear-gradient(135deg, var(--bg-primary), var(--bg-secondary), var(--bg-primary))' }}>
+        <div className="max-w-5xl mx-auto text-center animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', color: 'var(--brand-primary)' }}>
             🚀 180+ features to power your workflow
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-surface-900 leading-tight mb-5 tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--text-primary)] leading-tight mb-5 tracking-tight">
             Everything you need to ship
           </h1>
-          <p className="text-lg md:text-xl text-surface-500 max-w-3xl mx-auto mb-8 leading-relaxed">
+          <p className="text-lg md:text-xl text-[var(--text-tertiary)] max-w-3xl mx-auto mb-8 leading-relaxed">
             One platform covering the full project lifecycle — project management, sprints, 
-             tasks, testing, capacity heatmap, portfolio matrix, WorkDNA, analytics, integrations, and automation. No more juggling between tools.
+            tasks, testing, capacity heatmap, portfolio matrix, WorkDNA, analytics, integrations, and automation. No more juggling between tools.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link to="/pricing" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg text-base">
+            <Link to="/pricing" className="btn-premium px-8 py-3.5 text-base">
               See Plans & Pricing
             </Link>
-            <Link to="/register" className="px-8 py-3.5 border-2 border-surface-300 text-surface-700 font-semibold rounded-xl hover:bg-surface-50 transition-colors text-base">
+            <Link to="/register" className="px-8 py-3.5 border-2 border-[var(--border-primary)] text-[var(--text-secondary)] font-semibold rounded-[var(--radius-lg)] hover:bg-[var(--bg-secondary)] transition-colors text-base">
               Start Free
             </Link>
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <section className="py-20 px-5 bg-surface-50">
+      <section className="py-20 px-5 bg-[var(--bg-secondary)]">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             ['5', 'Project Types'],
@@ -159,53 +161,144 @@ export default function FeaturesPage() {
             ['27+', 'Granular Permissions'],
             ['180+', 'Total Features'],
           ].map(([val, label], i) => (
-            <div key={i} className="bg-white rounded-xl border border-surface-200 p-6 text-center hover:shadow-md transition-all">
+            <div key={i} className="card-premium glow-card p-6 text-center">
               <p className="text-3xl font-bold text-primary-600 mb-1">{val}</p>
-              <p className="text-sm text-surface-500">{label}</p>
+              <p className="text-sm text-[var(--text-tertiary)]">{label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FEATURE CATEGORIES */}
-      <section className="py-20 px-5">
-        <div className="max-w-6xl mx-auto space-y-20">
-          {CATEGORIES.map((cat, ci) => (
-            <div key={ci}>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">{cat.icon}</span>
-                <h2 className="text-2xl md:text-3xl font-bold text-surface-900">{cat.title}</h2>
-              </div>
-              <p className="text-sm text-surface-500 mb-6 ml-0">{cat.desc}</p>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cat.features.map((f, fi) => (
-                  <div key={fi} className="bg-white rounded-xl border border-surface-200 p-5 hover:shadow-md hover:-translate-y-0.5 hover:border-primary-200 transition-all group">
-                    <h3 className="font-semibold text-surface-900 text-sm mb-1.5 group-hover:text-primary-700 transition-colors">{f.title}</h3>
-                    <p className="text-xs text-surface-500 leading-relaxed">{f.desc}</p>
+      <section className="py-24 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-secondary)]/30 to-[var(--bg-primary)] pointer-events-none" />
+        <div className="max-w-5xl mx-auto relative">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-3 tracking-tight">Explore all features</h2>
+            <p className="text-[var(--text-tertiary)] max-w-2xl mx-auto">Click any category to discover its features. Each module is designed to work independently or together as a complete workflow.</p>
+          </div>
+
+          <div className="space-y-4">
+            {CATEGORIES.map((cat, ci) => {
+              const isOpen = openId === ci;
+              return (
+                <div key={ci}
+                  className="animate-fade-in rounded-2xl border border-[var(--glass-border)] transition-all duration-300"
+                  style={{
+                    animationDelay: `${ci * 0.04}s`,
+                    background: isOpen
+                      ? 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))'
+                      : 'var(--glass-bg)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: isOpen ? '0 8px 32px rgba(0,0,0,0.08)' : 'none',
+                  }}>
+                  <button
+                    onClick={() => toggle(ci)}
+                    className="w-full flex items-center gap-4 px-6 py-5 bg-transparent border-none cursor-pointer text-left group">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 transition-all duration-300 ${isOpen ? 'bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] shadow-lg shadow-[var(--brand-primary)]/20' : 'bg-[var(--bg-tertiary)]'}`}>
+                      {isOpen ? (
+                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <span>{cat.icon}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <h3 className={`text-base font-bold transition-colors duration-300 ${isOpen ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}>
+                          {cat.title}
+                        </h3>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all duration-300 ${isOpen ? 'bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]' : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'}`}>
+                          {cat.features.length} {cat.features.length === 1 ? 'feature' : 'features'}
+                        </span>
+                      </div>
+                      <p className={`text-xs mt-0.5 transition-colors duration-300 ${isOpen ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-muted)]'}`}>
+                        {cat.desc}
+                      </p>
+                    </div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isOpen ? 'bg-[var(--brand-primary)]/10 rotate-180' : 'bg-[var(--bg-tertiary)] group-hover:bg-[var(--bg-primary)]'}`}>
+                      <svg className={`w-4 h-4 transition-colors duration-300 ${isOpen ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="px-6 pb-6 pt-2 border-t border-[var(--glass-border)]">
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                        {cat.features.map((f, fi) => (
+                          <div key={fi}
+                            className="group/card rounded-xl p-4 transition-all duration-300 hover:shadow-md border border-transparent hover:border-[var(--brand-primary)]/10"
+                            style={{
+                              background: 'var(--bg-primary)',
+                              animation: isOpen ? `fadeIn 0.4s ease-out ${fi * 0.03}s both` : 'none',
+                            }}>
+                            <div className="flex items-start gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: `var(--brand-primary)` }} />
+                              <div>
+                                <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-1 group-hover/card:text-[var(--brand-primary)] transition-colors">{f.title}</h4>
+                                <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">{f.desc}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* INTEGRATIONS STRIP */}
-      <section className="py-16 px-5 bg-surface-50">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-xl font-bold text-surface-900 mb-3">Integrates with the tools you already use</h2>
-          <p className="text-sm text-surface-500 mb-8">Connect your existing workflow — no need to switch platforms.</p>
-          <div className="flex flex-wrap items-center justify-center gap-8">
+      <section className="py-20 px-5 bg-[var(--bg-secondary)]">
+        <div className="max-w-5xl mx-auto text-center animate-fade-in">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3 tracking-tight">Integrates with the tools you already use</h2>
+          <p className="text-sm text-[var(--text-tertiary)] mb-12 max-w-2xl mx-auto">Connect your existing workflow — no need to switch platforms.</p>
+          <div className="flex flex-wrap items-center justify-center gap-5">
             {[
-              { name: 'GitHub', icon: '⬛', bg: 'bg-gray-900', text: 'text-white' },
-              { name: 'Microsoft 365', icon: '🟦', bg: 'bg-blue-600', text: 'text-white' },
-              { name: 'Teams', icon: '💬', bg: 'bg-indigo-600', text: 'text-white' },
-              { name: 'Outlook', icon: '✉️', bg: 'bg-blue-500', text: 'text-white' },
-              { name: 'ClickUp', icon: '📋', bg: 'bg-purple-600', text: 'text-white' },
-              { name: 'Figma', icon: '🎨', bg: 'bg-rose-600', text: 'text-white' },
+              { 
+                name: 'GitHub', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>,
+              },
+              { 
+                name: 'Microsoft 365', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg>,
+              },
+              { 
+                name: 'Teams', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none"><rect x="2" y="3" width="20" height="18" rx="4" fill="#6264A7"/><path d="M7.5 7.5h9v2h-9zm1.5 3.5h6v2H9zm1 3.5h4v2h-4z" fill="#fff"/></svg>,
+              },
+              { 
+                name: 'Outlook', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 4.99L4 6h16zm0 12H4V8l8 5 8-5v10z"/></svg>,
+              },
+              { 
+                name: 'ClickUp', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.3 14.3l-1.4 1.4L12 13.8l-3.9 3.9-1.4-1.4L12 11l5.3 5.3z"/></svg>,
+              },
+              { 
+                name: 'Figma', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.354-3.019-3.019-3.019h-3.117V7.51zm0 8.462h-4.588c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.98z"/><path d="M12.735 24H8.147c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588V24z"/><path d="M12.735 0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.49-4.49 4.49h-4.588V0z"/></svg>,
+              },
+              { 
+                name: 'Lovable', 
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>,
+              },
             ].map((int, i) => (
-              <div key={i} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${int.bg} ${int.text} text-sm font-semibold shadow-sm`}>
-                <span>{int.icon}</span>
+              <div key={i} 
+                className="flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg border border-[var(--glass-border)]"
+                style={{ 
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  color: 'var(--text-secondary)',
+                }}>
+                <span className="w-5 h-5 flex items-center justify-center" style={{ color: 'var(--brand-primary)' }}>
+                  {int.svg}
+                </span>
                 <span>{int.name}</span>
               </div>
             ))}
@@ -213,18 +306,21 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* BOTTOM CTA */}
       <section className="py-20 px-5">
-        <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-12 shadow-lg">
-          <h2 className="text-3xl font-bold text-white mb-3">Ready to ship faster?</h2>
-          <p className="text-primary-200 mb-8 max-w-lg mx-auto">Join teams that use GRESIO to manage projects, track tasks, and deliver quality software — all in one platform.</p>
-          <div className="flex items-center justify-center gap-4">
-            <Link to="/pricing" className="px-8 py-3.5 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 hover:scale-105 transition-all shadow-md hover:shadow-lg text-base">
-              Choose Your Plan
-            </Link>
-            <Link to="/register" className="px-8 py-3.5 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-base">
-              Start Free Trial
-            </Link>
+        <div className="max-w-3xl mx-auto text-center animate-fade-in">
+          <div className="rounded-3xl p-12 shadow-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--brand-secondary), #0f172a)' }}>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />
+            <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to ship faster?</h2>
+            <p className="text-white/80 mb-8 max-w-lg mx-auto relative">Join teams that use GRESIO to manage projects, track tasks, and deliver quality software — all in one platform.</p>
+            <div className="flex items-center justify-center gap-4 relative">
+              <Link to="/pricing" className="px-8 py-3.5 bg-white text-[var(--text-primary)] font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg text-base">
+                Choose Your Plan
+              </Link>
+              <Link to="/register" className="px-8 py-3.5 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-base">
+                Start Free Trial
+              </Link>
+            </div>
           </div>
         </div>
       </section>

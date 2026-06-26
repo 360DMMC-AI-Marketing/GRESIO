@@ -49,40 +49,40 @@ export default function Login() {
 
   if (tempToken) {
     return (
-      <div className="min-h-screen bg-white">
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-surface-200' : 'bg-transparent'}`}>
+      <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md shadow-sm border-b border-[var(--glass-border)]' : 'bg-transparent'}`}>
           <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">GRESIO</span></Link>
+            <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span></Link>
           </div>
         </nav>
         <div className="pt-24 pb-16 px-5">
           <div className="w-full max-w-sm mx-auto">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center mb-8 animate-fade-in">
+              <div className="w-12 h-12 bg-[var(--info-bg)] rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-xl">🔐</span>
               </div>
-              <h1 className="text-2xl font-bold text-surface-900">Two-factor authentication</h1>
-              <p className="text-surface-500 text-sm mt-1">Enter the code from your authenticator app</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Two-factor authentication</h1>
+              <p className="text-[var(--text-tertiary)] text-sm mt-1">Enter the code from your authenticator app</p>
             </div>
-            <div className="bg-white rounded-2xl border border-surface-200 p-6 shadow-sm">
+            <div className="glass-panel glow-card p-6 rounded-[var(--radius-xl)] bg-white dark:bg-[var(--bg-secondary)]">
               {error && (
-                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+                <div className="mb-4 px-4 py-3 bg-[var(--danger-bg)] border border-[var(--danger-border)] rounded-lg text-sm text-[var(--danger-text)]">{error}</div>
               )}
-              <form onSubmit={handleCode} className="space-y-4">
+              <form onSubmit={handleCode} className="space-y-4 animate-fade-in animate-scale-in">
                 <div>
-                  <label className="block text-xs font-medium text-surface-700 mb-1.5">Authentication code</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Authentication code</label>
                   <input type="text" value={code} onChange={e => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} required
                     placeholder="000 000" maxLength={6}
-                    className="w-full px-3 py-2.5 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder-surface-400 outline-none text-center text-lg tracking-widest focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" />
+                    className="w-full px-3 py-2.5 border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none text-center text-lg tracking-widest bg-white dark:bg-[var(--bg-tertiary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-colors" />
                 </div>
                 <button type="submit" disabled={loading || code.length < 6}
-                  className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors mt-2">
-                  {loading ? 'Verifying…' : 'Verify'}
+                  className="btn-premium w-full py-2.5 mt-2 disabled:opacity-50">
+                  {loading ? 'Verifying\u2026' : 'Verify'}
                 </button>
               </form>
               <p className="text-center mt-4">
                 <button type="button" onClick={() => { setTempToken(''); setCode(''); setError(''); }}
-                  className="text-xs text-surface-400 hover:text-primary-600 transition-colors bg-transparent border-none cursor-pointer">
+                  className="text-xs text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors bg-transparent border-none cursor-pointer">
                   Back to sign in
                 </button>
               </p>
@@ -94,48 +94,48 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-surface-200' : 'bg-transparent'}`}>
+    <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md shadow-sm border-b border-[var(--glass-border)]' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-surface-900 tracking-tight">GRESIO</span></Link>
+          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span></Link>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-medium text-primary-600 px-3 py-1.5 transition-colors">Sign In</Link>
-            <Link to="/register" className="text-sm font-medium bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm">Get Started</Link>
+            <Link to="/login" className="text-sm font-medium text-[var(--brand-primary)] px-3 py-1.5 transition-colors">Sign In</Link>
+            <Link to="/register" className="text-sm font-medium btn-premium px-4 py-2">Get Started</Link>
           </div>
         </div>
       </nav>
       <div className="pt-24 pb-16 px-5">
         <div className="w-full max-w-sm mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-surface-900">Welcome back</h1>
-            <p className="text-surface-500 text-sm mt-1">Sign in to your workspace</p>
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Welcome back</h1>
+            <p className="text-[var(--text-tertiary)] text-sm mt-1">Sign in to your workspace</p>
           </div>
-          <div className="bg-white rounded-2xl border border-surface-200 p-6 shadow-sm">
+          <div className="glass-panel glow-card p-6 rounded-[var(--radius-xl)] bg-white dark:bg-[var(--bg-secondary)]">
             {error && (
-              <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+              <div className="mb-4 px-4 py-3 bg-[var(--danger-bg)] border border-[var(--danger-border)] rounded-lg text-sm text-[var(--danger-text)]">{error}</div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in animate-scale-in">
               <div>
-                <label className="block text-xs font-medium text-surface-700 mb-1.5">Email</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Email</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                   placeholder="you@company.com"
-                  className="w-full px-3 py-2.5 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder-surface-400 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" />
+                  className="w-full px-3 py-2.5 border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none bg-white dark:bg-[var(--bg-tertiary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-colors" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-surface-700 mb-1.5">Password</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Password</label>
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2.5 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder-surface-400 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" />
+                  placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                  className="w-full px-3 py-2.5 border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none bg-white dark:bg-[var(--bg-tertiary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-colors" />
               </div>
               <button type="submit" disabled={loading}
-                className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors mt-2">
-                {loading ? 'Signing in…' : 'Sign in'}
+                className="btn-premium w-full py-2.5 mt-2 disabled:opacity-50">
+                {loading ? 'Signing in\u2026' : 'Sign in'}
               </button>
             </form>
             <p className="text-center mt-4 space-x-2">
-              <Link to="/forgot-password" className="text-xs text-surface-400 hover:text-primary-600 transition-colors">Forgot password?</Link>
-              <span className="text-xs text-surface-300">·</span>
-              <Link to="/register" className="text-xs text-primary-600 hover:text-primary-700 font-medium">Create account</Link>
+              <Link to="/forgot-password" className="text-xs text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors">Forgot password?</Link>
+              <span className="text-xs text-[var(--text-muted)]">\u00B7</span>
+              <Link to="/register" className="text-xs text-[var(--brand-primary)] hover:text-[var(--brand-hover)] font-medium">Create account</Link>
             </p>
           </div>
         </div>

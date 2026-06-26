@@ -75,56 +75,59 @@ const FAQS = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
       <section className="pt-36 pb-20 px-5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">How It Works</h1>
-          <p className="text-lg text-surface-500 max-w-xl mx-auto mb-12">Projects move through 8 phases automatically. You focus on the work, we handle the flow.</p>
+        <div className="max-w-4xl mx-auto text-center animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-4">How It Works</h1>
+            <p className="text-lg text-[var(--text-tertiary)] max-w-xl mx-auto mb-12">Projects move through 8 phases automatically. You focus on the work, we handle the flow.</p>
 
-          <div className="relative mb-16">
-            <div className="hidden md:block absolute top-5 left-0 right-0 h-0.5 bg-surface-200" />
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-0">
-              {PHASES.map((phase, i) => (
-                <div key={i} className="flex flex-col items-center relative z-10">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-surface-800 text-white border-surface-800' : i === 6 ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-surface-100 text-surface-400 border-surface-200'}`}>
-                    {i + 1}
+            <div className="relative mb-16">
+              <div className="hidden md:block absolute top-5 left-0 right-0 h-0.5 bg-[var(--border-primary)]" />
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-0">
+                {PHASES.map((phase, i) => (
+                  <div key={i} className="flex flex-col items-center relative z-10">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-indigo-600 text-white border-indigo-600' : i === 6 ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-primary)]'}`}>
+                      {i + 1}
+                    </div>
+                    <span className={`text-[10px] font-medium text-center leading-tight ${i < 4 ? 'text-primary-700' : i === 4 ? 'text-amber-600' : i === 5 ? 'text-indigo-600' : i === 6 ? 'text-emerald-600' : 'text-[var(--text-muted)]'}`}>
+                      {phase}
+                    </span>
+                    <span className={`text-[9px] mt-0.5 ${i < 4 ? 'text-primary-400' : i === 4 ? 'text-amber-400' : i === 5 ? 'text-indigo-400' : i === 6 ? 'text-emerald-400' : 'text-[var(--text-muted)]'}`}>
+                      {i < 4 ? 'Auto' : i < 6 ? 'Manual' : i === 6 ? 'Done' : ''}
+                    </span>
                   </div>
-                  <span className={`text-[10px] font-medium text-center leading-tight ${i < 4 ? 'text-primary-700' : i === 4 ? 'text-amber-600' : i === 5 ? 'text-surface-700' : i === 6 ? 'text-emerald-600' : 'text-surface-400'}`}>
-                    {phase}
-                  </span>
-                  <span className={`text-[9px] mt-0.5 ${i < 4 ? 'text-primary-400' : i === 4 ? 'text-amber-400' : i === 5 ? 'text-surface-400' : i === 6 ? 'text-emerald-400' : 'text-surface-300'}`}>
-                    {i < 4 ? 'Auto' : i < 6 ? 'Manual' : i === 6 ? 'Done' : ''}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto mb-16">
+        <div className="max-w-5xl mx-auto mb-16 animate-fade-in">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {PHASE_DETAILS.map((d) => (
-              <div key={d.num} className="bg-white rounded-xl border border-surface-200 p-4 hover:shadow-md hover:border-surface-300 transition-all">
+              <div key={d.num} className="card-premium glow-card p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${d.num <= 4 ? 'bg-primary-600 text-white' : d.num === 5 ? 'bg-amber-500 text-white' : d.num === 6 ? 'bg-surface-800 text-white' : d.num === 7 ? 'bg-emerald-500 text-white' : 'bg-surface-100 text-surface-400'}`}>{d.num}</span>
-                  <span className="text-sm font-semibold text-surface-900">{d.name}</span>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${d.num <= 4 ? 'bg-primary-600 text-white' : d.num === 5 ? 'bg-amber-500 text-white' : d.num === 6 ? 'bg-indigo-600 text-white' : d.num === 7 ? 'bg-emerald-500 text-white' : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'}`}>{d.num}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{d.name}</span>
                   <span className={`text-[9px] ml-auto px-1.5 py-0.5 rounded font-medium ${d.auto ? 'bg-primary-50 text-primary-600' : d.num === 7 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                     {d.auto ? 'Auto' : d.num === 7 ? 'Done' : 'Manual'}
                   </span>
                 </div>
-                <p className="text-xs text-surface-500 leading-relaxed">{d.desc}</p>
+                <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">{d.desc}</p>
               </div>
             ))}
           </div>
-          <p className="text-xs text-surface-400 text-center mt-6">🔒 Phases 6 (Launch), 7 (Delivered), and 8 (Report) require manual approval by Admin, PM, or Team Lead.</p>
+          <p className="text-xs text-[var(--text-muted)] text-center mt-6">🔒 Phases 6 (Launch), 7 (Delivered), and 8 (Report) require manual approval by Admin, PM, or Team Lead.</p>
         </div>
 
-        {/* PROJECT TYPES */}
-        <div className="max-w-5xl mx-auto mb-16 pt-8">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-surface-900 mb-3">5 project types, each with adapted phases</h2>
-            <p className="text-sm text-surface-500 max-w-2xl mx-auto">Depending on what your team is building, GRESIO adjusts the lifecycle phases automatically. The first two phases (Discovery, Planning) and the last four (Testing, Review, Launch, Delivered) are shared — the middle phases adapt to your project type.</p>
+        <div className="max-w-5xl mx-auto mb-16 pt-8 animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-10">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">5 project types, each with adapted phases</h2>
+              <p className="text-sm text-[var(--text-tertiary)] max-w-2xl mx-auto">Depending on what your team is building, GRESIO adjusts the lifecycle phases automatically. The first two phases (Discovery, Planning) and the last four (Testing, Review, Launch, Delivered) are shared — the middle phases adapt to your project type.</p>
+            </div>
           </div>
           <div className="grid md:grid-cols-5 gap-3">
             {[
@@ -134,38 +137,39 @@ export default function HowItWorksPage() {
               { type: 'Content\nWriting', icon: '✍️', phases: ['Discovery', 'Planning', 'Content Creation', 'Editing', 'Testing', 'Review', 'Launch', 'Delivered'], color: 'bg-amber-500' },
               { type: 'Research\nAnalysis', icon: '🔬', phases: ['Discovery', 'Planning', 'Research', 'Analysis', 'Testing', 'Review', 'Launch', 'Delivered'], color: 'bg-rose-500' },
             ].map((pt, i) => (
-              <div key={i} className="bg-white rounded-xl border border-surface-200 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <div key={i} className="card-premium glow-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">{pt.icon}</span>
-                  <span className="text-xs font-bold text-surface-900 whitespace-pre-line leading-tight">{pt.type}</span>
+                  <span className="text-xs font-bold text-[var(--text-primary)] whitespace-pre-line leading-tight">{pt.type}</span>
                 </div>
                 <div className="space-y-1">
                   {pt.phases.map((p, j) => (
                     <div key={j} className="flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${j < pt.phases.length - 2 ? 'bg-primary-400' : j < pt.phases.length ? 'bg-surface-400' : 'bg-surface-300'}`} />
-                      <span className={`text-[10px] ${j < pt.phases.length - 2 ? 'text-surface-700 font-medium' : j < pt.phases.length ? 'text-surface-500' : 'text-surface-300'}`}>{p}</span>
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${j < pt.phases.length - 2 ? 'bg-primary-400' : j < pt.phases.length ? 'bg-[var(--text-muted)]' : 'bg-[var(--text-muted)]'}`} />
+                      <span className={`text-[10px] ${j < pt.phases.length - 2 ? 'text-[var(--text-secondary)] font-medium' : j < pt.phases.length ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-muted)]'}`}>{p}</span>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-surface-400 text-center mt-6">All project types share the same auto-flow logic. The system advances phases automatically when conditions are met, with manual gates only for Launch, Delivered, and Report.</p>
+          <p className="text-xs text-[var(--text-muted)] text-center mt-6">All project types share the same auto-flow logic. The system advances phases automatically when conditions are met, with manual gates only for Launch, Delivered, and Report.</p>
         </div>
 
-
-        <div className="max-w-3xl mx-auto border-t border-surface-200 pt-16">
-          <h2 className="text-2xl font-bold text-surface-900 text-center mb-10">Frequently asked questions</h2>
-          <div className="space-y-3">
-            {FAQS.map((item, i) => (
-              <details key={i} className="bg-white rounded-xl border border-surface-200 p-4 group">
-                <summary className="text-sm font-medium text-surface-900 cursor-pointer list-none flex items-center justify-between">
-                  {item.q}
-                  <span className="text-surface-400 group-open:rotate-180 transition-transform shrink-0 ml-2">▼</span>
-                </summary>
-                <p className="text-xs text-surface-500 mt-2 leading-relaxed">{item.a}</p>
-              </details>
-            ))}
+        <div className="max-w-3xl mx-auto animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-10">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] text-center mb-10">Frequently asked questions</h2>
+            <div className="space-y-3">
+              {FAQS.map((item, i) => (
+                <details key={i} className="card-premium glow-card p-4 group">
+                  <summary className="text-sm font-medium text-[var(--text-primary)] cursor-pointer list-none flex items-center justify-between">
+                    {item.q}
+                    <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform shrink-0 ml-2">▼</span>
+                  </summary>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-2 leading-relaxed">{item.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </div>
       </section>
