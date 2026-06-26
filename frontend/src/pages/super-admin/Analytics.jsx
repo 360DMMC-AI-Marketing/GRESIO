@@ -45,8 +45,8 @@ export default function Analytics() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-2 text-surface-400 text-sm">
+      <div className="flex items-center justify-center py-20 animate-fade-in">
+        <div className="flex items-center gap-2 dark:text-[var(--text-muted)] text-sm">
           <Loader size={16} className="animate-spin" />
           Loading analytics...
         </div>
@@ -55,69 +55,69 @@ export default function Analytics() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-5 page-enter">
+      <div className="flex items-center justify-between glass-panel">
         <div className="flex items-center gap-3">
-          <BarChart3 size={20} className="text-surface-700" />
+          <BarChart3 size={20} className="text-[var(--text-secondary)]" />
           <div>
-            <h1 className="text-2xl font-bold text-surface-900">Revenue Analytics</h1>
-            <p className="text-xs text-surface-400 mt-0.5">Platform-wide revenue and metrics</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Revenue Analytics</h1>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Platform-wide revenue and metrics</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-white border border-surface-200 rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-[var(--bg-secondary)] dark:bg-[var(--bg-secondary)] border border-[var(--border-primary)] dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] p-0.5">
           {['1m', '6m', '1y'].map(p => (
             <button key={p} data-voice={`period-${p}`} onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border-none ${period === p ? 'bg-[#2347e8] text-white' : 'text-surface-500 hover:text-surface-700 bg-transparent'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border-none ${period === p ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--text-tertiary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] bg-transparent'}`}>
               {p === '1m' ? '1 Month' : p === '6m' ? '6 Months' : '1 Year'}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5 flex items-center gap-4">
+      <div className="grid grid-cols-4 gap-4 animate-fade-in">
+        <div className="card-premium glow-card p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
             <Building2 size={20} />
           </div>
           <div>
-            <p className="text-xs text-surface-500 font-medium">Total Companies</p>
-            <p className="text-3xl font-bold text-surface-900 mt-0.5">{totalCompanies}</p>
-            <p className="text-xs text-surface-400 mt-0.5">registered on platform</p>
+            <p className="text-xs text-[var(--text-tertiary)] font-medium">Total Companies</p>
+            <p className="num-mono text-3xl font-bold text-[var(--text-primary)] mt-0.5">{totalCompanies}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">registered on platform</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5 flex items-center gap-4">
+        <div className="card-premium glow-card p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
             <Users size={20} />
           </div>
           <div>
-            <p className="text-xs text-surface-500 font-medium">Total Admins</p>
-            <p className="text-3xl font-bold text-surface-900 mt-0.5">{totalAdmins}</p>
-            <p className="text-xs text-surface-400 mt-0.5">across all companies</p>
+            <p className="text-xs text-[var(--text-tertiary)] font-medium">Total Admins</p>
+            <p className="num-mono text-3xl font-bold text-[var(--text-primary)] mt-0.5">{totalAdmins}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">across all companies</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5 flex items-center gap-4">
+        <div className="card-premium glow-card p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
             <DollarSign size={20} />
           </div>
           <div>
-            <p className="text-xs text-surface-500 font-medium">Monthly MRR</p>
-            <p className="text-3xl font-bold text-surface-900 mt-0.5">${totalMRR.toLocaleString()}</p>
-            <p className="text-xs text-surface-400 mt-0.5">recurring revenue</p>
+            <p className="text-xs text-[var(--text-tertiary)] font-medium">Monthly MRR</p>
+            <p className="num-mono text-3xl font-bold text-[var(--text-primary)] mt-0.5">${totalMRR.toLocaleString()}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">recurring revenue</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5 flex items-center gap-4">
+        <div className="card-premium glow-card p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
             <TrendingUp size={20} />
           </div>
           <div>
-            <p className="text-xs text-surface-500 font-medium">Total Revenue ({periodLabel})</p>
-            <p className="text-3xl font-bold text-surface-900 mt-0.5">${totalRevenuePeriod.toLocaleString()}</p>
-            <p className="text-xs text-surface-400 mt-0.5">period total</p>
+            <p className="text-xs text-[var(--text-tertiary)] font-medium">Total Revenue ({periodLabel})</p>
+            <p className="num-mono text-3xl font-bold text-[var(--text-primary)] mt-0.5">${totalRevenuePeriod.toLocaleString()}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">period total</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_280px] gap-4">
+      <div className="grid grid-cols-[1fr_280px] gap-4 animate-scale-in">
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-4">
             {[
@@ -128,25 +128,25 @@ export default function Analytics() {
               const planTotal = monthly.reduce((s, m) => s + (m[p.key] || 0), 0);
               const planCount = byPlan[p.key] || 0;
               return (
-                <div key={p.key} className="bg-white rounded-xl border border-surface-200 shadow-sm p-4">
+                <div key={p.key} className="card-premium glow-card p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                    <span className="text-xs font-medium text-surface-600">{p.label}</span>
-                    <span className="text-[10px] text-surface-400 ml-auto">${p.price}/mo</span>
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">{p.label}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] ml-auto">${p.price}/mo</span>
                   </div>
-                  <div className="text-2xl font-bold text-surface-900">${planTotal.toLocaleString()}</div>
-                  <div className="text-[11px] text-surface-400 mt-0.5">{planCount} company{planCount !== 1 ? 'ies' : 'y'}</div>
+                  <div className="num-mono text-2xl font-bold text-[var(--text-primary)]">${planTotal.toLocaleString()}</div>
+                  <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{planCount} company{planCount !== 1 ? 'ies' : 'y'}</div>
                   <div className="mt-3 space-y-1">
                     {monthly.slice(-3).map(m => {
                       const val = m[p.key] || 0;
                       const pct = maxMonthlyRevenue > 0 ? (val / maxMonthlyRevenue) * 100 : 0;
                       return (
                         <div key={m.month} className="flex items-center gap-2">
-                          <span className="text-[9px] text-surface-400 w-6 shrink-0">{m.month.slice(5)}</span>
-                          <div className="flex-1 h-1.5 bg-surface-100 rounded-full overflow-hidden">
+                          <span className="text-[9px] text-[var(--text-muted)] w-6 shrink-0">{m.month.slice(5)}</span>
+                          <div className="flex-1 h-1.5 dark:bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: p.color, opacity: 0.6 }} />
                           </div>
-                          <span className="text-[9px] font-medium text-surface-500 w-8 text-right">${val}</span>
+                          <span className="text-[9px] font-medium text-[var(--text-tertiary)] w-8 text-right">${val}</span>
                         </div>
                       );
                     })}
@@ -156,25 +156,25 @@ export default function Analytics() {
             })}
           </div>
 
-          <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
+          <div className="card-premium glow-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <BarChart3 size={15} className="text-surface-400" />
-                <h2 className="text-sm font-semibold text-surface-900">Revenue Breakdown</h2>
+                <BarChart3 size={15} className="text-[var(--text-muted)]" />
+                <h2 className="text-sm font-semibold text-[var(--text-primary)]">Revenue Breakdown</h2>
               </div>
-              <div className="flex items-center gap-1 text-[10px] text-surface-400">
+              <div className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
                 <Calendar size={11} />
                 {period === '1m' ? 'This month' : period === '6m' ? 'Last 6 months' : 'Last 12 months'}
               </div>
             </div>
             {monthly.length === 0 ? (
-              <div className="py-8 text-center text-surface-400">
+              <div className="py-8 text-center text-[var(--text-muted)]">
                 <p className="text-sm">No revenue data yet</p>
                 <p className="text-xs mt-1">Revenue appears when companies subscribe to paid plans</p>
               </div>
             ) : (
               <div className="space-y-0">
-                <div className="flex items-center gap-3 pb-2 mb-2 border-b border-surface-100 text-[10px] text-surface-400 font-medium">
+                <div className="flex items-center gap-3 pb-2 mb-2 border-b dark:border-[var(--border-primary)] text-[10px] text-[var(--text-muted)] font-medium">
                   <div className="w-12">Month</div>
                   <div className="flex-1">Revenue</div>
                   <div className="w-16 text-right">Team</div>
@@ -184,8 +184,8 @@ export default function Analytics() {
                 {monthly.map((m, i) => {
                   const maxVal = maxMonthlyRevenue;
                   return (
-                    <div key={m.month} className="flex items-center gap-3 py-2.5 border-b border-surface-50 last:border-0 group hover:bg-surface-50/50 rounded-sm -mx-2 px-2 transition-colors">
-                      <div className="w-12 text-xs font-medium text-surface-600">{m.month.slice(5)}</div>
+                    <div key={m.month} className="flex items-center gap-3 py-2.5 border-b dark:border-[var(--border-secondary)] last:border-0 group dark:hover:bg-[var(--bg-tertiary)]/50 rounded-sm -mx-2 px-2 transition-colors">
+                      <div className="w-12 text-xs font-medium text-[var(--text-secondary)]">{m.month.slice(5)}</div>
                       <div className="flex-1 flex items-center gap-0.5 h-5">
                         {m.enterprise > 0 && (
                           <div className="h-full rounded-sm transition-all" style={{ width: `${(m.enterprise / maxVal) * 100}%`, backgroundColor: '#f59e0b', opacity: 0.7 }} title={`Enterprise: $${m.enterprise}`} />
@@ -197,9 +197,9 @@ export default function Analytics() {
                           <div className="h-full rounded-sm transition-all" style={{ width: `${(m.starter / maxVal) * 100}%`, backgroundColor: '#9ca3af', opacity: 0.5 }} title={`Starter: $${m.starter}`} />
                         )}
                       </div>
-                      <div className="w-16 text-right text-xs text-surface-600 font-medium">${m.team}</div>
-                      <div className="w-20 text-right text-xs text-surface-600 font-medium">${m.enterprise}</div>
-                      <div className="w-16 text-right text-xs font-semibold text-surface-900">${m.total}</div>
+                      <div className="w-16 text-right text-xs text-[var(--text-secondary)] font-medium">${m.team}</div>
+                      <div className="w-20 text-right text-xs text-[var(--text-secondary)] font-medium">${m.enterprise}</div>
+                      <div className="w-16 text-right text-xs font-semibold text-[var(--text-primary)]">${m.total}</div>
                     </div>
                   );
                 })}
@@ -208,11 +208,11 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
-            <h2 className="text-sm font-semibold text-surface-900 mb-4">Companies by Plan</h2>
+        <div className="flex flex-col gap-4 animate-fade-in">
+          <div className="card-premium glow-card p-5">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Companies by Plan</h2>
             {Object.keys(byPlan).length === 0 ? (
-              <p className="text-xs text-surface-400 text-center py-4">No data</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-4">No data</p>
             ) : (
               <div className="space-y-3">
                 {Object.entries(byPlan)
@@ -226,11 +226,11 @@ export default function Analytics() {
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: planColors[plan] || '#9ca3af' }} />
-                            <span className="text-xs font-medium text-surface-700 capitalize">{planLabels[plan] || plan}</span>
+                            <span className="text-xs font-medium text-[var(--text-secondary)] capitalize">{planLabels[plan] || plan}</span>
                           </div>
-                          <span className="text-xs font-semibold text-surface-900">{count} ({pct.toFixed(0)}%)</span>
+                          <span className="text-xs font-semibold text-[var(--text-primary)]">{count} ({pct.toFixed(0)}%)</span>
                         </div>
-                        <div className="w-full h-2 bg-surface-100 rounded-full overflow-hidden">
+                        <div className="w-full h-2 dark:bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${barWidth}%`, backgroundColor: planColors[plan] || '#9ca3af' }} />
                         </div>
                       </div>
@@ -240,20 +240,20 @@ export default function Analytics() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-surface-200 shadow-sm p-5">
-            <h2 className="text-sm font-semibold text-surface-900 mb-3">Plan Pricing</h2>
+          <div className="card-premium glow-card p-5">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Plan Pricing</h2>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-surface-500">Starter</span>
-                <span className="font-medium text-surface-700">$0/mo</span>
+                <span className="text-[var(--text-tertiary)]">Starter</span>
+                <span className="font-medium text-[var(--text-secondary)]">$0/mo</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-surface-500">Team</span>
-                <span className="font-medium text-surface-700">$29/mo</span>
+                <span className="text-[var(--text-tertiary)]">Team</span>
+                <span className="font-medium text-[var(--text-secondary)]">$29/mo</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-surface-500">Enterprise</span>
-                <span className="font-medium text-surface-700">$99/mo</span>
+                <span className="text-[var(--text-tertiary)]">Enterprise</span>
+                <span className="font-medium text-[var(--text-secondary)]">$99/mo</span>
               </div>
             </div>
           </div>

@@ -1,5 +1,9 @@
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const Sprint = require('../models/Sprint');
+const TestCase = require('../models/TestCase');
+const Bug = require('../models/Bug');
+const WorkLog = require('../models/WorkLog');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const Activity = require('../models/Activity');
@@ -8,26 +12,38 @@ const Company = require('../models/Company');
 const microsoftGraphService = require('../services/microsoftGraphService');
 const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { enforceProjectLimit } = require('../config/planLimits');
-const ProjectChain = require('../models/ProjectChain');
+
 
 exports.getProjects = async (req, res, next) => {
   try {
+    const { parent } = req.query;
     const filter = { isActive: true };
+
+    if (parent === 'none') {
+      filter.parentProject = null;
+    } else if (parent) {
+      filter.parentProject = parent;
+    }
+
     if (req.user.role !== 'admin') {
       filter.domain = req.user.domain;
+      const subProjectIds = await Project.distinct('_id', { parentProject: { $ne: null }, members: req.user._id, isActive: true });
+      const umbrellaOfSub = await Project.distinct('parentProject', { parentProject: { $ne: null }, members: req.user._id, isActive: true });
       const taskProjectIds = await Task.distinct('project', { assignee: req.user._id, isActive: true, scope: 'project' });
       filter.$or = [
         { members: req.user._id },
         { _id: { $in: taskProjectIds } },
+        { _id: { $in: subProjectIds } },
+        { _id: { $in: umbrellaOfSub } },
       ];
     }
+
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit);
     const hasPagination = !isNaN(page) && !isNaN(limit);
 
     let projectsQuery = Project.find(filter)
       .populate('members', 'name email role avatar')
-      .populate('tasks')
       .sort({ updatedAt: -1 });
 
     if (hasPagination) {
@@ -35,6 +51,18 @@ exports.getProjects = async (req, res, next) => {
     }
 
     const projects = await projectsQuery;
+    const allProjectIds = projects.map(p => p._id);
+    const tasksByProject = {};
+    if (allProjectIds.length > 0) {
+      const allTasks = await Task.find({ project: { $in: allProjectIds }, isActive: true }).lean();
+      allTasks.forEach(t => {
+        const pid = t.project?.toString();
+        if (pid) {
+          if (!tasksByProject[pid]) tasksByProject[pid] = [];
+          tasksByProject[pid].push(t);
+        }
+      });
+    }
 
     const ops = [];
     for (const p of projects) {
@@ -46,12 +74,36 @@ exports.getProjects = async (req, res, next) => {
     }
     if (ops.length) await Promise.all(ops);
 
+    // For umbrella projects, attach their children count
+    const umbrellaIds = projects.filter(p => p.projectType === 'umbrella').map(p => p._id);
+    const childrenMap = {};
+    if (umbrellaIds.length > 0) {
+      const children = await Project.find({ parentProject: { $in: umbrellaIds }, isActive: true })
+        .select('_id parentProject name phase progress status members')
+        .populate('members', 'name email role avatar')
+        .lean();
+      for (const c of children) {
+        const pid = c.parentProject?.toString();
+        if (!childrenMap[pid]) childrenMap[pid] = [];
+        childrenMap[pid].push(c);
+      }
+    }
+    const projectsWithChildren = projects.map(p => {
+      const pojo = p.toObject ? p.toObject() : p;
+      const pid = p._id.toString();
+      pojo.tasks = tasksByProject[pid] || [];
+      if (childrenMap[pid]) {
+        pojo.children = childrenMap[pid];
+      }
+      return pojo;
+    });
+
     if (hasPagination) {
       const total = await Project.countDocuments(filter);
-      return res.json({ data: projects, total, page, totalPages: Math.ceil(total / limit) });
+      return res.json({ data: projectsWithChildren, total, page, totalPages: Math.ceil(total / limit) });
     }
 
-    res.json(projects);
+    res.json(projectsWithChildren);
   } catch (error) {
     next(error);
   }
@@ -62,15 +114,36 @@ exports.getProjectById = async (req, res, next) => {
     const filter = { _id: req.params.id, isActive: true };
     if (req.user.role !== 'admin') filter.domain = req.user.domain;
     const project = await Project.findOne(filter)
-      .populate('members', 'name email avatar role activityScore status')
-      .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role outlookEmail' } });
+      .populate('members', 'name email avatar role activityScore status');
     if (!project) return res.status(404).json({ message: 'Project not found' });
     const progress = calcPhaseProgress(project.projectType, project.phase);
     if (project.progress !== progress) {
       project.progress = progress;
       await project.save();
     }
-    res.json(project);
+    const result = project.toObject ? project.toObject() : project;
+
+    // If umbrella, attach children
+    if (project.projectType === 'umbrella') {
+      const children = await Project.find({ parentProject: project._id, isActive: true })
+        .populate('members', 'name email avatar role activityScore status')
+        .lean();
+      result.children = children;
+    }
+
+    // If sub-project, attach parent info
+    if (project.parentProject) {
+      const parent = await Project.findById(project.parentProject).select('name _id phase progress').lean();
+      if (parent) result.parent = parent;
+    }
+
+    // Attach tasks directly (not via populate, to support ClickUp import)
+    const tasks = await Task.find({ project: project._id, isActive: true })
+      .populate('assignee', 'name email avatar role outlookEmail')
+      .lean();
+    result.tasks = tasks;
+
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -86,6 +159,44 @@ exports.createProject = async (req, res, next) => {
         return res.status(403).json({ message: result.message });
       }
     }
+
+    // If departments provided, create umbrella + sub-projects
+    if (req.body.departments && Array.isArray(req.body.departments) && req.body.departments.length > 0) {
+      const umbrella = await Project.create({
+        ...req.body,
+        projectType: 'umbrella',
+        phase: 'discovery',
+        domain,
+      });
+      if (req.body.members && req.body.members.length > 0) {
+        await updateUserProjects(req.body.members, umbrella._id);
+      }
+
+      const depts = req.body.departments.map(d => typeof d === 'string' ? { name: d, type: req.body.subProjectType || 'software' } : d);
+      const subProjects = [];
+      for (const d of depts) {
+        const sub = await Project.create({
+          name: d.name.trim(),
+          projectType: d.type || 'software',
+          domain,
+          phase: 'discovery',
+          parentProject: umbrella._id,
+          members: req.body.members || [],
+          description: `Department: ${d.name.trim()} — part of ${umbrella.name}`,
+        });
+        await updateUserProjects(req.body.members || [], sub._id);
+        subProjects.push(sub);
+      }
+
+      autoCreateTeamsChannel(umbrella, req.user).catch(() => {});
+
+      const full = await Project.findById(umbrella._id)
+        .populate('members', 'name email role avatar');
+      const fullObj = full.toObject();
+      fullObj.tasks = await Task.find({ project: full._id, isActive: true });
+      return res.status(201).json({ ...fullObj, subProjects: subProjects.map(s => s._id) });
+    }
+
     const project = await Project.create({ ...req.body, domain, phase: 'discovery' });
     if (req.body.members && req.body.members.length > 0) {
       await updateUserProjects(req.body.members, project._id);
@@ -153,22 +264,37 @@ exports.evaluatePhase = async (req, res, next) => {
     await updateProjectProgress(req.params.id);
     const phase = await evaluateProjectPhase(req.params.id);
     const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain })
-      .populate('members', 'name email avatar role activityScore status')
-      .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role' } });
+      .populate('members', 'name email avatar role activityScore status');
     if (!project) return res.status(404).json({ message: 'Project not found' });
-    res.json({ phase: project.phase, project });
+    const tasks = await Task.find({ project: project._id, isActive: true })
+      .populate({ path: 'assignee', select: 'name email avatar role' });
+    const projectObj = project.toObject();
+    projectObj.tasks = tasks;
+    res.json({ phase: project.phase, project: projectObj });
   } catch (e) { next(e); }
 };
 
 exports.deleteProject = async (req, res, next) => {
   try {
+    const filter = { _id: req.params.id };
+    if (req.user.role !== 'admin') filter.domain = req.user.domain;
     const project = await Project.findOneAndUpdate(
-      { _id: req.params.id, domain: req.user.domain },
+      filter,
       { isActive: false },
       { new: true }
     );
     if (!project) return res.status(404).json({ message: 'Project not found' });
-    await Task.updateMany({ project: req.params.id }, { isActive: false });
+    await cascadeDeactivate(project._id);
+
+    // Cascade delete sub-projects if this is an umbrella
+    if (project.projectType === 'umbrella') {
+      const subProjects = await Project.find({ parentProject: req.params.id, isActive: true });
+      for (const sub of subProjects) {
+        await Project.updateOne({ _id: sub._id }, { isActive: false });
+        await cascadeDeactivate(sub._id);
+      }
+    }
+
     res.json({ message: 'Project deactivated' });
   } catch (error) {
     next(error);
@@ -179,19 +305,32 @@ exports.getProjectAnalytics = async (req, res, next) => {
   try {
     const filter = { _id: req.params.id, isActive: true };
     if (req.user.role !== 'admin') filter.domain = req.user.domain;
-    const project = await Project.findOne(filter).populate('tasks');
+    const project = await Project.findOne(filter);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    const totalTasks = project.tasks.length;
-    const doneTasks = project.tasks.filter((t) => t.status === 'done').length;
-    const overdueTasks = project.tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
+    // For umbrella, aggregate data across all children
+    const projectIds = project.projectType === 'umbrella'
+      ? [project._id, ...(await Project.find({ parentProject: project._id, isActive: true }).select('_id').lean()).map(p => p._id)]
+      : [project._id];
+
+    const tasks = await Task.find({ project: { $in: projectIds }, isActive: true });
+    const totalTasks = tasks.length;
+    const doneTasks = tasks.filter((t) => t.status === 'done').length;
+    const overdueTasks = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
     const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+    const sprints = await Sprint.find({ project: { $in: projectIds }, isActive: true });
+    const testCases = await TestCase.find({ project: { $in: projectIds }, isActive: true });
+    const bugs = await Bug.find({ project: { $in: projectIds }, isActive: true });
 
     res.json({
       totalTasks,
       doneTasks,
       overdueTasks,
       completionRate,
+      totalSprints: sprints.length,
+      totalTestCases: testCases.length,
+      totalBugs: bugs.length,
       progress: project.progress,
       status: project.status,
       deadline: project.deadline,
@@ -200,6 +339,14 @@ exports.getProjectAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+
+async function cascadeDeactivate(projectId) {
+  await Task.updateMany({ project: projectId }, { isActive: false });
+  await Sprint.updateMany({ project: projectId }, { isActive: false });
+  await TestCase.updateMany({ project: projectId }, { isActive: false });
+  await Bug.updateMany({ project: projectId }, { isActive: false });
+  await WorkLog.updateMany({ project: projectId }, { isActive: false });
+}
 
 async function updateUserProjects(userIds, projectId) {
   const User = require('../models/User');
@@ -210,13 +357,16 @@ async function updateUserProjects(userIds, projectId) {
 
 exports.markLaunched = async (req, res, next) => {
   try {
-    const project = await Project.findOneAndUpdate(
+    let project = await Project.findOneAndUpdate(
       { _id: req.params.id, domain: req.user.domain },
       { phase: 'launched', status: 'ready_to_test', launchedAt: new Date() },
       { new: true }
-    ).populate('members', 'name email avatar role activityScore status')
-     .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role' } });
+    ).populate('members', 'name email avatar role activityScore status');
     if (!project) return res.status(404).json({ message: 'Project not found' });
+    const tasks = await Task.find({ project: project._id, isActive: true })
+      .populate({ path: 'assignee', select: 'name email avatar role' });
+    project = project.toObject();
+    project.tasks = tasks;
     const notified = new Set();
     for (const m of project.members) {
       if (notified.has(m._id.toString())) continue;
@@ -237,13 +387,16 @@ exports.markLaunched = async (req, res, next) => {
 exports.markDelivered = async (req, res, next) => {
   try {
     const { deliveryNotes } = req.body;
-    const project = await Project.findOneAndUpdate(
+    let project = await Project.findOneAndUpdate(
       { _id: req.params.id, domain: req.user.domain },
       { phase: 'delivered', status: 'completed', deliveredAt: new Date(), deliveryNotes: deliveryNotes || '', progress: 100 },
       { new: true }
-    ).populate('members', 'name email avatar role activityScore status')
-     .populate({ path: 'tasks', match: { isActive: true }, populate: { path: 'assignee', select: 'name email avatar role' } });
+    ).populate('members', 'name email avatar role activityScore status');
     if (!project) return res.status(404).json({ message: 'Project not found' });
+    const tasks = await Task.find({ project: project._id, isActive: true })
+      .populate({ path: 'assignee', select: 'name email avatar role' });
+    project = project.toObject();
+    project.tasks = tasks;
     const notified = new Set();
     for (const m of project.members) {
       if (notified.has(m._id.toString())) continue;
@@ -257,32 +410,6 @@ exports.markDelivered = async (req, res, next) => {
         link: `/projects/${project._id}`,
       });
     }
-    // Project Relay: notify next projects in any chains containing this project
-    try {
-      const chains = await ProjectChain.find({ domain: req.user.domain, projects: project._id, isActive: true });
-      for (const chain of chains) {
-        const idx = chain.projects.indexOf(project._id);
-        if (idx !== -1 && idx < chain.projects.length - 1) {
-          const nextProjectId = chain.projects[idx + 1];
-          const nextProject = await Project.findById(nextProjectId).select('name members');
-          if (nextProject) {
-            const notifiedNext = new Set();
-            for (const m of nextProject.members || []) {
-              if (notifiedNext.has(m.toString())) continue;
-              notifiedNext.add(m.toString());
-              await Notification.create({
-                user: m,
-                domain: req.user.domain,
-                type: 'project_relay',
-                title: `🎯 Relay: ${project.name} is delivered!`,
-                message: `Chain "${chain.name}": "${project.name}" is complete. Your project "${nextProject.name}" is next — ready to start?`,
-                link: `/projects/${nextProjectId}`,
-              });
-            }
-          }
-        }
-      }
-    } catch (e) { console.error('Project Relay notification error:', e); }
     res.json(project);
   } catch (e) { next(e); }
 };
@@ -392,4 +519,15 @@ exports.deleteReviewCall = async (req, res, next) => {
     );
     res.json({ message: 'Review call deleted' });
   } catch (e) { next(e); }
+};
+
+exports.getDepartments = async (req, res, next) => {
+  try {
+    const umbrella = await Project.findOne({ _id: req.params.id, projectType: 'umbrella', isActive: true });
+    if (!umbrella) return res.status(404).json({ message: 'Umbrella project not found' });
+    const children = await Project.find({ parentProject: req.params.id, isActive: true })
+      .populate('members', 'name email role avatar')
+      .lean();
+    res.json(children);
+  } catch (error) { next(error); }
 };

@@ -78,7 +78,7 @@ exports.getMyLogs = async (req, res, next) => {
   try {
     const { date } = req.query;
     const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { user: req.user._id, project: { $in: projectIds } };
+    const filter = { user: req.user._id, project: { $in: projectIds }, isActive: true };
     if (date) filter.date = date;
     const docs = await WorkLog.find(filter)
       .populate('project', 'name')
@@ -97,7 +97,7 @@ exports.getTeamLogs = async (req, res, next) => {
     }
     const projectIds = await getDomainProjectIds(req.user.domain);
     const { date } = req.query;
-    const filter = { project: { $in: projectIds } };
+    const filter = { project: { $in: projectIds }, isActive: true };
     if (date) filter.date = date;
     else {
       const today = new Date().toISOString().slice(0, 10);

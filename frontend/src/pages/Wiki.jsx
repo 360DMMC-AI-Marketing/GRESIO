@@ -241,64 +241,61 @@ export default function Wiki() {
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-[3px] border-[#2347e8] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-surface-400 font-medium">Loading wiki...</p>
+        <div className="w-10 h-10 border-[3px] border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm dark:text-[var(--text-muted)] font-medium">Loading wiki...</p>
       </div>
     </div>
   );
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
+    <div className="max-w-5xl mx-auto page-enter">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2347e8] to-[#1d3dcc] flex items-center justify-center shadow-lg shadow-[#2347e8]/20">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-hover)] flex items-center justify-center shadow-lg shadow-[var(--brand-primary)]/20">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Knowledge Base</h1>
+              <h1 className="text-2xl font-bold dark:text-[var(--text-primary)] tracking-tight">Knowledge Base</h1>
             </div>
-            <p className="text-sm text-surface-400 ml-[52px]">Company wiki & documentation</p>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm dark:text-[var(--text-muted)] ml-[52px]">Company wiki & documentation</p>
+          </div>
+        </div>
+      </div>
 
       {view === 'list' && (
         <>
-          {/* Toolbar */}
-          <div className="bg-white rounded-2xl border border-surface-200 p-4 mb-6 shadow-sm">
+          <div className="glass-panel p-4 mb-6 rounded-[var(--radius-xl)]">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 dark:text-[var(--text-muted)]" />
                 <input
                   type="text" placeholder="Search articles..."
                   value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all placeholder:text-surface-400"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all placeholder:text-surface-400 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
                 />
               </div>
               {canManage && (
                 <div className="flex items-center gap-2">
                   <input ref={importRef} type="file" multiple accept=".md,.txt" onChange={handleImport} className="hidden" />
                   <button onClick={() => importRef.current?.click()} disabled={importing}
-                    className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-surface-600 bg-surface-50 border border-surface-200 rounded-xl hover:bg-surface-100 hover:border-surface-300 transition-all cursor-pointer disabled:opacity-50">
+                    className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold dark:text-[var(--text-secondary)] bg-surface-50 dark:bg-[var(--bg-tertiary)] border border-surface-200 dark:border-[var(--border-primary)] rounded-xl hover:bg-surface-100 dark:hover:bg-[var(--bg-secondary)] hover:border-surface-300 dark:hover:border-[var(--border-secondary)] transition-all cursor-pointer disabled:opacity-50">
                     <FileUp className="w-4 h-4" /> {importing ? 'Importing...' : 'Import'}
                   </button>
                   <button onClick={() => setShowCreate(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20">
+                    className="btn-premium text-xs px-4 py-2.5">
                     <Plus className="w-4 h-4" /> New Article
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Department filter pills */}
-            <div className="flex items-center gap-1.5 flex-wrap mt-4 pt-3 border-t border-surface-100">
+            <div className="flex items-center gap-1.5 flex-wrap mt-4 pt-3 border-t dark:border-[var(--border-secondary)]">
               <button onClick={() => setActiveDepartment('All')}
                 className={`px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                   activeDepartment === 'All'
-                    ? 'bg-surface-900 text-white border-surface-900 shadow-sm'
-                    : 'bg-white text-surface-500 border-surface-200 hover:border-surface-300 hover:text-surface-700'
+                    ? 'bg-surface-900 dark:bg-[var(--bg-primary)] text-white dark:text-[var(--text-primary)] border-surface-900 dark:border-[var(--border-primary)] shadow-sm'
+                    : 'bg-white dark:bg-[var(--bg-secondary)] dark:text-[var(--text-tertiary)] border-surface-200 dark:border-[var(--border-primary)] hover:border-surface-300 dark:hover:border-[var(--border-secondary)]'
                 }`}>
                 All
               </button>
@@ -309,7 +306,7 @@ export default function Wiki() {
                     className={`px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeDepartment === d
                         ? `${c.bg} text-white border-transparent shadow-sm`
-                        : 'bg-white text-surface-500 border-surface-200 hover:border-surface-300'
+                        : 'bg-white dark:bg-[var(--bg-secondary)] dark:text-[var(--text-tertiary)] border-surface-200 dark:border-[var(--border-primary)] hover:border-surface-300 dark:hover:border-[var(--border-secondary)]'
                     }`}>
                     {activeDepartment !== d && <span className={`w-1.5 h-1.5 rounded-full ${c.bg}`} />}
                     {d}
@@ -318,30 +315,28 @@ export default function Wiki() {
               })}
               {canManage && (
                 <button onClick={handleAddDepartment}
-                  className="px-3 py-2 text-xs font-medium text-[#2347e8] bg-transparent border border-dashed border-[#2347e8]/30 rounded-xl hover:bg-[#2347e8]/5 transition-all cursor-pointer flex items-center gap-1 ml-1">
+                  className="px-3 py-2 text-xs font-medium text-[var(--brand-primary)] bg-transparent border border-dashed border-[var(--brand-primary)]/30 rounded-xl hover:bg-[var(--brand-primary)]/5 transition-all cursor-pointer flex items-center gap-1 ml-1">
                   <Plus className="w-3 h-3" /> New
                 </button>
               )}
             </div>
           </div>
 
-          {/* Page count */}
           <div className="flex items-center gap-2 mb-4 px-1">
-            <Hash className="w-3.5 h-3.5 text-surface-400" />
-            <span className="text-xs font-medium text-surface-400">{displayPages.length} article{displayPages.length !== 1 ? 's' : ''}</span>
+            <Hash className="w-3.5 h-3.5 dark:text-[var(--text-muted)]" />
+            <span className="text-xs font-medium dark:text-[var(--text-muted)]"><span className="num-mono">{displayPages.length}</span> article{displayPages.length !== 1 ? 's' : ''}</span>
             {activeDepartment !== 'All' && (
-              <span className="text-xs text-surface-300">in <span className="font-semibold text-surface-400">{activeDepartment}</span></span>
+              <span className="text-xs dark:text-[var(--text-muted)]">in <span className="font-semibold dark:text-[var(--text-muted)]">{activeDepartment}</span></span>
             )}
           </div>
 
-          {/* Blog-style cards */}
           {displayPages.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-surface-200 p-16 text-center shadow-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-surface-100 to-surface-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <BookOpen className="w-8 h-8 text-surface-400" />
+            <div className="card-premium p-16 text-center animate-fade-in">
+              <div className="w-16 h-16 bg-gradient-to-br from-surface-100 dark:from-[var(--bg-tertiary)] to-surface-200 dark:to-[var(--bg-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <BookOpen className="w-8 h-8 dark:text-[var(--text-muted)]" />
               </div>
-              <h3 className="text-lg font-bold text-surface-900 mb-2">No articles yet</h3>
-              <p className="text-sm text-surface-400 max-w-sm mx-auto mb-6">
+              <h3 className="text-lg font-bold dark:text-[var(--text-primary)] mb-2">No articles yet</h3>
+              <p className="text-sm dark:text-[var(--text-muted)] max-w-sm mx-auto mb-6">
                 {searchQuery
                   ? 'No articles match your search. Try a different keyword.'
                   : activeDepartment !== 'All'
@@ -350,23 +345,22 @@ export default function Wiki() {
               </p>
               {canManage && !searchQuery && activeDepartment === 'All' && (
                 <button onClick={() => setShowCreate(true)}
-                  className="px-5 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20">
+                  className="btn-premium text-xs px-5 py-2.5">
                   <Plus className="w-4 h-4 inline-block mr-1.5 align-text-bottom" /> Create First Article
                 </button>
               )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {displayPages.map(page => {
+              {displayPages.map((page, idx) => {
                 const c = getDeptColor(page.department);
                 return (
                   <article key={page._id}
                     onClick={() => openPage(page._id)}
-                    className="group bg-white rounded-2xl border border-surface-200 overflow-hidden hover:border-surface-300 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
-                    {/* Color accent bar */}
+                    className="card-premium glow-card overflow-hidden cursor-pointer animate-fade-in group"
+                    style={{ animationDelay: `${idx * 80}ms` }}>
                     <div className={`h-1.5 bg-gradient-to-r ${c.gradient}`} />
                     <div className="p-5">
-                      {/* Top row: badge left, rating right */}
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2">
                           {page.department && (
@@ -375,46 +369,42 @@ export default function Wiki() {
                             </span>
                           )}
                           {page.files?.length > 0 && (
-                            <span className="flex items-center gap-1 text-[10px] text-surface-400 font-medium">
+                            <span className="flex items-center gap-1 text-[10px] dark:text-[var(--text-muted)] font-medium">
                               <FileText className="w-3 h-3" />
-                              {page.files.length}
+                              <span className="num-mono">{page.files.length}</span>
                             </span>
                           )}
                         </div>
-                        {/* Rating badge - top right */}
                         {page.ratings?.length > 0 && (
-                          <div className="flex items-center gap-1 bg-surface-50 rounded-lg px-2 py-1 border border-surface-100 shrink-0">
+                          <div className="flex items-center gap-1 bg-surface-50 dark:bg-[var(--bg-tertiary)] rounded-lg px-2 py-1 border border-surface-100 dark:border-[var(--border-secondary)] shrink-0">
                             <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="text-[10px] font-bold text-surface-600">{page.averageRating}</span>
-                            <span className="text-[9px] text-surface-400">({page.ratings.length})</span>
+                            <span className="text-[10px] font-bold dark:text-[var(--text-secondary)] num-mono">{page.averageRating}</span>
+                            <span className="text-[9px] dark:text-[var(--text-muted)]">(<span className="num-mono">{page.ratings.length}</span>)</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Title - most prominent */}
-                      <h3 className="text-xl font-black text-surface-900 leading-tight mb-1 group-hover:text-[#2347e8] transition-colors">
+                      <h3 className="text-xl font-black dark:text-[var(--text-primary)] leading-tight mb-1 group-hover:text-[var(--brand-primary)] transition-colors">
                         {page.title}
                       </h3>
 
-                      {/* Highlights - bullet points */}
                       {page.highlights?.length > 0 && (
                         <div className="mb-4">
                           <ul className="space-y-1">
                             {page.highlights.slice(0, 3).map((h, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs text-surface-500 leading-relaxed">
-                                <span className="w-1 h-1 rounded-full bg-surface-400 mt-1.5 shrink-0" />
+                              <li key={i} className="flex items-start gap-2 text-xs dark:text-[var(--text-tertiary)] leading-relaxed">
+                                <span className="w-1 h-1 rounded-full dark:bg-[var(--text-muted)] mt-1.5 shrink-0" />
                                 <span className="line-clamp-1">{h}</span>
                               </li>
                             ))}
                             {page.highlights.length > 3 && (
-                              <li className="text-[10px] text-surface-400 font-medium ml-3">+{page.highlights.length - 3} more</li>
+                              <li className="text-[10px] dark:text-[var(--text-muted)] font-medium ml-3">+<span className="num-mono">{page.highlights.length - 3}</span> more</li>
                             )}
                           </ul>
                         </div>
                       )}
 
-                      {/* Footer - creator */}
-                      <div className="flex items-center justify-between pt-3 border-t border-surface-100">
+                      <div className="flex items-center justify-between pt-3 border-t dark:border-[var(--border-secondary)]">
                         <div className="flex items-center gap-2.5">
                           <div className={`w-7 h-7 rounded-full ${c.light} flex items-center justify-center`}>
                             <span className={`text-[10px] font-bold ${c.text}`}>
@@ -422,15 +412,15 @@ export default function Wiki() {
                             </span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-[11px] font-semibold text-surface-700 leading-tight">
+                            <span className="text-[11px] font-semibold dark:text-[var(--text-secondary)] leading-tight">
                               {page.createdBy?.name || 'Unknown'}
                             </span>
-                            <span className="text-[10px] text-surface-400 leading-tight">
+                            <span className="text-[10px] dark:text-[var(--text-muted)] leading-tight">
                               Created {new Date(page.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-surface-300">
+                        <div className="flex items-center gap-1 dark:text-[var(--text-muted)]">
                           <ArrowLeft className="w-4 h-4 -rotate-135 opacity-0 group-hover:opacity-100 transition-all" />
                         </div>
                       </div>
@@ -443,17 +433,14 @@ export default function Wiki() {
         </>
       )}
 
-      {/* View - Blog article layout */}
       {view === 'currentPage' && currentPage}
       {view === 'view' && currentPage && (
-        <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
-          {/* Article header - clean minimal */}
+        <div className="card-premium glow-card overflow-hidden animate-fade-in">
           <div className={`relative bg-gradient-to-br ${getDeptColor(currentPage.department).gradient} px-8 pt-12 pb-20 text-center`}>
             <button onClick={() => { setCurrentPage(null); setView('list'); }}
               className="absolute top-4 left-4 flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl px-3.5 py-2 border border-white/10 backdrop-blur-sm">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
-            {/* Interactive star rating - top right */}
             <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10">
               {[1, 2, 3, 4, 5].map(s => {
                 const userRating = currentPage.ratings?.find(r => r.user === user?._id)?.value || 0;
@@ -464,12 +451,12 @@ export default function Wiki() {
                   </button>
                 );
               })}
-              <span className="text-xs font-bold text-white/90 ml-1">{currentPage.averageRating || 0}</span>
-              <span className="text-[10px] text-white/50">({currentPage.ratings?.length || 0})</span>
+              <span className="text-xs font-bold text-white/90 ml-1 num-mono">{currentPage.averageRating || 0}</span>
+              <span className="text-[10px] text-white/50">(<span className="num-mono">{currentPage.ratings?.length || 0}</span>)</span>
             </div>
             <div className="max-w-4xl mx-auto">
               {currentPage.department && (
-                <span className={`inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-6`}>
+                <span className="inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-xl bg-white/20 text-white backdrop-blur-sm mb-6">
                   {currentPage.department}
                 </span>
               )}
@@ -492,14 +479,13 @@ export default function Wiki() {
                 </div>
               </div>
             </div>
-            {/* Action buttons */}
             <div className="flex items-center justify-center gap-2 mt-8">
               <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50">
                 <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Attach'}
               </button>
               <button onClick={startEdit}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 backdrop-blur-sm transition-all cursor-pointer">
+                className="btn-premium text-xs px-4 py-2.5">
                 <Edit3 className="w-3.5 h-3.5" /> Edit
               </button>
               {canManage && (
@@ -511,16 +497,15 @@ export default function Wiki() {
             </div>
           </div>
 
-          {/* Highlights section */}
           {currentPage.highlights?.length > 0 && (
             <div className="px-8 pt-8">
               <div className="max-w-3xl mx-auto">
-                <div className="bg-surface-50 rounded-2xl border border-surface-200 p-6">
-                  <h3 className="text-xs font-bold text-surface-500 uppercase tracking-wider mb-4">Highlights</h3>
+                <div className="bg-surface-50 dark:bg-[var(--bg-secondary)] rounded-2xl border border-surface-200 dark:border-[var(--border-primary)] p-6">
+                  <h3 className="text-xs font-bold dark:text-[var(--text-tertiary)] uppercase tracking-wider mb-4">Highlights</h3>
                   <ul className="space-y-3">
                     {currentPage.highlights.map((h, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm text-surface-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#2347e8] mt-2 shrink-0" />
+                      <li key={i} className="flex items-start gap-3 text-sm dark:text-[var(--text-secondary)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)] mt-2 shrink-0" />
                         {h}
                       </li>
                     ))}
@@ -530,10 +515,9 @@ export default function Wiki() {
             </div>
           )}
 
-          {/* Article content */}
           <div className="px-8 py-8">
             <div className="max-w-3xl mx-auto">
-              <div className="prose prose-sm md:prose-base max-w-none prose-headings:text-surface-900 prose-headings:font-bold prose-a:text-[#2347e8] prose-code:text-[#2347e8] prose-code:bg-surface-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-pre:bg-surface-900 prose-pre:text-surface-100 prose-pre:rounded-xl prose-img:rounded-xl prose-blockquote:border-l-[#2347e8] prose-blockquote:text-surface-600">
+              <div className="prose prose-sm md:prose-base max-w-none dark:prose-headings:text-[var(--text-primary)] prose-headings:font-bold prose-a:text-[var(--brand-primary)] prose-code:text-[var(--brand-primary)] prose-code:bg-surface-100 dark:prose-code:bg-[var(--bg-tertiary)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-pre:bg-surface-900 dark:prose-pre:bg-[var(--bg-primary)] dark:prose-pre:text-[var(--text-primary)] prose-pre:rounded-xl prose-img:rounded-xl prose-blockquote:border-l-[var(--brand-primary)] dark:prose-blockquote:text-[var(--text-secondary)]">
                 <Markdown remarkPlugins={[remarkGfm]}>
                   {currentPage.content || '*No content*'}
                 </Markdown>
@@ -541,35 +525,34 @@ export default function Wiki() {
             </div>
           </div>
 
-          {/* Attached files */}
           {currentPage.files?.length > 0 && (
             <div className="px-8 pb-8">
-              <div className="max-w-3xl mx-auto pt-8 border-t border-surface-100">
-                <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-surface-400" />
-                  Attachments ({currentPage.files.length})
+              <div className="max-w-3xl mx-auto pt-8 border-t dark:border-[var(--border-secondary)]">
+                <h3 className="text-sm font-bold dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 dark:text-[var(--text-muted)]" />
+                  Attachments (<span className="num-mono">{currentPage.files.length}</span>)
                 </h3>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {currentPage.files.map(f => (
                     <div key={f._id}
-                      className="flex items-center justify-between px-4 py-3 bg-surface-50 rounded-xl border border-surface-100 hover:border-surface-200 hover:bg-white transition-all group">
+                      className="flex items-center justify-between px-4 py-3 bg-surface-50 dark:bg-[var(--bg-tertiary)] rounded-xl border border-surface-100 dark:border-[var(--border-secondary)] hover:border-surface-200 dark:hover:border-[var(--border-primary)] hover:bg-white dark:hover:bg-[var(--bg-secondary)] transition-all group">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-white border border-surface-200 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-surface-400" />
+                        <div className="w-9 h-9 rounded-lg bg-white dark:bg-[var(--bg-secondary)] border border-surface-200 dark:border-[var(--border-primary)] flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 dark:text-[var(--text-muted)]" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-surface-700 truncate">{f.originalName}</p>
-                          <p className="text-[10px] text-surface-400">{formatSize(f.size)}</p>
+                          <p className="text-xs font-semibold dark:text-[var(--text-secondary)] truncate">{f.originalName}</p>
+                          <p className="text-[10px] dark:text-[var(--text-muted)]">{formatSize(f.size)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0 ml-2">
                         <a href={`/uploads/${f.filename}`} target="_blank" rel="noreferrer"
-                          className="flex items-center justify-center w-8 h-8 text-surface-400 hover:text-[#2347e8] hover:bg-[#2347e8]/5 rounded-lg transition-all no-underline">
+                          className="flex items-center justify-center w-8 h-8 dark:text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/5 rounded-lg transition-all no-underline">
                           <Download className="w-4 h-4" />
                         </a>
                         {canManage && (
                           <button onClick={() => handleDeleteFile(f._id)}
-                            className="flex items-center justify-center w-8 h-8 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer bg-transparent border-none">
+                            className="flex items-center justify-center w-8 h-8 text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all cursor-pointer bg-transparent border-none">
                             <X className="w-4 h-4" />
                           </button>
                         )}
@@ -581,22 +564,21 @@ export default function Wiki() {
             </div>
           )}
 
-          {/* Contributors */}
           {currentPage.contributors?.length > 0 && (
             <div className="px-8 pb-8">
-              <div className="max-w-3xl mx-auto pt-6 border-t border-surface-100">
-                <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
-                  <User className="w-4 h-4 text-surface-400" />
-                  Contributors ({currentPage.contributors.length})
+              <div className="max-w-3xl mx-auto pt-6 border-t dark:border-[var(--border-secondary)]">
+                <h3 className="text-sm font-bold dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                  <User className="w-4 h-4 dark:text-[var(--text-muted)]" />
+                  Contributors (<span className="num-mono">{currentPage.contributors.length}</span>)
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {currentPage.contributors.map((c, i) => (
                     <div key={i}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-xl border border-surface-100">
-                      <div className="w-6 h-6 rounded-full bg-[#2347e8]/10 flex items-center justify-center">
-                        <span className="text-[9px] font-bold text-[#2347e8]">{getInitials(c.name)}</span>
+                      className="flex items-center gap-2 px-3 py-1.5 bg-surface-50 dark:bg-[var(--bg-tertiary)] rounded-xl border border-surface-100 dark:border-[var(--border-secondary)]">
+                      <div className="w-6 h-6 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center">
+                        <span className="text-[9px] font-bold text-[var(--brand-primary)]">{getInitials(c.name)}</span>
                       </div>
-                      <span className="text-xs font-medium text-surface-600">{c.name}</span>
+                      <span className="text-xs font-medium dark:text-[var(--text-secondary)]">{c.name}</span>
                     </div>
                   ))}
                 </div>
@@ -604,9 +586,8 @@ export default function Wiki() {
             </div>
           )}
 
-          {/* Footer meta */}
           <div className="px-8 pb-8">
-            <div className="max-w-3xl mx-auto pt-4 border-t border-surface-100 flex items-center gap-4 text-xs text-surface-400">
+            <div className="max-w-3xl mx-auto pt-4 border-t dark:border-[var(--border-secondary)] flex items-center gap-4 text-xs dark:text-[var(--text-muted)]">
               {currentPage.department && (
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${getDeptColor(currentPage.department).badge}`}>
                   {currentPage.department}
@@ -627,18 +608,17 @@ export default function Wiki() {
         </div>
       )}
 
-      {/* Edit - Split pane with modern styling */}
       {view === 'edit' && currentPage && (
-        <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100 bg-surface-50/50">
+        <div className="card-premium overflow-hidden animate-fade-in">
+          <div className="flex items-center justify-between px-6 py-4 border-b dark:border-[var(--border-secondary)] bg-surface-50/50 dark:bg-[var(--bg-secondary)]/50">
             <button onClick={() => { setView('view'); }}
-              className="flex items-center gap-1.5 text-xs font-medium text-surface-500 hover:text-surface-700 transition-colors cursor-pointer bg-transparent border-none">
+              className="flex items-center gap-1.5 text-xs font-medium dark:text-[var(--text-tertiary)] dark:hover:text-[var(--text-secondary)] transition-colors cursor-pointer bg-transparent border-none">
               <ArrowLeft className="w-4 h-4" /> Cancel
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-surface-400 font-medium">Editing: {currentPage.title}</span>
+              <span className="text-xs dark:text-[var(--text-muted)] font-medium">Editing: {currentPage.title}</span>
               <button onClick={saveEdit} disabled={saving}
-                className="flex items-center gap-1.5 px-5 py-2 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20 disabled:opacity-50">
+                className="btn-premium text-xs px-5 py-2 disabled:opacity-50">
                 {saving ? (
                   <span className="flex items-center gap-1.5">
                     <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -654,12 +634,12 @@ export default function Wiki() {
                 <input
                   type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
                   placeholder="Article title"
-                  className="w-full px-5 py-3 text-xl font-bold border border-surface-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] transition-all placeholder:text-surface-300"
+                  className="w-full px-5 py-3 text-xl font-bold border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-white dark:bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] transition-all placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
                 />
               </div>
               <select
                 value={editDepartment} onChange={e => setEditDepartment(e.target.value)}
-                className="px-5 py-3 text-sm font-medium border border-surface-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] transition-all cursor-pointer min-w-[160px]"
+                className="px-5 py-3 text-sm font-medium border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-white dark:bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] transition-all cursor-pointer min-w-[160px] dark:text-[var(--text-primary)]"
               >
                 {departments.map(d => (
                   <option key={d} value={d}>{d}</option>
@@ -670,21 +650,21 @@ export default function Wiki() {
               value={editHighlights} onChange={e => setEditHighlights(e.target.value)}
               placeholder="Highlights (one per line)"
               rows={3}
-              className="w-full px-5 py-3 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+              className="w-full px-5 py-3 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all font-mono resize-y placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
             />
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-semibold text-surface-500 mb-2 uppercase tracking-wider">Markdown</label>
+                <label className="block text-xs font-semibold dark:text-[var(--text-tertiary)] mb-2 uppercase tracking-wider">Markdown</label>
                 <textarea
                   value={editContent} onChange={e => setEditContent(e.target.value)}
                   placeholder="Write in markdown..."
                   rows={24}
-                  className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+                  className="w-full px-5 py-4 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all font-mono resize-y placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-surface-500 mb-2 uppercase tracking-wider">Preview</label>
-                <div className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-white min-h-[600px] prose prose-sm max-w-none overflow-auto">
+                <label className="block text-xs font-semibold dark:text-[var(--text-tertiary)] mb-2 uppercase tracking-wider">Preview</label>
+                <div className="w-full px-5 py-4 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-white dark:bg-[var(--bg-secondary)] min-h-[600px] prose prose-sm max-w-none overflow-auto dark:text-[var(--text-primary)]">
                   <Markdown remarkPlugins={[remarkGfm]}>
                     {editContent || '*Nothing to preview*'}
                   </Markdown>
@@ -695,19 +675,18 @@ export default function Wiki() {
         </div>
       )}
 
-      {/* Create modal */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowCreate(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 border border-surface-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100">
-              <h2 className="text-base font-bold text-surface-900 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2347e8] to-[#1d3dcc] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in" onClick={() => setShowCreate(false)}>
+          <div className="card-premium w-full max-w-2xl mx-4 animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-[var(--border-secondary)]">
+              <h2 className="text-base font-bold dark:text-[var(--text-primary)] flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-hover)] flex items-center justify-center">
                   <Plus className="w-4 h-4 text-white" />
                 </div>
                 New Article
               </h2>
               <button onClick={() => setShowCreate(false)}
-                className="w-8 h-8 flex items-center justify-center text-surface-400 hover:text-surface-600 hover:bg-surface-100 rounded-lg transition-all cursor-pointer bg-transparent border-none">
+                className="w-8 h-8 flex items-center justify-center dark:text-[var(--text-muted)] dark:hover:text-[var(--text-secondary)] hover:bg-surface-100 dark:hover:bg-[var(--bg-tertiary)] rounded-lg transition-all cursor-pointer bg-transparent border-none">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -715,12 +694,12 @@ export default function Wiki() {
               <input
                 type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
                 placeholder="Article title"
-                className="w-full px-5 py-3 text-lg font-bold border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all placeholder:text-surface-300"
+                className="w-full px-5 py-3 text-lg font-bold border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
                 autoFocus
               />
               <select
                 value={newDepartment} onChange={e => setNewDepartment(e.target.value)}
-                className="w-full px-5 py-3 text-sm font-medium border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all cursor-pointer"
+                className="w-full px-5 py-3 text-sm font-medium border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all cursor-pointer dark:text-[var(--text-primary)]"
               >
                 {departments.map(d => (
                   <option key={d} value={d}>{d}</option>
@@ -730,30 +709,30 @@ export default function Wiki() {
                 value={newHighlights} onChange={e => setNewHighlights(e.target.value)}
                 placeholder="Highlights (one per line)&#10;e.g.&#10;User authentication with JWT&#10;Role-based access control&#10;Real-time notifications"
                 rows={3}
-                className="w-full px-5 py-3 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+                className="w-full px-5 py-3 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all font-mono resize-y placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
               />
               <textarea
                 value={newContent} onChange={e => setNewContent(e.target.value)}
                 placeholder="Write your article content in markdown..."
                 rows={12}
-                className="w-full px-5 py-4 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-[#2347e8]/15 focus:border-[#2347e8] focus:bg-white transition-all font-mono resize-y placeholder:text-surface-300"
+                className="w-full px-5 py-4 text-sm border border-surface-200 dark:border-[var(--border-primary)] rounded-xl bg-surface-50 dark:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] focus:bg-white dark:focus:bg-[var(--bg-secondary)] transition-all font-mono resize-y placeholder:text-surface-300 dark:placeholder:text-[var(--text-muted)] dark:text-[var(--text-primary)]"
               />
-              <div className="flex items-center gap-3 text-xs text-surface-400 bg-surface-50 rounded-xl px-4 py-3 border border-surface-100">
-                <span className="font-semibold text-surface-500">Markdown:</span>
-                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200"># Heading</code>
-                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">**bold**</code>
-                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">`code`</code>
-                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">[link](url)</code>
-                <code className="text-[#2347e8] bg-white px-1.5 py-0.5 rounded border border-surface-200">- list</code>
+              <div className="flex items-center gap-3 text-xs dark:text-[var(--text-muted)] bg-surface-50 dark:bg-[var(--bg-tertiary)] rounded-xl px-4 py-3 border border-surface-100 dark:border-[var(--border-secondary)]">
+                <span className="font-semibold dark:text-[var(--text-tertiary)]">Markdown:</span>
+                <code className="text-[var(--brand-primary)] bg-white dark:bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-surface-200 dark:border-[var(--border-primary)]"># Heading</code>
+                <code className="text-[var(--brand-primary)] bg-white dark:bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-surface-200 dark:border-[var(--border-primary)]">**bold**</code>
+                <code className="text-[var(--brand-primary)] bg-white dark:bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-surface-200 dark:border-[var(--border-primary)]">`code`</code>
+                <code className="text-[var(--brand-primary)] bg-white dark:bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-surface-200 dark:border-[var(--border-primary)]">[link](url)</code>
+                <code className="text-[var(--brand-primary)] bg-white dark:bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-surface-200 dark:border-[var(--border-primary)]">- list</code>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-surface-100">
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-[var(--border-secondary)]">
               <button onClick={() => setShowCreate(false)}
-                className="px-5 py-2.5 text-xs font-semibold text-surface-600 bg-transparent border border-surface-200 rounded-xl hover:bg-surface-50 hover:border-surface-300 transition-all cursor-pointer">
+                className="px-5 py-2.5 text-xs font-semibold dark:text-[var(--text-secondary)] bg-transparent border border-surface-200 dark:border-[var(--border-primary)] rounded-xl hover:bg-surface-50 dark:hover:bg-[var(--bg-tertiary)] hover:border-surface-300 dark:hover:border-[var(--border-secondary)] transition-all cursor-pointer">
                 Cancel
               </button>
               <button onClick={createPage} disabled={saving || !newTitle.trim()}
-                className="px-6 py-2.5 bg-gradient-to-r from-[#2347e8] to-[#1d3dcc] text-white rounded-xl text-xs font-bold hover:from-[#1d3dcc] hover:to-[#1a37b8] transition-all cursor-pointer border-none shadow-md shadow-[#2347e8]/20 disabled:opacity-50">
+                className="btn-premium text-xs px-6 py-2.5 disabled:opacity-50">
                 {saving ? 'Creating...' : 'Create Article'}
               </button>
             </div>

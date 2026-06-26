@@ -9,11 +9,16 @@ export default function OnboardingGuide() {
   const [acknowledged, setAcknowledged] = useState(user?.onboardingCompleted || false);
   const [reachedBottom, setReachedBottom] = useState(false);
   const [checklist, setChecklist] = useState({
-    role: false, lead: false, lifecycle: false, manual: false, tasks: false, qa: false, calendar: false, relay: false, help: false,
+    role: false, lifecycle: false, tasks: false, contact: false, features: false,
   });
+  const [openSections, setOpenSections] = useState({
+    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true,
+  });
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const pageRef = useRef(null);
   const footerRef = useRef(null);
   const allChecked = Object.values(checklist).every(Boolean);
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     if (acknowledged) return;
@@ -27,6 +32,13 @@ export default function OnboardingGuide() {
     return () => obs.disconnect();
   }, [acknowledged]);
 
+  const handleScroll = () => {
+    if (pageRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = pageRef.current;
+      setScrollProgress(Math.min((scrollTop / (scrollHeight - clientHeight)) * 100, 100));
+    }
+  };
+
   const handleAcknowledge = async () => {
     try {
       const res = await auth.updateProfile({ onboardingCompleted: true });
@@ -35,617 +47,296 @@ export default function OnboardingGuide() {
     navigate('/dashboard');
   };
 
+  const toggleSection = (id) => {
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
-    <div style={{maxWidth:800,margin:'0 auto',padding:'24px 20px'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
-        <div>
-          <h1 style={{fontSize:18,fontWeight:700,color:'#111827',margin:0}}>📖 User Onboarding & System Overview</h1>
-          <p style={{fontSize:11,color:'#6b7280',margin:'4px 0 0'}}>Complete guide to understanding and using GRESIO</p>
+    <div ref={pageRef} onScroll={handleScroll} className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-20 page-enter">
+      {/* ── Progress Bar ── */}
+      {!acknowledged && (
+        <div className="fixed top-14 left-0 right-0 z-40 h-1 bg-neutral-200 dark:bg-[var(--border-primary)]" style={{ paddingLeft: 0 }}>
+          <div className="h-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
         </div>
-        <span style={{fontSize:9,fontWeight:600,padding:'3px 10px',borderRadius:12,whiteSpace:'nowrap',background:acknowledged ? '#f0fdf4' : '#fffbeb',color:acknowledged ? '#16a34a' : '#d97706'}}>
+      )}
+
+      {/* ── Header ── */}
+      <div className="glass-panel gradient-wave rounded-[var(--radius-xl)] p-4 sm:p-5 mb-5 flex items-center justify-between flex-wrap gap-3" style={{background: 'linear-gradient(135deg, #f0f4ff 0%, #eef2ff 50%, #f5f3ff 100%)', backgroundSize: '200% 200%'}}>
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xl">📖</span>
+            <h1 className="text-lg font-bold text-neutral-900 dark:text-[var(--text-primary)] m-0">User Onboarding & System Overview</h1>
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20 px-2 py-0.5 rounded-full">
+              <span className="live-dot" /> Guide
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500 dark:text-[var(--text-tertiary)] mt-1">Complete guide to understanding and using GRESIO</p>
+        </div>
+        <span className="text-[10px] font-semibold px-3 py-1 rounded-full whitespace-nowrap" style={{background: acknowledged ? 'var(--success-bg)' : 'var(--warning-bg)', color: acknowledged ? 'var(--success-text)' : 'var(--warning-text)'}}>
           {acknowledged ? '✅ Acknowledged' : '⏳ Not Acknowledged'}
         </span>
       </div>
 
-      {showWelcomeBanner && !acknowledged && (
-        <div style={{background:'#f0f4ff',borderRadius:9,border:'0.5px solid #dce6ff',padding:'12px 16px',marginBottom:4}}>
-          <p style={{fontSize:13,fontWeight:600,color:'#1a35c4',margin:'0 0 2px'}}>{'\u{1F44B}'} Welcome to GRESIO!</p>
-          <p style={{fontSize:11,color:'#4b5563',margin:0}}>
-            You've completed the quick setup. Review the full guide below, then check all items in the checklist and acknowledge at the bottom.
-          </p>
-          <button onClick={() => setShowWelcomeBanner(false)}
-            style={{fontSize:10,color:'#6b7280',background:'none',border:'none',cursor:'pointer',padding:0,marginTop:6,textDecoration:'underline'}}>
-            Dismiss
-          </button>
+      {/* ── Welcome Banner ── */}
+      {showWelcome && !acknowledged && (
+        <div className="card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--border-primary)] p-4 mb-5 flex items-start gap-3">
+          <span className="text-lg shrink-0">👋</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-neutral-900 dark:text-[var(--text-primary)] m-0">Welcome to GRESIO!</p>
+            <p className="text-xs text-neutral-500 dark:text-[var(--text-tertiary)] mt-1">You've completed the quick setup. Review the guide below, check the 5 items, then acknowledge at the bottom.</p>
+            <button onClick={() => setShowWelcome(false)}
+              className="btn-premium mt-2 text-[10px]">Got it</button>
+          </div>
         </div>
       )}
 
-      <div style={{display:'flex',flexDirection:'column',gap:24,fontSize:12,color:'#374151',lineHeight:1.6}}>
+      {/* ── Sections ── */}
+      <div className="flex flex-col gap-4 stagger">
 
-        <Section title="2. What is GRESIO?">
-          <p>GRESIO is an all-in-one internal operating system designed for managing projects of all kinds — software, design, business, content, and research — tracking tasks, running QA test cases, and monitoring project health from discovery to delivery.</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Features</h4>
+        {/* 1. What is GRESIO? */}
+        <Section num="1" title="What is GRESIO?" open={openSections[1]} onToggle={() => toggleSection(1)}>
+          <p className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed">
+            GRESIO is an all-in-one internal operating system for managing projects of all kinds — software, design, business, content, and research — tracking tasks, running QA test cases, and monitoring project health from discovery to delivery.
+          </p>
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">Key Features</h4>
           <InfoTable rows={[
             ['Project Dashboard','Visual progress tracker with lifecycle phases'],
-            ['5 Project Types','Software, Design, Business, Content, Research — each with its own phase workflow'],
+            ['5 Project Types','Software, Design, Business, Content, Research — each with its own workflow'],
             ['Sprint Management','Create, plan, and execute agile sprints'],
-            ['Task Tracking','Assign, track, and complete tasks'],
-            ['Test Case Management','Create and execute QA tests linked to features'],
+            ['Task & Test Tracking','Assign, track, and complete tasks; create and execute QA tests'],
             ['Team Collaboration','Role-based access for secure teamwork'],
-            ['Calendar','Visual calendar showing tasks, sprints, project deadlines, milestones, events, and reminders — all color-coded'],
-            ['Project Relay','Chain multiple projects in an ordered pipeline with automatic notifications on delivery — supports branching workflows'],
-            ['Report Generation','Generate admin (full audit) and client (summary) PDF reports for completed/delivered projects'],
+            ['Calendar','Color-coded view of tasks, sprints, deadlines, milestones, events, and reminders'],
+            ['Report Generation','Admin (full audit) and Client (summary) PDF reports'],
             ['Automated Status Flow','Smart phase transitions based on project data and type'],
             ['Manual Gates','Admin/PM/Team Lead approval for critical milestones'],
-            ['Knowledge Base','Central hub for company wiki (markdown articles, ratings, file attachments), WorkDNA archives, and reusable project templates'],
+            ['Knowledge Base','Company wiki, WorkDNA archives, and reusable project templates'],
           ]} />
         </Section>
 
-        <Section title="3. User Roles & Permissions">
-          <p>Your role determines what you can see and do in GRESIO. You cannot change your own role — only an Admin can assign or modify roles.</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Available Roles</h4>
-          <InfoTable rows={[
-            ['Admin','1 — Highest','Full system access. Can create/delete projects, assign roles, manage company settings, manage integrations, and access all features.'],
-            ['Project Manager (PM)','2','Manages multiple projects. Can create sprints, assign tasks, launch/deliver projects, manage members, and view all reports.'],
-            ['Team Lead','3','Leads a department. Can create tasks, manage sprint backlog, approve phase transitions, manage resources, and manage members.'],
-            ['Manager','3','Oversees operations. Can edit projects, create tasks, edit/delete test cases, and view work logs.'],
-            ['QA Tester','4','Executes test cases. Can create tasks, execute/retest test cases, manage bugs, and mark test results.'],
-            ['Developer','4','Executes assigned tasks. Can update task status, view projects, and run test cases.'],
-            ['Intern','5','Supports the department. Can view projects, update own tasks, run test cases, and view dashboards.'],
-            ['Other','5','Base-level access. Can view dashboards and basic project information.'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Detailed Permission Matrix</h4>
-          <InfoTable rows={[
-            ['Action','Admin','PM','Manager','Team Lead','QA Tester','Developer','Intern'],
-            ['Create Project','✅','✅','✅','❌','❌','❌','❌'],
-            ['Delete Project','✅','✅','✅','❌','❌','❌','❌'],
-            ['Edit Project','✅','✅','✅','✅','❌','❌','❌'],
-            ['Edit Project Settings','✅','✅','✅','❌','❌','❌','❌'],
-            ['Create Sprint','✅','✅','✅','❌','❌','❌','❌'],
-            ['Delete Sprint','✅','❌','❌','❌','❌','❌','❌'],
-            ['Manage Sprint Tasks','✅','✅','✅','❌','❌','❌','❌'],
-            ['Create Task','✅','✅','✅','✅','✅','❌','❌'],
-            ['Create Standalone Task','✅','✅','✅','✅','❌','❌','❌'],
-            ['Update Any Task','✅','✅','✅','✅','✅','✅','✅'],
-            ['Add / Delete Subtasks','✅','✅','✅','❌','❌','❌','❌'],
-            ['Create Test Case','✅','✅','✅','❌','❌','❌','❌'],
-            ['Edit / Delete Test Case','✅','✅','✅','✅','✅','❌','❌'],
-            ['Execute / Retest Test Case','✅','✅','✅','❌','✅','❌','❌'],
-            ['Manage Resources','✅','✅','✅','❌','❌','❌','❌'],
-            ['Manage Members','✅','✅','✅','❌','❌','❌','❌'],
-            ['Manage Bugs','✅','✅','✅','❌','✅','❌','❌'],
-            ['🔒 Launch Project','✅','✅','❌','❌','❌','❌','❌'],
-            ['🔒 Deliver Project','✅','✅','❌','❌','❌','❌','❌'],
-            ['Evaluate Phase','✅','✅','✅','❌','❌','❌','❌'],
-            ['View Work Logs','✅','✅','✅','✅','❌','❌','❌'],
-            ['View Dashboard / Reports','✅','✅','✅','✅','✅','✅','✅'],
-            ['Generate / Delete Reports','✅','✅','✅','✅','❌','❌','❌'],
-            ['Change User Roles','✅','❌','❌','❌','❌','❌','❌'],
-            ['Delete Users','✅','❌','❌','❌','❌','❌','❌'],
-            ['Company / Plan Settings','✅','❌','❌','❌','❌','❌','❌'],
-            ['Manage Integrations','✅','❌','❌','❌','❌','❌','❌'],
-            ['Customize Dashboard','✅','❌','❌','❌','❌','❌','❌'],
-            ['Microsoft Teams Settings','✅','✅','❌','❌','❌','❌','❌'],
-            ['Browse & Use Templates','✅','✅','✅','✅','✅','✅','✅'],
-            ['Save Project as Template','✅','✅','✅','❌','❌','❌','❌'],
-          ]} />
-          <p style={{fontSize:10,color:'#6b7280',marginTop:6}}>🔒 = Manual gate — requires explicit action by permitted role. System will not auto-transition.</p>
-        </Section>
-
-        <Section title="4. Project Lifecycle Explained">
-          <p>GRESIO supports <strong>5 project types</strong>, each with its own lifecycle phases. When you create a project, you choose its type. The phase bar adapts automatically.</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Project Type Overview</h4>
-          <InfoTable rows={[
-            ['Type','Label','Phases'],
-            ['Software','Software / Development','Discovery → Planning → Development → Testing → Review → Launch → Delivered'],
-            ['Design','Design / Creative','Discovery → Planning → Designing → Prototyping → Testing → Review → Launch → Delivered'],
-            ['Business','Business / Marketing / Growth','Discovery → Planning → Business Growth → Validation → Testing → Review → Launch → Delivered'],
-            ['Content','Content / Writing','Discovery → Planning → Content Creation → Editing → Testing → Review → Launch → Delivered'],
-            ['Research','Research / Analysis','Discovery → Planning → Research → Analysis → Testing → Review → Launch → Delivered'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Common Phases (All Types)</h4>
-          <InfoTable rows={[
-            ['Phase','Type','Trigger','Who Can Advance'],
-            ['Discovery','All','Project created','System (auto)'],
-            ['Planning','All','Project info / repos configured, or sprint exists','System (auto)'],
-            ['Testing','All','Testing conditions met (varies by type)','System (auto)'],
-            ['Review','All','Testing complete and all tasks done','System (auto)'],
-            ['Launch','All','Manual approval','Admin, PM, Team Lead'],
-            ['Delivered','All','Manual approval','Admin, PM, Team Lead'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Type-Specific Phases</h4>
-          <InfoTable rows={[
-            ['Type','Middle Phases','Auto-Transition Condition'],
-            ['Software','Development','Sprint/tasks exist and work has started'],
-            ['Design','Designing → Prototyping → Testing','Tasks exist → testing items/tests ready → all tasks done'],
-            ['Business','Business Growth → Validation → Testing','Tasks exist → ≥70% done → testing ready'],
-            ['Content','Content Creation → Editing → Testing','Tasks exist → ≥50% done → testing ready'],
-            ['Research','Research → Analysis → Testing','Tasks exist → ≥50% done → testing ready'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Important Rules</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11}}>
-            <li>Auto-transitions cannot be reversed by regular users. Only Admin/PM/Team Lead can manually override status backward.</li>
-            <li>You cannot skip phases. A project must pass through each phase in order.</li>
-            <li>Manual gates (Launch, Delivered) are locked. If you see a 🔒 icon, you do not have permission to proceed.</li>
-            <li>The project type is set at creation and shown as a badge on project cards and the project detail page.</li>
-          </ul>
-        </Section>
-
-        <Section title="5. Dashboard Overview">
-          <p>When you open a project, you see:</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Progress Bar</h4>
-          <ul style={{margin:'0 0 12px',paddingLeft:16,fontSize:11}}>
-            <li>Shows current phase highlighted in blue</li>
-            <li>Completed phases show green</li>
-            <li>Pending phases are gray</li>
-            <li>Manual phases show 🔒 lock icon</li>
-          </ul>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Stats Cards</h4>
-          <InfoTable rows={[
-            ['Card','Meaning'],
-            ['Total Sprints','Number of sprints created for this project'],
-            ['Active Sprint','Currently running sprint (0 if none active)'],
-            ['Total Tasks','All tasks across all sprints'],
-            ['Completed','Tasks with status "Done"'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Project Health (Right Sidebar)</h4>
-          <InfoTable rows={[
-            ['Metric','Good','Warning','Bad'],
-            ['Completion','100%','70-99%','<70%'],
-            ['Overdue Tasks','0','1-2','3+'],
-            ['Risk Level','—','—','High'],
-            ['Days Left','On track','<7 days','Overdue (red)'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Navigation Tabs</h4>
-          <InfoTable rows={[
-            ['Tab',"What's Inside"],
-            ['📋 Overview','Project summary, health metrics, recent activity'],
-            ['⚡ Sprints','Sprint list, burndown charts, velocity'],
-            ['🧪 Test Cases','Test case management and execution'],
-            ['🔍 Review','Schedule review calls, track phase changes'],
-            ['📅 Calendar','Task deadlines, sprint dates, project milestones, events, and reminders — month view with color-coded items'],
-            ['🔗 Relay','Chain projects in an ordered pipeline with completion tracking and auto-notifications'],
-            ['👥 Department','Members, roles, workload distribution'],
-            ['🔗 Resources','Linked repositories, documentation, environments'],
-            ['⚙️ Settings','Project configuration, notifications, integrations'],
-          ]} />
-        </Section>
-
-        <Section title="6. Tasks, Sprints & Test Cases">
-          <h4 style={{margin:'0 0 6px',fontSize:11,color:'#111827'}}>Tasks</h4>
-          <ul style={{margin:'0 0 12px',paddingLeft:16,fontSize:11}}>
-            <li>Regular work items assigned to developers</li>
-            <li>Status: To Do → In Progress → In Review → Done</li>
-            <li>Can be linked to sprints and features</li>
-          </ul>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Sprints</h4>
-          <ul style={{margin:'0 0 12px',paddingLeft:16,fontSize:11}}>
-            <li>Time-boxed iterations (usually 1-2 weeks)</li>
-            <li>Contains tasks and test cases</li>
-            <li>Has start date, end date, and goal</li>
-          </ul>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Test Cases (Special Task Type)</h4>
-          <ul style={{margin:'0 0 12px',paddingLeft:16,fontSize:11}}>
-            <li>Quality assurance items that validate features</li>
-            <li>Linked to specific features/requirements</li>
-            <li>Contains step-by-step instructions with expected vs actual results</li>
-            <li>Status: Draft → Ready → In Progress → Passed / Failed / Blocked / Skipped</li>
-            <li>If a test fails: System auto-creates a Bug task linked to the original feature</li>
-          </ul>
-        </Section>
-
-        <Section title="7. Status Transitions: Auto vs Manual">
-          <h4 style={{margin:'0 0 6px',fontSize:11,color:'#111827'}}>Automatic Transitions (System handles these)</h4>
-          <p style={{fontSize:11}}>You don't need to do anything. The system checks conditions based on the project type and moves the project forward automatically.</p>
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Software / Development</h4>
-          <InfoTable rows={[
-            ['From','To','Condition'],
-            ['Discovery','Planning','Project info filled (description, deadline, members) OR repos configured'],
-            ['Planning','Development','Tasks exist OR Sprints exist (work started)'],
-            ['Development','Testing','ALL tasks Done AND no critical tasks remain'],
-            ['Testing','Review','All test cases passed OR (all testing items passed with none failed)'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Design / Creative</h4>
-          <InfoTable rows={[
-            ['From','To','Condition'],
-            ['Discovery','Planning','Project info filled or repos linked'],
-            ['Planning','Designing','Tasks or sprints exist'],
-            ['Designing','Prototyping','Testing items exist OR (test cases exist AND all passed)'],
-            ['Prototyping','Testing','Testing ready (test cases passed or all testing passed)'],
-            ['Testing','Review','All tasks done and no critical blockers'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Business / Marketing / Growth</h4>
-          <InfoTable rows={[
-            ['From','To','Condition'],
-            ['Discovery','Planning','Project info filled'],
-            ['Planning','Business Growth','Tasks or sprints exist'],
-            ['Business Growth','Validation','≥70% of tasks done'],
-            ['Validation','Testing','Testing ready'],
-            ['Testing','Review','All tasks done and no critical blockers'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Content / Writing</h4>
-          <InfoTable rows={[
-            ['From','To','Condition'],
-            ['Discovery','Planning','Project info filled'],
-            ['Planning','Content Creation','Tasks exist'],
-            ['Content Creation','Editing','≥50% of tasks done'],
-            ['Editing','Testing','Testing ready'],
-            ['Testing','Review','All tasks done and no critical blockers'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Research / Analysis</h4>
-          <InfoTable rows={[
-            ['From','To','Condition'],
-            ['Discovery','Planning','Project info filled'],
-            ['Planning','Research','Tasks exist'],
-            ['Research','Analysis','≥50% of tasks done'],
-            ['Analysis','Testing','Testing ready'],
-            ['Testing','Review','All tasks done and no critical blockers'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Manual Transitions (You must click)</h4>
-          <p style={{fontSize:11}}>These apply to <strong>all project types</strong> and require explicit action by an authorized user.</p>
-          <InfoTable rows={[
-            ['From','To','Who Can Click','What System Checks'],
-            ['Any last auto phase','Launch','Admin, PM','All critical tests passed, no open critical bugs'],
-            ['Launch','Delivered','Admin, PM','All acceptance criteria met, stakeholders approved'],
-          ]} />
-          <p style={{fontSize:11,marginTop:6}}>If you click Launch or Delivered and the system blocks you, a report will show what's missing.</p>
-        </Section>
-
-        <Section title="8. Notifications & Alerts">
-          <p>Notifications are organized into <strong>three tabs</strong> on the Notifications page:</p>
-          <InfoTable rows={[
-            ['Tab','Types You See'],
-            ['📁 Projects','Project updates, phase changes, project invites'],
-            ['✅ Tasks & Tests','Task assignments, task updates, status changes for tasks/tests'],
-            ['📢 Other','Meeting reminders, deadline alerts, warnings, worklog entries, mentions, system messages'],
-          ]} />
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Notification Triggers</h4>
-          <InfoTable rows={[
-            ['Event','Who Gets Notified','Tab'],
-            ['Task assigned to you','You','📁 Projects'],
-            ['Sprint starts','All sprint members','📁 Projects'],
-            ['Project phase changes','All project members','📁 Projects'],
-            ['Review call scheduled','All project members','📢 Other'],
-            ['Task marked overdue','You + Your Team Lead','📢 Other'],
-            ['Test case failed','QA Lead + Developer + PM','✅ Tasks'],
-            ['Warning triggered (interests)','PM + Team Lead','📢 Other'],
-            ['Worklog added','Other project members','📢 Other'],
-            ['Project ready for Launch','PM + Stakeholders','📁 Projects'],
-            ['Manual action required','Authorized users','📁 Projects'],
-          ]} />
-          <p style={{fontSize:11}}>To manage notifications: Go to Settings → Notifications in your profile.</p>
-        </Section>
-
-        <Section title="9. Report Generation">
-          <p>GRESIO can generate professional PDF reports for projects that have reached <strong>Completed</strong> status or <strong>Delivered</strong> phase. These reports can be shared with stakeholders or clients.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Generate Reports</h4>
-          <p style={{fontSize:11}}>Only <strong>Admin</strong>, <strong>Project Manager</strong>, <strong>Manager</strong>, and <strong>Team Lead</strong> can generate, view, and delete reports.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Report Types</h4>
-          <InfoTable rows={[
-            ['Type','Audience','Contents'],
-            ['Admin Report','Internal team, PM, Admin','Full project KPIs: tasks, sprints, team performance, effort hours, test results, timeline, project health metrics. Branded "Generated by GRESIO · Certified by 360 DMMC".'],
-            ['Client Report','Client or external stakeholder','App features overview, design/visual highlights, and the 8-phase project methodology. Focused on value delivered, not internal KPIs. Branded "Generated by GRESIO · Certified by 360 DMMC".'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>How to Generate a Report</h4>
-          <ol style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.8}}>
-            <li>Go to <strong>Projects</strong> from the sidebar</li>
-            <li>Find a project with <strong>Completed</strong> status or <strong>Delivered</strong> phase</li>
-            <li>Click the <strong>"Generate Report"</strong> button on the project card</li>
-            <li>Choose <strong>Admin Report</strong>, <strong>Client Report</strong>, or <strong>Generate Both</strong></li>
-            <li>The report is saved instantly — click <strong>"View Report"</strong> to open it</li>
-          </ol>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Viewing &amp; Downloading Reports</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>All saved reports are listed under <strong>Insights → Reports</strong> in the sidebar</li>
-            <li>Click <strong>View</strong> to open the full report preview page</li>
-            <li>Click <strong>Download PDF</strong> on the preview page to export as a PDF file</li>
-            <li>You can share the report link with anyone — the public preview page requires a login</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Important Notes</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>Reports capture a <strong>snapshot</strong> of project data at the time of generation. They do not auto-update — generate a new report to refresh the data.</li>
-            <li>Generating a report for the same project <strong>overwrites</strong> the previous report of the same type. Old data is replaced.</li>
-            <li>Reports can only be <strong>deleted</strong> by authorized roles (Admin, PM, Manager, Team Lead).</li>
-            <li>Download count is tracked for each report.</li>
-          </ul>
-        </Section>
-
-        <Section title="10. WorkDNA — Company Brain">
-          <p style={{fontSize:11}}>WorkDNA is GRESIO's intelligent project archive — it automatically analyzes every active project each month, logs key decisions, and lets you search past projects to learn from before starting something new.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🧬 What WorkDNA Does</h4>
-          <InfoTable rows={[
-            ['Feature','What It Does','How It Helps'],
-            ['Monthly Project Archive','Each month, WorkDNA scans all active projects and saves a full snapshot: features, tech stack, risks, patterns, task stats, team members, documents, repositories, and technical URLs','Every project\'s complete technical state is preserved. No more digging through old chats to find what was used.'],
-            ['Decision Journal','Log every important decision — what was decided, why, what alternatives were considered, and the outcome','Never lose context. New team members can catch up in minutes instead of weeks.'],
-            ['Déjà Vu Search','Search archived projects and past decisions by keyword (features, tech, project names) to find similar work done before','Avoid repeating the same mistakes. Know what to watch out for before you start.'],
-            ['Pattern Detection','Rule-based analysis of overdue tasks, bug density, sprint cadence, and completion rates across all projects','Get warned about problems before they become crises. Spot bottlenecks you didn\'t know existed.'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>How to Use It</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>Navigate to <strong>Insights → WorkDNA</strong> from the sidebar</li>
-            <li>The <strong>Project Archive</strong> tab shows all analyzed projects — click any to expand and see every technical detail (features, tech stack, docs, repos, risks, stats, key decisions)</li>
-            <li>Click <strong>"Monthly Analysis"</strong> to trigger an immediate scan of all active projects and create fresh archives</li>
-            <li>Use the <strong>Decision Journal</strong> tab to browse all logged decisions and their outcomes</li>
-            <li>Use the <strong>Déjà Vu</strong> tab to search archived projects and decisions by keyword — find similar past projects before starting new work</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Log Decisions</h4>
-          <InfoTable rows={[
-            ['Role','Log Decision','Delete Decision','Run Analysis','View WorkDNA'],
-            ['Admin','✅','✅','✅','✅'],
-            ['Project Manager','✅','✅','✅','✅'],
-            ['Team Lead','✅','✅','❌','✅'],
-            ['Manager','✅','❌','✅','✅'],
-            ['Developer','❌','❌','❌','✅'],
-            ['QA Tester','❌','❌','❌','✅'],
-            ['Intern / Other','❌','❌','❌','✅'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What Each Archive Contains</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li><strong>Features</strong> — extracted from task titles and types</li>
-            <li><strong>Tech Stack</strong> — detected from task descriptions across all projects</li>
-            <li><strong>Risks</strong> — overdue tasks, critical bugs, delayed status, sprint overdue</li>
-            <li><strong>Patterns</strong> — task completion rate, sprint cadence, bug density</li>
-            <li><strong>Stats</strong> — tasks (done/overdue/total), sprints, bugs, decisions count</li>
-            <li><strong>Documents</strong> — all resources linked to the project (Figma, docs, repos, specs)</li>
-            <li><strong>Repositories</strong> — GitHub repos and other code hosting links</li>
-            <li><strong>Technical URLs</strong> — frontend/backend/mobile repos, staging/production URLs, API docs</li>
-            <li><strong>Key Decisions</strong> — decisions linked to the project, with rationale and outcome</li>
-            <li><strong>Client & Description</strong> — project metadata</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Why WorkDNA Matters</h4>
-          <p style={{fontSize:11}}>
-            Traditional PM tools manage tasks. WorkDNA manages <strong>wisdom</strong>. Every project makes your company smarter. 
-            When someone leaves, their decision trail stays. When a new project starts, past archives are already searchable. 
-            Over time, WorkDNA becomes your company's most valuable asset — the one thing that compounds in value with every project.
+        {/* 2. Your Role & Permissions */}
+        <Section num="2" title="Your Role & Permissions" open={openSections[2]} onToggle={() => toggleSection(2)}>
+          <p className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed">
+            Your role determines what you can see and do. You cannot change your own role — only an Admin can assign or modify roles. Below is the full permission matrix.
           </p>
+
+          <div className="mt-3 overflow-auto rounded-[var(--radius-lg)] border border-neutral-100 dark:border-[var(--border-secondary)]">
+            <table className="w-full border-collapse text-[10px] leading-tight">
+              <thead>
+                <tr className="bg-neutral-50 dark:bg-[var(--bg-tertiary)]">
+                  <th className="px-2.5 py-2.5 text-left font-semibold text-neutral-800 dark:text-[var(--text-primary)] text-[10px] uppercase tracking-wider sticky left-0 bg-neutral-50 dark:bg-[var(--bg-tertiary)] z-10">Action</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-brand-700 dark:text-brand-400 text-[10px] uppercase tracking-wider">Admin</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-purple-700 dark:text-purple-400 text-[10px] uppercase tracking-wider">PM</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-amber-700 dark:text-amber-400 text-[10px] uppercase tracking-wider">Manager</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-cyan-700 dark:text-cyan-400 text-[10px] uppercase tracking-wider">Team Lead</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-emerald-700 dark:text-emerald-400 text-[10px] uppercase tracking-wider">QA</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-sky-700 dark:text-sky-400 text-[10px] uppercase tracking-wider">Dev</th>
+                  <th className="px-2.5 py-2.5 text-center font-semibold text-slate-500 text-[10px] uppercase tracking-wider">Intern</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Create Project','✅','✅','✅','❌','❌','❌','❌'],
+                  ['Delete Project','✅','✅','✅','❌','❌','❌','❌'],
+                  ['Create Sprint','✅','✅','✅','❌','❌','❌','❌'],
+                  ['Create Task','✅','✅','✅','✅','✅','❌','❌'],
+                  ['Assign Tasks','✅','✅','✅','✅','✅','❌','❌'],
+                  ['Update Any Task','✅','✅','✅','✅','✅','✅','✅'],
+                  ['Create Test Case','✅','✅','✅','❌','❌','❌','❌'],
+                  ['Execute Test Case','✅','✅','✅','❌','✅','❌','❌'],
+                  ['🔒 Launch Project','✅','✅','❌','❌','❌','❌','❌'],
+                  ['🔒 Deliver Project','✅','✅','❌','❌','❌','❌','❌'],
+                  ['Change User Roles','✅','❌','❌','❌','❌','❌','❌'],
+                  ['Company Settings','✅','❌','❌','❌','❌','❌','❌'],
+                ].map((row, i) => (
+                  <tr key={i} className="border-b border-neutral-100 dark:border-[var(--border-secondary)] last:border-0 hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)]/50 transition-colors">
+                    {row.map((cell, j) => (
+                      <td key={j} className={`px-2.5 py-2 ${j === 0 ? 'text-left font-semibold text-neutral-800 dark:text-[var(--text-primary)] whitespace-nowrap text-[10px]' : 'text-center text-xs'}`}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)] mt-2">🔒 = Manual gate — requires explicit action by permitted role</p>
+
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-4 mb-2 uppercase tracking-wider">Role Descriptions</h4>
+          <InfoTable rows={[
+            ['Admin','Full system access. Can create/delete projects, assign roles, manage settings.'],
+            ['Project Manager (PM)','Manages multiple projects. Creates sprints, assigns tasks, launches/delivers.'],
+            ['Team Lead','Leads a department. Manages sprint backlog, approves phases, manages members.'],
+            ['Manager','Oversees operations. Edits projects, creates tasks, edits test cases.'],
+            ['QA Tester','Executes test cases. Creates tasks, manages bugs, marks test results.'],
+            ['Developer','Executes assigned tasks. Updates task status, runs test cases.'],
+            ['Intern','Supports the department. Views projects, updates own tasks.'],
+          ]} />
         </Section>
 
-        <Section title="11. WorkDNA — Fully Automatic (No AI Needed)">
-          <p style={{fontSize:11}}>WorkDNA is designed to be fully automatic and self-contained. All analysis is done using <strong>rule-based logic</strong> — no external API keys, no AI costs, no setup required.</p>
+        {/* 3. Project Lifecycle */}
+        <Section num="3" title="Project Lifecycle" open={openSections[3]} onToggle={() => toggleSection(3)}>
+          <p className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed">
+            GRESIO supports <strong>5 project types</strong>, each with its own lifecycle. The phase bar adapts automatically.
+          </p>
 
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>⚙️ How Analysis Works</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>When you click <strong>"Monthly Analysis"</strong>, WorkDNA scans all active projects immediately</li>
-            <li>For each project, it fetches: tasks, sprints, bugs, decisions, resources, team members, settings</li>
-            <li>Features are extracted from task titles and types using keyword matching</li>
-            <li>Tech stack is detected from task descriptions (React, Node.js, Database, Mobile, DevOps, etc.)</li>
-            <li>Risks are calculated: overdue tasks, unresolved critical bugs, low progress, sprint delays</li>
-            <li>Patterns are detected: completion rate, sprint cadence, bug density</li>
-            <li>A summary is generated automatically from project status, completion rate, and features</li>
-            <li>Results are saved as a monthly snapshot — one document per project per month</li>
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">Project Types & Phases</h4>
+          <InfoTable rows={[
+            ['Type','Phases'],
+            ['Software','Discovery → Planning → Development → Testing → Review → Launch → Delivered'],
+            ['Design','Discovery → Planning → Designing → Prototyping → Testing → Review → Launch → Delivered'],
+            ['Business','Discovery → Planning → Business Growth → Validation → Testing → Review → Launch → Delivered'],
+            ['Content','Discovery → Planning → Content Creation → Editing → Testing → Review → Launch → Delivered'],
+            ['Research','Discovery → Planning → Research → Analysis → Testing → Review → Launch → Delivered'],
+          ]} />
+
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">Key Rules</h4>
+          <ul className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] m-0 pl-4 space-y-1 leading-relaxed">
+            <li>Auto-transitions move the project forward automatically. Only Admin/PM/Team Lead can override.</li>
+            <li>You cannot skip phases — each phase must be completed in order.</li>
+            <li>Manual gates (Launch, Delivered) require explicit approval by authorized roles.</li>
           </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🧠 Why Rule-Based</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li><strong>Zero cost</strong> — no API keys, no monthly bills, no token limits</li>
-            <li><strong>Instant</strong> — analysis completes in seconds, not minutes</li>
-            <li><strong>Deterministic</strong> — same data always produces same results, no hallucination risk</li>
-            <li><strong>Private</strong> — no data leaves your server, all processing is local</li>
-            <li><strong>Self-contained</strong> — works immediately after deployment, no configuration needed</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>🔮 Future Possibilities</h4>
-          <p style={{fontSize:11}}>While WorkDNA is currently 100% rule-based, its architecture supports adding AI-powered features later (semantic search, natural language queries, auto-extracted decisions) if needed. But for now, everything works automatically — no setup, no cost, no complexity.</p>
-
-          <blockquote style={{margin:'10px 0',padding:'8px 12px',background:'#f0f4ff',borderLeft:'3px solid #2347e8',fontSize:11,borderRadius:4}}>
-            <strong>💡 Bottom line:</strong> WorkDNA is the easiest intelligence layer to adopt — click one button and every project is archived forever. No configuration, no API keys, no maintenance.
-          </blockquote>
         </Section>
 
-        <Section title="12. Getting Started Checklist">
-          <p>Before you start using GRESIO, complete this checklist:</p>
-          <ul style={{margin:0,padding:0,fontSize:11,listStyle:'none'}}>
+        {/* 4. Essential Features */}
+        <Section num="4" title="Essential Features" open={openSections[4]} onToggle={() => toggleSection(4)}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-neutral-600 dark:text-[var(--text-secondary)]">
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">📊</span>
+              <p className="font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-1 mb-0.5">Dashboard</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">Progress bar, stats cards, project health, and navigation tabs for every project.</p>
+            </div>
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">✅</span>
+              <p className="font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-1 mb-0.5">Tasks & Sprints</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">Time-boxed sprints (1-2 weeks) with tasks. Status: To Do → In Progress → In Review → Done.</p>
+            </div>
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">🧪</span>
+              <p className="font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-1 mb-0.5">Test Cases</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">QA validation with step-by-step instructions. Failed tests auto-create Bug tasks.</p>
+            </div>
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">📅</span>
+              <p className="font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-1 mb-0.5">Calendar</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">Month view with color-coded tasks 🟡, sprints 🟢, deadlines 🔴, milestones 🔵, events 🟣, reminders 🟠.</p>
+            </div>
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">🔔</span>
+              <p className="font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-1 mb-0.5">Notifications</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">Three tabs: Projects, Tasks & Tests, Other. Get alerts for assignments, deadlines, and phase changes.</p>
+            </div>
+            <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-3">
+              <span className="text-base">📋</span>
+              <p className="font-semibold text-neutral-800 dark:[var(--text-primary)] mt-1 mb-0.5">Reports</p>
+              <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] m-0">Generate Admin (full KPIs) or Client (summary) PDF reports for completed/delivered projects.</p>
+            </div>
+          </div>
+        </Section>
+
+        {/* 5. WorkDNA & Knowledge Base */}
+        <Section num="5" title="WorkDNA & Knowledge Base" open={openSections[5]} onToggle={() => toggleSection(5)}>
+          <p className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed">
+            WorkDNA is GRESIO's intelligent project archive — it automatically analyzes every active project each month, logs key decisions, and lets you search past projects to learn from before starting something new.
+          </p>
+
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">What WorkDNA Does</h4>
+          <InfoTable rows={[
+            ['Monthly Project Archive','Saves full snapshot: features, tech stack, risks, patterns, tasks, team, docs'],
+            ['Decision Journal','Log every decision — what, why, alternatives, and outcome'],
+            ['Déjà Vu Search','Search archives by keyword to find similar past work'],
+            ['Pattern Detection','Rule-based analysis of overdue tasks, bug density, sprint cadence'],
+          ]} />
+
+          <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">Knowledge Base</h4>
+          <ul className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] m-0 pl-4 space-y-1 leading-relaxed">
+            <li><strong>📝 Wiki</strong> — Create/edit markdown articles with live preview, rate articles, attach files</li>
+            <li><strong>🧬 WorkDNA</strong> — Browse monthly snapshots, log decisions, search past projects</li>
+            <li><strong>📋 Templates</strong> — Browse reusable project templates with predefined phases and tasks</li>
+          </ul>
+        </Section>
+
+        {/* 6. Checklist */}
+        <Section num="6" title="Getting Started Checklist" open={openSections[6]} onToggle={() => toggleSection(6)}>
+          <p className="text-xs text-neutral-500 dark:text-[var(--text-tertiary)] mb-3">Check all 5 items to acknowledge the guide:</p>
+          <ul className="m-0 p-0 list-none space-y-2">
             {[
               {k:'role',l:'I understand my role and its permissions'},
-              {k:'lead',l:'I know who my Team Lead / PM is'},
-              {k:'lifecycle',l:'I understand the lifecycle phases for each project type'},
-              {k:'manual',l:'I know that Launch and Delivered require manual approval'},
+              {k:'lifecycle',l:'I understand project lifecycle phases'},
               {k:'tasks',l:'I know how to create and update tasks'},
-              {k:'qa',l:'I know how to run test cases (if I\'m QA)'},
-              {k:'calendar',l:'I know how to use the Calendar to track deadlines and events'},
-              {k:'relay',l:'I understand how Project Relay chains work'},
-              {k:'workdna',l:'I understand WorkDNA and how to log decisions'},
-              {k:'kb',l:'I know how to use the Knowledge Base to find documentation and guides'},
-              {k:'help',l:'I know where to find help if I\'m stuck'},
+              {k:'contact',l:'I know who to contact if I\'m stuck'},
+              {k:'features',l:'I\'ve reviewed the key features'},
             ].map(({k,l}) => (
-              <li key={k} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',opacity:checklist[k] ? 1 : 0.6}}
-                onClick={() => !acknowledged && setChecklist(p => ({...p, [k]: !p[k]}))}>
-                <span style={{fontSize:11,color:checklist[k] ? '#16a34a' : '#d1d5db'}}>
-                  {checklist[k] ? '✅' : '◻️'}
+              <li key={k}
+                onClick={() => !acknowledged && setChecklist(p => ({...p, [k]: !p[k]}))}
+                className="flex items-center gap-3 py-2 px-3 rounded-[var(--radius-md)] cursor-pointer transition-all hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)]"
+                style={{opacity: checklist[k] ? 1 : 0.65}}>
+                <span className={`w-5 h-5 rounded-[var(--radius-sm)] flex items-center justify-center text-[10px] font-bold transition-all border-2 shrink-0 ${checklist[k] ? 'bg-brand-600 border-brand-600 text-white' : 'border-neutral-300 dark:border-[var(--border-primary)] text-transparent'}`}>
+                  {checklist[k] ? '✓' : ''}
                 </span>
-                <span style={{color:checklist[k] ? '#111827' : '#6b7280',fontWeight:checklist[k] ? 600 : 400}}>{l}</span>
+                <span className={`text-xs transition-all ${checklist[k] ? 'font-semibold text-neutral-900 dark:text-[var(--text-primary)]' : 'text-neutral-600 dark:text-[var(--text-secondary)]'}`}>{l}</span>
               </li>
             ))}
           </ul>
           {!acknowledged && !allChecked && (
-            <p style={{fontSize:11,fontWeight:600,color:'#d97706',marginTop:10}}>☑️ Check all items above to enable acknowledgment</p>
+            <p className="text-[11px] font-semibold mt-3" style={{color: 'var(--warning-text)'}}>☑️ Check all 5 items above to enable acknowledgment</p>
           )}
           {!acknowledged && allChecked && !reachedBottom && (
-            <p style={{fontSize:11,fontWeight:600,color:'#d97706',marginTop:10}}>📖 Scroll to the bottom of the page to acknowledge</p>
+            <p className="text-[11px] font-semibold mt-3" style={{color: 'var(--warning-text)'}}>📖 Scroll to the bottom of the page to acknowledge</p>
           )}
           {!acknowledged && allChecked && reachedBottom && (
-            <p style={{fontSize:11,fontWeight:600,color:'#16a34a',marginTop:10}}>✅ All items checked — you can now acknowledge below</p>
+            <p className="text-[11px] font-semibold mt-3" style={{color: 'var(--success-text)'}}>✅ All ready — acknowledge below</p>
           )}
         </Section>
 
+        {/* 7. Admin Only */}
         {user?.role === 'admin' && (
-        <Section title="13. Admin: Import Users from Microsoft 365">
-          <p style={{fontSize:11}}>As an admin, you can import all company users from your Microsoft 365 / Azure AD directory directly into GRESIO in one click.</p>
-
-          <h4 style={{margin:'14px 0 6px',fontSize:11,color:'#111827'}}>What this does</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>Searches Azure AD for all users whose email ends with <strong>your company domain</strong></li>
-            <li>Creates a GRESIO account for each user with a temporary password</li>
-            <li>Sends a welcome email with login instructions via Microsoft Graph</li>
-            <li>Users who already exist in GRESIO (matched by email) are skipped</li>
-          </ul>
-
-          <h4 style={{margin:'14px 0 6px',fontSize:11,color:'#111827'}}>Steps</h4>
-          <ol style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.8}}>
-            <li>From the sidebar, go to <strong>Admin Panel</strong></li>
-            <li>Scroll down to the <strong>"Import from Microsoft 365"</strong> card</li>
-            <li>In the <strong>@</strong> input field, type your company email domain (e.g. <code>yourcompany.com</code>)</li>
-            <li>Click the <strong>"Import Users"</strong> button (with the Microsoft logo)</li>
-            <li>Wait for the import to complete — a green success message will show the count of imported and skipped users</li>
-          </ol>
-
-          <h4 style={{margin:'14px 0 6px',fontSize:11,color:'#111827'}}>What happens after import</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>All imported users can be seen in the <strong>Team</strong> section from the sidebar</li>
-            <li>Each user receives a welcome email with their email, temporary password, and login link</li>
-            <li>Imported users are assigned the <strong>Developer</strong> role by default (you can change this later)</li>
-            <li>Users can change their password after first login</li>
-          </ul>
-
-        </Section>
+          <Section num="7" title="Admin: Import Users from Microsoft 365" open={openSections[7]} onToggle={() => toggleSection(7)}>
+            <p className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed">
+              Import all company users from Microsoft 365 / Azure AD in one click.
+            </p>
+            <h4 className="text-[11px] font-semibold text-neutral-800 dark:text-[var(--text-primary)] mt-3 mb-2 uppercase tracking-wider">How It Works</h4>
+            <ol className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] m-0 pl-4 space-y-1.5 leading-relaxed">
+              <li>Go to <strong>Admin Panel</strong> from the sidebar</li>
+              <li>In the <strong>"Import from Microsoft 365"</strong> card, type your domain (e.g. <code>company.com</code>)</li>
+              <li>Click <strong>"Import Users"</strong> — accounts are created with temp passwords</li>
+              <li>Welcome emails are sent automatically via Microsoft Graph</li>
+              <li>Existing users (matched by email) are skipped</li>
+            </ol>
+            <p className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] mt-3">Imported users get the <strong>Developer</strong> role by default. You can change this later.</p>
+          </Section>
         )}
 
-        <Section title="16. FAQ & Troubleshooting">
-          <div style={{display:'flex',flexDirection:'column',gap:12,fontSize:11}}>
-            <Qa q="Why can't I click 'Launch'?" a={"Only Admin, PM, or Team Lead can launch a project. If you don't see the button or it's grayed out, your role doesn't have permission. Contact your PM."} />
-            <Qa q="The project is stuck in Development. Why won't it move to Testing?" a={"Check that: All tasks are marked \"Done\" (not \"In Review\" or \"In Progress\"), All sprints are marked \"Completed\", There are no open blockers."} />
-            <Qa q="I marked my task as Done but the project didn't advance." a="The system checks ALL tasks across ALL sprints. If even one task is not Done, the project stays in Development." />
-            <Qa q="Can I undo a status change?" a="Only Admin, PM, or Team Lead can manually override status backward. Regular users cannot undo auto-transitions." />
-            <Qa q="What happens if a test case fails?" a="The system automatically creates a Bug task, links it to the failed test, and notifies the developer who built that feature." />
-            <Qa q="I uploaded a file but my teammate can't see it." a="Check that your teammate has at least Viewer access to the project. Also verify the file is attached to a task or test case they can access." />
-            <Qa q="How do I change my role?" a="You cannot. Only an Admin can change user roles. Contact your system administrator." />
-            <Qa q="What does &quot;6d overdue&quot; mean?" a="The project deadline has passed by 6 days. The PM and Team Lead are notified. Work should be prioritized to close the project." />
+        {/* 8. Need Help? */}
+        <Section num="8" title="Need Help?" open={openSections[8]} onToggle={() => toggleSection(8)}>
+          <div className="text-xs text-neutral-600 dark:text-[var(--text-secondary)] leading-relaxed space-y-2">
+            <p className="m-0 flex items-center gap-2">
+              <span className="text-sm">✉️</span>
+              <a href="mailto:Consult@360DMMC.com" className="text-brand-600 dark:text-brand-400 font-medium hover:underline">Consult@360DMMC.com</a>
+            </p>
+            <p className="m-0 flex items-center gap-2">
+              <span className="text-sm">🕐</span>
+              <span>Support Hours: Sunday–Thursday, 9:00 AM – 6:00 PM</span>
+            </p>
+            <p className="m-0 flex items-center gap-2">
+              <span className="text-sm">🚨</span>
+              <span>Emergency: Use the <strong>"Escalate"</strong> button in the top navigation</span>
+            </p>
           </div>
         </Section>
 
-        <Section title="14. Calendar">
-          <p style={{fontSize:11}}>The Calendar page gives you a month-view of all your team's important dates — tasks, sprints, project deadlines, milestones, events, and reminders — all in one place.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What You See</h4>
-          <InfoTable rows={[
-            ['Item','Color','Description'],
-            ['Tasks','🟡 Yellow','Task deadlines pulled from all projects'],
-            ['Sprints','🟢 Green','Sprint start and end dates'],
-            ['Deadlines','🔴 Red','Project final delivery deadlines'],
-            ['Milestones','🔵 Blue','Key project milestones'],
-            ['Events','🟣 Purple','Custom events added via the calendar'],
-            ['Reminders','🟠 Orange','Manual reminders for reviews & meetings'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>How to Use</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>Navigate between months using the ← → arrows</li>
-            <li>Each day shows dots or indicators for items due that day</li>
-            <li>Click <strong>"Add Event"</strong> to create a custom calendar event or reminder</li>
-            <li>Events can optionally create a <strong>Microsoft Teams meeting</strong> — toggle "Create Teams Meeting" and enter the meeting link</li>
-            <li>Reminders can be set for review calls directly from the <strong>Review</strong> tab in a project's detail page</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Access</h4>
-          <p style={{fontSize:11}}>The Calendar is available from the sidebar under <strong>Workspace → Execution → Calendar</strong>. It is visible to all roles.</p>
-        </Section>
-
-        <Section title="15. Project Relay">
-          <p style={{fontSize:11}}>Project Relay lets you chain projects in ordered pipelines. When one project is delivered, the next project's team is automatically notified — perfect for workflows where projects depend on each other.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Key Concepts</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>A <strong>Chain</strong> is a named sequence of projects in a specific order</li>
-            <li>Chains are standalone entities — they don't modify the original projects</li>
-            <li>Both <strong>linear</strong> (1→2→3) and <strong>branching</strong> (1→[2,3]) chains are supported</li>
-            <li>When a project's phase changes to <strong>Delivered</strong>, the system sends a notification to members of the next project in the chain</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Create & Manage Chains</h4>
-          <InfoTable rows={[
-            ['Role','Create','Edit','Delete'],
-            ['Admin','✅','✅','✅'],
-            ['Project Manager','✅','✅','✅'],
-            ['Team Lead','✅','✅','❌'],
-            ['Manager','✅','✅','❌'],
-            ['Others','❌','❌','❌'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Chain Status & Visuals</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li>Each project in the chain shows its current phase (e.g., Development, Delivered)</li>
-            <li>Delivered projects appear with a <strong>green background</strong></li>
-            <li>When <strong>all</strong> projects in a chain are delivered, the chain card shows a green left border and a <strong>✓ Completed</strong> badge</li>
-            <li>The completion count (e.g., <strong>3/3 projects done</strong>) is shown on every chain card</li>
-            <li>Edit/Delete buttons are hidden once the chain is fully completed</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Accessing Project Relay</h4>
-          <p style={{fontSize:11}}>Go to <strong>Workspace → Project Relay</strong> from the sidebar. From there you can view all chains, create new ones, and click into any chain to see its pipeline visualization. Each chain is also visible from its member projects' <strong>Relay</strong> tab in the project detail page.</p>
-        </Section>
-
-        <Section title="17. Knowledge Base">
-          <p style={{fontSize:11}}>The Knowledge Base is the central hub that brings together your <strong>company wiki</strong>, <strong>WorkDNA archives</strong>, and <strong>project templates</strong> — everything your team needs to document, learn from, and reuse past work.</p>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>What's Included</h4>
-          <ul style={{margin:0,paddingLeft:16,fontSize:11,lineHeight:1.7}}>
-            <li><strong>📝 Wiki Articles</strong> — Create and edit markdown documentation with live preview. Organize by department, rate articles, attach files, and import existing <code>.md</code>/<code>.txt</code> files.</li>
-            <li><strong>🧬 WorkDNA Archive</strong> — Browse monthly archived snapshots of every project: features, tech stack, decisions, risks, repos, and stats. Search past projects to learn before starting something new.</li>
-            <li><strong>📋 Template Marketplace</strong> — Browse, rate, and download reusable project templates for Software, Design, Business, Content, and Research. Templates include predefined phases and tasks.</li>
-          </ul>
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Who Can Do What</h4>
-          <InfoTable rows={[
-            ['Action','Admin / PM / Team Lead / Manager','Others'],
-            ['Create wiki articles','✅','❌'],
-            ['Edit wiki articles','✅','✅'],
-            ['Delete wiki articles','✅','❌'],
-            ['Add departments','✅','❌'],
-            ['Rate articles / templates','✅','✅'],
-            ['Create templates','✅','❌'],
-            ['Access WorkDNA','✅','✅'],
-          ]} />
-
-          <h4 style={{margin:'12px 0 6px',fontSize:11,color:'#111827'}}>Accessing the Knowledge Base</h4>
-          <p style={{fontSize:11}}>Go to <strong>Workspace → Knowledge Base</strong> from the sidebar to browse wiki articles. WorkDNA is available under <strong>Insights → WorkDNA</strong>, and Templates under <strong>Workspace → Templates</strong> — all accessible from the Knowledge Base section of the sidebar.</p>
-        </Section>
-
-        <Section title="System Administrator Contact">
-          <p style={{fontSize:11}}>
-            If you encounter issues not covered in this guide:<br />
-            System Admin: <a href="mailto:Consult@360DMMC.com">Consult@360DMMC.com</a><br />
-            Support Hours: Sunday–Thursday, 9:00 AM – 6:00 PM<br />
-            Emergency: Use the 🚨 "Escalate" button in the top navigation
-          </p>
-        </Section>
-
-        <Section title="Version History">
-          <InfoTable rows={[
-            ['Version','Date','Changes'],
-            ['1.1','June 2026','Added Microsoft 365 user import guide for admins'],
-            ['1.2','June 2026','Added 5 project types with type-specific lifecycle phases'],
-            ['1.3','June 2026','Added Report Generation feature (admin + client PDF reports)'],
-            ['1.4','June 2026','Added Review tab with call scheduler; enhanced notifications with 3-tab layout; project phase change alerts'],
-            ['1.5','June 2026','Added Calendar page with color-coded tasks, sprints, deadlines, milestones, events, and reminders'],
-            ['1.6','June 2026','Added Project Relay — chain projects in ordered pipelines with delivery notifications'],
-            ['1.7','June 2026','Added dedicated Calendar (11) and Project Relay (12) sections to the guide; updated checklist with relay item'],
-            ['2.0','June 2026','🧬 Added WorkDNA — Company Brain: Decision Journal, Project Déjà Vu, Pattern Detection, Invisible Work Map. New WorkDNA page under Insights. Added to Landing page and Onboarding guide as section 10.'],
-            ['2.1','June 2026','🤖 Added AI Roadmap section to Onboarding (section 11). Created stub AI provider + embeddings services. Ready for API key activation.'],
-            ['2.2','June 2026','📚 Added Knowledge Base section to Onboarding (section 17). Featured on Landing, Features, and Pricing pages.'],
-          ]} />
-        </Section>
       </div>
 
-      <div ref={footerRef} style={{textAlign:'center',marginTop:24,paddingTop:16,borderTop:'0.5px solid #e5e7eb'}}>
+      {/* ── Footer / Acknowledge ── */}
+      <div ref={footerRef} className="text-center mt-8 pt-5" style={{borderTop: '0.5px solid var(--border-primary)'}}>
         {acknowledged ? (
-          <span style={{fontSize:12,color:'#22c55e',fontWeight:600}}>✅ You have acknowledged this guide</span>
+          <div className="flex items-center justify-center gap-2 text-sm font-semibold" style={{color: 'var(--success-text)'}}>
+            <span className="text-lg">✅</span> You have acknowledged this guide
+          </div>
         ) : allChecked && reachedBottom ? (
-          <button data-voice="acknowledge-guide" onClick={handleAcknowledge} className="btn btn-blue" style={{fontSize:11,padding:'8px 20px'}}>
+          <button onClick={handleAcknowledge} className="btn-premium text-xs px-6 py-2.5 animate-scale-in">
             ✅ I Acknowledge and Agree
           </button>
         ) : (
-          <span style={{fontSize:11,color:'#9ca3af'}}>
-            {!allChecked ? '☑️ Check all items in the checklist above first' : '📖 Scroll down to reach the bottom'}
+          <span className="text-[11px]" style={{color: 'var(--text-muted)'}}>
+            {!allChecked ? '☑️ Check all 5 items in the checklist above first' : '📖 Scroll down to reach the bottom'}
           </span>
         )}
       </div>
@@ -653,24 +344,35 @@ export default function OnboardingGuide() {
   );
 }
 
-function Section({ title, children }) {
+function Section({ num, title, open, onToggle, children }) {
   return (
-    <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:'14px 16px'}}>
-      <h3 style={{fontSize:13,fontWeight:700,color:'#111827',margin:'0 0 8px'}}>{title}</h3>
-      {children}
+    <div className="card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--border-primary)] overflow-hidden">
+      <button onClick={onToggle}
+        className="w-full flex items-center gap-3 px-4 py-3.5 cursor-pointer bg-transparent border-none transition-colors hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)]">
+        <span className="w-6 h-6 rounded-[var(--radius-md)] bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 flex items-center justify-center text-[11px] font-bold shrink-0">{num}</span>
+        <span className="flex-1 text-left text-sm font-semibold text-neutral-900 dark:text-[var(--text-primary)]">{title}</span>
+        <svg className={`w-4 h-4 text-neutral-400 dark:text-[var(--text-muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      <div className={`transition-all duration-300 ease-in-out ${open ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div className="px-4 pb-4">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
 
 function InfoTable({ rows }) {
   return (
-    <div style={{overflow:'auto'}}>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
+    <div className="overflow-auto rounded-[var(--radius-md)] border border-neutral-100 dark:border-[var(--border-secondary)]">
+      <table className="w-full border-collapse text-[10px]">
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} style={{borderBottom:'0.5px solid #f3f4f6'}}>
+            <tr key={i} className="border-b border-neutral-100 dark:border-[var(--border-secondary)] last:border-0">
               {row.map((cell, j) => (
-                <td key={j} style={{padding:'5px 8px',fontWeight:j === 0 ? 600 : 400,color:j === 0 ? '#111827' : '#6b7280',whiteSpace: j === 0 ? 'nowrap' : undefined,verticalAlign:'top'}}>{cell}</td>
+                <td key={j} className={`px-2.5 py-2 align-top ${j === 0 ? 'font-semibold whitespace-nowrap text-neutral-800 dark:text-[var(--text-primary)]' : 'text-neutral-500 dark:text-[var(--text-tertiary)]'}`}>{cell}</td>
               ))}
             </tr>
           ))}
@@ -679,13 +381,3 @@ function InfoTable({ rows }) {
     </div>
   );
 }
-
-function Qa({ q, a }) {
-  return (
-    <div>
-      <p style={{fontWeight:600,color:'#111827',margin:'0 0 2px'}}>Q: {q}</p>
-      <p style={{color:'#6b7280',margin:0}}>A: {a}</p>
-    </div>
-  );
-}
-

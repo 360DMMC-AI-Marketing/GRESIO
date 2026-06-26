@@ -139,42 +139,42 @@ export default function ReportEditPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader size={20} className="animate-spin text-surface-400" />
-        <span className="ml-3 text-xs text-surface-400">Loading editor...</span>
+      <div className="page-enter flex items-center justify-center py-20">
+        <Loader size={20} className="animate-spin text-[var(--text-muted)]" />
+        <span className="ml-3 text-xs text-[var(--text-muted)]">Loading editor...</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6 max-w-full">
+    <div className="page-enter flex flex-col gap-4 p-6 max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="glass-panel flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button data-voice="back-project" onClick={() => navigate(`/projects/${projectId}`)}
-            className="p-1.5 text-surface-400 hover:text-surface-600 hover:bg-surface-100 rounded-lg transition-colors bg-transparent border-none cursor-pointer">
+            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors bg-transparent border-none cursor-pointer">
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-lg font-bold text-surface-900">Customize Report — {projectName}</h1>
-            <p className="text-[10px] text-surface-400">Edit sections, then save to create the report</p>
+            <h1 className="text-lg font-bold text-[var(--text-primary)]">Customize Report — {projectName}</h1>
+            <p className="text-[10px] text-[var(--text-muted)]">Edit sections, then save to create the report</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex bg-surface-100 rounded-lg p-0.5">
+          <div className="flex bg-[var(--bg-tertiary)] rounded-lg p-0.5">
             <button data-voice="type-client" onClick={() => setType('client')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'client' ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'client' ? 'bg-white dark:bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
               Client Report
             </button>
             <button data-voice="type-admin" onClick={() => setType('admin')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'admin' ? 'bg-white text-surface-900 shadow-sm' : 'text-surface-500 hover:text-surface-700'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors border-none cursor-pointer ${type === 'admin' ? 'bg-white dark:bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
               Admin Report
             </button>
           </div>
 
           <button data-voice="preview-report" onClick={() => setPreviewMode(!previewMode)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors border-none cursor-pointer">
             <Eye size={14} /> {previewMode ? 'Edit' : 'Preview'}
           </button>
 
@@ -185,7 +185,7 @@ export default function ReportEditPage() {
             </button>
           ) : (
             <button data-voice="save-report" onClick={handleSave} disabled={saving}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#2347e8] text-white rounded-lg hover:bg-[#1d3dcc] transition-colors border-none cursor-pointer disabled:opacity-50">
+              className="btn-premium flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium">
               <Save size={14} /> {saving ? 'Saving...' : 'Save Report'}
             </button>
           )}
@@ -194,7 +194,7 @@ export default function ReportEditPage() {
 
       {/* Main content */}
       {previewMode ? (
-        <div className="overflow-auto bg-surface-100 rounded-xl p-4" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+        <div className="overflow-auto bg-[var(--bg-tertiary)] rounded-xl p-4 animate-fade-in" style={{ maxHeight: 'calc(100vh - 180px)' }}>
           <div className="flex justify-center">
             <ReportPreview projectName={projectName} type={type} sections={sections} pdfRef={pdfRef} />
           </div>
@@ -203,8 +203,8 @@ export default function ReportEditPage() {
           </div>
         </div>
       ) : (
-        <div className="flex gap-4" style={{ height: 'calc(100vh - 180px)' }}>
-          <div className="w-56 shrink-0 overflow-y-auto">
+        <div className="flex gap-4 animate-fade-in" style={{ height: 'calc(100vh - 180px)' }}>
+          <div className="w-56 shrink-0 overflow-y-auto card-premium">
             <SectionSelector sections={sections} onToggle={handleToggleSection} onReorder={handleReorder} currentKey={currentKey} onSelect={setCurrentKey} />
           </div>
 
@@ -214,7 +214,7 @@ export default function ReportEditPage() {
               <div>
                 {prevSection && (
                   <button onClick={() => setCurrentKey(prevSection.key)}
-                    className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
+                    className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors border-none cursor-pointer">
                     ← {prevSection.title}
                   </button>
                 )}
@@ -222,7 +222,7 @@ export default function ReportEditPage() {
               <div>
                 {nextSection && (
                   <button onClick={() => setCurrentKey(nextSection.key)}
-                    className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
+                    className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors border-none cursor-pointer">
                     {nextSection.title} →
                   </button>
                 )}

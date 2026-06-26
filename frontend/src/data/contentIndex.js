@@ -1,7 +1,7 @@
 const CONTENT_INDEX = [
   // ---- ONBOARDING GUIDE ----
   { page: 'Onboarding Guide', title: 'Welcome to GRESIO!', desc: 'Quick-setup welcome banner introducing the full onboarding guide', url: '/onboarding-guide', icon: '👋' },
-  { page: 'Onboarding Guide', title: 'What is GRESIO?', desc: 'All-in-one internal OS: project dashboard, 5 project types, sprint management, task tracking, test cases, team collaboration, calendar, project relay, reports, automation', url: '/onboarding-guide', icon: 'ℹ️' },
+  { page: 'Onboarding Guide', title: 'What is GRESIO?', desc: 'All-in-one internal OS: project dashboard, 5 project types, sprint management, task tracking, test cases, team collaboration, calendar, reports, automation', url: '/onboarding-guide', icon: 'ℹ️' },
   { page: 'Onboarding Guide', title: 'User Roles & Permissions', desc: '8 user roles with full permission matrix — Admin, PM, Team Lead, Manager, QA Tester, Developer, Intern, Other', url: '/onboarding-guide', icon: '👤' },
   { page: 'Onboarding Guide', title: 'Project Lifecycle Explained', desc: '5 project types (Software, Design, Business, Content, Research) with type-specific lifecycle phases', url: '/onboarding-guide', icon: '🔄' },
   { page: 'Onboarding Guide', title: 'Dashboard Overview', desc: 'Progress bar, stats cards, project health metrics, navigation tabs', url: '/onboarding-guide', icon: '📊' },
@@ -11,10 +11,10 @@ const CONTENT_INDEX = [
   { page: 'Onboarding Guide', title: 'Report Generation', desc: 'Admin and Client PDF reports for completed/delivered projects', url: '/onboarding-guide', icon: '📄' },
   { page: 'Onboarding Guide', title: 'WorkDNA — Company Brain', desc: 'Monthly project archive, decision journal, deja vu search, pattern detection', url: '/onboarding-guide', icon: '🧠' },
   { page: 'Onboarding Guide', title: 'WorkDNA — Fully Automatic (No AI Needed)', desc: 'Rule-based analysis, zero-cost, deterministic, private, self-contained', url: '/onboarding-guide', icon: '🤖' },
-  { page: 'Onboarding Guide', title: 'Getting Started Checklist', desc: '11-item checklist: understand role, lifecycle, tasks, QA, calendar, relay, WorkDNA, Knowledge Base', url: '/onboarding-guide', icon: '✅' },
+  { page: 'Onboarding Guide', title: 'Getting Started Checklist', desc: '11-item checklist: understand role, lifecycle, tasks, QA, calendar, WorkDNA, Knowledge Base', url: '/onboarding-guide', icon: '✅' },
   { page: 'Onboarding Guide', title: 'Admin: Import Users from Microsoft 365', desc: 'One-click Azure AD user import with temporary passwords and welcome emails', url: '/onboarding-guide', icon: '👥' },
   { page: 'Onboarding Guide', title: 'Calendar Overview', desc: 'Month-view calendar with color-coded items: tasks (yellow), sprints (green), deadlines (red), milestones (blue), events (purple), reminders (orange)', url: '/onboarding-guide', icon: '📅' },
-  { page: 'Onboarding Guide', title: 'Project Relay', desc: 'Chain projects in ordered pipelines with linear and branching support, auto-notifications on delivery', url: '/onboarding-guide', icon: '🔗' },
+
   { page: 'Onboarding Guide', title: 'FAQ & Troubleshooting', desc: '8 Q&A items: launch permissions, stuck phases, undone tasks, status undo, test failure, file visibility, role changes', url: '/onboarding-guide', icon: '❓' },
   { page: 'Onboarding Guide', title: 'Knowledge Base', desc: 'Wiki articles (markdown, ratings, attachments), WorkDNA archives, Template Marketplace', url: '/onboarding-guide', icon: '📚' },
   { page: 'Onboarding Guide', title: 'System Administrator Contact', desc: 'Admin email, support hours, emergency escalation', url: '/onboarding-guide', icon: '📞' },
@@ -145,7 +145,7 @@ const CONTENT_INDEX = [
   { page: 'Sprints', title: 'Sprints', desc: 'Manage time-boxed sprints with goals, dates, and progress tracking', url: '/sprints', icon: '⚡' },
   { page: 'Work Logs', title: 'Work Logs', desc: 'Track time spent on tasks and projects with hourly logging', url: '/work-logs', icon: '⏱️' },
   { page: 'Test Cases', title: 'Test Case Dashboard', desc: 'Manage test cases, execute tests, track results and bugs', url: '/test-cases', icon: '🧪' },
-  { page: 'Project Relay', title: 'Project Relay', desc: 'Chain projects in ordered pipelines with linear and branching support', url: '/relay', icon: '🔗' },
+
   { page: 'Users', title: 'Department / Users', desc: 'Manage team members, roles, and department structure', url: '/users', icon: '👥' },
   { page: 'Analytics', title: 'Analytics', desc: 'Advanced analytics with sprint burndown, velocity, workload and participation scoring', url: '/analytics', icon: '📈' },
   { page: 'Reports', title: 'Reports', desc: 'Generate and view admin and client PDF reports with KPIs', url: '/reports', icon: '📄' },

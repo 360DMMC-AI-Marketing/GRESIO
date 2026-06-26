@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { analytics, projects, companies } from '../services/api';
 import { users as usersApi } from '../services/api';
@@ -139,6 +140,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState(loadSections);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [draftSections, setDraftSections] = useState(null);
   const [viewMode, setViewMode] = useState('weeks');
   const [capacityData, setCapacityData] = useState(null);
   const [capacityLoading, setCapacityLoading] = useState(true);
@@ -164,7 +166,7 @@ export default function Dashboard() {
     ])
       .then(([aRes, pRes, compRes, prodRes, workRes, compAnal]) => {
         setStats(aRes.data);
-        setProjectList(pRes.data.slice(0, 6));
+        setProjectList(pRes.data.filter(p => !p.parentProject).slice(0, 6));
         const comps = Array.isArray(compRes) ? compRes : compRes.data || [];
         setCompany(comps[0] || null);
         setProductivity(Array.isArray(prodRes) ? prodRes : prodRes?.data || []);
@@ -193,15 +195,18 @@ export default function Dashboard() {
     [predictions]
   );
 
-  function toggleSection(key) {
-    setSections(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('dash_sections', JSON.stringify(next));
-      return next;
-    });
-  }
-
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="skeleton h-24 w-full rounded-[var(--radius-xl)]" />
+      <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+        <div className="skeleton h-32" />
+        <div className="skeleton h-32" />
+        <div className="skeleton h-32" />
+        <div className="skeleton h-32" />
+      </div>
+      <div className="skeleton h-64 rounded-[var(--radius-lg)]" />
+    </div>
+  );
 
   const healthScore = stats?.healthScore || 0;
   const healthColor = healthScore >= 70 ? '#22c55e' : healthScore >= 40 ? '#f59e0b' : '#ef4444';
@@ -211,100 +216,119 @@ export default function Dashboard() {
   return (
     <div>
       {/* ── Executive Briefing Header ── */}
-      <div style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #eef2ff 50%, #f5f3ff 100%)', borderRadius: 12, border: '0.5px solid #e0e7ff', padding: '16px 20px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="glass-panel gradient-wave rounded-[var(--radius-xl)] p-4 sm:p-5 mb-4 flex items-center justify-between flex-wrap gap-3 dark:border-[var(--glass-border)]" style={{background: 'linear-gradient(135deg, #f0f4ff 0%, #eef2ff 50%, #f5f3ff 100%)', backgroundSize: '200% 200%'}}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 300, color: '#6b7280', letterSpacing: '-0.02em' }}>{getGreeting()},</span>
-            <span style={{ fontSize: 26, fontWeight: 800, color: '#1e40af', letterSpacing: '-0.03em' }}>{user?.name?.split(' ')[0] || 'there'}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span className="text-[22px] font-light text-neutral-500 dark:text-[var(--text-tertiary)] tracking-tight">{getGreeting()},</span>
+            <span className="text-[26px] font-extrabold text-primary-700 dark:text-brand-400 tracking-tighter">{user?.name?.split(' ')[0] || 'there'}</span>
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20 px-2 py-0.5 rounded-full">
+              <span className="live-dot" /> Live
+            </span>
           </div>
-          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontWeight: 500 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          <div className="text-xs text-neutral-500 dark:text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
             {company && (
               <>
-                <span style={{ color: '#d1d5db' }}>·</span>
-                <span style={{ color: '#4f46e5', fontWeight: 600 }}>{company.name}</span>
-                {company.domain && <span style={{ color: '#9ca3af' }}>({company.domain})</span>}
+                <span className="text-neutral-300 dark:text-[var(--border-primary)]">·</span>
+                <span className="text-primary-600 dark:text-brand-400 font-semibold">{company.name}</span>
+                {company.domain && <span className="text-neutral-400 dark:text-[var(--text-muted)]">({company.domain})</span>}
               </>
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {streak > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#fff7ed', border: '0.5px solid #fed7aa', borderRadius: 20, padding: '5px 12px' }}>
-              <span style={{ fontSize: 15 }}>🔥</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#c2410c' }}>{streak}d</span>
-              <span style={{ fontSize: 10, color: '#ea580c', fontWeight: 500 }}>streak</span>
+            <div className="flex items-center gap-1.5 bg-orange-50 dark:bg-amber-900/20 border border-orange-200 dark:border-amber-700/30 rounded-full px-3 py-1">
+              <span className="text-sm">🔥</span>
+              <span className="num-mono text-xs font-bold text-orange-700 dark:text-amber-400">{streak}d</span>
+              <span className="text-[10px] text-orange-600 dark:text-amber-500 font-medium">streak</span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', border: '0.5px solid #e2e8f0', borderRadius: 20, padding: '5px 14px' }}>
-            <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
+          <div className="flex items-center gap-2 bg-neutral-50 dark:bg-[var(--bg-tertiary)] border border-neutral-200 dark:border-[var(--border-primary)] rounded-full px-3.5 py-1">
+            <span className="text-[11px] text-neutral-400 dark:text-[var(--text-muted)] font-medium">
               Health <span style={{ color: healthTrend.direction === '↓' ? '#ef4444' : healthTrend.direction === '↑' ? '#22c55e' : '#94a3b8', fontWeight: 700 }}>{healthTrend.direction}</span>
             </span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: healthColor, lineHeight: 1 }}>{healthScore}%</span>
+            <span className="num-mono text-lg font-extrabold leading-none" style={{ color: healthColor }}>{healthScore}%</span>
           </div>
-           <div style={{ position: 'relative' }}>
-            {user?.role === 'admin' && (
-            <button data-voice="customize" onClick={() => setShowCustomize(!showCustomize)}
-              style={{ background: showCustomize ? '#e0e7ff' : '#f8fafc', border: '0.5px solid #e2e8f0', borderRadius: 20, padding: '5px 14px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 11, fontWeight: 600, color: showCustomize ? '#2347e8' : '#64748b', transition: 'all 0.15s' }}
-              title="Customize dashboard"><span style={{fontSize:13}}>✎</span> Customize</button>
-            )}
-            {showCustomize && (
-              <>
-                <div className="fixed inset-0 z-[99]" onClick={() => setShowCustomize(false)} />
-                <div className="absolute top-full right-0 mt-1.5 z-[100] bg-white rounded-2xl shadow-2xl border border-surface-200 py-2.5 min-w-[210px]">
-                  <div className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider px-3.5 pb-2 border-b border-surface-100 mb-1">Customize Dashboard</div>
-                  {[
-                    { key: 'statsGrid', label: 'Stats Grid' },
-                    { key: 'insights', label: "Today's Pulse" },
-                    { key: 'atRisk', label: 'Projects at Risk' },
-                    { key: 'projects', label: 'Projects' },
-                    { key: 'capacity', label: 'Department Workload' },
-                    { key: 'plan', label: 'Plan' },
-                    { key: 'matrix', label: 'Portfolio Matrix' },
-                  ].map(item => (
-                    <div key={item.key} onClick={() => toggleSection(item.key)}
-                      className="flex items-center gap-2 px-3.5 py-1.5 cursor-pointer text-xs text-surface-700 hover:bg-surface-50 transition-colors">
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${sections[item.key] ? 'bg-primary-600 border-primary-600' : 'border-surface-300 bg-transparent'}`}>
-                        {sections[item.key] && <span className="text-white text-[10px] leading-none">✓</span>}
-                      </div>
-                      {item.label}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+             <button data-voice="customize" onClick={() => {
+               setDraftSections({ ...sections });
+               setShowCustomize(true);
+             }}
+               className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[11px] font-semibold cursor-pointer border-none transition-all bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)]">
+               <span className="text-xs">✎</span> Customize</button>
+
+             {showCustomize && draftSections && createPortal(
+               <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowCustomize(false); setDraftSections(null); }}>
+                 <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] shadow-elevation border border-neutral-200 dark:border-[var(--border-primary)] p-6 w-[340px] animate-scale-in" onClick={e => e.stopPropagation()}>
+                   <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">Customize Dashboard</h3>
+                     <button onClick={() => { setShowCustomize(false); setDraftSections(null); }} className="w-6 h-6 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-400 hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] transition-colors cursor-pointer border-none text-xs">✕</button>
+                   </div>
+                   <div className="space-y-1 mb-5">
+                     {[
+                       { key: 'statsGrid', label: 'Stats Grid' },
+                       { key: 'insights', label: "Today's Pulse" },
+                       { key: 'atRisk', label: 'Projects at Risk' },
+                       { key: 'projects', label: 'Projects' },
+                       { key: 'capacity', label: 'Department Workload' },
+                       { key: 'plan', label: 'Plan' },
+                       { key: 'matrix', label: 'Portfolio Matrix' },
+                     ].map(item => (
+                       <div key={item.key} onClick={() => setDraftSections(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                         className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-[var(--radius-lg)] text-xs text-neutral-700 dark:text-[var(--text-secondary)] hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)] transition-colors">
+                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${draftSections[item.key] ? 'bg-primary-600 border-primary-600 dark:bg-brand-500 dark:border-brand-500' : 'border-neutral-300 dark:border-[var(--border-primary)] bg-transparent'}`}>
+                           {draftSections[item.key] && <span className="text-white text-[10px] leading-none font-bold">✓</span>}
+                         </div>
+                         <span className="font-medium">{item.label}</span>
+                       </div>
+                     ))}
+                   </div>
+                   <div className="flex gap-2">
+                     <button onClick={() => { setShowCustomize(false); setDraftSections(null); }}
+                       className="flex-1 px-3 py-2 text-xs font-semibold rounded-[var(--radius-lg)] bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-600 dark:text-[var(--text-secondary)] hover:bg-neutral-200 dark:hover:bg-[var(--border-secondary)] transition-colors cursor-pointer border-none">Cancel</button>
+                     <button onClick={() => {
+                       setSections(draftSections);
+                       localStorage.setItem('dash_sections', JSON.stringify(draftSections));
+                       setShowCustomize(false);
+                       setDraftSections(null);
+                     }}
+                       className="flex-1 px-3 py-2 text-xs font-semibold rounded-[var(--radius-lg)] bg-primary-600 dark:bg-brand-600 text-white hover:bg-primary-700 dark:hover:bg-brand-700 transition-colors cursor-pointer border-none shadow-sm">Save</button>
+                   </div>
+                 </div>
+               </div>,
+               document.body
+             )}
         </div>
       </div>
 
       {/* ── Company Profile ── */}
       {company && (
-        <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-5 mb-4">
+        <div className="card-premium bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--border-primary)] p-5 mb-4 animate-fade-in">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-bold shrink-0">
+              <div className="w-14 h-14 rounded-[var(--radius-lg)] bg-gradient-to-br from-primary-500 to-primary-700 dark:from-brand-600 dark:to-brand-800 flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-md">
                 {company.name?.charAt(0)?.toUpperCase() || 'C'}
               </div>
               <div>
-                <h2 className="text-lg font-bold text-neutral-900">{company.name}</h2>
+                <h2 className="text-lg font-bold text-neutral-900 dark:text-[var(--text-primary)]">{company.name}</h2>
                 {company.tagline && (
-                  <p className="text-sm text-neutral-500 mt-0.5">{company.tagline}</p>
+                  <p className="text-sm text-neutral-500 dark:text-[var(--text-tertiary)] mt-0.5">{company.tagline}</p>
                 )}
                 <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                   {company.industry && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 dark:bg-brand-900/20 text-primary-700 dark:text-brand-400 font-medium">
                       {company.industry}
                     </span>
                   )}
                   {company.country && (
-                    <span className="text-[11px] text-neutral-500 flex items-center gap-1">
+                    <span className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       {company.country}
                     </span>
                   )}
                   {(company.domain || company.website) && (
                     <a href={`https://${company.domain || company.website}`} target="_blank" rel="noopener noreferrer"
-                      className="text-[11px] text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                      className="text-[11px] text-primary-600 dark:text-brand-400 hover:text-primary-700 dark:hover:text-brand-300 font-medium flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                       {company.domain || company.website}
                     </a>
@@ -318,39 +342,39 @@ export default function Dashboard() {
 
       {/* ── Stats Grid ── */}
       {sections.statsGrid && (
-      <div className="stats-grid">
+      <div className="stats-grid stagger">
         <StatCard title="Active Projects" value={stats?.totalProjects || 0} icon="📁" color="brand"
           subtitle={`${stats?.inProgressProjects || 0} in progress`} />
         <StatCard title="Completed Projects" value={stats?.completedProjects || 0} icon="✅" color="blue"
           subtitle={`out of ${stats?.totalProjects || 0} total projects`} />
         <StatCard title="Blocked Projects" value={stats?.blockedProjects || 0} icon="⚠️" color="red"
           subtitle={`${stats?.atRiskProjects || 0} at risk · ${stats?.delayedProjects || 0} delayed`} />
-        <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-6 hover:shadow-hover-lift hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-neutral-500 font-medium">Department</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-bold text-neutral-900 tracking-tight">{stats?.activeUsers || 0}</span>
-                <span className="text-sm text-success-600 font-medium">online</span>
-              </div>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#22c55e',display:'inline-block'}}/> {stats?.activeUsers || 0}</span>
-                <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/> {stats?.idleUsers || 0}</span>
-                <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#d1d5db',display:'inline-block'}}/> {stats?.inactiveUsers || 0}</span>
-              </div>
-              <div className="mt-3 pt-3 border-t border-neutral-100">
-                <div className="flex items-center gap-2 text-xs flex-wrap">
-                  <span className="font-semibold text-neutral-700">{(workload?.overloaded?.length || 0) > 0 ? `${workload.overloaded.length} overloaded` : 'All balanced'}</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="text-neutral-700">{workload?.workload?.filter(w => w.taskCount < 5 && w.status !== 'inactive').length || 0} available</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="text-neutral-700">{workload?.avgActivityScore ? `${Math.round(workload.avgActivityScore)}% avg` : ''}</span>
+        <div className="card-premium bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--border-primary)] p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-neutral-500 dark:text-[var(--text-tertiary)] font-medium">Department</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-bold text-neutral-900 dark:text-[var(--text-primary)] tracking-tight">{stats?.activeUsers || 0}</span>
+                  <span className="text-sm text-success-600 dark:text-success-400 font-medium">online</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#22c55e',display:'inline-block'}}/> {stats?.activeUsers || 0}</span>
+                  <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/> {stats?.idleUsers || 0}</span>
+                  <span className="text-xs flex items-center gap-1"><span style={{width:6,height:6,borderRadius:'50%',background:'#d1d5db',display:'inline-block'}}/> {stats?.inactiveUsers || 0}</span>
+                </div>
+                <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-[var(--border-secondary)]">
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
+                    <span className="font-semibold text-neutral-700 dark:text-[var(--text-secondary)]">{(workload?.overloaded?.length || 0) > 0 ? `${workload.overloaded.length} overloaded` : 'All balanced'}</span>
+                    <span className="text-neutral-300 dark:text-[var(--text-muted)]">·</span>
+                    <span className="text-neutral-700 dark:text-[var(--text-secondary)]">{workload?.workload?.filter(w => w.taskCount < 5 && w.status !== 'inactive').length || 0} available</span>
+                    <span className="text-neutral-300 dark:text-[var(--text-muted)]">·</span>
+                    <span className="text-neutral-700 dark:text-[var(--text-secondary)]">{workload?.avgActivityScore ? `${Math.round(workload.avgActivityScore)}% avg` : ''}</span>
+                  </div>
                 </div>
               </div>
+              <div className="w-12 h-12 rounded-[var(--radius-xl)] flex items-center justify-center text-xl bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400">👥</div>
             </div>
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-success-50 text-success-600">👥</div>
           </div>
-        </div>
       </div>
       )}
 
@@ -365,33 +389,42 @@ export default function Dashboard() {
 
       {/* ── Projects at Risk ── */}
       {sections.atRisk && (highRisk.length > 0 || mediumRisk.length > 0) && (
-        <div className="card" style={{ marginBottom: 12, padding: 14, borderLeft: '3px solid #ef4444' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <div className="card" style={{ marginBottom: 12, padding: 14, borderLeft: '3px solid #ef4444', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 16 }}>🚨</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Projects at Risk</span>
-            <span className="status-badge bg-danger-50 text-danger-700" style={{ fontSize: 10 }}>{highRisk.length} high · {mediumRisk.length} medium</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Projects at Risk</span>
+            <span className="status-badge" style={{ fontSize: 10, background: '#fef2f2', color: '#b91c1c' }}>
+              <span className="num-mono">{highRisk.length}</span> high · <span className="num-mono">{mediumRisk.length}</span> medium
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 'auto' }}>Scroll for more →</span>
           </div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, flexWrap: 'nowrap' }}>
+          <div className="stagger" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, flexWrap: 'nowrap' }}>
             {[...highRisk, ...mediumRisk].sort((a, b) => {
               const order = { high: 0, medium: 1, low: 2 };
               return (order[a.risk] || 3) - (order[b.risk] || 3);
             }).map(p => (
-              <Link key={p.projectId} to={`/projects/${p.projectId}`} style={{ textDecoration: 'none', minWidth: 220, padding: '10px 12px', borderRadius: 10, background: p.risk === 'high' ? '#fef2f2' : p.risk === 'medium' ? '#fffbeb' : '#f9fafb', border: '0.5px solid', borderColor: p.risk === 'high' ? '#fecaca' : p.risk === 'medium' ? '#fde68a' : '#e5e7eb', display: 'block', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <span style={{ fontSize: 16 }}>{p.risk === 'high' ? '🔴' : p.risk === 'medium' ? '🟡' : '🟢'}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: p.risk === 'high' ? '#991b1b' : p.risk === 'medium' ? '#92400e' : '#111827' }}>{p.name}</span>
-                  <span style={{ fontSize: 8, color: '#6b7280', background: '#f3f4f6', padding: '1px 5px', borderRadius: 3, textTransform: 'capitalize', marginLeft: 'auto' }}>{p.status}</span>
-                </div>
-                <div style={{ fontSize: 10, color: p.risk === 'high' ? '#b91c1c' : '#6b7280', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <span>{p.done}/{p.total} tasks</span>
-                  {p.overdue > 0 && <span style={{ color: '#ef4444', fontWeight: 600 }}>{p.overdue} overdue</span>}
-                  {p.daysUntilDeadline !== null && <span style={{ color: p.daysUntilDeadline <= 7 ? '#ef4444' : '#6b7280' }}>{p.daysUntilDeadline}d left</span>}
-                </div>
-                {p.daysUntilDeadline !== null && p.daysUntilDeadline <= 3 && (
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ fontSize: 9, color: 'white', background: '#ef4444', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>CRITICAL</span>
+              <Link key={p.projectId} to={`/projects/${p.projectId}`} style={{ textDecoration: 'none', minWidth: 240, display: 'block', flexShrink: 0 }}>
+                <div className="card-premium" style={{ padding: '12px 14px', background: p.risk === 'high' ? 'var(--danger-bg)' : p.risk === 'medium' ? 'var(--warning-bg)' : 'var(--bg-secondary)', border: '0.5px solid', borderColor: p.risk === 'high' ? 'var(--danger-border)' : p.risk === 'medium' ? 'var(--warning-border)' : 'var(--border-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 16 }}>{p.risk === 'high' ? '🔴' : p.risk === 'medium' ? '🟡' : '🟢'}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: p.risk === 'high' ? 'var(--danger-text)' : p.risk === 'medium' ? 'var(--warning-text)' : 'var(--text-primary)' }}>{p.name}</span>
+                    <span className="badge-pill" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', textTransform: 'capitalize', marginLeft: 'auto' }}>{p.status}</span>
                   </div>
-                )}
+                  {/* Mini progress bar */}
+                  <div style={{ height: 3, background: 'var(--bg-tertiary)', borderRadius: 3, marginBottom: 6, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${p.completionRate || 0}%`, borderRadius: 3, background: p.risk === 'high' ? '#ef4444' : p.risk === 'medium' ? '#f59e0b' : '#22c55e', transition: 'width 0.5s ease' }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-tertiary)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <span><span className="num-mono">{p.done}</span>/<span className="num-mono">{p.total}</span> tasks</span>
+                    {p.overdue > 0 && <span style={{ color: '#ef4444', fontWeight: 600 }}><span className="num-mono">{p.overdue}</span> overdue</span>}
+                    {p.daysUntilDeadline !== null && <span style={{ color: p.daysUntilDeadline <= 7 ? '#ef4444' : 'var(--text-tertiary)' }}><span className="num-mono">{p.daysUntilDeadline}</span>d left</span>}
+                  </div>
+                  {p.daysUntilDeadline !== null && p.daysUntilDeadline <= 3 && (
+                    <div style={{ marginTop: 8 }}>
+                      <span style={{ fontSize: 9, color: 'white', background: '#ef4444', padding: '2px 10px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em' }}>CRITICAL</span>
+                    </div>
+                  )}
+                </div>
               </Link>
             ))}
           </div>
@@ -459,37 +492,37 @@ export default function Dashboard() {
 
       {/* ── Team Workload ── */}
       {sections.capacity && (
-        <div style={{ marginTop: 12, background: '#fff', borderRadius: 14, border: '0.5px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div className="card" style={{ marginTop: 12, overflow: 'hidden' }}>
           {/* Header */}
-          <div style={{ padding: '14px 18px', borderBottom: '0.5px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 16 }}>📊</span> Department Workload
-                <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 400 }}>— Next 6 Weeks</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>— Next 6 Weeks</span>
                 {capacityData && (
-                  <span style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>
                     · auto-refreshes every 30s
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
                 Hover any week for task details · Click to expand
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button data-voice="refresh-workload" onClick={loadCapacity} disabled={capacityLoading}
-                style={{ padding: '5px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: '0.5px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4, opacity: capacityLoading ? 0.5 : 1 }}>
-                <span style={{ display: 'inline-block', animation: capacityLoading ? 'spin 1s linear infinite' : 'none' }}>⟳</span>
+                className="btn btn-gray" style={{ opacity: capacityLoading ? 0.5 : 1 }}>
+                <span style={{ display: 'inline-block', animation: capacityLoading ? 'spin 1s linear infinite' : 'none', marginRight: 4 }}>⟳</span>
                 {capacityLoading ? 'Refreshing...' : 'Refresh'}
               </button>
               {(capacityData?.sprints?.length > 0) && (
-              <div style={{ display: 'flex', gap: 4, background: '#f9fafb', padding: 2, borderRadius: 8, border: '0.5px solid #f3f4f6' }}>
+              <div style={{ display: 'flex', gap: 4, background: 'var(--bg-tertiary)', padding: 2, borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border-secondary)' }}>
                 <button data-voice="view-weeks" onClick={() => setViewMode('weeks')}
-                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'weeks' ? '#fff' : 'transparent', color: viewMode === 'weeks' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'weeks' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'weeks' ? 'var(--bg-primary)' : 'transparent', color: viewMode === 'weeks' ? 'var(--brand-primary)' : 'var(--text-tertiary)', boxShadow: viewMode === 'weeks' ? 'var(--elevation-low)' : 'none' }}>
                   Weeks
                 </button>
                 <button data-voice="view-sprints" onClick={() => setViewMode('sprints')}
-                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'sprints' ? '#fff' : 'transparent', color: viewMode === 'sprints' ? '#2347e8' : '#6b7280', boxShadow: viewMode === 'sprints' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                  style={{ padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: viewMode === 'sprints' ? 'var(--bg-primary)' : 'transparent', color: viewMode === 'sprints' ? 'var(--brand-primary)' : 'var(--text-tertiary)', boxShadow: viewMode === 'sprints' ? 'var(--elevation-low)' : 'none' }}>
                   Sprints
                 </button>
               </div>
@@ -620,8 +653,8 @@ export default function Dashboard() {
 
           {/* Hover tooltip */}
           {hoveredCell && (
-            <div className="fixed z-[1000] pointer-events-none bg-neutral-800 text-white rounded-2xl shadow-2xl p-2.5 text-[11px] min-w-[200px] max-w-[300px]"
-              style={{ left: tooltipPos.x, top: tooltipPos.y, transform: 'translate(-50%, -100%)' }}>
+            <div className="fixed z-[1000] pointer-events-none tooltip-glass text-white min-w-[200px] max-w-[300px]"
+              style={{ left: tooltipPos.x, top: tooltipPos.y, transform: 'translate(-50%, -100%)', background: 'rgba(30,41,59,0.9)' }}>
               <div className="font-semibold mb-1.5 text-neutral-200">
                 {hoveredCell.user.name} · {new Date(hoveredCell.period.start).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
               </div>
@@ -650,46 +683,46 @@ export default function Dashboard() {
               onClick={() => setSelectedCell(null)}>
               <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
               <div onClick={e => e.stopPropagation()}
-                className="relative bg-white rounded-2xl shadow-2xl max-w-[480px] w-[90%] max-h-[80vh] overflow-auto">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
+                className="relative bg-white dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] shadow-2xl max-w-[480px] w-[90%] max-h-[80vh] overflow-auto animate-scale-in">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-[var(--border-secondary)]">
                   <div>
-                    <div className="text-sm font-bold text-surface-900">{selectedCell.user.name}</div>
-                    <div className="text-[11px] text-surface-500 mt-0.5">
+                    <div className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">{selectedCell.user.name}</div>
+                    <div className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] mt-0.5">
                       Week of {new Date(selectedCell.period.start).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })} · <span className="font-semibold" style={{color: selectedCell.period.totalHours > 40 ? '#ef4444' : selectedCell.period.totalHours > 28 ? '#f59e0b' : '#22c55e'}}>{selectedCell.period.totalHours}h</span> of {selectedCell.period.capacity}h
                     </div>
                   </div>
                   <button onClick={() => setSelectedCell(null)}
-                    className="w-7 h-7 rounded-lg bg-surface-100 text-surface-500 hover:text-surface-700 flex items-center justify-center border-none cursor-pointer text-sm">
+                    className="w-7 h-7 rounded-[var(--radius-md)] bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)] flex items-center justify-center border-none cursor-pointer text-sm transition-colors">
                     ✕
                   </button>
                 </div>
                 <div className="px-5 py-3">
                   {selectedCell.period.tasks?.length > 0 ? (
                     <div className="flex flex-col gap-1">
-                      <div className="text-[10px] font-semibold text-surface-400 uppercase tracking-wider mb-1.5">Assigned Tasks</div>
+                      <div className="text-[10px] font-semibold text-neutral-400 dark:text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Assigned Tasks</div>
                       {selectedCell.period.tasks.map((t, i) => (
                         <div key={t._id || i}
-                          className="flex items-center gap-2.5 p-2 rounded-lg border border-surface-100"
-                          style={{background: i % 2 === 0 ? '#f9fafb' : '#fff'}}>
+                          className="flex items-center gap-2.5 p-2 rounded-[var(--radius-md)] border border-neutral-100 dark:border-[var(--border-secondary)]"
+                          style={{background: i % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)'}}>
                           <div className="w-[3px] h-6 rounded-full shrink-0"
                             style={{background: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#d1d5db'}} />
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-surface-900 truncate">{t.title}</div>
-                            <div className="text-[10px] text-surface-400 mt-0.5">{t.project}</div>
+                            <div className="text-xs font-medium text-neutral-900 dark:text-[var(--text-primary)] truncate">{t.title}</div>
+                            <div className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)] mt-0.5">{t.project}</div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-sm font-bold text-surface-900">{t.hours || t.estimatedHours || 0}h</div>
-                            <div className="text-[9px] text-surface-400 capitalize">{t.status ? t.status.replace(/_/g, ' ') : t.category || 'worklog'}</div>
+                            <div className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">{t.hours || t.estimatedHours || 0}h</div>
+                            <div className="text-[9px] text-neutral-400 dark:text-[var(--text-muted)] capitalize">{t.status ? t.status.replace(/_/g, ' ') : t.category || 'worklog'}</div>
                           </div>
                         </div>
                       ))}
-                      <div className="flex justify-between items-center px-2.5 pt-2.5 mt-1 border-t border-surface-100">
-                        <span className="text-[11px] font-semibold text-surface-500">{selectedCell.period.tasks.length} tasks</span>
-                        <span className="text-sm font-bold text-surface-900">{selectedCell.period.totalHours}h total</span>
+                      <div className="flex justify-between items-center px-2.5 pt-2.5 mt-1 border-t border-neutral-100 dark:border-[var(--border-secondary)]">
+                        <span className="text-[11px] font-semibold text-neutral-500 dark:text-[var(--text-tertiary)]">{selectedCell.period.tasks.length} tasks</span>
+                        <span className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">{selectedCell.period.totalHours}h total</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-xs text-surface-400">
+                    <div className="text-center py-8 text-xs text-neutral-400 dark:text-[var(--text-muted)]">
                       No tasks assigned this week
                     </div>
                   )}
@@ -704,6 +737,14 @@ export default function Dashboard() {
               box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
             }
             @keyframes spin { to { transform: rotate(360deg); } }
+            .recharts-scatter-symbol circle {
+              animation: matrix-dot 2s ease-in-out infinite;
+              transform-origin: center;
+            }
+            @keyframes matrix-dot {
+              0%, 100% { opacity: 0.75; }
+              50% { opacity: 1; }
+            }
           `}</style>
         </div>
       )}

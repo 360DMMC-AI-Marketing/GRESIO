@@ -44,64 +44,64 @@ export default function MyTasks() {
   const roleIcons = { developer:'💻', qa_tester:'🧪', project_manager:'📋', manager:'📋', admin:'🏢' };
 
   if (loading) {
-    return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'60vh',color:'#6b7280',fontSize:14}}>Loading your workspace...</div>;
+    return <div className="page-enter" style={{display:'flex',justifyContent:'center',alignItems:'center',height:'60vh',color:'var(--text-muted)',fontSize:14}}>Loading your workspace...</div>;
   }
 
   return (
-    <div style={{padding:'24px 32px'}}>
+    <div className="page-enter" style={{padding:'24px 32px'}}>
       {/* Header */}
       <div style={{marginBottom:24,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <span style={{fontSize:24}}>{roleIcons[user?.role] || '📊'}</span>
-            <h1 style={{fontSize:22,fontWeight:700,color:'#111827',margin:0}}>{data?.view || 'My Workspace'}</h1>
+            <h1 style={{fontSize:22,fontWeight:700,color:'var(--text-heading)',margin:0}}>{data?.view || 'My Workspace'}</h1>
           </div>
-          <p style={{fontSize:12,color:'#6b7280',marginTop:2}}>
+          <p style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>
             {user?.name} · {user?.role?.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}
           </p>
         </div>
       </div>
 
       {/* Widget Cards */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:24}}>
+      <div className="stagger" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:24}}>
         {widgets.map(w => (
-          <div key={w.id} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,padding:'16px 20px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+          <div key={w.id} className="card-premium" style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',padding:'16px 20px',boxShadow:'var(--elevation-1)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
               <span style={{fontSize:20}}>{w.icon}</span>
               {w.type === 'ratio' && (
-                <span style={{fontSize:10,color:'#6b7280',background:'#f3f4f6',padding:'2px 6px',borderRadius:4}}>This week</span>
+                <span style={{fontSize:10,color:'var(--text-muted)',background:'var(--bg-subtle)',padding:'2px 6px',borderRadius:'var(--radius-sm)'}}>This week</span>
               )}
             </div>
-            <div style={{fontSize:11,color:'#6b7280',fontWeight:500,marginBottom:2}}>{w.title}</div>
-            {w.type === 'count' && <div style={{fontSize:28,fontWeight:700,color:'#111827'}}>{w.data}</div>}
-            {w.type === 'percent' && <div style={{fontSize:28,fontWeight:700,color:'#111827'}}>{w.data}%</div>}
-            {w.type === 'hours' && <div style={{fontSize:28,fontWeight:700,color:'#111827'}}>{w.data}h</div>}
+            <div style={{fontSize:11,color:'var(--text-muted)',fontWeight:500,marginBottom:2}}>{w.title}</div>
+            {w.type === 'count' && <div style={{fontSize:28,fontWeight:700,color:'var(--text-heading)'}}>{w.data}</div>}
+            {w.type === 'percent' && <div style={{fontSize:28,fontWeight:700,color:'var(--text-heading)'}}>{w.data}%</div>}
+            {w.type === 'hours' && <div style={{fontSize:28,fontWeight:700,color:'var(--text-heading)'}}>{w.data}h</div>}
             {w.type === 'progress' && (
               <div>
-                <div style={{fontSize:28,fontWeight:700,color:'#111827'}}>{w.data.done}/{w.data.total}</div>
-                <div style={{height:4,background:'#e5e7eb',borderRadius:2,marginTop:4}}>
-                  <div style={{height:'100%',background:'#22c55e',borderRadius:2,width:`${w.data.total > 0 ? Math.round((w.data.done/w.data.total)*100) : 0}%`}} />
+                <div style={{fontSize:28,fontWeight:700,color:'var(--text-heading)'}}>{w.data.done}/{w.data.total}</div>
+                <div style={{height:4,background:'var(--bg-muted)',borderRadius:'var(--radius-xs)',marginTop:4}}>
+                  <div style={{height:'100%',background:'var(--success)',borderRadius:'var(--radius-xs)',width:`${w.data.total > 0 ? Math.round((w.data.done/w.data.total)*100) : 0}%`}} />
                 </div>
               </div>
             )}
             {w.type === 'ratio' && (
               <div style={{display:'flex',gap:12,alignItems:'center',marginTop:4}}>
-                <div><span style={{fontSize:18,fontWeight:700,color:'#22c55e'}}>{w.data.pass}</span><span style={{fontSize:11,color:'#6b7280',marginLeft:4}}>passed</span></div>
-                <div><span style={{fontSize:18,fontWeight:700,color:'#ef4444'}}>{w.data.fail}</span><span style={{fontSize:11,color:'#6b7280',marginLeft:4}}>failed</span></div>
+                <div><span style={{fontSize:18,fontWeight:700,color:'var(--success)'}}>{w.data.pass}</span><span style={{fontSize:11,color:'var(--text-muted)',marginLeft:4}}>passed</span></div>
+                <div><span style={{fontSize:18,fontWeight:700,color:'var(--danger)'}}>{w.data.fail}</span><span style={{fontSize:11,color:'var(--text-muted)',marginLeft:4}}>failed</span></div>
               </div>
             )}
             {w.type === 'workload' && (
-              <div style={{fontSize:12,color:'#6b7280'}}>
+              <div style={{fontSize:12,color:'var(--text-muted)'}}>
                 <div>{w.data.memberCount} members · {w.data.totalTasks} tasks</div>
-                <div style={{height:4,background:'#e5e7eb',borderRadius:2,marginTop:4}}>
-                  <div style={{height:'100%',background:'#3b82f6',borderRadius:2,width:`${w.data.completionRate}%`}} />
+                <div style={{height:4,background:'var(--bg-muted)',borderRadius:'var(--radius-xs)',marginTop:4}}>
+                  <div style={{height:'100%',background:'var(--accent)',borderRadius:'var(--radius-xs)',width:`${w.data.completionRate}%`}} />
                 </div>
               </div>
             )}
             {w.type === 'list' && Array.isArray(w.data) && (
-              <div style={{fontSize:11,color:'#6b7280'}}>
+              <div style={{fontSize:11,color:'var(--text-muted)'}}>
                 {w.data.length === 0 ? 'No items' : w.data.slice(0,3).map((item,i) => (
-                  <div key={i} style={{padding:'2px 0',borderBottom:i<2?'1px solid #f3f4f6':'none'}}>{item.title}</div>
+                  <div key={i} style={{padding:'2px 0',borderBottom:i<2?'1px solid var(--border-subtle)':'none'}}>{item.title}</div>
                 ))}
               </div>
             )}
@@ -110,13 +110,14 @@ export default function MyTasks() {
       </div>
 
       {/* Tabs */}
-      <div style={{display:'flex',gap:0,borderBottom:'2px solid #e5e7eb',marginBottom:20}}>
+      <div className="glass-panel" style={{display:'flex',gap:0,borderBottom:'2px solid var(--border-default)',marginBottom:20}}>
         {['tasks','analytics'].map(tab => (
           <button key={tab} data-voice={`tab-${tab}-view`} onClick={() => setActiveTab(tab)}
+            className={activeTab === tab ? 'btn-premium' : 'btn btn-gray'}
             style={{
               padding:'8px 20px',fontSize:13,fontWeight:600,
-              color: activeTab === tab ? '#111827' : '#6b7280',
-              background:'transparent',border:'none',borderBottom:`2px solid ${activeTab === tab ? '#3b82f6' : 'transparent'}`,
+              color: activeTab === tab ? 'var(--text-heading)' : 'var(--text-muted)',
+              background:'transparent',border:'none',borderBottom:`2px solid ${activeTab === tab ? 'var(--accent)' : 'transparent'}`,
               marginBottom:-2,cursor:'pointer',textTransform:'capitalize',
             }}>
             {tab === 'tasks' ? (data?.role === 'qa_tester' ? 'Testing Queue' : data?.role === 'developer' ? 'My Tasks' : data?.role === 'admin' ? 'All Tasks' : 'Team Tasks') : 'Analytics'}
@@ -184,22 +185,22 @@ function PMView({ data, navigate }) {
         <StatCard label="Projects" value={data.stats.totalProjects} />
         <StatCard label="Total Sprints" value={data.stats.totalSprints} />
         <StatCard label="Members" value={data.stats.memberCount} />
-        <StatCard label="Completion Rate" value={`${data.stats.completionRate}%`} color="#22c55e" />
+        <StatCard label="Completion Rate" value={`${data.stats.completionRate}%`} color="var(--success)" />
       </div>
 
       {sections.map((s, i) => (
         <SectionBlock key={i} title={s.title} empty={s.empty}>
           {s.type === 'sprint' ? (
             s.sprints?.length > 0 ? s.sprints.map(sp => (
-              <div key={sp._id} onClick={() => navigate(`/sprints`)} style={{padding:'10px 14px',background:'#f9fafb',borderRadius:6,cursor:'pointer',marginBottom:6,border:'1px solid #e5e7eb'}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#111827'}}>{sp.name}</div>
-                <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>{sp.project?.name} · {sp.tasks?.length || 0} tasks</div>
+              <div key={sp._id} onClick={() => navigate(`/sprints`)} style={{padding:'10px 14px',background:'var(--bg-muted)',borderRadius:'var(--radius-md)',cursor:'pointer',marginBottom:6,border:'1px solid var(--border-default)'}}>
+                <div style={{fontSize:13,fontWeight:600,color:'var(--text-heading)'}}>{sp.name}</div>
+                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>{sp.project?.name} · {sp.tasks?.length || 0} tasks</div>
                 {sp.tasks?.length > 0 && (
                   <div style={{marginTop:6,display:'flex',gap:4,flexWrap:'wrap'}}>
                     {sp.tasks.slice(0,5).map(t => (
-                      <span key={t._id} style={{fontSize:10,padding:'1px 6px',background:STATUS_COLORS[t.status] || '#6b7280',color:'white',borderRadius:3}}>{t.title?.slice(0,20)}</span>
+                      <span key={t._id} style={{fontSize:10,padding:'1px 6px',background:STATUS_COLORS[t.status] || '#6b7280',color:'white',borderRadius:'var(--radius-xs)'}}>{t.title?.slice(0,20)}</span>
                     ))}
-                    {sp.tasks.length > 5 && <span style={{fontSize:10,color:'#6b7280'}}>+{sp.tasks.length-5} more</span>}
+                    {sp.tasks.length > 5 && <span style={{fontSize:10,color:'var(--text-muted)'}}>+{sp.tasks.length-5} more</span>}
                   </div>
                 )}
               </div>
@@ -214,20 +215,20 @@ function PMView({ data, navigate }) {
       <SectionBlock title="👥 Tasks by Member" empty="No members with tasks">
         {Object.values(data.sections.tasksByMember || {}).filter(m => m.tasks.length > 0).map(({ user:u, tasks:ts }) => {
           const workload = ts.length > 8 ? 'overloaded' : ts.length > 3 ? 'normal' : 'underutilized';
-          const workloadColor = workload === 'overloaded' ? '#ef4444' : workload === 'normal' ? '#22c55e' : '#f59e0b';
+          const workloadColor = workload === 'overloaded' ? 'var(--danger)' : workload === 'normal' ? 'var(--success)' : '#f59e0b';
           return (
-            <div key={u._id} style={{padding:'10px 14px',background:'#f9fafb',borderRadius:6,marginBottom:6,border:'1px solid #e5e7eb'}}>
+            <div key={u._id} style={{padding:'10px 14px',background:'var(--bg-muted)',borderRadius:'var(--radius-md)',marginBottom:6,border:'1px solid var(--border-default)'}}>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#111827'}}>{u.name}</div>
-                <span style={{fontSize:10,color:'white',background:workloadColor,padding:'1px 6px',borderRadius:3}}>
+                <div style={{fontSize:13,fontWeight:600,color:'var(--text-heading)'}}>{u.name}</div>
+                <span style={{fontSize:10,color:'white',background:workloadColor,padding:'1px 6px',borderRadius:'var(--radius-xs)'}}>
                   {workload} ({ts.length})
                 </span>
               </div>
               <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                 {ts.slice(0,6).map(t => (
-                  <span key={t._id} style={{fontSize:10,padding:'1px 6px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:3}}>{t.title?.slice(0,18)}</span>
+                  <span key={t._id} style={{fontSize:10,padding:'1px 6px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:'var(--radius-xs)'}}>{t.title?.slice(0,18)}</span>
                 ))}
-                {ts.length > 6 && <span style={{fontSize:10,color:'#6b7280'}}>+{ts.length-6} more</span>}
+                {ts.length > 6 && <span style={{fontSize:10,color:'var(--text-muted)'}}>+{ts.length-6} more</span>}
               </div>
             </div>
           );
@@ -244,7 +245,7 @@ function AdminView({ data, navigate }) {
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:12,marginBottom:16}}>
         <StatCard label="Total Users" value={data.stats.totalUsers} />
         <StatCard label="Total Tasks" value={data.stats.totalTasks} />
-        <StatCard label="Completion Rate" value={`${data.stats.completionRate}%`} color="#22c55e" />
+        <StatCard label="Completion Rate" value={`${data.stats.completionRate}%`} color="var(--success)" />
         <StatCard label="Test Cases" value={data.stats.totalTestCases} />
       </div>
 
@@ -261,14 +262,14 @@ function AdminView({ data, navigate }) {
       <SectionBlock title="📋 All Tasks" empty="No tasks">
         <div style={{maxHeight:400,overflowY:'auto'}}>
           {data.sections.tasks.slice(0,50).map(t => (
-            <div key={t._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',borderBottom:'1px solid #f3f4f6'}}>
+            <div key={t._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',borderBottom:'1px solid var(--border-subtle)'}}>
               <div>
-                <span style={{fontSize:13,color:'#111827',fontWeight:500}}>{t.title}</span>
-                <span style={{fontSize:11,color:'#6b7280',marginLeft:8}}>{t.project?.name || ''}</span>
+                <span style={{fontSize:13,color:'var(--text-heading)',fontWeight:500}}>{t.title}</span>
+                <span style={{fontSize:11,color:'var(--text-muted)',marginLeft:8}}>{t.project?.name || ''}</span>
               </div>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                <span style={{fontSize:10,padding:'1px 6px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:3}}>{t.status}</span>
-                {t.assignee && <span style={{fontSize:10,color:'#6b7280'}}>{t.assignee.name}</span>}
+                <span style={{fontSize:10,padding:'1px 6px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:'var(--radius-xs)'}}>{t.status}</span>
+                {t.assignee && <span style={{fontSize:10,color:'var(--text-muted)'}}>{t.assignee.name}</span>}
               </div>
             </div>
           ))}
@@ -277,17 +278,17 @@ function AdminView({ data, navigate }) {
 
       <SectionBlock title="👥 User Workloads" empty="No users">
         {Object.values(data.sections.userWorkloads || {}).map(({ user:u, taskCount, doneCount, estimatedHours, loggedHours }) => (
-          <div key={u._id} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 12px',borderBottom:'1px solid #f3f4f6'}}>
-            <div style={{width:28,height:28,borderRadius:14,background:'#3b82f6',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:600}}>
+          <div key={u._id} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 12px',borderBottom:'1px solid var(--border-subtle)'}}>
+            <div style={{width:28,height:28,borderRadius:'var(--radius-full)',background:'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:600}}>
               {u.name?.charAt(0)}
             </div>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:500,color:'#111827'}}>{u.name}</div>
-              <div style={{fontSize:11,color:'#6b7280'}}>{u.role?.replace('_',' ')}</div>
+              <div style={{fontSize:13,fontWeight:500,color:'var(--text-heading)'}}>{u.name}</div>
+              <div style={{fontSize:11,color:'var(--text-muted)'}}>{u.role?.replace('_',' ')}</div>
             </div>
             <div style={{textAlign:'right'}}>
-              <div style={{fontSize:13,fontWeight:600,color:'#111827'}}>{taskCount} tasks</div>
-              <div style={{fontSize:11,color:'#6b7280'}}>{doneCount} done · {loggedHours}h logged</div>
+              <div style={{fontSize:13,fontWeight:600,color:'var(--text-heading)'}}>{taskCount} tasks</div>
+              <div style={{fontSize:11,color:'var(--text-muted)'}}>{doneCount} done · {loggedHours}h logged</div>
             </div>
           </div>
         ))}
@@ -308,8 +309,8 @@ function SectionList({ sections, navigate }) {
 
 function SectionBlock({ title, empty, children }) {
   return (
-    <div style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,marginBottom:16,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{padding:'12px 16px',borderBottom:'1px solid #f3f4f6',fontSize:14,fontWeight:600,color:'#111827',background:'#fafafa'}}>{title}</div>
+    <div className="card-premium" style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',marginBottom:16,overflow:'hidden',boxShadow:'var(--elevation-1)'}}>
+      <div style={{padding:'12px 16px',borderBottom:'1px solid var(--border-subtle)',fontSize:14,fontWeight:600,color:'var(--text-heading)',background:'var(--bg-muted)'}}>{title}</div>
       <div style={{padding:'8px 16px'}}>
         {!children || (Array.isArray(children) && children.length === 0) ? <EmptyState msg={empty} /> : children}
       </div>
@@ -320,14 +321,14 @@ function SectionBlock({ title, empty, children }) {
 function TaskItems({ items, navigate, type }) {
   if (!items?.length) return null;
   return items.map(t => (
-    <div key={t._id} onClick={() => navigate(type === 'test' ? '/test-cases' : '/tasks')} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',borderBottom:'1px solid #f3f4f6',cursor:'pointer',transition:'background 0.1s'}}
+    <div key={t._id} onClick={() => navigate(type === 'test' ? '/test-cases' : '/tasks')} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',borderBottom:'1px solid var(--border-subtle)',cursor:'pointer',transition:'background 0.1s'}}
       onMouseEnter={e => e.currentTarget.style.background='#f9fafb'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
       <div style={{flex:1}}>
         <div style={{display:'flex',alignItems:'center',gap:6}}>
-          <span style={{fontSize:13,fontWeight:500,color:'#111827'}}>{t.title}</span>
+          <span style={{fontSize:13,fontWeight:500,color:'var(--text-heading)'}}>{t.title}</span>
           {t.priority && <PriorityBadge p={t.priority} />}
         </div>
-        <div style={{display:'flex',gap:8,fontSize:11,color:'#6b7280',marginTop:2}}>
+        <div style={{display:'flex',gap:8,fontSize:11,color:'var(--text-muted)',marginTop:2}}>
           {t.project?.name && <span>📁 {t.project.name}</span>}
           {t.sprint?.name && <span>⚡ {t.sprint.name}</span>}
           {t.feature && <span>🔖 {t.feature}</span>}
@@ -335,12 +336,12 @@ function TaskItems({ items, navigate, type }) {
           {type === 'test' && t.type && <span>🔌 {t.type}</span>}
           {t.assignee?.name && <span>👤 {t.assignee.name}</span>}
           {t.executedBy?.name && <span>▶️ {t.executedBy.name}</span>}
-          {t.linkedBug && <span style={{color:'#ef4444'}}>🐛 #{t.linkedBug.title?.slice(0,20)}</span>}
+          {t.linkedBug && <span style={{color:'var(--danger)'}}>🐛 #{t.linkedBug.title?.slice(0,20)}</span>}
         </div>
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        {t.type === 'bug' && <span style={{fontSize:9,background:'#fef2f2',color:'#ef4444',padding:'1px 5px',borderRadius:3,fontWeight:600}}>BUG</span>}
-        <span style={{fontSize:10,padding:'2px 8px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:4,fontWeight:500,textTransform:'capitalize'}}>{t.status}</span>
+        {t.type === 'bug' && <span style={{fontSize:9,background:'#fef2f2',color:'var(--danger)',padding:'1px 5px',borderRadius:'var(--radius-xs)',fontWeight:600}}>BUG</span>}
+        <span style={{fontSize:10,padding:'2px 8px',background:(STATUS_COLORS[t.status] || '#6b7280')+'20',color:STATUS_COLORS[t.status]||'#6b7280',borderRadius:'var(--radius-sm)',fontWeight:500,textTransform:'capitalize'}}>{t.status}</span>
       </div>
     </div>
   ));
@@ -348,23 +349,23 @@ function TaskItems({ items, navigate, type }) {
 
 function StatCard({ label, value, color }) {
   return (
-    <div style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,padding:'14px 18px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{fontSize:11,color:'#6b7280',fontWeight:500,marginBottom:2}}>{label}</div>
-      <div style={{fontSize:24,fontWeight:700,color:color || '#111827'}}>{value}</div>
+    <div className="card-premium" style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',padding:'14px 18px',boxShadow:'var(--elevation-1)'}}>
+      <div style={{fontSize:11,color:'var(--text-muted)',fontWeight:500,marginBottom:2}}>{label}</div>
+      <div className="num-mono" style={{fontSize:24,fontWeight:700,color:color || 'var(--text-heading)'}}>{value}</div>
     </div>
   );
 }
 
 function PriorityBadge({ p }) {
   const colors = { critical:'#ef4444', urgent:'#f59e0b', high:'#3b82f6', medium:'#6b7280', low:'#9ca3af' };
-  return <span style={{fontSize:9,background:(colors[p]||'#6b7280')+'20',color:colors[p]||'#6b7280',padding:'1px 5px',borderRadius:3,fontWeight:600}}>{p}</span>;
+  return <span style={{fontSize:9,background:(colors[p]||'#6b7280')+'20',color:colors[p]||'#6b7280',padding:'1px 5px',borderRadius:'var(--radius-xs)',fontWeight:600}}>{p}</span>;
 }
 
 function AlertBanner({ type, message }) {
   const colors = { warning:{bg:'#fffbeb',border:'#fde68a',color:'#92400e'}, error:{bg:'#fef2f2',border:'#fecaca',color:'#991b1b'}, info:{bg:'#eff6ff',border:'#bfdbfe',color:'#1e40af'} };
   const c = colors[type] || colors.info;
   return (
-    <div style={{padding:'10px 14px',background:c.bg,border:`1px solid ${c.border}`,borderRadius:8,fontSize:12,color:c.color,display:'flex',alignItems:'center',gap:8}}>
+    <div style={{padding:'10px 14px',background:c.bg,border:`1px solid ${c.border}`,borderRadius:'var(--radius-lg)',fontSize:12,color:c.color,display:'flex',alignItems:'center',gap:8}}>
       <span>{type === 'warning' ? '⚠️' : type === 'error' ? '🚨' : 'ℹ️'}</span>
       {message}
     </div>
@@ -372,7 +373,7 @@ function AlertBanner({ type, message }) {
 }
 
 function EmptyState({ msg }) {
-  return <div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'#9ca3af'}}>{msg || 'No items'}</div>;
+  return <div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'var(--text-disabled)'}}>{msg || 'No items'}</div>;
 }
 
 /* ===== ANALYTICS COMPONENTS ===== */
@@ -383,14 +384,14 @@ function AnalyticsMetrics({ metrics }) {
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
       {metrics.map((m, i) => {
         const trendIcon = m.trend === 'up' ? '📈' : m.trend === 'down' ? '📉' : '➡️';
-        const trendColor = m.trend === 'up' ? '#22c55e' : m.trend === 'down' ? '#ef4444' : '#6b7280';
+        const trendColor = m.trend === 'up' ? 'var(--success)' : m.trend === 'down' ? 'var(--danger)' : 'var(--text-muted)';
         return (
-          <div key={i} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,padding:'16px 20px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+          <div key={i} style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',padding:'16px 20px',boxShadow:'var(--elevation-1)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-              <span style={{fontSize:11,color:'#6b7280',fontWeight:500}}>{m.name}</span>
+              <span style={{fontSize:11,color:'var(--text-muted)',fontWeight:500}}>{m.name}</span>
               <span style={{fontSize:14}}>{trendIcon}</span>
             </div>
-            <div style={{fontSize:22,fontWeight:700,color:'#111827'}}>{m.value}</div>
+            <div style={{fontSize:22,fontWeight:700,color:'var(--text-heading)'}}>{m.value}</div>
             <div style={{fontSize:10,color:trendColor,marginTop:2}}>Target: {m.target}</div>
           </div>
         );
@@ -404,8 +405,8 @@ function AnalyticsCharts({ charts }) {
   return (
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(350px,1fr))',gap:16}}>
       {charts.map((c, i) => (
-        <div key={i} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,padding:'16px 20px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#111827',marginBottom:12}}>{c.title}</div>
+        <div key={i} style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',padding:'16px 20px',boxShadow:'var(--elevation-1)'}}>
+          <div style={{fontSize:13,fontWeight:600,color:'var(--text-heading)',marginBottom:12}}>{c.title}</div>
           {c.type === 'bar' && <BarChart labels={c.labels} data={c.data} />}
           {c.type === 'doughnut' && <DoughnutChart labels={c.labels} data={c.data} />}
         </div>
@@ -421,9 +422,9 @@ function BarChart({ labels, data }) {
     <div style={{display:'flex',alignItems:'flex-end',gap:8,height:120,padding:'10px 0'}}>
       {labels.map((l, i) => (
         <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',height:'100%',justifyContent:'flex-end'}}>
-          <div style={{fontSize:10,color:'#6b7280',marginBottom:4}}>{data[i]}</div>
+          <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:4}}>{data[i]}</div>
           <div style={{width:'100%',maxWidth:40,height:`${Math.max((data[i]/max)*100, 2)}%`,background:colors[i%colors.length],borderRadius:'4px 4px 0 0',transition:'height 0.3s'}} />
-          <div style={{fontSize:9,color:'#9ca3af',marginTop:4,textAlign:'center',overflow:'hidden',textOverflow:'ellipsis',maxWidth:60,whiteSpace:'nowrap'}}>{l}</div>
+          <div style={{fontSize:9,color:'var(--text-disabled)',marginTop:4,textAlign:'center',overflow:'hidden',textOverflow:'ellipsis',maxWidth:60,whiteSpace:'nowrap'}}>{l}</div>
         </div>
       ))}
     </div>
@@ -442,7 +443,7 @@ function DoughnutChart({ labels, data }) {
   return (
     <div style={{display:'flex',alignItems:'center',gap:20}}>
       <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" strokeWidth="16" />
+         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border-default)" strokeWidth="16" />
         {segments.map((s, i) => {
           const pct = s.value / total;
           const angle = pct * 360;
@@ -460,16 +461,16 @@ function DoughnutChart({ labels, data }) {
             <path key={i} d={`M 60 60 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`} fill={s.color} stroke="white" strokeWidth="1" />
           );
         })}
-        <circle cx="60" cy="60" r="42" fill="white" />
-        <text x="60" y="56" textAnchor="middle" fontSize="18" fontWeight="bold" fill="#111827">{total}</text>
-        <text x="60" y="72" textAnchor="middle" fontSize="8" fill="#6b7280">total</text>
+        <circle cx="60" cy="60" r="42" fill="var(--bg-card)" />
+        <text x="60" y="56" textAnchor="middle" fontSize="18" fontWeight="bold" fill="var(--text-heading)">{total}</text>
+        <text x="60" y="72" textAnchor="middle" fontSize="8" fill="var(--text-muted)">total</text>
       </svg>
       <div style={{display:'flex',flexDirection:'column',gap:4}}>
         {segments.filter(s => s.value > 0).map((s, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:6,fontSize:11}}>
-            <div style={{width:8,height:8,borderRadius:4,background:s.color}} />
-            <span style={{color:'#374151'}}>{s.label}</span>
-            <span style={{color:'#6b7280'}}>{s.value}</span>
+            <div style={{width:8,height:8,borderRadius:'var(--radius-sm)',background:s.color}} />
+            <span style={{color:'var(--text-heading)'}}>{s.label}</span>
+            <span style={{color:'var(--text-muted)'}}>{s.value}</span>
           </div>
         ))}
       </div>
@@ -479,8 +480,8 @@ function DoughnutChart({ labels, data }) {
 
 function AlertsPanel({ alerts }) {
   return (
-    <div style={{background:'white',border:'1px solid #e5e7eb',borderRadius:10,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{padding:'12px 16px',borderBottom:'1px solid #f3f4f6',fontSize:14,fontWeight:600,color:'#111827',background:'#fafafa',display:'flex',alignItems:'center',gap:6}}>
+    <div style={{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'var(--radius-card)',overflow:'hidden',boxShadow:'var(--elevation-1)'}}>
+      <div style={{padding:'12px 16px',borderBottom:'1px solid var(--border-subtle)',fontSize:14,fontWeight:600,color:'var(--text-heading)',background:'var(--bg-muted)',display:'flex',alignItems:'center',gap:6}}>
         🚨 Alerts
       </div>
       <div style={{padding:'8px 16px'}}>
@@ -488,7 +489,7 @@ function AlertsPanel({ alerts }) {
           const colors = { high:{bg:'#fef2f2',color:'#991b1b',icon:'🔴'}, medium:{bg:'#fffbeb',color:'#92400e',icon:'🟡'}, low:{bg:'#eff6ff',color:'#1e40af',icon:'🔵'} };
           const c = colors[a.severity] || colors.low;
           return (
-            <div key={i} style={{padding:'8px 0',display:'flex',alignItems:'center',gap:8,borderBottom:i<alerts.length-1?'1px solid #f3f4f6':'none'}}>
+            <div key={i} style={{padding:'8px 0',display:'flex',alignItems:'center',gap:8,borderBottom:i<alerts.length-1?'1px solid var(--border-subtle)':'none'}}>
               <span>{c.icon}</span>
               <span style={{fontSize:12,color:c.color}}>{a.message}</span>
             </div>

@@ -16,7 +16,7 @@ const populate = q => q
 exports.getSprints = async (req, res, next) => {
   try {
     const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { project: { $in: projectIds } };
+    const filter = { project: { $in: projectIds }, isActive: true };
     if (req.query.project) filter.project = req.query.project;
     if (req.query.status) filter.status = req.query.status;
     const sprints = await populate(Sprint.find(filter).sort({ startDate: -1 }));

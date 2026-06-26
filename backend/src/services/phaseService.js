@@ -13,6 +13,12 @@ function getIO() {
 }
 
 const TYPE_CONFIGS = {
+  umbrella: {
+    label: 'Umbrella / Departmental Project',
+    phases: ['discovery', 'planning', 'development', 'testing', 'review', 'launched', 'delivered'],
+    autoPhases: new Set(['discovery', 'planning', 'development', 'testing', 'review']),
+    manualPhases: new Set(['launched', 'delivered']),
+  },
   software: {
     label: 'Software / Development',
     phases: ['discovery', 'planning', 'development', 'testing', 'review', 'launched', 'delivered'],
@@ -84,6 +90,56 @@ async function evaluateProjectPhase(projectId) {
   const cacheKey = projectId.toString();
   const cached = phaseTransitionCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < 2000) {
+    return project.phase;
+  }
+
+  // If umbrella project, evaluate based on sub-projects' phases
+  if (type === 'umbrella') {
+    const children = await Project.find({ parentProject: projectId, isActive: true }).lean();
+    if (children.length > 0) {
+      const childPhases = children.map(c => c.phase);
+      const childProgress = children.reduce((sum, c) => sum + (c.progress || 0), 0) / children.length;
+      const allLaunched = children.every(c => c.phase === 'launched' || c.phase === 'delivered');
+      const allDelivered = children.every(c => c.phase === 'delivered');
+      const someInReview = children.some(c => c.phase === 'review');
+      const someInTesting = children.some(c => c.phase === 'testing');
+      const someInExecution = children.some(c => ['development', 'designing', 'business_growth', 'content_creation', 'research'].includes(c.phase));
+      const someInPlanning = children.some(c => c.phase === 'planning');
+
+      let targetPhase;
+      if (allDelivered) targetPhase = 'delivered';
+      else if (allLaunched) targetPhase = 'launched';
+      else if (someInReview) targetPhase = 'review';
+      else if (someInTesting) targetPhase = 'testing';
+      else if (someInExecution) targetPhase = getExecutionPhase(type) || 'development';
+      else if (someInPlanning) targetPhase = 'planning';
+      else targetPhase = 'discovery';
+
+      if (targetPhase !== project.phase) {
+        const fromPhase = project.phase;
+        phaseTransitionCache.set(cacheKey, { timestamp: Date.now(), fromPhase, toPhase: targetPhase });
+        const progress = Math.round(childProgress);
+        await Project.findByIdAndUpdate(projectId, { phase: targetPhase, progress }, { new: true });
+        if (project.domain) {
+          await Activity.create({
+            user: null, domain: project.domain, type: 'project_update',
+            source: 'internal',
+            description: `Phase auto-transition: ${fromPhase} → ${targetPhase} (umbrella)`,
+            metadata: { projectId, fromPhase, toPhase: targetPhase, reason: 'umbrella_aggregate' },
+          }).catch(() => {});
+        }
+        try {
+          const { getIO } = require('../socket/ioProvider');
+          const io = getIO();
+          if (io) {
+            io.to(`project:${projectId}`).emit('phase_changed', { projectId, fromPhase, toPhase: targetPhase, progress });
+          }
+        } catch (e) {}
+        return targetPhase;
+      }
+      return project.phase;
+    }
+    // No children yet — stay in current phase
     return project.phase;
   }
 

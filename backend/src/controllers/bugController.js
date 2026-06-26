@@ -17,7 +17,7 @@ const SEVERITY_MAP = { critical: 'critical', high: 'high', medium: 'medium', low
 exports.getBugs = async (req, res, next) => {
   try {
     const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { project: { $in: projectIds } };
+    const filter = { project: { $in: projectIds }, isActive: true };
     if (req.query.projectId) filter.project = req.query.projectId;
     if (req.query.status) filter.status = req.query.status;
     if (req.query.severity) filter.severity = req.query.severity;
@@ -353,7 +353,7 @@ exports.updateBug = async (req, res, next) => {
 exports.getBugStats = async (req, res, next) => {
   try {
     const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { project: { $in: projectIds } };
+    const filter = { project: { $in: projectIds }, isActive: true };
     if (req.params.projectId) filter.project = req.params.projectId;
     const bugs = await Bug.find(filter);
     const total = bugs.length;

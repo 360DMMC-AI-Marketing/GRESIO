@@ -74,6 +74,47 @@ router.get('/tasks', async (req, res) => {
   }
 });
 
+router.post('/save-config', async (req, res) => {
+  try {
+    const { apiKey, workspaceIds, workspaces } = req.body;
+    const Integration = require('../models/Integration');
+    let integration = await Integration.findOne({ name: 'clickup' });
+    const config = integration?.config || {};
+    const existingTimes = config.workspaceSyncTimes || {};
+    const workspaceSyncTimes = {};
+    (workspaceIds || []).forEach(id => {
+      workspaceSyncTimes[id] = existingTimes[id] || null;
+    });
+    const update = {
+      config: { workspaceIds: workspaceIds || [], workspaceSyncTimes, workspaces: workspaces || [] },
+      isConnected: true,
+    };
+    if (apiKey) update.credentials = { apiKey };
+    integration = await Integration.findOneAndUpdate(
+      { name: 'clickup' },
+      { $set: update },
+      { upsert: true, new: true }
+    );
+    res.json({ message: 'Config saved', workspaceIds: workspaceIds || [] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/config', async (req, res) => {
+  try {
+    const Integration = require('../models/Integration');
+    const integration = await Integration.findOne({ name: 'clickup' });
+    if (!integration) return res.json({ apiKey: '', workspaceIds: [] });
+    const creds = integration.getDecryptedCredentials();
+    res.json({
+      apiKey: creds?.apiKey ? '••••' + creds.apiKey.slice(-4) : '',
+      workspaceIds: integration.config?.workspaceIds || [],
+      workspaces: integration.config?.workspaces || [],
+      workspaceSyncTimes: integration.config?.workspaceSyncTimes || {},
+      lastSync: integration.lastSync,
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.post('/cleanup', async (req, res) => {
   try {
     const result = await clickupService.cleanupImport();
@@ -93,6 +134,29 @@ router.post('/import-all', async (req, res) => {
     console.error('Import All error:', err.stack || err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+router.post('/sync-workspace', async (req, res) => {
+  try {
+    const { workspaceId } = req.body;
+    if (!workspaceId) return res.status(400).json({ error: 'workspaceId required' });
+    const Integration = require('../models/Integration');
+    const integration = await Integration.findOne({ name: 'clickup' });
+    if (!integration) return res.status(400).json({ error: 'ClickUp not configured' });
+    const creds = integration.getDecryptedCredentials();
+    const apiKey = creds?.apiKey || '';
+    if (!apiKey) return res.status(400).json({ error: 'No ClickUp API key' });
+    const result = await clickupService.incrementalSync(apiKey, [workspaceId], req.user?.domain || '');
+    const now = new Date();
+    const config = integration.config || {};
+    const workspaceSyncTimes = config.workspaceSyncTimes || {};
+    workspaceSyncTimes[workspaceId] = now;
+    await Integration.findOneAndUpdate(
+      { name: 'clickup' },
+      { $set: { 'config.workspaceSyncTimes': workspaceSyncTimes, lastSync: now } }
+    );
+    res.json({ message: 'Sync complete', result });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 router.post('/import', async (req, res) => {

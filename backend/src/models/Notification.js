@@ -6,7 +6,7 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['task_assigned', 'task_updated', 'task_update', 'mention', 'project_update',
-           'status_change', 'meeting_reminder', 'deadline_alert', 'system', 'project_invite', 'warning', 'worklog_added', 'project_relay', 'wiki_created'],
+           'status_change', 'meeting_reminder', 'deadline_alert', 'system', 'project_invite', 'warning', 'worklog_added', 'wiki_created'],
     required: true,
   },
   title: { type: String, required: true },

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import api, { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations, chains } from '../services/api';
+import api, { projects, tasks, users, sprints as sprintsApi, testCases, workLogs, bugs as bugsApi, integrations } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Modal, { ConfirmModal, AlertModal, InputModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
-import { Workflow } from 'lucide-react';
+
 
 const TYPE_CONFIGS = {
   software: { label:'Software / Development', phases:['discovery','planning','development','testing','review','launched','delivered'], autoPhases:['discovery','planning','development','testing','review'] },
@@ -115,8 +115,7 @@ export default function ProjectDetail() {
   const [bugSeverityFilter, setBugSeverityFilter] = useState('all');
   const [selectedBug, setSelectedBug] = useState(null);
   const [confirmResolveBug, setConfirmResolveBug] = useState(null);
-  const [relayChains, setRelayChains] = useState([]);
-  const [relayPosition, setRelayPosition] = useState(null); // { chainName, prev, next }
+
   const [showReviewOverview, setShowReviewOverview] = useState(false);
   const [editingReviewCall, setEditingReviewCall] = useState(false);
   const [completeReviewModal, setCompleteReviewModal] = useState(null);
@@ -167,28 +166,15 @@ export default function ProjectDetail() {
       setBugList(extra[canManage ? 3 : 2]?.data || []);
       const active = new Set(sRes.data.filter(sp => sp.status === 'active').map(sp => sp._id));
       setExpandedSprints(active);
+
+      // If sub-project with parent but no parent data, fetch the parent
+      if (pRes.data.parentProject && !pRes.data.parent) {
+        projects.getById(pRes.data.parentProject).then(r => {
+          setProject(prev => prev ? { ...prev, parent: { _id: r.data._id, name: r.data.name, phase: r.data.phase, progress: r.data.progress } } : prev);
+        }).catch(() => {});
+      }
     }).catch(() => navigate('/projects'));
 
-    // Fetch relay chain info
-    chains.getAll().then(r => {
-      const all = r.data || [];
-      const relevant = all.filter(c => (c.projects || []).some(p => p._id === id));
-      setRelayChains(relevant);
-      if (relevant.length > 0) {
-        const chain = relevant[0];
-        const idx = (chain.projects || []).findIndex(p => p._id === id);
-        if (idx !== -1) {
-          setRelayPosition({
-            chainName: chain.name,
-            prev: idx > 0 ? chain.projects[idx - 1] : null,
-            next: idx < chain.projects.length - 1 ? chain.projects[idx + 1] : null,
-            total: chain.projects.length,
-            currentIdx: idx + 1,
-            chainId: chain._id,
-          });
-        }
-      }
-    }).catch(() => {});
   }, [id]);
 
   // Socket: join project room & listen for test case events
@@ -632,16 +618,82 @@ export default function ProjectDetail() {
     ...(['admin','project_manager','team_lead'].includes(user?.role) ? [{ key:'settings', label:'⚙️ Settings' }] : []),
   ];
 
+  // ===== UMBRELLA DASHBOARD =====
+  if (project.projectType === 'umbrella') {
+    const children = project.children || [];
+    const childProgress = children.length > 0 ? Math.round(children.reduce((s, c) => s + (c.progress || 0), 0) / children.length) : 0;
+    return (
+      <div className="wrap" style={{minHeight:600}}>
+        <div className="proj-header">
+          <div className="proj-top">
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                <span className="proj-name">{project.name}</span>
+                <span style={{fontSize:9,background:'#eef2ff',color:'var(--brand-primary)',padding:'2px 7px',borderRadius:20,fontWeight:600}}>Umbrella</span>
+                {project.phase && <span style={{fontSize:9,background:'#f0fdf4',color:'#15803d',padding:'2px 7px',borderRadius:20,fontWeight:600}}>{project.phase.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
+              </div>
+              <div className="proj-client" style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
+                {children.length} sub-project(s) &middot; {children.reduce((s, c) => s + (c.members?.length || 0), 0)} total members
+              </div>
+            </div>
+            <div className="proj-actions">
+              <button className="btn btn-blue" onClick={() => navigate('/projects')} style={{fontSize:10,padding:'4px 10px'}}>← Back to projects</button>
+            </div>
+          </div>
+          <div className="prog-row">
+            <span className="prog-label">Overall progress</span>
+            <div className="prog-track"><div className="prog-fill" style={{width:childProgress+'%'}}></div></div>
+            <span className="prog-pct">{childProgress}%</span>
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:16}}>
+          {children.length === 0 ? (
+            <div style={{gridColumn:'1/-1',textAlign:'center',padding:40,color:'var(--text-muted)',fontSize:12}}>No sub-projects yet. Add sub-projects from the projects page.</div>
+          ) : children.map(child => {
+            const phase = (child.phase || 'planning').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+            const tasks = (child.tasks || []).length;
+            const done = (child.tasks || []).filter(t => t.status === 'done').length;
+            return (
+              <div key={child._id} className="card" style={{padding:16,cursor:'pointer'}} onClick={() => navigate(`/projects/${child._id}`)}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <span style={{fontSize:14,fontWeight:600,color:'var(--text-primary)'}}>{child.name}</span>
+                  <span style={{fontSize:9,background:'var(--bg-tertiary)',color:'var(--text-muted)',padding:'2px 6px',borderRadius:4,fontWeight:500}}>{phase}</span>
+                </div>
+                <div className="prog-row" style={{marginBottom:8}}>
+                  <div className="prog-track" style={{flex:1}}><div className="prog-fill" style={{width:(child.progress || 0)+'%'}}></div></div>
+                  <span className="prog-pct" style={{fontSize:10}}>{child.progress || 0}%</span>
+                </div>
+                <div style={{display:'flex',gap:12,fontSize:10,color:'var(--text-muted)'}}>
+                  <span>👥 {(child.members || []).length} members</span>
+                  <span>✅ {done}/{tasks} tasks</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="wrap" style={{minHeight:600}}>
+    <div className="page-enter wrap" style={{minHeight:600}}>
       {/* ===== Project Header ===== */}
-      <div className="proj-header">
+      <div className="glass-panel proj-header">
         <div className="proj-top">
           <div>
             <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+              {project.parent && (
+                <span style={{fontSize:10,color:'var(--brand-primary)',cursor:'pointer',fontWeight:500,marginRight:2}} onClick={() => navigate(`/projects/${project.parent._id}`)}>
+                  {project.parent.name} /
+                </span>
+              )}
+              {!project.parent && project.parentProject && (
+                <span style={{fontSize:10,color:'var(--text-muted)',marginRight:2}}>Sub-project /</span>
+              )}
               <span className="proj-name">{project.name}</span>
               {project.phase && <span style={{fontSize:9,background:'#f0fdf4',color:'#15803d',padding:'2px 7px',borderRadius:20,fontWeight:600}}>{project.phase.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
-              {project.projectType && <span style={{fontSize:8,background:'#f3f4f6',color:'#6b7280',padding:'2px 6px',borderRadius:4,fontWeight:500}}>{typeCfg.label}</span>}
+              {project.projectType && project.projectType !== 'umbrella' && <span style={{fontSize:8,background:'var(--bg-tertiary)',color:'var(--text-muted)',padding:'2px 6px',borderRadius:4,fontWeight:500}}>{typeCfg.label}</span>}
+              {project.projectType === 'umbrella' && <span style={{fontSize:8,background:'#eef2ff',color:'var(--brand-primary)',padding:'2px 6px',borderRadius:4,fontWeight:500}}>Umbrella</span>}
             </div>
             <div className="proj-client">
               {project.description ? `${project.description} · ` : ''}Client: {settingsForm.clientName || project.client || 'N/A'}{project.deadline ? ` · Deadline: ${fmtDate(project.deadline, true)}${daysLeft !== '—' ? ` (${daysLeft}d left)` : ''}` : ''}
@@ -683,7 +735,7 @@ export default function ProjectDetail() {
             <div className="sp-l">Total sprints</div>
           </div>
           <div className="stat-pill">
-            <div className="sp-n" style={{color:'#1d4ed8'}}>{activeSprints}</div>
+            <div className="sp-n" style={{color:'var(--brand-primary)'}}>{activeSprints}</div>
             <div className="sp-l">Active sprint</div>
           </div>
           <div className="stat-pill">
@@ -711,32 +763,32 @@ export default function ProjectDetail() {
         <div className="tab-content" style={{display:'block'}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 220px',gap:12}}>
             <div>
-              <div style={{fontSize:12,fontWeight:600,color:'#374151',marginBottom:8}}>Active tasks across all sprints</div>
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
+              <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)',marginBottom:8}}>Active tasks across all sprints</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead>
-                    <tr style={{background:'#f9fafb',borderBottom:'0.5px solid #e5e7eb'}}>
-                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Task</th>
-                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Sprint</th>
-                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
-                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
-                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Deadline</th>
+                    <tr style={{background:'var(--bg-tertiary)',borderBottom:'0.5px solid var(--border-secondary)'}}>
+                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Task</th>
+                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Sprint</th>
+                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
+                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
+                      <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Deadline</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allTasks.length === 0 ? (
-                      <tr><td colSpan={5} style={{padding:'20px',textAlign:'center',color:'#9ca3af',fontSize:11}}>No tasks yet. Create a sprint to get started.</td></tr>
+                      <tr><td colSpan={5} style={{padding:'20px',textAlign:'center',color:'var(--text-muted)',fontSize:11}}>No tasks yet. Create a sprint to get started.</td></tr>
                     ) : allTasks.map(t => {
                       const ts = TASK_STATUS_META[t.status] || TASK_STATUS_META.todo;
                       const prio = PRIORITY_MAP[t.priority];
                       const overdue = t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done';
                       return (
-                        <tr key={`${t._id}-${t.sprintId}`} style={{borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}
-                          onMouseEnter={e => e.currentTarget.style.background='#f9fafb'}
+                        <tr key={`${t._id}-${t.sprintId}`} style={{borderBottom:'0.5px solid var(--bg-tertiary)',cursor:'pointer'}}
+                          onMouseEnter={e => e.currentTarget.style.background='var(--bg-tertiary)'}
                           onMouseLeave={e => e.currentTarget.style.background=''}>
                           <td style={{padding:'7px 12px'}}>
-                            <div style={{fontSize:11,fontWeight:500,color:'#111827'}}>{t.title}</div>
-                            {t.description && <div style={{fontSize:9,color:'#9ca3af'}}>{t.description}</div>}
+                            <div style={{fontSize:11,fontWeight:500,color:'var(--text-primary)'}}>{t.title}</div>
+                            {t.description && <div style={{fontSize:9,color:'var(--text-muted)'}}>{t.description}</div>}
                           </td>
                           <td style={{padding:'7px 12px'}}>
                             <span className="tag-pill">{t.sprintName}</span>
@@ -750,14 +802,14 @@ export default function ProjectDetail() {
                                 <>
                                   <div className="av-xs" style={{
                                     background: t.assignee.role === 'developer' ? '#f0fdf4' : t.assignee.role === 'intern' ? '#fff7ed' : '#dce6ff',
-                                    color: t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : '#1a35c4'
+                                    color: t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : 'var(--brand-primary)'
                                   }}>{t.assignee.name?.charAt(0) || '?'}</div>
                                   <span style={{fontSize:10}}>{t.assignee.name}</span>
                                 </>
-                              ) : <span style={{fontSize:10,color:'#9ca3af'}}>—</span>}
+                              ) : <span style={{fontSize:10,color:'var(--text-muted)'}}>—</span>}
                             </div>
                           </td>
-                          <td style={{padding:'7px 12px',fontSize:10,color:overdue ? '#ef4444' : '#9ca3af',fontWeight:overdue ? 600 : 400}}>
+                          <td style={{padding:'7px 12px',fontSize:10,color:overdue ? '#ef4444' : 'var(--text-muted)',fontWeight:overdue ? 600 : 400}}>
                             {t.deadline ? fmtDate(t.deadline) : '—'}
                             {overdue ? ' · OVERDUE' : ''}
                           </td>
@@ -770,36 +822,36 @@ export default function ProjectDetail() {
 
               {/* ===== Overview: Test Cases Summary ===== */}
               <div style={{marginTop:16}}>
-                <div style={{fontSize:12,fontWeight:600,color:'#374151',marginBottom:8}}>
+                <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)',marginBottom:8}}>
                   🧪 Test cases
-                  <span style={{fontSize:10,fontWeight:400,color:'#6b7280',marginLeft:6}}>
+                  <span style={{fontSize:10,fontWeight:400,color:'var(--text-muted)',marginLeft:6}}>
                     · {tcList.length} total{tcStats ? ` · ${tcStats.passed} passed (${tcStats.passRate}%)` : ''}
                   </span>
                 </div>
                 {tcList.length > 0 && (
-                  <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
+                  <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
                     <table style={{width:'100%',borderCollapse:'collapse'}}>
                       <thead>
-                        <tr style={{background:'#f9fafb',borderBottom:'0.5px solid #e5e7eb'}}>
-                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>ID</th>
-                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Title</th>
-                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
-                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
+                        <tr style={{background:'var(--bg-tertiary)',borderBottom:'0.5px solid var(--border-secondary)'}}>
+                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>ID</th>
+                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Title</th>
+                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
+                          <th style={{textAlign:'left',padding:'5px 10px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
                         </tr>
                       </thead>
                       <tbody>
                         {tcList.slice(0, 10).map(tc => {
-                          const statusColor = { draft:'#9ca3af', ready:'#3b82f6', in_progress:'#f59e0b', passed:'#22c55e', failed:'#ef4444', blocked:'#8b5cf6', skipped:'#6b7280' };
+                          const statusColor = { draft:'var(--text-muted)', ready:'#3b82f6', in_progress:'#f59e0b', passed:'#22c55e', failed:'#ef4444', blocked:'#8b5cf6', skipped:'var(--text-muted)' };
                           return (
-                            <tr key={tc._id} style={{borderBottom:'0.5px solid #f3f4f6'}}>
-                              <td style={{padding:'5px 10px',fontSize:9,fontWeight:600,color:'#2347e8'}}>{tc.testCaseId}</td>
-                              <td style={{padding:'5px 10px',fontSize:10,color:'#111827'}}>{tc.title}</td>
+                            <tr key={tc._id} style={{borderBottom:'0.5px solid var(--bg-tertiary)'}}>
+                              <td style={{padding:'5px 10px',fontSize:9,fontWeight:600,color:'var(--brand-primary)'}}>{tc.testCaseId}</td>
+                              <td style={{padding:'5px 10px',fontSize:10,color:'var(--text-primary)'}}>{tc.title}</td>
                               <td style={{padding:'5px 10px'}}>
-                                <span style={{fontSize:9,fontWeight:600,color:statusColor[tc.status]||'#9ca3af',background:`${statusColor[tc.status]||'#9ca3af'}15`,padding:'1px 6px',borderRadius:3}}>
+                                <span style={{fontSize:9,fontWeight:600,color:statusColor[tc.status]||'var(--text-muted)',background:`${statusColor[tc.status]||'var(--text-muted)'}15`,padding:'1px 6px',borderRadius:3}}>
                                   {tc.status.replace('_',' ')}
                                 </span>
                               </td>
-                              <td style={{padding:'5px 10px',fontSize:9,color:'#6b7280'}}>{tc.assignee?.name || '—'}</td>
+                              <td style={{padding:'5px 10px',fontSize:9,color:'var(--text-muted)'}}>{tc.assignee?.name || '—'}</td>
                             </tr>
                           );
                         })}
@@ -810,74 +862,74 @@ export default function ProjectDetail() {
               </div>
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>Project health</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:8}}>Project health</div>
                 <div style={{display:'flex',flexDirection:'column',gap:5}}>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
-                    <span style={{color:'#6b7280'}}>Completion</span>
+                    <span style={{color:'var(--text-muted)'}}>Completion</span>
                     <span style={{fontWeight:600,color:'#22c55e'}}>{pct}%</span>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
-                    <span style={{color:'#6b7280'}}>Overdue tasks</span>
+                    <span style={{color:'var(--text-muted)'}}>Overdue tasks</span>
                     <span style={{fontWeight:600,color:overdueTasks > 0 ? '#ef4444' : '#22c55e'}}>{overdueTasks}</span>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
-                    <span style={{color:'#6b7280'}}>Risk level</span>
+                    <span style={{color:'var(--text-muted)'}}>Risk level</span>
                     <span style={{fontWeight:600,color:project.status === 'at_risk' ? '#f59e0b' : project.status === 'delayed' ? '#ef4444' : project.status === 'blocked' ? '#8b5cf6' : '#22c55e'}}>
                       {project.status === 'on_track' ? 'Low' : project.status === 'at_risk' ? 'Medium' : project.status === 'delayed' ? 'High' : project.status === 'blocked' ? 'Blocked' : '—'}
                     </span>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
-                    <span style={{color:'#6b7280'}}>Days left</span>
-                    <span style={{fontWeight:600,color:daysLeft !== '—' && daysLeft < 0 ? '#ef4444' : daysLeft !== '—' && daysLeft <= 3 ? '#f59e0b' : '#111827'}}>
+                    <span style={{color:'var(--text-muted)'}}>Days left</span>
+                    <span style={{fontWeight:600,color:daysLeft !== '—' && daysLeft < 0 ? '#ef4444' : daysLeft !== '—' && daysLeft <= 3 ? '#f59e0b' : 'var(--text-primary)'}}>
                       {daysLeft !== '—' && daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : daysLeft}
                     </span>
                   </div>
                 </div>
               </div>
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>Tech stack</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>Tech stack</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
                   {((project.techStack) || []).length === 0 ? (
-                    <span style={{fontSize:9,color:'#9ca3af'}}>Not specified</span>
+                    <span style={{fontSize:9,color:'var(--text-muted)'}}>Not specified</span>
                   ) : (project.techStack || []).map((t,i) => (
-                    <span key={i} style={{fontSize:9,background:'#f3f4f6',color:'#374151',padding:'2px 6px',borderRadius:4}}>{t}</span>
+                    <span key={i} style={{fontSize:9,background:'var(--bg-tertiary)',color:'var(--text-secondary)',padding:'2px 6px',borderRadius:4}}>{t}</span>
                   ))}
                 </div>
               </div>
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>👥 Team Summary</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>👥 Team Summary</div>
                 <div style={{display:'flex',flexDirection:'column',gap:3}}>
                   {groupedData.groups.length === 0 ? (
-                    <span style={{fontSize:9,color:'#9ca3af'}}>No team data</span>
+                    <span style={{fontSize:9,color:'var(--text-muted)'}}>No team data</span>
                   ) : (
                     <>
                       {groupedData.groups.filter(g => g.members.length > 0).map(g => (
                         <div key={g._id} style={{display:'flex',justifyContent:'space-between',fontSize:9}}>
-                          <span style={{color:'#6b7280'}}>{g.icon} {g.name}</span>
-                          <span style={{fontWeight:600,color:'#111827'}}>{g.members.length}</span>
+                          <span style={{color:'var(--text-muted)'}}>{g.icon} {g.name}</span>
+                          <span style={{fontWeight:600,color:'var(--text-primary)'}}>{g.members.length}</span>
                         </div>
                       ))}
-                      <div style={{display:'flex',justifyContent:'space-between',fontSize:9,borderTop:'0.5px solid #e5e7eb',paddingTop:3,marginTop:3}}>
-                        <span style={{color:'#374151',fontWeight:500}}>Total team size</span>
-                        <span style={{fontWeight:700,color:'#111827'}}>{groupedData.groups.reduce((s,g) => s+g.members.length,0) + groupedData.ungrouped.length}</span>
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:9,borderTop:'0.5px solid var(--border-secondary)',paddingTop:3,marginTop:3}}>
+                        <span style={{color:'var(--text-secondary)',fontWeight:500}}>Total team size</span>
+                        <span style={{fontWeight:700,color:'var(--text-primary)'}}>{groupedData.groups.reduce((s,g) => s+g.members.length,0) + groupedData.ungrouped.length}</span>
                       </div>
                     </>
                   )}
                 </div>
               </div>
               {project.projectType !== 'design' && (
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>Repositories</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>Repositories</div>
                 <div style={{display:'flex',flexDirection:'column',gap:3}}>
                   {!(['frontendRepo','backendRepo','apiDocsUrl','stagingUrl','productionUrl']).some(k => project.settings?.[k]) ? (
-                    <span style={{fontSize:9,color:'#9ca3af'}}>Not specified</span>
+                    <span style={{fontSize:9,color:'var(--text-muted)'}}>Not specified</span>
                   ) : (
                     <>
                       {['frontendRepo','backendRepo','apiDocsUrl','stagingUrl','productionUrl'].map(k => project.settings?.[k] ? (
                         <div key={k}>
-                          <span style={{fontSize:9,color:'#9ca3af',marginRight:4}}>{k.replace('Repo','').replace('Url','')}</span>
-                          <a href={project.settings[k]} target="_blank" rel="noreferrer" style={{fontSize:9,color:'#2563eb',textDecoration:'none'}}>{project.settings[k]}</a>
+                          <span style={{fontSize:9,color:'var(--text-muted)',marginRight:4}}>{k.replace('Repo','').replace('Url','')}</span>
+                          <a href={project.settings[k]} target="_blank" rel="noreferrer" style={{fontSize:9,color:'var(--brand-primary)',textDecoration:'none'}}>{project.settings[k]}</a>
                         </div>
                       ) : null)}
                     </>
@@ -885,28 +937,28 @@ export default function ProjectDetail() {
                 </div>
               </div>
               )}
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>💬 Teams Channel</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>💬 Teams Channel</div>
                 <div style={{display:'flex',flexDirection:'column',gap:3}}>
                   {project.teamChannel ? (
                     <>
                       <div style={{display:'flex',alignItems:'center',gap:4}}>
                         <span style={{width:6,height:6,borderRadius:'50%',background:project.teamsChannelId?'#22c55e':'#eab308',display:'inline-block'}} />
-                        <span style={{fontSize:9,color:'#374151',fontWeight:500}}>{project.teamChannel}</span>
+                        <span style={{fontSize:9,color:'var(--text-secondary)',fontWeight:500}}>{project.teamChannel}</span>
                       </div>
                       {project.teamsChannelId && (
                         <a href={`https://teams.microsoft.com/l/channel/${project.teamsChannelId}/`}
                           target="_blank" rel="noopener noreferrer"
-                          style={{fontSize:9,color:'#2563eb',textDecoration:'none'}}>
+                          style={{fontSize:9,color:'var(--brand-primary)',textDecoration:'none'}}>
                           Open in Teams ↗
                         </a>
                       )}
                     </>
                   ) : (
                     <div style={{display:'flex',alignItems:'center',gap:6}}>
-                      <span style={{fontSize:9,color:'#9ca3af'}}>Not configured</span>
+                      <span style={{fontSize:9,color:'var(--text-muted)'}}>Not configured</span>
                       <button onClick={async (e) => { e.stopPropagation(); try { const r = await projects.createTeamsChannel(id); setProject(p => ({...p, teamChannel: r.data.displayName, teamsChannelId: r.data.channelId})); } catch(e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); } }}
-                        style={{fontSize:8,padding:'3px 8px',background:'#2563eb',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>
+                        style={{fontSize:8,padding:'3px 8px',background:'var(--brand-primary)',color:'var(--bg-secondary)',border:'none',borderRadius:4,cursor:'pointer'}}>
                         + Create in Teams
                       </button>
                     </div>
@@ -914,49 +966,9 @@ export default function ProjectDetail() {
                 </div>
               </div>
 
-      {/* ===== Overview: Project Relay Widget ===== */}
-      {relayChains.length > 0 && (
-        <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-          <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><Workflow size={14} /> Project Relay</div>
-          {relayChains.map(chain => {
-            const projects = chain.projects || [];
-            const currentIdx = projects.findIndex(p => p._id === id);
-            return (
-              <div key={chain._id} style={{marginBottom: relayChains.length > 1 ? 8 : 0}}>
-                <div style={{fontSize:8,fontWeight:600,color:'#9ca3af',marginBottom:4}}>{chain.name}</div>
-                <div style={{display:'flex',gap:3,overflowX:'auto',paddingBottom:2}}>
-                  {projects.map((p, i) => (
-                    <div key={p._id} style={{display:'flex',alignItems:'center',flexShrink:0}}>
-                      <div
-                        onClick={() => navigate(`/projects/${p._id}`)}
-                        style={{
-                          padding:'5px 7px',borderRadius:6,cursor:'pointer',minWidth:80,
-                          border: p._id === id ? '1px solid #2347e8' : '0.5px solid #e5e7eb',
-                          background: p._id === id ? '#eff6ff' : p.phase === 'delivered' ? '#f0fdf4' : 'white',
-                        }}
-                      >
-                        <div style={{fontSize:9,fontWeight:600,color:'#111827',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                        <div style={{display:'flex',alignItems:'center',gap:3,marginTop:1}}>
-                          <span style={{fontSize:7,padding:'1px 4px',borderRadius:6,fontWeight:600,
-                            background: p.phase === 'delivered' ? '#22c55e' : p.phase === 'launched' ? '#eab308' : '#f3f4f6',
-                            color: p.phase === 'delivered' ? 'white' : p.phase === 'launched' ? '#854d0e' : '#6b7280',
-                          }}>{p.phase?.replace(/_/g,' ')}</span>
-                          {i === currentIdx && <span style={{fontSize:7,color:'#2347e8'}}>★</span>}
-                        </div>
-                      </div>
-                      {i < projects.length - 1 && <span style={{color:'#d1d5db',fontSize:14,margin:'0 1px'}}>→</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
               {/* ===== Overview: Review Call Widget ===== */}
-              <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:11}}>
-                <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:6}}>📅 Review Call</div>
+              <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>📅 Review Call</div>
                 {project.reviewCall?.date ? (
                   <>
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
@@ -965,15 +977,15 @@ export default function ProjectDetail() {
                         color:project.reviewCall.completed ? '#16A34A' : '#CA8A04'}}>
                         {project.reviewCall.completed ? 'Completed' : 'Pending'}
                       </span>
-                      <span style={{fontSize:9,color:'#6B7280'}}>{new Date(project.reviewCall.date).toLocaleDateString()}</span>
+                      <span style={{fontSize:9,color:'var(--text-secondary)'}}>{new Date(project.reviewCall.date).toLocaleDateString()}</span>
                     </div>
-                    <div style={{fontSize:9,color:'#6B7280'}}>
+                    <div style={{fontSize:9,color:'var(--text-secondary)'}}>
                       {project.reviewCall.time && <span>⏰ {project.reviewCall.time}</span>}
                     </div>
                     {showReviewOverview && (
-                      <div style={{fontSize:9,color:'#374151',display:'flex',flexDirection:'column',gap:3,marginTop:4}}>
+                      <div style={{fontSize:9,color:'var(--text-secondary)',display:'flex',flexDirection:'column',gap:3,marginTop:4}}>
                         {project.reviewCall.link && (
-                          <a href={project.reviewCall.link} target="_blank" style={{color:'#2563eb'}}>🔗 Meeting Link</a>
+                          <a href={project.reviewCall.link} target="_blank" style={{color:'var(--brand-primary)'}}>🔗 Meeting Link</a>
                         )}
                         {canManage && project.reviewCall.date && !project.reviewCall.link && (
                           <button onClick={async () => {
@@ -992,18 +1004,18 @@ export default function ProjectDetail() {
                               }
                             } catch (e) { toast.error('Failed to generate meeting'); }
                           }}
-                            style={{fontSize:8,fontWeight:600,color:'#fff',background:'#6366F1',border:'none',borderRadius:3,padding:'3px 8px',cursor:'pointer',marginTop:4,fontFamily:'inherit',alignSelf:'flex-start'}}>
+                            style={{fontSize:8,fontWeight:600,color:'var(--bg-secondary)',background:'var(--brand-primary)',border:'none',borderRadius:3,padding:'3px 8px',cursor:'pointer',marginTop:4,fontFamily:'inherit',alignSelf:'flex-start'}}>
                             🎥 Generate Teams meeting
                           </button>
                         )}
-                        {project.reviewCall.notes && <span style={{color:'#6B7280'}}>📝 {project.reviewCall.notes}</span>}
-                        {project.reviewCall.discussion && <span style={{color:'#374151'}}>💬 {project.reviewCall.discussion}</span>}
+                        {project.reviewCall.notes && <span style={{color:'var(--text-secondary)'}}>📝 {project.reviewCall.notes}</span>}
+                        {project.reviewCall.discussion && <span style={{color:'var(--text-secondary)'}}>💬 {project.reviewCall.discussion}</span>}
                         {!project.reviewCall.completed && canManage && (
                           <button onClick={() => {
                             setCompleteReviewNotes(project.reviewCall.discussion || '');
                             setCompleteReviewModal('overview');
                           }}
-                            style={{fontSize:8,fontWeight:600,color:'#fff',background:'#16A34A',border:'none',borderRadius:3,padding:'3px 8px',cursor:'pointer',marginTop:4,fontFamily:'inherit'}}>
+                            style={{fontSize:8,fontWeight:600,color:'var(--bg-secondary)',background:'#16A34A',border:'none',borderRadius:3,padding:'3px 8px',cursor:'pointer',marginTop:4,fontFamily:'inherit'}}>
                             ✅ Mark as completed
                           </button>
                         )}
@@ -1011,13 +1023,13 @@ export default function ProjectDetail() {
                     )}
                     <div style={{display:'flex',gap:6,marginTop:4}}>
                       <button onClick={() => setShowReviewOverview(!showReviewOverview)}
-                        style={{fontSize:8,color:'#2563eb',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
+                        style={{fontSize:8,color:'var(--brand-primary)',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
                         {showReviewOverview ? 'Show less' : 'View details'}
                       </button>
                     </div>
                   </>
                 ) : (
-                  <span style={{fontSize:9,color:'#9ca3af'}}>Not scheduled</span>
+                  <span style={{fontSize:9,color:'var(--text-muted)'}}>Not scheduled</span>
                 )}
               </div>
             </div>
@@ -1029,26 +1041,26 @@ export default function ProjectDetail() {
       {activeTab === 'sprints' && (
         <div className="tab-content" style={{display:'block'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>{projectSprints.length} sprints · {activeSprints} active</div>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>{projectSprints.length} sprints · {activeSprints} active</div>
             {canManage && (
               <button data-voice="new-sprint" className="btn btn-blue" onClick={() => setShowSprintForm(!showSprintForm)}>+ New Sprint</button>
             )}
           </div>
 
           {showSprintForm && (
-            <form onSubmit={handleCreateSprint} style={{background:'white',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
-              <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>New Sprint</div>
+            <form onSubmit={handleCreateSprint} style={{background:'var(--bg-secondary)',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:8}}>New Sprint</div>
               <div className="form-row">
                 <input data-voice="field-sprint-name" className="select" value={sprintForm.name} onChange={e => setSprintForm({...sprintForm,name:e.target.value})} placeholder="Sprint name *" required style={{flex:1,minWidth:120}} />
                 <input data-voice="field-sprint-goal" className="select" value={sprintForm.goal} onChange={e => setSprintForm({...sprintForm,goal:e.target.value})} placeholder="Goal (optional)" style={{flex:2,minWidth:160}} />
               </div>
               <div className="form-row">
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                  <span style={{fontSize:9,color:'#6b7280'}}>Start date</span>
+                  <span style={{fontSize:9,color:'var(--text-muted)'}}>Start date</span>
                   <input type="date" className="select" value={sprintForm.startDate} onChange={e => setSprintForm({...sprintForm,startDate:e.target.value})} required />
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                  <span style={{fontSize:9,color:'#6b7280'}}>End date</span>
+                  <span style={{fontSize:9,color:'var(--text-muted)'}}>End date</span>
                   <input type="date" className="select" value={sprintForm.endDate} onChange={e => setSprintForm({...sprintForm,endDate:e.target.value})} required />
                 </div>
                 <Dropdown value={sprintForm.status} onChange={v => setSprintForm({...sprintForm,status:v})}
@@ -1062,7 +1074,7 @@ export default function ProjectDetail() {
           )}
 
           {projectSprints.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>⚡</p><p style={{fontSize:11}}>No sprints for this project yet</p></div>
+            <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)'}}><p style={{fontSize:24,marginBottom:8}}>⚡</p><p style={{fontSize:11}}>No sprints for this project yet</p></div>
           ) : projectSprints.map(s => {
             const total = s.tasks?.length || 0;
             const done = s.tasks?.filter(t => t.status === 'done').length || 0;
@@ -1076,23 +1088,23 @@ export default function ProjectDetail() {
                   <span className="sc-name">{s.name}</span>
                   <span className={`sp-status ${statusCls}`}>{s.status}</span>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginLeft:8}}>
-                    <div className="sc-sprint-bar"><div className="sc-sprint-fill" style={{width:spPct+'%',background:spPct === 100 ? '#22c55e' : '#2347e8'}}></div></div>
+                    <div className="sc-sprint-bar"><div className="sc-sprint-fill" style={{width:spPct+'%',background:spPct === 100 ? '#22c55e' : 'var(--brand-primary)'}}></div></div>
                     <span className="sc-prog">{done}/{total} · {spPct}%</span>
                   </div>
                   <span className="sc-meta" style={{marginLeft:8}}>{fmtDate(s.startDate)} → {fmtDate(s.endDate)}</span>
                   {canManage && (
                     <div style={{position:'relative',marginLeft:'auto'}} onClick={e => { e.stopPropagation(); setActionSprint(actionSprint === s._id ? null : s._id); }}>
-                      <span style={{cursor:'pointer',fontSize:13,color:'#6b7280',padding:'0 4px'}}>⋮</span>
+                      <span style={{cursor:'pointer',fontSize:13,color:'var(--text-muted)',padding:'0 4px'}}>⋮</span>
                       {actionSprint === s._id && (
-                        <div style={{position:'absolute',top:16,right:0,background:'white',border:'0.5px solid #e5e7eb',borderRadius:6,boxShadow:'0 4px 12px rgba(0,0,0,0.1)',zIndex:50,minWidth:130,overflow:'hidden'}}
+                        <div style={{position:'absolute',top:16,right:0,background:'var(--bg-secondary)',border:'0.5px solid var(--border-secondary)',borderRadius:6,boxShadow:'0 4px 12px rgba(0,0,0,0.1)',zIndex:50,minWidth:130,overflow:'hidden'}}
                           onClick={e => e.stopPropagation()}>
-                          <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'#374151',borderBottom:'0.5px solid #f3f4f6'}}
+                          <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'var(--text-secondary)',borderBottom:'0.5px solid var(--bg-tertiary)'}}
                             onClick={() => startEditSprint(s)}>✏️ Edit sprint</div>
                           {s.status !== 'completed' && s.status !== 'cancelled' ? (
-                            <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'#374151',borderBottom:'0.5px solid #f3f4f6'}}
+                            <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'var(--text-secondary)',borderBottom:'0.5px solid var(--bg-tertiary)'}}
                               onClick={() => { setActionSprint(null); handleCompleteSprint(s._id); }}>✓ Complete</div>
                           ) : (
-                            <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'#374151',borderBottom:'0.5px solid #f3f4f6'}}
+                            <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'var(--text-secondary)',borderBottom:'0.5px solid var(--bg-tertiary)'}}
                               onClick={() => { setActionSprint(null); handleReopenSprint(s._id); }}>↻ Reopen</div>
                           )}
                           <div style={{padding:'6px 10px',fontSize:10,cursor:'pointer',color:'#ef4444'}}
@@ -1102,12 +1114,12 @@ export default function ProjectDetail() {
                     </div>
                   )}
                 </div>
-                <div className="sc-prog-bar"><div className="sc-prog-fill" style={{width:spPct+'%',background:spPct === 100 ? '#22c55e' : '#2347e8'}}></div></div>
+                <div className="sc-prog-bar"><div className="sc-prog-fill" style={{width:spPct+'%',background:spPct === 100 ? '#22c55e' : 'var(--brand-primary)'}}></div></div>
                 {expanded && (
                   <div id={`body-${s._id}`}>
                     {editingSprintId === s._id ? (
-                      <div style={{padding:'8px 11px',background:'#f9fafb',borderBottom:'0.5px solid #e5e7eb'}}>
-                        <div style={{fontSize:10,fontWeight:600,color:'#111827',marginBottom:6}}>Edit sprint</div>
+                      <div style={{padding:'8px 11px',background:'var(--bg-tertiary)',borderBottom:'0.5px solid var(--border-secondary)'}}>
+                        <div style={{fontSize:10,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>Edit sprint</div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
                           <input className="select" placeholder="Name" value={editSprintForm.name}
                             onChange={e => setEditSprintForm({...editSprintForm,name:e.target.value})} />
@@ -1151,7 +1163,7 @@ export default function ProjectDetail() {
                             {t.assignee && (
                               <div className="av-xs" style={{
                                 background: t.assignee.role === 'developer' ? '#f0fdf4' : t.assignee.role === 'intern' ? '#fff7ed' : '#dce6ff',
-                                color: t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : '#1a35c4'
+                                color: t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : 'var(--brand-primary)'
                               }} title={t.assignee.name}>{t.assignee.name?.charAt(0) || '?'}</div>
                             )}
                             <span className={`t-deadline ${overdue ? 'overdue' : soon ? 'soon' : ''}`}>
@@ -1187,7 +1199,7 @@ export default function ProjectDetail() {
                     {/* Add task form */}
                     {canManage && (
                       <div className={`add-task-form ${openTaskForm === s._id ? 'open' : ''}`}>
-                        <div style={{fontSize:10,fontWeight:600,color:'#374151',marginBottom:6}}>Add task to {s.name}</div>
+                        <div style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)',marginBottom:6}}>Add task to {s.name}</div>
                         <div className="form-row">
                           <input data-voice="field-task-title" className="select" value={taskForm.title} onChange={e => setTaskForm({...taskForm,title:e.target.value})}
                             placeholder="Task title *" style={{flex:2,minWidth:140}} />
@@ -1223,7 +1235,7 @@ export default function ProjectDetail() {
                         <button className="btn btn-gray" style={{fontSize:10,padding:'4px 10px'}}
                           onClick={() => handleReopenSprint(s._id)}>↻ Reopen</button>
                       )}
-                      <span style={{marginLeft:'auto',fontSize:9,color:'#9ca3af'}}>{s.goal ? `Goal: ${s.goal}` : ''}</span>
+                      <span style={{marginLeft:'auto',fontSize:9,color:'var(--text-muted)'}}>{s.goal ? `Goal: ${s.goal}` : ''}</span>
                     </div>
                   </div>
                 )}
@@ -1237,7 +1249,7 @@ export default function ProjectDetail() {
       {activeTab === 'team' && (
         <div className="tab-content" style={{display:'block'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>
               {groupedData.groups.reduce((s, g) => s + g.members.length, 0) + groupedData.ungrouped.length} members
             </div>
             {canManage && (
@@ -1249,10 +1261,10 @@ export default function ProjectDetail() {
           </div>
 
           {showNewDeptForm && (
-            <div style={{ background:'white', borderRadius:12, border:'1px solid #2347e8', padding:'16px 18px', marginBottom:16, boxShadow:'0 2px 8px rgba(35,71,232,0.08)' }}>
-              <div style={{ fontSize:12, fontWeight:600, color:'#111827', marginBottom:12 }}>Create new department</div>
+            <div style={{ background:'var(--bg-secondary)', borderRadius:12, border:'1px solid #2347e8', padding:'16px 18px', marginBottom:16, boxShadow:'0 2px 8px rgba(35,71,232,0.08)' }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)', marginBottom:12 }}>Create new department</div>
               <input value={newDeptName} onChange={e => setNewDeptName(e.target.value)}
-                placeholder="Department name *" style={{ width:'100%', padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:11, outline:'none', marginBottom:10, boxSizing:'border-box' }} />
+                placeholder="Department name *" style={{ width:'100%', padding:'7px 10px', border:'1px solid var(--border-secondary)', borderRadius:6, fontSize:11, outline:'none', marginBottom:10, boxSizing:'border-box' }} />
               <div style={{ display:'flex', gap:4, marginBottom:10, flexWrap:'wrap' }}>
                 {['👥','💻','🎨','⚙️','📋','🔬','📊','🏗️','📝','🛠️','🎯','📦'].map(emoji => (
                   <span key={emoji} onClick={() => setNewDeptIcon(emoji)}
@@ -1272,9 +1284,9 @@ export default function ProjectDetail() {
                     toast.success('Department created');
                   } catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
                 }}
-                  style={{ padding:'6px 16px', background:'#2347e8', color:'white', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>Create</button>
+                  style={{ padding:'6px 16px', background:'var(--brand-primary)', color:'var(--bg-secondary)', borderRadius:6, fontSize:10, fontWeight:600, border:'none', cursor:'pointer' }}>Create</button>
                 <button type="button" onClick={() => { setShowNewDeptForm(false); setNewDeptName(''); setNewDeptIcon('👥'); }}
-                  style={{ padding:'6px 16px', background:'#f3f4f6', color:'#374151', borderRadius:6, fontSize:10, border:'none', cursor:'pointer' }}>Cancel</button>
+                  style={{ padding:'6px 16px', background:'var(--bg-tertiary)', color:'var(--text-secondary)', borderRadius:6, fontSize:10, border:'none', cursor:'pointer' }}>Cancel</button>
               </div>
             </div>
           )}
@@ -1282,7 +1294,7 @@ export default function ProjectDetail() {
           {/* Suggested teams based on project type */}
           {canManage && suggestedTeams.filter(s => s.existingCount === 0).length > 0 && (
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:600,color:'#374151',marginBottom:6}}>💡 Suggested teams for {project?.projectType || 'software'} project</div>
+              <div style={{fontSize:11,fontWeight:600,color:'var(--text-secondary)',marginBottom:6}}>💡 Suggested teams for {project?.projectType || 'software'} project</div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {suggestedTeams.filter(s => s.existingCount === 0).map(s => (
                   <div key={s.groupName} style={{background:'#f0fdf4',border:'0.5px solid #bbf7d0',borderRadius:8,padding:'8px 12px',minWidth:180,flex:1}}>
@@ -1296,14 +1308,14 @@ export default function ProjectDetail() {
                       <div style={{marginTop:4}}>
                         {s.availableUsers.slice(0,4).map(u => (
                           <button key={u._id} onClick={() => handleQuickInvite(s, u)}
-                            style={{display:'inline-flex',alignItems:'center',gap:4,margin:'2px 4px 2px 0',padding:'3px 8px',background:'white',border:'0.5px solid #bbf7d0',borderRadius:6,fontSize:9,cursor:'pointer',color:'#166534',whiteSpace:'nowrap'}}>
+                            style={{display:'inline-flex',alignItems:'center',gap:4,margin:'2px 4px 2px 0',padding:'3px 8px',background:'var(--bg-secondary)',border:'0.5px solid #bbf7d0',borderRadius:6,fontSize:9,cursor:'pointer',color:'#166534',whiteSpace:'nowrap'}}>
                             + {u.name}
                           </button>
                         ))}
-                        {s.availableUsers.length > 4 && <span style={{fontSize:9,color:'#6b7280'}}>+{s.availableUsers.length - 4} more</span>}
+                        {s.availableUsers.length > 4 && <span style={{fontSize:9,color:'var(--text-muted)'}}>+{s.availableUsers.length - 4} more</span>}
                       </div>
                     ) : (
-                      <div style={{fontSize:9,color:'#6b7280'}}>No matching users found</div>
+                      <div style={{fontSize:9,color:'var(--text-muted)'}}>No matching users found</div>
                     )}
                   </div>
                 ))}
@@ -1312,33 +1324,33 @@ export default function ProjectDetail() {
           )}
 
           {groupedData.groups.length === 0 && groupedData.ungrouped.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>👥</p><p style={{fontSize:11}}>No members yet</p></div>
+            <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)'}}><p style={{fontSize:24,marginBottom:8}}>👥</p><p style={{fontSize:11}}>No members yet</p></div>
           ) : (
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
               {groupedData.groups.map(g => (
-                <div key={g._id} style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'0.5px solid #e5e7eb',background:'#fafafa'}}>
+                <div key={g._id} style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'0.5px solid var(--border-secondary)',background:'var(--bg-tertiary)'}}>
                     <span style={{fontSize:16}}>{g.icon}</span>
-                    <span style={{fontSize:12,fontWeight:600,color:'#111827',flex:1}}>{g.name}</span>
-                    <span style={{fontSize:10,color:'#6b7280',background:'#e5e7eb',padding:'2px 10px',borderRadius:12,fontWeight:600}}>
+                    <span style={{fontSize:12,fontWeight:600,color:'var(--text-primary)',flex:1}}>{g.name}</span>
+                    <span style={{fontSize:10,color:'var(--text-muted)',background:'var(--border-secondary)',padding:'2px 10px',borderRadius:12,fontWeight:600}}>
                       {g.members.length} {g.members.length === 1 ? 'member' : 'members'}
                     </span>
                   </div>
                   {g.members.length === 0 ? (
-                    <div style={{padding:'16px 14px',textAlign:'center',color:'#9ca3af',fontSize:10}}>No members in this group</div>
+                    <div style={{padding:'16px 14px',textAlign:'center',color:'var(--text-muted)',fontSize:10}}>No members in this group</div>
                   ) : (
                     g.members.map(m => {
-                      const roleStyles = { admin:{bg:'#f0f4ff',clr:'#1a35c4'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'#1a35c4'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
+                      const roleStyles = { admin:{bg:'#f0f4ff',clr:'var(--brand-primary)'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'var(--brand-primary)'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
                       const rs = roleStyles[m.projectRole] || roleStyles.developer;
                       const isActive = m.status === 'active';
                       return (
-                        <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}>
+                        <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid var(--bg-tertiary)',cursor:'pointer'}}>
                           <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,background:rs.bg,color:rs.clr,flexShrink:0}}>
                             {(m.user?.name || m.email || '?').charAt(0).toUpperCase()}
                           </div>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:11,fontWeight:500,color:'#111827'}}>{m.user?.name || m.email}</div>
-                            <div style={{fontSize:9,color:'#6b7280',marginTop:1}}>
+                            <div style={{fontSize:11,fontWeight:500,color:'var(--text-primary)'}}>{m.user?.name || m.email}</div>
+                            <div style={{fontSize:9,color:'var(--text-muted)',marginTop:1}}>
                               <span style={{background:rs.bg,color:rs.clr,padding:'1px 6px',borderRadius:3,fontWeight:500}}>{m.projectRole?.replace(/_/g,' ') || 'developer'}</span>
                               {m.user?.email && <span style={{marginLeft:6}}>{m.user.email}</span>}
                             </div>
@@ -1357,20 +1369,20 @@ export default function ProjectDetail() {
                 </div>
               ))}
               {groupedData.ungrouped.length > 0 && (
-                <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'0.5px solid #e5e7eb',background:'#fafafa'}}>
+                <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'0.5px solid var(--border-secondary)',background:'var(--bg-tertiary)'}}>
                     <span style={{fontSize:16}}>📋</span>
-                    <span style={{fontSize:12,fontWeight:600,color:'#111827',flex:1}}>Ungrouped</span>
-                    <span style={{fontSize:10,color:'#6b7280',background:'#e5e7eb',padding:'2px 10px',borderRadius:12,fontWeight:600}}>{groupedData.ungrouped.length} members</span>
+                    <span style={{fontSize:12,fontWeight:600,color:'var(--text-primary)',flex:1}}>Ungrouped</span>
+                    <span style={{fontSize:10,color:'var(--text-muted)',background:'var(--border-secondary)',padding:'2px 10px',borderRadius:12,fontWeight:600}}>{groupedData.ungrouped.length} members</span>
                   </div>
                   {groupedData.ungrouped.map(m => (
-                    <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid #f3f4f6',cursor:'pointer'}}>
-                      <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,background:'#f3f4f6',color:'#374151',flexShrink:0}}>
+                    <div key={m._id} onClick={() => handleMemberClick(m)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'0.5px solid var(--bg-tertiary)',cursor:'pointer'}}>
+                      <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,background:'var(--bg-tertiary)',color:'var(--text-secondary)',flexShrink:0}}>
                         {(m.user?.name || m.email || '?').charAt(0).toUpperCase()}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:11,fontWeight:500,color:'#111827'}}>{m.user?.name || m.email}</div>
-                        <div style={{fontSize:9,color:'#6b7280',marginTop:1}}>
+                        <div style={{fontSize:11,fontWeight:500,color:'var(--text-primary)'}}>{m.user?.name || m.email}</div>
+                        <div style={{fontSize:9,color:'var(--text-muted)',marginTop:1}}>
                           <span>{m.projectRole || 'developer'}</span>
                           {m.user?.email && <span style={{marginLeft:6}}>{m.user.email}</span>}
                         </div>
@@ -1391,13 +1403,13 @@ export default function ProjectDetail() {
       {activeTab === 'resources' && (
         <div className="tab-content" style={{display:'block'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>{resources.length} resources</div>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>{resources.length} resources</div>
             {canManage && <button className="btn btn-blue" onClick={() => openResourceForm()}>+ Add Resource</button>}
           </div>
 
           {showResourceForm && (
-            <form onSubmit={handleResourceSubmit} style={{background:'white',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
-              <div style={{fontSize:11,fontWeight:600,color:'#111827',marginBottom:8}}>{editingResource ? 'Edit Resource' : 'Add Resource'}</div>
+            <form onSubmit={handleResourceSubmit} style={{background:'var(--bg-secondary)',borderRadius:9,border:'1px solid #2347e8',padding:'12px 14px',marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:8}}>{editingResource ? 'Edit Resource' : 'Add Resource'}</div>
               <div className="form-row">
                 <input className="select" value={resourceForm.title} onChange={e => setResourceForm({...resourceForm,title:e.target.value})}
                   placeholder="Title *" required style={{flex:2,minWidth:160}} />
@@ -1426,11 +1438,11 @@ export default function ProjectDetail() {
           )}
 
           {resources.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}><p style={{fontSize:24,marginBottom:8}}>🔗</p><p style={{fontSize:11}}>No resources yet</p></div>
+            <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)'}}><p style={{fontSize:24,marginBottom:8}}>🔗</p><p style={{fontSize:11}}>No resources yet</p></div>
           ) : resources.map(r => {
             const iconMap = { github:'🐙', gitlab:'🦊', figma:'🎨', notion:'📄', jira:'📋', trello:'📌', confluence:'📖', link:'🔗', pdf:'📕', docx:'📘', xlsx:'📊', pptx:'📽', image:'🖼', video:'🎬', document:'📄', other:'📎' };
-            const colorMap = { github:'#15803d', gitlab:'#fc6d26', figma:'#7e22ce', notion:'#1d4ed8', jira:'#0052cc', link:'#374151', pdf:'#dc2626', docx:'#2563eb', xlsx:'#16a34a', pptx:'#ea580c', image:'#8b5cf6', video:'#ec4899', document:'#6b7280', other:'#9ca3af' };
-            const bgMap = { github:'#f0fdf4', gitlab:'#fff7ed', figma:'#fdf4ff', notion:'#eff6ff', jira:'#f0f4ff', link:'#f3f4f6', pdf:'#fef2f2', docx:'#eff6ff', xlsx:'#f0fdf4', pptx:'#fff7ed', image:'#f5f3ff', video:'#fdf4ff', document:'#f9fafb', other:'#f9fafb' };
+            const colorMap = { github:'#15803d', gitlab:'#fc6d26', figma:'#7e22ce', notion:'var(--brand-primary)', jira:'#0052cc', link:'var(--text-secondary)', pdf:'#dc2626', docx:'var(--brand-primary)', xlsx:'#16a34a', pptx:'#ea580c', image:'#8b5cf6', video:'#ec4899', document:'var(--text-muted)', other:'var(--text-muted)' };
+            const bgMap = { github:'#f0fdf4', gitlab:'#fff7ed', figma:'#fdf4ff', notion:'#eff6ff', jira:'#f0f4ff', link:'var(--bg-tertiary)', pdf:'#fef2f2', docx:'#eff6ff', xlsx:'#f0fdf4', pptx:'#fff7ed', image:'#f5f3ff', video:'#fdf4ff', document:'var(--bg-tertiary)', other:'var(--bg-tertiary)' };
             const icon = iconMap[r.type] || iconMap.other;
             const bg = bgMap[r.type] || bgMap.other;
             const color = colorMap[r.type] || colorMap.other;
@@ -1441,9 +1453,9 @@ export default function ProjectDetail() {
                     <div className="res-icon" style={{background:bg}}>{icon}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div className="res-title">{r.title}</div>
-                      {r.fileName && <div className="res-url" style={{fontSize:9,color:'#6b7280'}}>{r.fileName}</div>}
+                      {r.fileName && <div className="res-url" style={{fontSize:9,color:'var(--text-muted)'}}>{r.fileName}</div>}
                       {r.url && !r.fileUrl && <div className="res-url">{r.url}</div>}
-                      {r.description && <div style={{fontSize:9,color:'#6b7280',marginTop:1}}>{r.description}</div>}
+                      {r.description && <div style={{fontSize:9,color:'var(--text-muted)',marginTop:1}}>{r.description}</div>}
                     </div>
                   </a>
                 ) : (
@@ -1451,17 +1463,17 @@ export default function ProjectDetail() {
                     <div className="res-icon" style={{background:bg}}>{icon}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div className="res-title">{r.title}</div>
-                      {r.description && <div style={{fontSize:9,color:'#6b7280',marginTop:1}}>{r.description}</div>}
+                      {r.description && <div style={{fontSize:9,color:'var(--text-muted)',marginTop:1}}>{r.description}</div>}
                     </div>
                   </>
                 )}
                 <span style={{fontSize:9,background:bg,color:color,padding:'2px 6px',borderRadius:4,fontWeight:500}}>{r.type}</span>
                 {r.fileUrl && (
-                  <a href={r.fileUrl} download={r.fileName || r.title} style={{cursor:'pointer',color:'#374151',fontSize:11,flexShrink:0,textDecoration:'none'}}>⬇</a>
+                  <a href={r.fileUrl} download={r.fileName || r.title} style={{cursor:'pointer',color:'var(--text-secondary)',fontSize:11,flexShrink:0,textDecoration:'none'}}>⬇</a>
                 )}
                 {canManage && (
                   <>
-                    <span onClick={() => openResourceForm(r)} style={{cursor:'pointer',color:'#2347e8',fontSize:11,flexShrink:0}}>✎</span>
+                    <span onClick={() => openResourceForm(r)} style={{cursor:'pointer',color:'var(--brand-primary)',fontSize:11,flexShrink:0}}>✎</span>
                     <span onClick={() => setConfirmState({ title:'Delete resource', message:'Delete this resource?', onConfirm:() => handleDeleteResource(r._id) })} style={{cursor:'pointer',color:'#f87171',fontSize:11,flexShrink:0}}>✕</span>
                   </>
                 )}
@@ -1475,9 +1487,9 @@ export default function ProjectDetail() {
       {activeTab === 'test-cases' && (
         <div className="tab-content" style={{display:'block'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>
               🧪 {tcList.length} test cases
-              {tcStats && <span style={{fontSize:10,color:'#6b7280',fontWeight:400,marginLeft:8}}>
+              {tcStats && <span style={{fontSize:10,color:'var(--text-muted)',fontWeight:400,marginLeft:8}}>
                 · {tcStats.passed} passed ({tcStats.passRate}%) · {tcStats.failed} failed
               </span>}
             </div>
@@ -1500,52 +1512,52 @@ export default function ProjectDetail() {
 
           {tcStats && (
             <div style={{display:'flex',gap:8,marginBottom:10}}>
-              {[{k:'draft',l:'Draft',c:'#9ca3af'},{k:'ready',l:'Ready',c:'#3b82f6'},{k:'in_progress',l:'In Progress',c:'#f59e0b'},{k:'passed',l:'Passed',c:'#22c55e'},{k:'failed',l:'Failed',c:'#ef4444'},{k:'blocked',l:'Blocked',c:'#8b5cf6'},{k:'skipped',l:'Skipped',c:'#6b7280'}].map(s => (
-                <div key={s.k} style={{flex:1,background:'white',borderRadius:8,border:'0.5px solid #e5e7eb',padding:'8px 10px',textAlign:'center'}}>
+              {[{k:'draft',l:'Draft',c:'var(--text-muted)'},{k:'ready',l:'Ready',c:'#3b82f6'},{k:'in_progress',l:'In Progress',c:'#f59e0b'},{k:'passed',l:'Passed',c:'#22c55e'},{k:'failed',l:'Failed',c:'#ef4444'},{k:'blocked',l:'Blocked',c:'#8b5cf6'},{k:'skipped',l:'Skipped',c:'var(--text-muted)'}].map(s => (
+                <div key={s.k} style={{flex:1,background:'var(--bg-secondary)',borderRadius:8,border:'0.5px solid var(--border-secondary)',padding:'8px 10px',textAlign:'center'}}>
                   <div style={{fontSize:16,fontWeight:700,color:s.c}}>{tcStats[s.k] || 0}</div>
-                  <div style={{fontSize:9,color:'#6b7280',marginTop:1}}>{s.l}</div>
+                  <div style={{fontSize:9,color:'var(--text-muted)',marginTop:1}}>{s.l}</div>
                 </div>
               ))}
             </div>
           )}
 
           {tcList.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}>
+            <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)'}}>
               <p style={{fontSize:24,marginBottom:8}}>🧪</p>
               <p style={{fontSize:11}}>No test cases yet</p>
             </div>
           ) : (
-            <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
+            <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
-                  <tr style={{background:'#f9fafb',borderBottom:'0.5px solid #e5e7eb'}}>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>ID</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Title</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Type</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Priority</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
-                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.04em'}}>Actions</th>
+                  <tr style={{background:'var(--bg-tertiary)',borderBottom:'0.5px solid var(--border-secondary)'}}>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>ID</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Title</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Type</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Priority</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Status</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Assignee</th>
+                    <th style={{textAlign:'left',padding:'7px 12px',fontSize:9,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em'}}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tcList.map(tc => {
                     const typeIcon = { integration:'🔌', unit:'🧩', e2e:'🔄', security:'🔒', performance:'⚡', manual:'👤' };
-                    const statusColor = { draft:'#9ca3af', ready:'#3b82f6', in_progress:'#f59e0b', passed:'#22c55e', failed:'#ef4444', blocked:'#8b5cf6', skipped:'#6b7280' };
+                    const statusColor = { draft:'var(--text-muted)', ready:'#3b82f6', in_progress:'#f59e0b', passed:'#22c55e', failed:'#ef4444', blocked:'#8b5cf6', skipped:'var(--text-muted)' };
                     const prioIcon = { critical:'🔴', urgent:'⛔', high:'🟠', medium:'🟡', low:'🟢' };
                     return (
-                      <tr key={tc._id} style={{borderBottom:'0.5px solid #f3f4f6'}}>
-                        <td style={{padding:'7px 12px',fontSize:10,fontWeight:600,color:'#2347e8'}}>{tc.testCaseId}</td>
-                        <td style={{padding:'7px 12px',fontSize:11,color:'#111827'}}>{tc.title}</td>
-                        <td style={{padding:'7px 12px',fontSize:10,color:'#6b7280'}}>{typeIcon[tc.type] || '👤'} {tc.type}</td>
+                      <tr key={tc._id} style={{borderBottom:'0.5px solid var(--bg-tertiary)'}}>
+                        <td style={{padding:'7px 12px',fontSize:10,fontWeight:600,color:'var(--brand-primary)'}}>{tc.testCaseId}</td>
+                        <td style={{padding:'7px 12px',fontSize:11,color:'var(--text-primary)'}}>{tc.title}</td>
+                        <td style={{padding:'7px 12px',fontSize:10,color:'var(--text-muted)'}}>{typeIcon[tc.type] || '👤'} {tc.type}</td>
                         <td style={{padding:'7px 12px',fontSize:10}}>{prioIcon[tc.priority] || '🟡'} {tc.priority}</td>
                         <td style={{padding:'7px 12px'}}>
-                          <span style={{fontSize:10,fontWeight:600,color:statusColor[tc.status] || '#9ca3af',background:`${statusColor[tc.status] || '#9ca3af'}15`,padding:'2px 8px',borderRadius:4}}>
+                          <span style={{fontSize:10,fontWeight:600,color:statusColor[tc.status] || 'var(--text-muted)',background:`${statusColor[tc.status] || 'var(--text-muted)'}15`,padding:'2px 8px',borderRadius:4}}>
                             {tc.status.replace('_', ' ')}
                           </span>
                           {tc.linkedBug && <span style={{marginLeft:4,fontSize:10,color:'#ef4444'}}>🐛</span>}
                         </td>
-                        <td style={{padding:'7px 12px',fontSize:10,color:'#6b7280'}}>{tc.assignee?.name || '—'}</td>
+                        <td style={{padding:'7px 12px',fontSize:10,color:'var(--text-muted)'}}>{tc.assignee?.name || '—'}</td>
                         <td style={{padding:'7px 12px'}}>
                           <div style={{display:'flex',gap:4}}>
                             {(tc.status === 'draft' || tc.status === 'auto-draft') && (canManage || user?.role === 'qa_tester') && (
@@ -1558,7 +1570,7 @@ export default function ProjectDetail() {
                                   setTcStats(statsRes.data);
                                   setProject(projRes.data);
                                 } catch (e) { toast.error(e.response?.data?.message || 'Failed to update'); }
-                              }} style={{fontSize:9,padding:'2px 6px',background:'#3b82f6',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>Ready</button>
+                              }} style={{fontSize:9,padding:'2px 6px',background:'#3b82f6',color:'var(--bg-secondary)',border:'none',borderRadius:4,cursor:'pointer'}}>Ready</button>
                             )}
                             {tc.status === 'ready' && (canManage || user?.role === 'qa_tester') && (
                               <button onClick={async () => {
@@ -1571,7 +1583,7 @@ export default function ProjectDetail() {
                                   setTcStats(statsRes.data);
                                   setProject(projRes.data);
                                 } catch (e) { toast.error(e.response?.data?.message || 'Failed to start'); }
-                              }} style={{fontSize:9,padding:'2px 6px',background:'#f59e0b',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>Start</button>
+                              }} style={{fontSize:9,padding:'2px 6px',background:'#f59e0b',color:'var(--bg-secondary)',border:'none',borderRadius:4,cursor:'pointer'}}>Start</button>
                             )}
                             {tc.status === 'in_progress' && tc.assignee?._id === user._id && ['passed','failed','blocked','skipped'].map(s => (
                               <button key={s} onClick={async () => {
@@ -1588,7 +1600,7 @@ export default function ProjectDetail() {
                                   setTcStats(statsRes.data);
                                   setProject(projRes.data);
                                 } catch (e) { toast.error(e.response?.data?.message || 'Failed to update'); }
-                              }} style={{fontSize:9,padding:'2px 6px',background:s==='passed'?'#22c55e':s==='failed'?'#ef4444':s==='blocked'?'#8b5cf6':'#6b7280',color:'white',border:'none',borderRadius:4,cursor:'pointer'}}>
+                              }} style={{fontSize:9,padding:'2px 6px',background:s==='passed'?'#22c55e':s==='failed'?'#ef4444':s==='blocked'?'#8b5cf6':'var(--text-muted)',color:'var(--bg-secondary)',border:'none',borderRadius:4,cursor:'pointer'}}>
                                 {s === 'passed' ? '✅' : s === 'failed' ? '❌' : s === 'blocked' ? '⛔' : '⏭'} {s}
                               </button>
                             ))}
@@ -1597,7 +1609,7 @@ export default function ProjectDetail() {
                                 setTcForm({ title: tc.title, description: tc.description || '', type: tc.type || 'manual', priority: tc.priority || 'medium', assignee: tc.assignee?._id || '', sprint: tc.sprint?._id || tc.sprint || '', linkedTask: tc.linkedTask?._id || tc.linkedTask || '' });
                                 setEditingTc(tc);
                                 setShowTcForm(true);
-                              }} style={{fontSize:9,padding:'2px 6px',background:'#f3f4f6',color:'#374151',border:'none',borderRadius:4,cursor:'pointer'}}>✏️</button>
+                              }} style={{fontSize:9,padding:'2px 6px',background:'var(--bg-tertiary)',color:'var(--text-secondary)',border:'none',borderRadius:4,cursor:'pointer'}}>✏️</button>
                             )}
                             {canManage && (
                               <button onClick={async () => {
@@ -1606,7 +1618,7 @@ export default function ProjectDetail() {
                                 const [statsRes, projRes] = await Promise.all([testCases.getStats(id), projects.getById(id)]);
                                 setTcStats(statsRes.data);
                                 setProject(projRes.data);
-                              }} style={{fontSize:9,padding:'2px 6px',background:'#f3f4f6',color:'#ef4444',border:'none',borderRadius:4,cursor:'pointer'}}>✕</button>
+                              }} style={{fontSize:9,padding:'2px 6px',background:'var(--bg-tertiary)',color:'#ef4444',border:'none',borderRadius:4,cursor:'pointer'}}>✕</button>
                             )}
                           </div>
                         </td>
@@ -1618,12 +1630,12 @@ export default function ProjectDetail() {
             </div>
           )}
 
-          <hr style={{margin:'20px 0',border:'none',borderTop:'0.5px solid #e5e7eb'}} />
+          <hr style={{margin:'20px 0',border:'none',borderTop:'0.5px solid var(--border-secondary)'}} />
 
           {/* ===== BUGS SECTION (inside test-cases tab) ===== */}
           <div style={{marginTop:0}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-              <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>
+              <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>
                 🐛 Bugs <span style={{background:'#FEF2F2',color:'#DC2626',padding:'1px 8px',borderRadius:20,fontSize:10,marginLeft:6}}>{bugList.length}</span>
                 {bugList.filter(b => b.status === 'open').length > 0 && (
                   <span style={{fontSize:10,color:'#DC2626',fontWeight:400,marginLeft:6}}>· {bugList.filter(b => b.status === 'open').length} open</span>
@@ -1642,7 +1654,7 @@ export default function ProjectDetail() {
               if (bugSeverityFilter !== 'all') filtered = filtered.filter(b => b.severity === bugSeverityFilter);
               if (filtered.length === 0) {
                 return (
-                  <div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af'}}>
+                  <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)'}}>
                     <p style={{fontSize:24,marginBottom:8}}>🐛</p>
                     <p style={{fontSize:13,fontWeight:500,color:'#22c55e'}}>No bugs reported yet 🎉</p>
                     <p style={{fontSize:10,marginTop:4}}>Keep up the good work!</p>
@@ -1651,18 +1663,18 @@ export default function ProjectDetail() {
               }
               return filtered.map(bug => {
                 const severityColors = { critical:'#DC2626', high:'#EA580C', medium:'#CA8A04', low:'#2563EB' };
-                const statusColors = { open:'#DC2626', in_progress:'#CA8A04', fixed:'#16A34A', closed:'#6B7280', reopened:'#DC2626' };
-                const statusBg = { open:'#FEF2F2', in_progress:'#FFFBEB', fixed:'#F0FDF4', closed:'#F3F4F6', reopened:'#FEF2F2' };
+                const statusColors = { open:'#DC2626', in_progress:'#CA8A04', fixed:'#16A34A', closed:'var(--text-secondary)', reopened:'#DC2626' };
+                const statusBg = { open:'#FEF2F2', in_progress:'#FFFBEB', fixed:'#F0FDF4', closed:'var(--bg-tertiary)', reopened:'#FEF2F2' };
                 return (
-                  <div key={bug._id} style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',padding:'10px 14px',marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={() => setSelectedBug(bug)}>
-                    <div style={{width:6,height:6,borderRadius:'50%',background:severityColors[bug.severity]||'#6B7280',flexShrink:0}} />
+                  <div key={bug._id} style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:'10px 14px',marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={() => setSelectedBug(bug)}>
+                    <div style={{width:6,height:6,borderRadius:'50%',background:severityColors[bug.severity]||'var(--text-secondary)',flexShrink:0}} />
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                        <span style={{fontSize:9,fontWeight:700,color:'#2347E8'}}>Bug-{bug._id.toString().slice(-4).toUpperCase()}</span>
-                        <span style={{fontSize:11,fontWeight:600,color:'#111827'}}>{bug.title}</span>
+                        <span style={{fontSize:9,fontWeight:700,color:'var(--brand-primary)'}}>Bug-{bug._id.toString().slice(-4).toUpperCase()}</span>
+                        <span style={{fontSize:11,fontWeight:600,color:'var(--text-primary)'}}>{bug.title}</span>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:6,fontSize:9,color:'#6B7280'}}>
-                        <span style={{background:statusBg[bug.status]||'#F3F4F6',color:statusColors[bug.status]||'#6B7280',padding:'1px 6px',borderRadius:3,fontWeight:600}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,fontSize:9,color:'var(--text-secondary)'}}>
+                        <span style={{background:statusBg[bug.status]||'var(--bg-tertiary)',color:statusColors[bug.status]||'var(--text-secondary)',padding:'1px 6px',borderRadius:3,fontWeight:600}}>
                           {bug.status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
                         </span>
                         <span style={{background:severityColors[bug.severity]+'15',color:severityColors[bug.severity],padding:'1px 6px',borderRadius:3,fontWeight:600}}>
@@ -1674,12 +1686,12 @@ export default function ProjectDetail() {
                         <span>{new Date(bug.createdAt).toLocaleDateString()}</span>
                       </div>
                       {bug.description && (
-                        <div style={{fontSize:9,color:'#9CA3AF',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:400}}>{bug.description}</div>
+                        <div style={{fontSize:9,color:'var(--text-muted)',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:400}}>{bug.description}</div>
                       )}
                     </div>
                     <div style={{display:'flex',gap:4,flexShrink:0}}>
                       {bug.screenshot && (
-                        <img src={bug.screenshot} alt="bug" style={{width:36,height:28,borderRadius:4,objectFit:'cover',cursor:'pointer',border:'0.5px solid #e5e7eb'}}
+                        <img src={bug.screenshot} alt="bug" style={{width:36,height:28,borderRadius:4,objectFit:'cover',cursor:'pointer',border:'0.5px solid var(--border-secondary)'}}
                           onClick={() => window.open(bug.screenshot)} />
                       )}
                       {canManage && ['open', 'in_progress', 'reopened'].includes(bug.status) && (
@@ -1700,12 +1712,12 @@ export default function ProjectDetail() {
       {/* ===== REVIEW TAB ===== */}
       {activeTab === 'review' && (
         <div className="tab-content" style={{display:'block'}}>
-          <div style={{fontSize:12,fontWeight:600,color:'#374151',marginBottom:10}}>📅 Scheduled Review Calls</div>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)',marginBottom:10}}>📅 Scheduled Review Calls</div>
 
           {project.reviewCall?.date ? (
-            <div style={{background:'white',borderRadius:9,border:'0.5px solid #e5e7eb',overflow:'hidden'}}>
+            <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',overflow:'hidden'}}>
               {/* Card header */}
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:'0.5px solid #f3f4f6',background:'#fafafa'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:'0.5px solid var(--bg-tertiary)',background:'var(--bg-tertiary)'}}>
                 <span style={{fontSize:9,fontWeight:700,padding:'2px 8px',borderRadius:4,
                   background:project.reviewCall.completed ? '#F0FDF4' : '#FFFBEB',
                   color:project.reviewCall.completed ? '#16A34A' : '#CA8A04'}}>
@@ -1713,7 +1725,7 @@ export default function ProjectDetail() {
                 </span>
                 {canManage && !project.reviewCall.completed && (
                   <button onClick={() => setEditingReviewCall(!editingReviewCall)}
-                    style={{fontSize:9,color:'#2563eb',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>
+                    style={{fontSize:9,color:'var(--brand-primary)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>
                     {editingReviewCall ? 'Cancel' : '✏️ Edit'}
                   </button>
                 )}
@@ -1724,18 +1736,18 @@ export default function ProjectDetail() {
                   <>
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
                       <div>
-                        <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Date</label>
+                        <label style={{fontSize:9,fontWeight:600,color:'var(--text-secondary)',display:'block',marginBottom:2}}>Date</label>
                           <input type="date" className="select" value={project.reviewCall.date.split('T')[0]}
                           onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), date: e.target.value}}))} />
                       </div>
                       <div>
-                        <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Time</label>
+                        <label style={{fontSize:9,fontWeight:600,color:'var(--text-secondary)',display:'block',marginBottom:2}}>Time</label>
                           <input type="time" className="select" value={project.reviewCall.time || ''}
                           onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), time: e.target.value}}))} />
                       </div>
                     </div>
                     <div style={{marginBottom:8}}>
-                      <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Meeting Link</label>
+                      <label style={{fontSize:9,fontWeight:600,color:'var(--text-secondary)',display:'block',marginBottom:2}}>Meeting Link</label>
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         <input type="text" className="select" style={{fontSize:9,padding:'5px 8px',flex:1}}
                           placeholder="https://meet.google.com/..."
@@ -1756,20 +1768,20 @@ export default function ProjectDetail() {
                             }
                           } catch (e) { toast.error('Failed to generate meeting'); }
                         }}
-                          style={{fontSize:9,fontWeight:600,color:'#fff',background:'#6366F1',border:'none',borderRadius:4,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                          style={{fontSize:9,fontWeight:600,color:'var(--bg-secondary)',background:'var(--brand-primary)',border:'none',borderRadius:4,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
                           🎥 Generate
                         </button>
                       </div>
                     </div>
                     <div style={{marginBottom:10}}>
-                      <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Notes (Agenda)</label>
+                      <label style={{fontSize:9,fontWeight:600,color:'var(--text-secondary)',display:'block',marginBottom:2}}>Notes (Agenda)</label>
                       <textarea className="select" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
                         placeholder="Agenda items, things to discuss..."
                         value={project.reviewCall.notes || ''}
                         onChange={e => setProject(prev => ({...prev, reviewCall: {...(prev.reviewCall||{}), notes: e.target.value}}))} />
                     </div>
                     <div style={{marginBottom:10}}>
-                      <label style={{fontSize:9,fontWeight:600,color:'#374151',display:'block',marginBottom:2}}>Discussion Notes (Minutes)</label>
+                      <label style={{fontSize:9,fontWeight:600,color:'var(--text-secondary)',display:'block',marginBottom:2}}>Discussion Notes (Minutes)</label>
                       <textarea className="select" style={{fontSize:9,padding:'5px 8px',width:'100%',minHeight:50}}
                         placeholder="What was discussed during the call..."
                         value={project.reviewCall.discussion || ''}
@@ -1810,18 +1822,18 @@ export default function ProjectDetail() {
                 ) : (
                   <div>
                     <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 12px',fontSize:10,marginBottom:8}}>
-                      <span style={{fontWeight:600,color:'#6B7280'}}>Date:</span><span style={{color:'#111827'}}>{new Date(project.reviewCall.date).toLocaleDateString()}</span>
-                      {project.reviewCall.time && <><span style={{fontWeight:600,color:'#6B7280'}}>Time:</span><span style={{color:'#111827'}}>{project.reviewCall.time}</span></>}
-                      {project.reviewCall.link && <><span style={{fontWeight:600,color:'#6B7280'}}>Link:</span><a href={project.reviewCall.link} target="_blank" style={{color:'#2563eb'}}>{project.reviewCall.link}</a></>}
-                      {project.reviewCall.notes && <><span style={{fontWeight:600,color:'#6B7280'}}>Notes:</span><span style={{color:'#374151'}}>{project.reviewCall.notes}</span></>}
-                      {project.reviewCall.discussion && <><span style={{fontWeight:600,color:'#6B7280'}}>Discussion:</span><span style={{color:'#374151',whiteSpace:'pre-wrap'}}>{project.reviewCall.discussion}</span></>}
+                      <span style={{fontWeight:600,color:'var(--text-secondary)'}}>Date:</span><span style={{color:'var(--text-primary)'}}>{new Date(project.reviewCall.date).toLocaleDateString()}</span>
+                      {project.reviewCall.time && <><span style={{fontWeight:600,color:'var(--text-secondary)'}}>Time:</span><span style={{color:'var(--text-primary)'}}>{project.reviewCall.time}</span></>}
+                      {project.reviewCall.link && <><span style={{fontWeight:600,color:'var(--text-secondary)'}}>Link:</span><a href={project.reviewCall.link} target="_blank" style={{color:'var(--brand-primary)'}}>{project.reviewCall.link}</a></>}
+                      {project.reviewCall.notes && <><span style={{fontWeight:600,color:'var(--text-secondary)'}}>Notes:</span><span style={{color:'var(--text-secondary)'}}>{project.reviewCall.notes}</span></>}
+                      {project.reviewCall.discussion && <><span style={{fontWeight:600,color:'var(--text-secondary)'}}>Discussion:</span><span style={{color:'var(--text-secondary)',whiteSpace:'pre-wrap'}}>{project.reviewCall.discussion}</span></>}
                     </div>
                     {!project.reviewCall.completed && canManage && (
                       <button onClick={() => {
                         setCompleteReviewNotes(project.reviewCall.discussion || '');
                         setCompleteReviewModal('tab');
                       }}
-                        style={{fontSize:9,fontWeight:600,color:'#fff',background:'#16A34A',border:'none',borderRadius:4,padding:'4px 12px',cursor:'pointer',fontFamily:'inherit'}}>
+                        style={{fontSize:9,fontWeight:600,color:'var(--bg-secondary)',background:'#16A34A',border:'none',borderRadius:4,padding:'4px 12px',cursor:'pointer',fontFamily:'inherit'}}>
                         ✅ Mark as completed
                       </button>
                     )}
@@ -1847,7 +1859,7 @@ export default function ProjectDetail() {
               </div>
             </div>
           ) : canManage ? (
-            <div style={{textAlign:'center',padding:'30px 0',color:'#9CA3AF',fontSize:11}}>
+            <div style={{textAlign:'center',padding:'30px 0',color:'var(--text-muted)',fontSize:11}}>
               <div style={{marginBottom:8}}>No review call scheduled yet</div>
               <button className="btn btn-blue" style={{fontSize:9,padding:'4px 14px'}}
                 onClick={async () => {
@@ -1859,7 +1871,7 @@ export default function ProjectDetail() {
                 }}>+ Schedule Review Call</button>
             </div>
           ) : (
-            <div style={{textAlign:'center',padding:'20px 0',color:'#9CA3AF',fontSize:11}}>No review call scheduled yet</div>
+            <div style={{textAlign:'center',padding:'20px 0',color:'var(--text-muted)',fontSize:11}}>No review call scheduled yet</div>
           )}
         </div>
       )}
@@ -1898,10 +1910,10 @@ export default function ProjectDetail() {
               <div className="s-field">
                 <label className="s-label">Progress</label>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <input type="range" min="0" max="100" className="select" style={{flex:1,padding:0,accentColor:'#2347e8'}}
+                  <input type="range" min="0" max="100" className="select" style={{flex:1,padding:0,accentColor:'var(--brand-primary)'}}
                     value={settingsForm.manualProgress !== undefined ? settingsForm.manualProgress : project.progress || 0}
                     onChange={e => setSettingsForm({...settingsForm, manualProgress: Number(e.target.value)})} />
-                  <span style={{fontSize:11,fontWeight:600,color:'#111827',minWidth:28,textAlign:'right'}}>
+                  <span style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',minWidth:28,textAlign:'right'}}>
                     {settingsForm.manualProgress !== undefined ? settingsForm.manualProgress : project.progress || 0}%
                   </span>
                 </div>
@@ -1959,7 +1971,7 @@ export default function ProjectDetail() {
               {[{k:'notifyTaskAssignment',l:'Task Assignment'},{k:'notifySprintChanges',l:'Sprint Changes'},{k:'notifyProjectUpdates',l:'Project Updates'}].map(({k,l}) => (
                 <label key={k} style={{display:'flex',alignItems:'center',gap:6,fontSize:10,cursor:'pointer',padding:'4px 0'}}>
                   <input type="checkbox" checked={!!settingsForm[k]} disabled={!canManage}
-                    onChange={e => setSettingsForm({...settingsForm, [k]: e.target.checked})} style={{accentColor:'#2347e8'}} />
+                    onChange={e => setSettingsForm({...settingsForm, [k]: e.target.checked})} style={{accentColor:'var(--brand-primary)'}} />
                   {l}
                 </label>
               ))}
@@ -1969,39 +1981,6 @@ export default function ProjectDetail() {
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
             )}
-          </div>
-
-          <div className="settings-section">
-            <div className="settings-title">⚡ Project Relay</div>
-            <div style={{fontSize:10,color:'#6b7280',marginBottom:8}}>
-              Link this project into a pipeline chain. When delivered, the next project's team gets notified.
-            </div>
-            {relayChains.length === 0 ? (
-              <div style={{fontSize:10,color:'#9ca3af',marginBottom:8}}>Not linked to any relay chain.</div>
-            ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:8}}>
-                {relayChains.map(chain => {
-                  const projects = chain.projects || [];
-                  const idx = projects.findIndex(p => p._id === id);
-                  return (
-                    <div key={chain._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#f9fafb',borderRadius:6,padding:'6px 10px',fontSize:10}}>
-                      <div>
-                        <span style={{fontWeight:600,color:'#111827'}}>{chain.name}</span>
-                        <span style={{color:'#6b7280',marginLeft:6}}>— Position {idx + 1} of {projects.length}</span>
-                      </div>
-                      <button onClick={() => navigate(`/relay`)}
-                        style={{padding:'2px 8px',background:'#2347e8',color:'white',borderRadius:4,fontSize:9,border:'none',cursor:'pointer'}}>
-                        View Chain
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <button onClick={() => navigate('/relay')}
-              style={{padding:'5px 12px',background:'#f3f4f6',color:'#374151',borderRadius:6,fontSize:10,border:'none',cursor:'pointer',fontWeight:500}}>
-              Manage Chains ↗
-            </button>
           </div>
 
           <div className="settings-section">
@@ -2041,7 +2020,7 @@ export default function ProjectDetail() {
                   {settingsForm.teamsChannelId && (
                     <a href={`https://teams.microsoft.com/l/channel/${settingsForm.teamsChannelId}/`}
                       target="_blank" rel="noopener noreferrer"
-                      className="btn" style={{fontSize:10,padding:'6px 12px',background:'#f3f4f6',color:'#374151'}}>
+                      className="btn" style={{fontSize:10,padding:'6px 12px',background:'var(--bg-tertiary)',color:'var(--text-secondary)'}}>
                       Open in Teams ↗
                     </a>
                   )}
@@ -2052,10 +2031,10 @@ export default function ProjectDetail() {
 
           <div className="settings-section" style={{borderLeft:'3px solid #8b5cf6'}}>
             <div className="settings-title">📦 Save as Template</div>
-            <div style={{fontSize:10,color:'#6b7280',marginBottom:8}}>
+            <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:8}}>
               Turn this project into a reusable template. All sprints become phases and tasks are preserved.
             </div>
-            <button className="btn" style={{fontSize:10,padding:'6px 14px',background:'#8b5cf6',color:'white',border:'none',cursor:'pointer',borderRadius:6,fontWeight:500}}
+            <button className="btn" style={{fontSize:10,padding:'6px 14px',background:'#8b5cf6',color:'var(--bg-secondary)',border:'none',cursor:'pointer',borderRadius:6,fontWeight:500}}
               onClick={handleSaveAsTemplate} disabled={saving}>
               {saving ? 'Saving…' : 'Save as Template'}
             </button>
@@ -2112,9 +2091,9 @@ export default function ProjectDetail() {
         }>
         <div style={{textAlign:'center',padding:'10px 0'}}>
           <div style={{fontSize:28,marginBottom:8}}>🔄</div>
-          <div style={{fontSize:13,fontWeight:700,color:'#111827',marginBottom:4}}>Task Reopened</div>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)',marginBottom:4}}>Task Reopened</div>
           <div style={{fontSize:12,fontWeight:600,color:'#22c55e',marginBottom:8}}>Status: In Progress</div>
-          <div style={{fontSize:10,color:'#6b7280',lineHeight:1.5}}>
+          <div style={{fontSize:10,color:'var(--text-muted)',lineHeight:1.5}}>
             The task linked to this bug has been reopened and its status has been changed to <strong>In Progress</strong>. The assigned developer will be notified to fix the issue.
           </div>
           {confirmResolveBug?.task && (
@@ -2130,17 +2109,17 @@ export default function ProjectDetail() {
         {selectedBug && (
           <div>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-              <span style={{fontSize:11,fontWeight:700,color:'#2347E8'}}>Bug-{selectedBug._id.toString().slice(-4).toUpperCase()}</span>
-              <span style={{fontSize:10,color:'#6B7280'}}>· {new Date(selectedBug.createdAt).toLocaleDateString()}</span>
+              <span style={{fontSize:11,fontWeight:700,color:'var(--brand-primary)'}}>Bug-{selectedBug._id.toString().slice(-4).toUpperCase()}</span>
+              <span style={{fontSize:10,color:'var(--text-secondary)'}}>· {new Date(selectedBug.createdAt).toLocaleDateString()}</span>
             </div>
-            <div style={{fontSize:14,fontWeight:700,color:'#111827',marginBottom:8}}>{selectedBug.title}</div>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--text-primary)',marginBottom:8}}>{selectedBug.title}</div>
             {selectedBug.description && (
-              <div style={{fontSize:11,color:'#374151',marginBottom:10,lineHeight:1.5}}>{selectedBug.description}</div>
+              <div style={{fontSize:11,color:'var(--text-secondary)',marginBottom:10,lineHeight:1.5}}>{selectedBug.description}</div>
             )}
             <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
               <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:4,
-                background: selectedBug.status === 'open' ? '#FEF2F2' : selectedBug.status === 'in_progress' ? '#FFFBEB' : selectedBug.status === 'fixed' ? '#F0FDF4' : '#F3F4F6',
-                color: selectedBug.status === 'open' ? '#DC2626' : selectedBug.status === 'in_progress' ? '#CA8A04' : selectedBug.status === 'fixed' ? '#16A34A' : '#6B7280'}}>
+                background: selectedBug.status === 'open' ? '#FEF2F2' : selectedBug.status === 'in_progress' ? '#FFFBEB' : selectedBug.status === 'fixed' ? '#F0FDF4' : 'var(--bg-tertiary)',
+                color: selectedBug.status === 'open' ? '#DC2626' : selectedBug.status === 'in_progress' ? '#CA8A04' : selectedBug.status === 'fixed' ? '#16A34A' : 'var(--text-secondary)'}}>
                 {selectedBug.status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
               </span>
               <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:4,
@@ -2149,55 +2128,55 @@ export default function ProjectDetail() {
                 {selectedBug.severity.charAt(0).toUpperCase()+selectedBug.severity.slice(1)}
               </span>
             </div>
-            <hr style={{border:'none',borderTop:'0.5px solid #e5e7eb',margin:'10px 0'}} />
+            <hr style={{border:'none',borderTop:'0.5px solid var(--border-secondary)',margin:'10px 0'}} />
             {(selectedBug.stepsToReproduce?.length > 0) && (
               <div style={{marginBottom:10}}>
-                <div style={{fontSize:10,fontWeight:600,color:'#6B7280',marginBottom:4}}>Steps to Reproduce</div>
-                <ol style={{margin:0,paddingLeft:18,fontSize:10,color:'#374151',lineHeight:1.6}}>
+                <div style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)',marginBottom:4}}>Steps to Reproduce</div>
+                <ol style={{margin:0,paddingLeft:18,fontSize:10,color:'var(--text-secondary)',lineHeight:1.6}}>
                   {selectedBug.stepsToReproduce.map((s,i) => <li key={i}>{s}</li>)}
                 </ol>
               </div>
             )}
             {selectedBug.expectedBehavior && (
               <div style={{marginBottom:6}}>
-                <span style={{fontSize:10,fontWeight:600,color:'#6B7280'}}>Expected: </span>
-                <span style={{fontSize:10,color:'#374151'}}>{selectedBug.expectedBehavior}</span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Expected: </span>
+                <span style={{fontSize:10,color:'var(--text-secondary)'}}>{selectedBug.expectedBehavior}</span>
               </div>
             )}
             {selectedBug.actualBehavior && (
               <div style={{marginBottom:6}}>
-                <span style={{fontSize:10,fontWeight:600,color:'#6B7280'}}>Actual: </span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Actual: </span>
                 <span style={{fontSize:10,color:'#DC2626'}}>{selectedBug.actualBehavior}</span>
               </div>
             )}
             {selectedBug.environment && (
               <div style={{marginBottom:6}}>
-                <span style={{fontSize:10,fontWeight:600,color:'#6B7280'}}>Environment: </span>
-                <span style={{fontSize:10,color:'#374151'}}>{selectedBug.environment}</span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Environment: </span>
+                <span style={{fontSize:10,color:'var(--text-secondary)'}}>{selectedBug.environment}</span>
               </div>
             )}
             {selectedBug.assignee && (
               <div style={{marginBottom:6}}>
-                <span style={{fontSize:10,fontWeight:600,color:'#6B7280'}}>Assigned to: </span>
-                <span style={{fontSize:10,color:'#374151'}}>{selectedBug.assignee.name}</span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Assigned to: </span>
+                <span style={{fontSize:10,color:'var(--text-secondary)'}}>{selectedBug.assignee.name}</span>
               </div>
             )}
             {selectedBug.reporter && (
               <div style={{marginBottom:6}}>
-                <span style={{fontSize:10,fontWeight:600,color:'#6B7280'}}>Reported by: </span>
-                <span style={{fontSize:10,color:'#374151'}}>{selectedBug.reporter?.name || selectedBug.reporter}</span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Reported by: </span>
+                <span style={{fontSize:10,color:'var(--text-secondary)'}}>{selectedBug.reporter?.name || selectedBug.reporter}</span>
               </div>
             )}
             {selectedBug.screenshot && (
               <div style={{marginTop:10}}>
-                <img src={selectedBug.screenshot} alt="bug screenshot" style={{maxWidth:'100%',maxHeight:200,borderRadius:6,border:'0.5px solid #e5e7eb',cursor:'pointer'}}
+                <img src={selectedBug.screenshot} alt="bug screenshot" style={{maxWidth:'100%',maxHeight:200,borderRadius:6,border:'0.5px solid var(--border-secondary)',cursor:'pointer'}}
                   onClick={() => window.open(selectedBug.screenshot)} />
               </div>
             )}
             {selectedBug.resolutionNotes && (
               <div style={{marginTop:10,padding:'8px 10px',background:'#F0FDF4',borderRadius:6,border:'0.5px solid #BBF7D0'}}>
                 <div style={{fontSize:10,fontWeight:600,color:'#16A34A',marginBottom:2}}>Resolution Notes</div>
-                <div style={{fontSize:10,color:'#374151'}}>{selectedBug.resolutionNotes}</div>
+                <div style={{fontSize:10,color:'var(--text-secondary)'}}>{selectedBug.resolutionNotes}</div>
               </div>
             )}
             {canManage && selectedBug?.status !== 'closed' && (
@@ -2217,63 +2196,63 @@ export default function ProjectDetail() {
         title="Add member" icon="👥"
         footer={
           <div style={{display:'flex', gap:6}}>
-            <button onClick={() => setShowAddMember(false)} className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none">Cancel</button>
+            <button onClick={() => setShowAddMember(false)} className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none">Cancel</button>
             <button onClick={handleAddMember} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-colors cursor-pointer border-none"
-              style={{background: addMemberMode === 'department' && selectedUserIds.length === 0 ? '#9ca3af' : '#2347e8'}}>
+              style={{background: addMemberMode === 'department' && selectedUserIds.length === 0 ? 'var(--text-muted)' : 'var(--brand-primary)'}}>
               {addMemberMode === 'department' ? `Add (${selectedUserIds.length})` : 'Send invitation'}
             </button>
           </div>
         }>
-        <div style={{display:'flex', gap:3, marginBottom:16, background:'#f3f4f6', borderRadius:8, padding:3}}>
+        <div style={{display:'flex', gap:3, marginBottom:16, background:'var(--bg-tertiary)', borderRadius:8, padding:3}}>
           <button onClick={() => setAddMemberMode('department')}
-            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'department' ? '#fff' : 'transparent', color: addMemberMode === 'department' ? '#111827' : '#6b7280', boxShadow: addMemberMode === 'department' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
+            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'department' ? 'var(--bg-secondary)' : 'transparent', color: addMemberMode === 'department' ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: addMemberMode === 'department' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
             From department
           </button>
           <button onClick={() => setAddMemberMode('email')}
-            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'email' ? '#fff' : 'transparent', color: addMemberMode === 'email' ? '#111827' : '#6b7280', boxShadow: addMemberMode === 'email' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
+            style={{flex:1, padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:6, border:'none', cursor:'pointer', background: addMemberMode === 'email' ? 'var(--bg-secondary)' : 'transparent', color: addMemberMode === 'email' ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: addMemberMode === 'email' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}}>
             Invite by email
           </button>
         </div>
         {addMemberMode === 'department' ? (
           <>
-            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Department</label>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'var(--text-secondary)', marginBottom:4}}>Department</label>
             <Dropdown value={deptFilter} onChange={v => { setDeptFilter(v); setSelectedUserIds([]); }}
               options={[{value:'', label:'— Select department —'}, ...(domainUsers?.groups || []).map(g => ({value:g.name, label:`${g.icon} ${g.name}`}))]}
             />
             {deptFilter && (
-              <div style={{marginTop:8, maxHeight:200, overflowY:'auto', border:'0.5px solid #e5e7eb', borderRadius:6, padding:'2px 0'}}>
+              <div style={{marginTop:8, maxHeight:200, overflowY:'auto', border:'0.5px solid var(--border-secondary)', borderRadius:6, padding:'2px 0'}}>
                 {availableUsers.length === 0 ? (
-                  <div style={{textAlign:'center', color:'#9ca3af', fontSize:10, padding:16}}>All members of this department are already in the project</div>
+                  <div style={{textAlign:'center', color:'var(--text-muted)', fontSize:10, padding:16}}>All members of this department are already in the project</div>
                 ) : availableUsers.map(m => (
                   <label key={m.user._id} onClick={() => { setSelectedUserIds(prev => prev.includes(m.user._id) ? prev.filter(id => id !== m.user._id) : [...prev, m.user._id]); }}
                     style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px', cursor:'pointer', background: selectedUserIds.includes(m.user._id) ? '#f0f4ff' : 'transparent', borderRadius:4, margin:'2px 4px'}}>
-                    <input type="checkbox" checked={selectedUserIds.includes(m.user._id)} readOnly style={{accentColor:'#2347e8'}} />
-                    <div style={{width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:600, background:'#e5e7eb', color:'#374151', flexShrink:0}}>
+                    <input type="checkbox" checked={selectedUserIds.includes(m.user._id)} readOnly style={{accentColor:'var(--brand-primary)'}} />
+                    <div style={{width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:600, background:'var(--border-secondary)', color:'var(--text-secondary)', flexShrink:0}}>
                       {(m.user.name || '?').charAt(0).toUpperCase()}
                     </div>
                     <div style={{minWidth:0}}>
-                      <div style={{fontSize:10, fontWeight:500, color:'#111827'}}>{m.user.name}</div>
-                      <div style={{fontSize:9, color:'#9ca3af', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{m.user.email}</div>
+                      <div style={{fontSize:10, fontWeight:500, color:'var(--text-primary)'}}>{m.user.name}</div>
+                      <div style={{fontSize:9, color:'var(--text-muted)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{m.user.email}</div>
                     </div>
                   </label>
                 ))}
               </div>
             )}
-            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginTop:10, marginBottom:4}}>Default project role</label>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'var(--text-secondary)', marginTop:10, marginBottom:4}}>Default project role</label>
             <Dropdown value={addMemberForm.role} onChange={v => setAddMemberForm({...addMemberForm, role:v})}
               options={[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}]}
             />
           </>
         ) : (
           <>
-            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Email address</label>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'var(--text-secondary)', marginBottom:4}}>Email address</label>
             <input type="email" value={addMemberForm.email} onChange={e => setAddMemberForm({...addMemberForm,email:e.target.value})} placeholder="user@company.com"
               style={{width:'100%', padding:'6px 10px', fontSize:11, border:'0.5px solid #d1d5db', borderRadius:6, outline:'none', boxSizing:'border-box', marginBottom:8}} />
-            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginBottom:4}}>Project role</label>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'var(--text-secondary)', marginBottom:4}}>Project role</label>
             <Dropdown value={addMemberForm.role} onChange={v => setAddMemberForm({...addMemberForm, role:v})}
               options={[{value:'developer',label:'Developer'},{value:'qa_tester',label:'QA Tester'},{value:'project_manager',label:'Project Manager'},{value:'intern',label:'Intern'},{value:'admin',label:'Admin'}]}
             />
-            <label style={{display:'block', fontSize:10, fontWeight:500, color:'#374151', marginTop:8, marginBottom:4}}>Invitation message (optional)</label>
+            <label style={{display:'block', fontSize:10, fontWeight:500, color:'var(--text-secondary)', marginTop:8, marginBottom:4}}>Invitation message (optional)</label>
             <textarea value={addMemberForm.message} onChange={e => setAddMemberForm({...addMemberForm,message:e.target.value})} placeholder="Welcome to the project!"
               style={{width:'100%', padding:'6px 10px', fontSize:11, border:'0.5px solid #d1d5db', borderRadius:6, outline:'none', boxSizing:'border-box', resize:'vertical', minHeight:50}} />
           </>
@@ -2362,7 +2341,7 @@ export default function ProjectDetail() {
           </>
         }
       >
-        <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginTop:8}}>
+        <label style={{display:'block',fontSize:10,fontWeight:500,color:'var(--text-secondary)',marginTop:8}}>
           Why did it fail?
           <textarea
             style={{width:'100%',padding:'6px 10px',fontSize:11,border:'0.5px solid #d1d5db',borderRadius:6,outline:'none',boxSizing:'border-box',marginTop:4,resize:'vertical',minHeight:60}}
@@ -2371,7 +2350,7 @@ export default function ProjectDetail() {
             placeholder="Describe what went wrong…"
           />
         </label>
-        <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151',marginTop:8}}>
+        <label style={{display:'block',fontSize:10,fontWeight:500,color:'var(--text-secondary)',marginTop:8}}>
           Attach evidence (document / photo)
           <input
             ref={failFileRef}
@@ -2402,7 +2381,7 @@ export default function ProjectDetail() {
           </>
         }
       >
-        <label style={{display:'block',fontSize:10,fontWeight:500,color:'#374151'}}>
+        <label style={{display:'block',fontSize:10,fontWeight:500,color:'var(--text-secondary)'}}>
           Discussion Notes (Minutes of the meeting)
           <textarea
             style={{width:'100%',padding:'6px 10px',fontSize:11,border:'0.5px solid #d1d5db',borderRadius:6,outline:'none',boxSizing:'border-box',marginTop:4,resize:'vertical',minHeight:80}}
@@ -2418,39 +2397,39 @@ export default function ProjectDetail() {
         <>
           <div onClick={() => setSelectedMember(null)}
             style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', zIndex:999 }} />
-          <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'white', zIndex:1000,
+          <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'var(--bg-secondary)', zIndex:1000,
             boxShadow:'-8px 0 30px rgba(0,0,0,0.12)', display:'flex', flexDirection:'column', overflow:'hidden',
             animation:'slideIn 0.2s ease-out' }}>
             <style>{`@keyframes slideIn { from { transform:translateX(100%) } to { transform:translateX(0) } }`}</style>
-            <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid #f3f4f6', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+            <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid var(--bg-tertiary)', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, background:'#eef2ff', color:'#4338ca', flexShrink:0 }}>
+                <div style={{ width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, background:'#eef2ff', color:'var(--brand-primary)', flexShrink:0 }}>
                   {(selectedMember.user?.name || selectedMember.email || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#111827' }}>{selectedMember.user?.name || selectedMember.email}</div>
-                  <div style={{ fontSize:10, color:'#6b7280', marginTop:1 }}>{selectedMember.user?.email || selectedMember.email}</div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'var(--text-primary)' }}>{selectedMember.user?.name || selectedMember.email}</div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:1 }}>{selectedMember.user?.email || selectedMember.email}</div>
                 </div>
               </div>
               <button data-voice="close-panel" onClick={() => setSelectedMember(null)}
-                style={{ background:'#f3f4f6', border:'none', borderRadius:8, width:28, height:28, fontSize:12, color:'#6b7280', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                style={{ background:'var(--bg-tertiary)', border:'none', borderRadius:8, width:28, height:28, fontSize:12, color:'var(--text-muted)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>
-              <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:8 }}>Work Log</div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--text-primary)', marginBottom:8 }}>Work Log</div>
               {loadingWorkLogs ? (
-                <div style={{ textAlign:'center', padding:'20px 0', color:'#9ca3af', fontSize:11 }}>Loading...</div>
+                <div style={{ textAlign:'center', padding:'20px 0', color:'var(--text-muted)', fontSize:11 }}>Loading...</div>
               ) : memberWorkLogs.length === 0 ? (
-                <div style={{ textAlign:'center', padding:'12px 0', color:'#9ca3af', fontSize:11 }}>No work log entries found</div>
+                <div style={{ textAlign:'center', padding:'12px 0', color:'var(--text-muted)', fontSize:11 }}>No work log entries found</div>
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:20 }}>
                   {memberWorkLogs.slice(0, 10).map((wl, i) => (
-                    <div key={i} style={{ padding:'8px 10px', background:'#fafafa', borderRadius:6, border:'0.5px solid #f3f4f6' }}>
+                    <div key={i} style={{ padding:'8px 10px', background:'var(--bg-tertiary)', borderRadius:6, border:'0.5px solid var(--bg-tertiary)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                        <span style={{ fontSize:10, fontWeight:600, color:'#111827' }}>{wl.project?.name || wl.taskTitle || 'Work'}</span>
-                        <span style={{ fontSize:10, color:'#2347e8', fontWeight:600 }}>{wl.hours}h</span>
+                        <span style={{ fontSize:10, fontWeight:600, color:'var(--text-primary)' }}>{wl.project?.name || wl.taskTitle || 'Work'}</span>
+                        <span style={{ fontSize:10, color:'var(--brand-primary)', fontWeight:600 }}>{wl.hours}h</span>
                       </div>
-                      {wl.description && <div style={{ fontSize:9, color:'#6b7280', marginTop:2 }}>{wl.description}</div>}
-                      <div style={{ fontSize:8, color:'#9ca3af', marginTop:2 }}>
+                      {wl.description && <div style={{ fontSize:9, color:'var(--text-muted)', marginTop:2 }}>{wl.description}</div>}
+                      <div style={{ fontSize:8, color:'var(--text-muted)', marginTop:2 }}>
                         {wl.date} · {wl.category} · {wl.mood}
                       </div>
                     </div>
@@ -2458,17 +2437,17 @@ export default function ProjectDetail() {
                 </div>
               )}
 
-              <div style={{ fontSize:11, fontWeight:600, color:'#111827', marginBottom:8, marginTop:24 }}>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--text-primary)', marginBottom:8, marginTop:24 }}>
                 Project Assignments ({(selectedMember.memberships || []).filter(ms => ms.project).length || selectedMember.user?.assignedProjects?.length || 0})
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {(selectedMember.memberships || []).filter(ms => ms.project).map((ms, i) => {
-                  const roleStyles = { admin:{bg:'#f0f4ff',clr:'#1a35c4'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'#1a35c4'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
+                  const roleStyles = { admin:{bg:'#f0f4ff',clr:'var(--brand-primary)'}, project_manager:{bg:'#fffbeb',clr:'#d97706'}, team_leader:{bg:'#dce6ff',clr:'var(--brand-primary)'}, developer:{bg:'#f0fdf4',clr:'#16a34a'}, qa_tester:{bg:'#fdf4ff',clr:'#7e22ce'}, intern:{bg:'#fff7ed',clr:'#c2410c'} };
                   const rs = roleStyles[ms.projectRole] || roleStyles.developer;
                   return (
-                    <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #f3f4f6' }}>
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--bg-tertiary)', borderRadius:8, border:'1px solid var(--bg-tertiary)' }}>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#111827' }}>{ms.project?.name || 'Unknown project'}</div>
+                        <div style={{ fontSize:11, fontWeight:600, color:'var(--text-primary)' }}>{ms.project?.name || 'Unknown project'}</div>
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
                           <span style={{ fontSize:9, background:rs.bg, color:rs.clr, padding:'1px 6px', borderRadius:3, fontWeight:500 }}>
                             {ms.projectRole?.replace(/_/g, ' ') || 'developer'}
@@ -2479,7 +2458,7 @@ export default function ProjectDetail() {
                   );
                 })}
                 {(!selectedMember.memberships || selectedMember.memberships.filter(ms => ms.project).length === 0) && (
-                  <div style={{ textAlign:'center', padding:'12px 0', color:'#9ca3af', fontSize:11 }}>No project assignments</div>
+                  <div style={{ textAlign:'center', padding:'12px 0', color:'var(--text-muted)', fontSize:11 }}>No project assignments</div>
                 )}
               </div>
             </div>

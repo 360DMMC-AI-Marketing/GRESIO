@@ -138,14 +138,14 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-surface-900">Profile</h1>
-        <p className="text-surface-500 text-sm mt-1">Manage your account settings and integrations</p>
+    <div className="page-enter max-w-3xl mx-auto space-y-6">
+      <div className="glass-panel p-4 rounded-xl animate-fade-in">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Profile</h1>
+        <p className="text-[var(--text-tertiary)] text-sm mt-1">Manage your account settings and integrations</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-surface-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-surface-100">
+      <div className="card-premium glow-card overflow-hidden">
+        <div className="px-6 py-5 border-b border-[var(--border-primary)]">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16">
               {avatarPreview ? (
@@ -153,12 +153,12 @@ export default function Profile() {
               ) : user?.avatar ? (
                 <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-full object-cover" />
               ) : (
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-2xl">
+                <div className="w-16 h-16 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center text-[var(--brand-primary)] font-bold text-2xl">
                   {user?.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
               <button data-voice="upload-avatar" type="button" onClick={() => fileRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-600 text-white rounded-full text-xs flex items-center justify-center border-2 border-white cursor-pointer hover:bg-primary-700">
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-[var(--brand-secondary)] text-white rounded-full text-xs flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[var(--brand-primary)]">
                 📷
               </button>
               <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp"
@@ -168,9 +168,9 @@ export default function Profile() {
                 }} />
             </div>
             <div>
-              <p className="text-lg font-semibold text-surface-900">{user?.name}</p>
-              <p className="text-sm text-surface-500">{user?.email}</p>
-              <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 capitalize">{user?.role}</span>
+              <p className="text-lg font-semibold text-[var(--text-primary)]">{user?.name}</p>
+              <p className="text-sm text-[var(--text-tertiary)]">{user?.email}</p>
+              <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--brand-secondary)] capitalize">{user?.role}</span>
             </div>
           </div>
         </div>
@@ -178,49 +178,49 @@ export default function Profile() {
         <form onSubmit={handleSave} className="px-6 py-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Name</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">GitHub Username</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">GitHub Username</label>
               <input value={form.githubUsername} onChange={(e) => setForm({ ...form, githubUsername: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" placeholder="octocat" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" placeholder="octocat" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">ClickUp ID</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">ClickUp ID</label>
               <input value={form.clickupId} onChange={(e) => setForm({ ...form, clickupId: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Teams ID</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Teams ID</label>
               <input value={form.teamsId} onChange={(e) => setForm({ ...form, teamsId: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Outlook Email</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Outlook Email</label>
               <input type="email" value={form.outlookEmail} onChange={(e) => setForm({ ...form, outlookEmail: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" placeholder="you@outlook.com" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" placeholder="you@outlook.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Figma Username</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Figma Username</label>
               <input value={form.figmaUsername} onChange={(e) => setForm({ ...form, figmaUsername: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" placeholder="your-figma-handle" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" placeholder="your-figma-handle" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Lovable Username</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Lovable Username</label>
               <input value={form.lovableUsername} onChange={(e) => setForm({ ...form, lovableUsername: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" placeholder="your-lovable-username" />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" placeholder="your-lovable-username" />
             </div>
           </div>
 
           <div className="flex items-center gap-3 pt-2">
             <button data-voice="save-profile" type="submit" disabled={saving}
-              className="px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50">
+              className="btn-premium px-5 py-2 text-sm font-medium disabled:opacity-50">
               {saving ? 'Saving...' : 'Save changes'}
             </button>
             <button data-voice="change-password" type="button" onClick={() => setShowPassForm(!showPassForm)}
-              className="px-5 py-2 border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50 transition-colors">
+              className="px-5 py-2 border border-[var(--border-secondary)] text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-[var(--bg-tertiary)] transition-colors">
               Change password
             </button>
           </div>
@@ -228,47 +228,47 @@ export default function Profile() {
       </div>
 
       {showPassForm && (
-        <div className="bg-white rounded-xl border border-surface-200 p-6">
-          <h2 className="text-lg font-semibold text-surface-900 mb-4">Change password</h2>
+        <div className="card-premium glow-card p-6">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Change password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Current password</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Current password</label>
               <input type="password" value={passForm.currentPassword} onChange={(e) => setPassForm({ ...passForm, currentPassword: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" required />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">New password</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">New password</label>
               <input type="password" value={passForm.newPassword} onChange={(e) => setPassForm({ ...passForm, newPassword: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" required />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Confirm new password</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Confirm new password</label>
               <input type="password" value={passForm.confirmPassword} onChange={(e) => setPassForm({ ...passForm, confirmPassword: e.target.value })}
-                className="w-full px-4 py-2.5 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" required />
+                className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" required />
             </div>
             <div className="flex gap-2">
               <button type="submit" disabled={saving}
-                className="px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50">
+                className="btn-premium px-5 py-2 text-sm font-medium disabled:opacity-50">
                 {saving ? 'Updating...' : 'Update password'}
               </button>
               <button type="button" onClick={() => setShowPassForm(false)}
-                className="px-5 py-2 border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50">Cancel</button>
+                className="px-5 py-2 border border-[var(--border-secondary)] text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-[var(--bg-tertiary)]">Cancel</button>
             </div>
           </form>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-surface-200 overflow-hidden">
+      <div className="card-premium glow-card overflow-hidden">
         <div className="px-6 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-surface-900">Two-factor authentication</h2>
-              <p className="text-sm text-surface-500 mt-0.5">Add an extra layer of security to your account</p>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Two-factor authentication</h2>
+              <p className="text-sm text-[var(--text-tertiary)] mt-0.5">Add an extra layer of security to your account</p>
             </div>
             {user?.twoFactorEnabled ? (
               <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200">Enabled</span>
             ) : (
-              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-surface-100 text-surface-500">Disabled</span>
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[var(--bg-tertiary)] text-[var(--text-tertiary)]">Disabled</span>
             )}
           </div>
 
@@ -283,7 +283,7 @@ export default function Profile() {
                 toast.error('Failed to setup 2FA');
               }
             }} disabled={twoFactor.loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors">
+              className="btn-premium px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors">
               {twoFactor.loading ? 'Loading…' : 'Enable two-factor authentication'}
             </button>
           )}
@@ -291,14 +291,14 @@ export default function Profile() {
           {twoFactor.qrCode && (
             <div className="space-y-4">
               <p className="text-sm text-surface-600">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
-              <div className="bg-white border border-surface-200 rounded-xl p-4 inline-block">
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl p-4 inline-block">
                 <img src={twoFactor.qrCode} alt="2FA QR Code" className="w-48 h-48" />
               </div>
-              <p className="text-xs text-surface-400">Or enter this key manually: <code className="text-surface-700 font-mono bg-surface-100 px-2 py-0.5 rounded">{twoFactor.secret}</code></p>
+              <p className="text-xs text-[var(--text-muted)]">Or enter this key manually: <code className="text-[var(--text-secondary)] font-mono bg-[var(--bg-tertiary)] px-2 py-0.5 rounded">{twoFactor.secret}</code></p>
               <div className="flex items-center gap-2 max-w-xs">
                 <input type="text" value={twoFactor.code} onChange={e => setTwoFactor({ ...twoFactor, code: e.target.value.replace(/[^0-9]/g, '').slice(0, 6) })}
                   placeholder="000 000" maxLength={6}
-                  className="flex-1 px-3 py-2 border border-surface-300 rounded-lg text-sm text-center tracking-widest outline-none focus:ring-2 focus:ring-primary-500" />
+                  className="flex-1 px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-center tracking-widest outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" />
                 <button type="button" onClick={async () => {
                   setTwoFactor({ ...twoFactor, loading: true });
                   try {
@@ -310,12 +310,12 @@ export default function Profile() {
                     toast.error(err.response?.data?.message || 'Failed to verify code');
                   }
                 }} disabled={twoFactor.loading || twoFactor.code.length < 6}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors">
-                  {twoFactor.loading ? 'Verifying…' : 'Verify & enable'}
+                className="btn-premium px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors">
+                {twoFactor.loading ? 'Verifying…' : 'Verify & enable'}
                 </button>
               </div>
               <button type="button" onClick={() => setTwoFactor({ ...twoFactor, qrCode: null, secret: '', code: '' })}
-                className="text-xs text-surface-400 hover:text-primary-600 transition-colors bg-transparent border-none cursor-pointer">
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors bg-transparent border-none cursor-pointer">
                 Cancel
               </button>
             </div>
@@ -341,56 +341,56 @@ export default function Profile() {
       </div>
 
       {user?.role === 'admin' && company && companyForm && (
-        <div className="bg-white rounded-xl border border-surface-200 p-6">
+        <div className="card-premium glow-card p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-surface-900">Company</h2>
-              <p className="text-sm text-surface-500 mt-0.5">Manage your company details visible to the workspace</p>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Company</h2>
+              <p className="text-sm text-[var(--text-tertiary)] mt-0.5">Manage your company details visible to the workspace</p>
             </div>
             <button onClick={handleSaveCompany} disabled={savingCompany}
-              className="px-4 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors cursor-pointer border-none">
+              className="btn-premium px-4 py-1.5 text-xs font-medium disabled:opacity-50 transition-colors cursor-pointer border-none">
               {savingCompany ? 'Saving...' : 'Save'}
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Company name</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Company name</label>
               <input value={companyForm.name} onChange={e => setCompanyForm(p => ({ ...p, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" />
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Industry</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Industry</label>
               <select value={companyForm.industry} onChange={e => setCompanyForm(p => ({ ...p, industry: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] bg-white appearance-none cursor-pointer">
                 <option value="">Not set</option>
                 {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Country</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Country</label>
               <select value={companyForm.country} onChange={e => setCompanyForm(p => ({ ...p, country: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] bg-white appearance-none cursor-pointer">
                 <option value="">Not set</option>
                 {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Timezone</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Timezone</label>
               <select value={companyForm.timezone} onChange={e => setCompanyForm(p => ({ ...p, timezone: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none cursor-pointer">
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] bg-white appearance-none cursor-pointer">
                 <option value="">Not set</option>
                 {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Website</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Website</label>
               <input type="url" value={companyForm.website} onChange={e => setCompanyForm(p => ({ ...p, website: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" placeholder="https://" />
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" placeholder="https://" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-surface-700 mb-1">Tagline</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Tagline</label>
               <input value={companyForm.tagline} onChange={e => setCompanyForm(p => ({ ...p, tagline: e.target.value }))}
-                className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm text-surface-900 outline-none focus:ring-2 focus:ring-primary-500" placeholder="What does your company do?" />
+                className="w-full px-3 py-2 border border-[var(--border-secondary)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" placeholder="What does your company do?" />
             </div>
           </div>
         </div>
@@ -399,41 +399,41 @@ export default function Profile() {
       <AlertModal open={twoFactor.showBackup} onClose={() => setTwoFactor({ ...twoFactor, showBackup: false })}
         title="Save your backup codes" message={
           <div>
-            <p className="text-xs text-surface-500 mb-3">Each code can only be used once. Store these somewhere safe.</p>
+            <p className="text-xs text-[var(--text-tertiary)] mb-3">Each code can only be used once. Store these somewhere safe.</p>
             <div className="grid grid-cols-2 gap-2">
               {twoFactor.backupCodes?.map((code, i) => (
-                <code key={i} className="text-xs font-mono bg-surface-100 px-2 py-1.5 rounded text-surface-700 text-center">{code}</code>
+                <code key={i} className="text-xs font-mono bg-[var(--bg-tertiary)] px-2 py-1.5 rounded text-[var(--text-secondary)] text-center">{code}</code>
               ))}
             </div>
           </div>
         } type="success" />
 
-      <div className="bg-white rounded-xl border border-surface-200 p-6">
-        <h2 className="text-lg font-semibold text-surface-900 mb-2">Account info</h2>
+          <div className="card-premium glow-card p-6 animate-fade-in">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Account info</h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-surface-400">Email</span>
-            <p className="font-medium text-surface-700">{user?.email}</p>
+            <span className="text-[var(--text-muted)]">Email</span>
+            <p className="font-medium text-[var(--text-secondary)]">{user?.email}</p>
           </div>
           <div>
-            <span className="text-surface-400">Role</span>
-            <p className="font-medium text-surface-700 capitalize">{user?.role}</p>
+            <span className="text-[var(--text-muted)]">Role</span>
+            <p className="font-medium text-[var(--text-secondary)] capitalize">{user?.role}</p>
           </div>
           <div>
-            <span className="text-surface-400">Status</span>
-            <p className="font-medium text-surface-700 capitalize">{user?.status}</p>
+            <span className="text-[var(--text-muted)]">Status</span>
+            <p className="font-medium text-[var(--text-secondary)] capitalize">{user?.status}</p>
           </div>
           <div>
-            <span className="text-surface-400">Activity score</span>
-            <p className="font-medium text-surface-700">{user?.activityScore}%</p>
+            <span className="text-[var(--text-muted)]">Activity score</span>
+            <p className="font-medium text-[var(--text-secondary)]"><span className="num-mono">{user?.activityScore}%</span></p>
           </div>
           <div>
-            <span className="text-surface-400">Member since</span>
-            <p className="font-medium text-surface-700">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</p>
+            <span className="text-[var(--text-muted)]">Member since</span>
+            <p className="font-medium text-[var(--text-secondary)]">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</p>
           </div>
           <div>
-            <span className="text-surface-400">Last active</span>
-            <p className="font-medium text-surface-700">{user?.lastActive ? new Date(user.lastActive).toLocaleDateString() : '-'}</p>
+            <span className="text-[var(--text-muted)]">Last active</span>
+            <p className="font-medium text-[var(--text-secondary)]">{user?.lastActive ? new Date(user.lastActive).toLocaleDateString() : '-'}</p>
           </div>
         </div>
       </div>

@@ -131,30 +131,30 @@ export default function NotificationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] p-6">
+    <div className="page-enter min-h-screen bg-[var(--bg-secondary)] p-6">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="glass-panel flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-neutral-900">Notifications</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">Notifications</h1>
             {unread > 0 && (
-              <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full">{unread} unread</span>
+              <span className="text-xs font-semibold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-2.5 py-0.5 rounded-full"><span className="num-mono">{unread}</span> unread</span>
             )}
           </div>
           <button onClick={() => navigate(-1)}
-            className="text-sm text-neutral-500 hover:text-neutral-700 bg-white border border-neutral-200 px-4 py-2 rounded-lg transition-colors">
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border-primary)] px-4 py-2 rounded-lg transition-colors">
             Back
           </button>
         </div>
-        <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+        <div className="card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)] shadow-sm overflow-hidden">
           {unread > 0 && (
             <div className="flex justify-end px-5 pt-3 pb-0">
               <button onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer transition-colors">
-                <span>✓✓</span> Mark all as read <span className="text-neutral-400 font-normal">({unread})</span>
+                className="flex items-center gap-1 text-xs font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-secondary)] bg-transparent border-none cursor-pointer transition-colors">
+                <span>✓✓</span> Mark all as read <span className="text-[var(--text-muted)] font-normal">(<span className="num-mono">{unread}</span>)</span>
               </button>
             </div>
           )}
-          <div className="flex border-b border-neutral-100">
+          <div className="flex border-b border-[var(--border-secondary)]">
             {TABS.map(tab => {
               const count = notifs.filter(n => getColumn(n) === tab.key && !n.read).length;
               const isActive = activeTab === tab.key;
@@ -162,15 +162,15 @@ export default function NotificationsPage() {
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className="flex-1 flex items-center justify-center gap-1.5 h-12 text-sm font-medium transition-all duration-200 bg-transparent border-none cursor-pointer relative"
                   style={{
-                    color: isActive ? tab.color : '#6B7280',
+                    color: isActive ? tab.color : 'var(--text-muted)',
                     fontWeight: isActive ? 600 : 400,
-                    borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
-                    background: isActive ? tab.bg : '#FFFFFF',
+                    borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid var(--border-secondary)',
+                    background: isActive ? tab.bg : 'var(--bg-primary)',
                   }}>
                   <span>{tab.icon}</span>
                   <span>{tab.label}</span>
                   {count > 0 && (
-                    <span className="text-[11px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none" style={{background:tab.color}}>
+                    <span className="text-[11px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none num-mono" style={{background:tab.color}}>
                       {count}
                     </span>
                   )}
@@ -178,14 +178,14 @@ export default function NotificationsPage() {
               );
             })}
           </div>
-          <div className="p-5 space-y-2 transition-all duration-200">
+          <div className="p-5 space-y-2 transition-all duration-200 animate-fade-in">
             {(() => {
               const activeNotifs = notifs.filter(n => getColumn(n) === activeTab);
               const cfg = COLUMN_CONFIG[activeTab];
               if (activeNotifs.length === 0) {
                 const emptyMessages = { projects: 'No project notifications yet', tasks: 'No task notifications yet', other: 'No other notifications' };
                 return (
-                  <div className="flex flex-col items-center justify-center py-14 text-neutral-400">
+                  <div className="flex flex-col items-center justify-center py-14 text-[var(--text-muted)] animate-fade-in">
                     <span className="text-3xl mb-3">{cfg.icon}</span>
                     <p className="text-sm">{emptyMessages[activeTab]}</p>
                   </div>
@@ -193,8 +193,8 @@ export default function NotificationsPage() {
               }
               return activeNotifs.map(n => (
                 <div key={n._id}
-                  className="relative bg-white border rounded-xl p-4 transition-all duration-200 hover:shadow-md group"
-                  style={{borderColor:'#E5E7EB',borderLeftWidth:n.read ? 1 : 3,borderLeftColor:n.read ? '#E5E7EB' : cfg.borderColor}}>
+                  className="relative bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl p-4 transition-all duration-200 hover:shadow-md group"
+                  style={{borderColor:'var(--border-primary)',borderLeftWidth:n.read ? 1 : 3,borderLeftColor:n.read ? 'var(--border-primary)' : cfg.borderColor}}>
                   <div className="flex items-start gap-2">
                     {activeTab === 'projects' && (
                       <span className="w-2.5 h-2.5 rounded-full mt-0.5 shrink-0" style={{background:getProjectDot(n)}} />
@@ -207,27 +207,27 @@ export default function NotificationsPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm ${n.read ? 'text-neutral-500' : 'font-semibold text-neutral-900'}`} style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.title}</p>
+                        <p className={`text-sm ${n.read ? 'text-[var(--text-secondary)]' : 'font-semibold text-[var(--text-primary)]'}`} style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.title}</p>
                         <div className="flex items-center gap-1 shrink-0">
                           <span onClick={() => toggleRead(n)}
                             className="cursor-pointer text-xs select-none transition-colors hover:opacity-70"
                             title={n.read ? 'Mark as unread' : 'Mark as read'}
-                            style={{ color: n.read ? '#2563EB' : '#9CA3AF' }}>
+                            style={{ color: n.read ? 'var(--brand-primary)' : 'var(--text-muted)' }}>
                             {n.read ? '✓✓' : '✓'}
                           </span>
                           <button onClick={() => handleDelete(n._id)}
-                            className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-danger-500 bg-transparent border-none cursor-pointer text-sm p-0.5 transition-all"
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-danger-500 bg-transparent border-none cursor-pointer text-sm p-0.5 transition-all"
                             title="Delete">&times;</button>
                         </div>
                       </div>
-                      <p className="text-sm text-neutral-500 mt-0.5" style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.message}</p>
-                      <p className="text-xs text-neutral-300 mt-1.5">{timeAgo(n.createdAt)}</p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-0.5" style={n.metadata?.stale ? {textDecoration:'line-through',opacity:0.6} : {}}>{n.message}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-1.5">{timeAgo(n.createdAt)}</p>
                       {n.actions && n.actions.length > 0 && !n.read && (
                         <div className="flex gap-2 mt-2">
                           {n.actions.map(a => (
                             <button key={a.action} onClick={() => handleAction(n, a.action)}
                               className="text-xs font-semibold px-3 py-1 rounded-lg border-none cursor-pointer transition-colors"
-                              style={{background:a.action === 'accept_invite' ? '#2347e8' : '#f3f4f6',color:a.action === 'accept_invite' ? 'white' : '#374151'}}>
+                              style={{background:a.action === 'accept_invite' ? 'var(--brand-primary)' : 'var(--bg-tertiary)',color:a.action === 'accept_invite' ? 'white' : 'var(--text-primary)'}}>
                               {a.label}
                             </button>
                           ))}

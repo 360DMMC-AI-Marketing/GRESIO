@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getProjects, getProjectById, createProject, updateProject, deleteProject, getProjectAnalytics, markLaunched, markDelivered, createTeamsChannel, evaluatePhase, updateReviewCall, deleteReviewCall } = require('../controllers/projectController');
+const { getProjects, getProjectById, createProject, updateProject, deleteProject, getProjectAnalytics, markLaunched, markDelivered, createTeamsChannel, evaluatePhase, updateReviewCall, deleteReviewCall, getDepartments } = require('../controllers/projectController');
 const settingsController = require('../controllers/settingsController');
 const { auth, authorize } = require('../middleware/auth');
 const { project: projectValidation, task: taskValidation, idParam } = require('../middleware/validate');
@@ -13,6 +13,7 @@ router.use(auth);
 router.get('/', getProjects);
 router.get('/:id', getProjectById);
 router.get('/:id/analytics', getProjectAnalytics);
+router.get('/:id/departments', getDepartments);
 router.post('/', authorize('admin', 'project_manager', 'team_lead'), projectValidation.create, createProject);
 router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'manager'), updateProject);
 router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), deleteProject);

@@ -17,28 +17,28 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex flex-col gap-5 max-w-3xl">
-      <div className="flex items-center gap-3">
-        <User size={20} className="text-surface-700" />
+    <div className="flex flex-col gap-5 max-w-3xl page-enter">
+      <div className="flex items-center gap-3 glass-panel">
+        <User size={20} className="text-[var(--text-secondary)]" />
         <div>
-          <h1 className="text-2xl font-bold text-surface-900">Profile</h1>
-          <p className="text-xs text-surface-400 mt-0.5">Manage your personal information</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Profile</h1>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">Manage your personal information</p>
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="settings-section card-premium glow-card">
         <h2 className="settings-title">Avatar</h2>
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#2347e8] flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-16 h-16 rounded-full bg-[var(--brand-primary)] dark:bg-[var(--brand-primary)] flex items-center justify-center text-white text-xl font-bold">
             {form.name ? form.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'SA'}
           </div>
-          <button data-voice="change-photo" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors border-none cursor-pointer">
+          <button data-voice="change-photo" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] dark:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-[var(--radius-lg)] hover:bg-[var(--bg-tertiary)] dark:hover:bg-[var(--bg-tertiary)] transition-colors border-none cursor-pointer">
             <Camera size={14} /> Change photo
           </button>
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="settings-section card-premium glow-card">
         <h2 className="settings-title">Personal Information</h2>
         <div className="settings-grid">
           <div className="s-field">
@@ -52,7 +52,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="settings-section">
+      <div className="settings-section card-premium glow-card">
         <h2 className="settings-title">Change Password</h2>
         <div className="flex flex-col gap-3">
           <div className="s-field">
@@ -73,7 +73,7 @@ export default function ProfilePage() {
       </div>
 
       <button data-voice="save-profile" onClick={handleSave}
-        className="flex items-center gap-2 px-4 py-2.5 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] transition-colors w-fit border-none cursor-pointer">
+        className="btn-premium flex items-center gap-2 px-4 py-2.5 bg-[var(--brand-primary)] dark:bg-[var(--brand-primary)] text-white rounded-[var(--radius-lg)] text-sm font-semibold hover:bg-[var(--brand-secondary)] dark:hover:bg-[var(--brand-secondary)] transition-colors w-fit border-none cursor-pointer">
         <Save size={16} /> Save Changes
       </button>
     </div>

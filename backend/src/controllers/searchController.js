@@ -9,7 +9,6 @@ const DecisionJournal = require('../models/DecisionJournal');
 const Bug = require('../models/Bug');
 const TestCase = require('../models/TestCase');
 const Report = require('../models/Report');
-const ProjectChain = require('../models/ProjectChain');
 const { getDomainProjectIds } = require('../config/planLimits');
 
 const SEARCH_LIMIT = 5;
@@ -78,12 +77,6 @@ const SEARCHABLE = [
     labelField: '_id', to: r => `/report/${r._id}`,
     filter: {},
     useProjectIds: true,
-  },
-  {
-    model: ProjectChain, name: 'Chain', fields: 'name',
-    labelField: 'name', to: () => '/relay',
-    filter: { isActive: true },
-    hasDomain: true,
   },
 ];
 

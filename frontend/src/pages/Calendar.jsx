@@ -50,7 +50,6 @@ function eventsForDay(events, day) {
 }
 
 const iconMap = { task: '\u2713', sprint: '\u26A1', project_deadline: '\u2691', milestone: '\u25C6', event: '\u25CF', reminder: '\u23F0' };
-const USER_PALETTE = ['#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316', '#6366f1', '#ec4899'];
 
 export default function Calendar() {
   const { user } = useAuth();
@@ -135,53 +134,60 @@ export default function Calendar() {
   const handleEventCreated = () => { setShowAddModal(false); fetchEvents(); };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
-        <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 flex-wrap gap-3">
-          <h1 className="text-lg font-bold text-neutral-900 dark:text-white">Calendar</h1>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 page-enter">
+      <div className="card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--glass-border)] rounded-[var(--radius-xl)] shadow-elevation overflow-hidden">
+        <div className="glass-panel gradient-wave px-5 pt-4 pb-3 flex items-center justify-between flex-wrap gap-3"
+          style={{background: 'linear-gradient(135deg, #f0f4ff 0%, #eef2ff 50%, #f5f3ff 100%)', backgroundSize: '200% 200%'}}>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] bg-white dark:bg-[var(--bg-tertiary)] shadow-sm">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-600 dark:text-brand-400">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <h1 className="text-lg font-bold text-neutral-900 dark:text-[var(--text-primary)]">Calendar</h1>
+          </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <button data-voice="today" onClick={goToday} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors cursor-pointer border-none dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600">
-              Today
-            </button>
-            <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-700 rounded-lg px-1 py-1">
+            <button data-voice="today" onClick={goToday}
+              className="btn-premium text-[11px] px-3 py-1.5">Today</button>
+            <div className="flex items-center gap-0.5 bg-white dark:bg-[var(--bg-tertiary)] border border-neutral-200 dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] px-1 py-1">
               <button data-voice="prev-month" onClick={prevMonth}
-                className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white dark:hover:bg-neutral-600 text-neutral-500 dark:text-neutral-300 transition-colors cursor-pointer border-none bg-transparent">&lsaquo;</button>
-              <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 w-36 text-center select-none">
-                {MONTHS[currentMonth]} {currentYear}
+                className="text-sm font-semibold px-2 py-1 rounded-[var(--radius-md)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-secondary)] text-neutral-500 dark:text-[var(--text-tertiary)] transition-all cursor-pointer border-none bg-transparent">&lsaquo;</button>
+              <span className="text-sm font-bold text-neutral-800 dark:text-[var(--text-primary)] w-36 text-center select-none num-mono">
+                {MONTHS[currentMonth]} <span className="text-neutral-400 dark:text-[var(--text-muted)]">{currentYear}</span>
               </span>
               <button data-voice="next-month" onClick={nextMonth}
-                className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white dark:hover:bg-neutral-600 text-neutral-500 dark:text-neutral-300 transition-colors cursor-pointer border-none bg-transparent">&rsaquo;</button>
+                className="text-sm font-semibold px-2 py-1 rounded-[var(--radius-md)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-secondary)] text-neutral-500 dark:text-[var(--text-tertiary)] transition-all cursor-pointer border-none bg-transparent">&rsaquo;</button>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6 px-5 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="flex items-center gap-6 px-5 border-b border-neutral-100 dark:border-[var(--border-secondary)] bg-white dark:bg-[var(--bg-primary)]">
           {['month', 'agenda'].map(tab => (
             <button key={tab} data-voice={`tab-${tab}`} onClick={() => setActiveTab(tab)}
-              className={`text-sm font-semibold pb-2.5 transition-colors cursor-pointer bg-transparent border-none capitalize ${
+              className={`text-sm font-semibold pb-2.5 pt-3 transition-all cursor-pointer bg-transparent border-none capitalize ${
                 activeTab === tab
-                  ? 'text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 -mb-[1px]'
-                  : 'text-neutral-500 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300'
+                  ? 'text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 -mb-px'
+                  : 'text-neutral-400 dark:text-[var(--text-muted)] hover:text-neutral-600 dark:hover:text-[var(--text-secondary)]'
               }`}>
               {tab}
             </button>
           ))}
         </div>
 
-        <div className="px-5 py-2.5 border-b border-neutral-100 dark:border-neutral-700 flex items-center gap-3 flex-wrap">
+        <div className="px-5 py-2.5 border-b border-neutral-100 dark:border-[var(--border-secondary)] flex items-center gap-3 flex-wrap bg-neutral-50/50 dark:bg-[var(--bg-secondary)]/50">
           <Dropdown
             value={selectedProjectId}
             onChange={v => setSelectedProjectId(v)}
             options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]}
           />
           <button data-voice="sync-outlook" onClick={() => { const v = !syncToOutlook; setSyncToOutlook(v); localStorage.setItem('calendar_sync_outlook', v); }}
-            className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-[var(--radius-md)] border transition-all cursor-pointer flex items-center gap-1.5 ${
               syncToOutlook
-                ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
-                : 'bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100'
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                : 'bg-neutral-50 dark:bg-[var(--bg-tertiary)] border-neutral-200 dark:border-[var(--border-primary)] text-neutral-500 dark:text-[var(--text-tertiary)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-secondary)]'
             }`}>
             <span className={`w-3 h-3 rounded-full border flex items-center justify-center text-[7px] font-bold ${
-              syncToOutlook ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-neutral-300 text-neutral-400'
+              syncToOutlook ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-[var(--bg-primary)] border-neutral-300 dark:border-[var(--border-primary)] text-neutral-400 dark:text-[var(--text-muted)]'
             }`}>
               {syncToOutlook ? '\u2713' : ''}
             </span>
@@ -190,171 +196,170 @@ export default function Calendar() {
         </div>
 
         <div className="p-5">
-      {activeTab === 'month' && (
-        <>
-          <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <div className="min-w-[560px]">
-                <div className="grid grid-cols-7">
-                  {DAYS.map(d => (
-                    <div key={d} className="bg-neutral-50 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 text-[10px] font-semibold text-center py-2.5 uppercase tracking-wider border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0">
-                      {d}
-                    </div>
-                  ))}
-                  {monthDays.map((day, i) => {
-                if (!day) return <div key={`e${i}`} className="bg-neutral-50/40 dark:bg-neutral-900 min-h-[105px] border-b border-r border-neutral-200 dark:border-neutral-700 last:border-r-0" />;
-                const dayEvts = eventsForDay(filteredEvents, day);
-                const isSel = isSameDay(selectedDay, day);
-                const rowNum = Math.floor(i / 7);
-                const totalRows = Math.ceil(monthDays.length / 7);
-                const isLastRow = rowNum === totalRows - 1;
-                return (
-                  <div key={i} onClick={() => handleDayClick(day)}
-                    className={`min-h-[80px] sm:min-h-[110px] p-1.5 sm:p-3 cursor-pointer transition-all duration-150 relative border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
-                      isSel
-                        ? 'bg-brand-50/70 dark:bg-brand-900/25 ring-1 ring-inset ring-brand-200 dark:ring-brand-700'
-                        : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800'
-                    }`}>
-                    <div className={`text-xs font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1.5 transition-colors ${
-                      isToday(day)
-                        ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-sm'
-                        : isSel
-                          ? 'text-brand-700 dark:text-brand-300'
-                          : 'text-neutral-600 dark:text-neutral-300'
-                    }`}>
-                      {day.getDate()}
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      {dayEvts.slice(0, 4).map((e, j) => (
-                        <span key={j}
-                          className="text-[9px] font-medium truncate rounded px-1 py-0.5 leading-none inline-block"
-                          style={{ background: `${COLORS[e.type] || '#6b7280'}22`, color: COLORS[e.type]?.replace('8', '7') || '#6b7280' }}
-                          title={e.title || e.name || ''}>
-                          {e.title || e.name || ''}
-                        </span>
+          {activeTab === 'month' && (
+            <>
+              <div className="rounded-[var(--radius-lg)] border border-neutral-200 dark:border-[var(--border-primary)] overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[560px]">
+                    <div className="grid grid-cols-7">
+                      {DAYS.map(d => (
+                        <div key={d} className="bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-400 dark:text-[var(--text-muted)] text-[10px] font-semibold text-center py-2.5 uppercase tracking-widest border-b border-r border-neutral-200 dark:border-[var(--border-primary)] last:border-r-0">
+                          {d}
+                        </div>
                       ))}
-                      {dayEvts.length > 4 && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium mt-0.5">+{dayEvts.length - 4} more</span>}
+                      {monthDays.map((day, i) => {
+                        if (!day) return <div key={`e${i}`} className="bg-neutral-50/40 dark:bg-[var(--bg-secondary)]/50 min-h-[105px] border-b border-r border-neutral-200 dark:border-[var(--border-primary)] last:border-r-0" />;
+                        const dayEvts = eventsForDay(filteredEvents, day);
+                        const isSel = isSameDay(selectedDay, day);
+                        const rowNum = Math.floor(i / 7);
+                        const totalRows = Math.ceil(monthDays.length / 7);
+                        const isLastRow = rowNum === totalRows - 1;
+                        return (
+                          <div key={i} onClick={() => handleDayClick(day)}
+                            className={`min-h-[80px] sm:min-h-[110px] p-1.5 sm:p-3 cursor-pointer transition-all duration-150 relative border-r border-neutral-200 dark:border-[var(--border-primary)] last:border-r-0 ${isLastRow ? '' : 'border-b'} ${
+                              isSel
+                                ? 'bg-brand-50/70 dark:bg-brand-900/20 ring-1 ring-inset ring-brand-300 dark:ring-brand-700'
+                                : 'bg-white dark:bg-[var(--bg-primary)] hover:bg-neutral-50 dark:hover:bg-[var(--bg-secondary)]'
+                            }`}>
+                            <div className={`num-mono text-xs font-bold w-7 h-7 flex items-center justify-center rounded-full mb-1.5 transition-all ${
+                              isToday(day)
+                                ? 'bg-brand-600 dark:bg-brand-500 text-white shadow-sm'
+                                : isSel
+                                  ? 'text-brand-700 dark:text-brand-300'
+                                  : 'text-neutral-600 dark:text-[var(--text-tertiary)]'
+                            }`}>
+                              {day.getDate()}
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              {dayEvts.slice(0, 4).map((e, j) => (
+                                <span key={j}
+                                  className="text-[9px] font-medium truncate rounded-[var(--radius-sm)] px-1 py-0.5 leading-none inline-block"
+                                  style={{ background: `${COLORS[e.type] || '#6b7280'}22`, color: COLORS[e.type]?.replace('8', '7') || '#6b7280' }}
+                                  title={e.title || e.name || ''}>
+                                  {e.title || e.name || ''}
+                                </span>
+                              ))}
+                              {dayEvts.length > 4 && <span className="text-[9px] text-neutral-400 dark:text-[var(--text-muted)] font-medium mt-0.5">+{dayEvts.length - 4} more</span>}
+                            </div>
+                            {canAdd && (
+                              <button data-voice="add-event-day" onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
+                                className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-400 dark:text-[var(--text-muted)] hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] hover:bg-neutral-200 dark:hover:bg-[var(--border-primary)] text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
+                                +
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                    {canAdd && (
-                      <button data-voice="add-event-day" onClick={(e) => { e.stopPropagation(); openAddModal(day); }}
-                        className="absolute bottom-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-[11px] leading-none cursor-pointer border-none transition-all duration-150 hover:scale-110">
-                        +
-                      </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mt-3 text-[10px] text-neutral-400 dark:text-[var(--text-muted)] flex-wrap">
+                {Object.entries(COLORS).map(([key, color]) => (
+                  <div key={key} className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                    <span className="text-neutral-500 dark:text-[var(--text-tertiary)]">{LABELS[key]}</span>
+                  </div>
+                ))}
+              </div>
+
+              {selectedDay && (
+                <div className="mt-4 card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--glass-border)] rounded-[var(--radius-xl)] shadow-elevation overflow-hidden animate-fade-in">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-[var(--border-secondary)]">
+                    <div className="flex items-center gap-2.5">
+                      <p className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">
+                        {selectedDay.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                      </p>
+                      <span className="text-[10px] font-semibold text-neutral-400 dark:text-[var(--text-muted)] bg-neutral-100 dark:bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">{selectedEvents.length} item{selectedEvents.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {canAdd && (
+                        <button data-voice="add-event" onClick={() => openAddModal(selectedDay)}
+                          className="btn-premium text-[10px] px-2.5 py-1">+ Add</button>
+                      )}
+                      <button onClick={() => setSelectedDay(null)}
+                        className="w-6 h-6 flex items-center justify-center text-neutral-300 dark:text-[var(--text-muted)] hover:text-neutral-500 dark:hover:text-[var(--text-secondary)] rounded-[var(--radius-md)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-tertiary)] bg-transparent border-none cursor-pointer transition-all leading-none text-lg">&times;</button>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    {selectedEvents.length === 0 ? (
+                      <p className="text-[11px] text-neutral-400 dark:text-[var(--text-muted)] py-5 text-center">No items for this day</p>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {selectedEvents.map(e => (
+                          <div key={e._id} onClick={() => { if (e.projectId) navigate(`/projects/${e.projectId}`); }}
+                            className={`flex items-center gap-3 px-2.5 py-2 rounded-[var(--radius-lg)] transition-all ${
+                              e.projectId ? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)]/50' : ''
+                            }`}>
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[e.type] || '#6b7280' }} />
+                            <span className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)] w-16 shrink-0 font-medium">
+                              {e.endDate
+                                ? `${new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${new Date(e.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                                : new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)] truncate">{e.title || e.name}</p>
+                              <p className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)]">{LABELS[e.type] || e.type}{e.projectName ? ` \u00B7 ${e.projectName}` : ''}</p>
+                              {e.link && e.source === 'custom' && (
+                                <a href={e.link} target="_blank" rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="text-[10px] text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1 mt-0.5">
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                  Join meeting
+                                </a>
+                              )}
+                            </div>
+                            <span className="text-xs opacity-40 dark:opacity-50">{iconMap[e.type] || '\u2022'}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                );
-                  })}
                 </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 mt-3 text-[10px] text-neutral-400 dark:text-neutral-500 flex-wrap">
-            {Object.entries(COLORS).map(([key, color]) => (
-              <div key={key} className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-                <span className="text-neutral-500 dark:text-neutral-400">{LABELS[key]}</span>
-              </div>
-            ))}
-          </div>
-
-          {selectedDay && (
-            <div className="mt-4 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
-                <div className="flex items-center gap-2.5">
-                  <p className="text-sm font-bold text-neutral-900 dark:text-white">
-                    {selectedDay.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                  </p>
-                  <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 rounded-full">{selectedEvents.length} item{selectedEvents.length !== 1 ? 's' : ''}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                {canAdd && (
-                  <button data-voice="add-event" onClick={() => openAddModal(selectedDay)}
-                    className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 px-3 py-1 rounded-md transition-colors cursor-pointer bg-transparent border-none">
-                    + Add
-                  </button>
-                )}
-                  <button onClick={() => setSelectedDay(null)}
-                    className="text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400 text-lg leading-none bg-transparent border-none cursor-pointer p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">&times;</button>
-                </div>
-              </div>
-              <div className="p-3">
-                {selectedEvents.length === 0 ? (
-                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 py-5 text-center">No items for this day</p>
-                ) : (
-                  <div className="space-y-0.5">
-                    {selectedEvents.map(e => (
-                      <div key={e._id} onClick={() => { if (e.projectId) navigate(`/projects/${e.projectId}`); }}
-                        className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors ${
-                          e.projectId ? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700/40' : ''
-                        }`}>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[e.type] || '#6b7280' }} />
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 w-16 shrink-0">
-                          {e.endDate
-                            ? `${new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${new Date(e.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-                            : new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-neutral-900 dark:text-white truncate">{e.title || e.name}</p>
-                          <p className="text-[10px] text-neutral-400 dark:text-neutral-500">{LABELS[e.type] || e.type}{e.projectName ? ` \u00B7 ${e.projectName}` : ''}</p>
-                          {e.link && e.source === 'custom' && (
-                            <a href={e.link} target="_blank" rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="text-[10px] text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1 mt-0.5">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                              Join meeting
-                            </a>
-                          )}
-                        </div>
-                        <span className="text-xs opacity-40">{iconMap[e.type] || '\u2022'}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {activeTab === 'agenda' && (
-        <div className="space-y-8">
-          {agendaGroups.today.length === 0 && agendaGroups.thisWeek.length === 0 && agendaGroups.nextWeek.length === 0 && agendaGroups.later.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-neutral-400 dark:text-neutral-500">No upcoming events</p>
-              {canAdd && (
-                <button data-voice="add-event" onClick={() => openAddModal(new Date())}
-                  className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer bg-transparent border-none">
-                  Add your first event
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              {agendaGroups.today.length > 0 && (
-                <AgendaSection title="Today" events={agendaGroups.today} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
-              )}
-              <AgendaSection title="This Week" events={agendaGroups.thisWeek} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
-              {agendaGroups.nextWeek.length > 0 && (
-                <AgendaSection title="Next Week" events={agendaGroups.nextWeek} colors={COLORS} labels={LABELS} icons={iconMap} navigate={navigate} />
-              )}
-              {agendaGroups.later.length > 0 && (
-                <AgendaSection title="Later" events={agendaGroups.later} colors={COLORS} labels={LABELS} icons={iconMap} navigate={navigate} />
               )}
             </>
           )}
-        </div>
-      )}
 
-      {canAdd && (
-        <button onClick={() => openAddModal(new Date())}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-colors cursor-pointer border-none z-40">
-          +
-        </button>
-      )}
+          {activeTab === 'agenda' && (
+            <div className="space-y-6 stagger">
+              {agendaGroups.today.length === 0 && agendaGroups.thisWeek.length === 0 && agendaGroups.nextWeek.length === 0 && agendaGroups.later.length === 0 ? (
+                <div className="text-center py-12 animate-fade-in">
+                  <p className="text-sm text-neutral-400 dark:text-[var(--text-muted)]">No upcoming events</p>
+                  {canAdd && (
+                    <button data-voice="add-event" onClick={() => openAddModal(new Date())}
+                      className="mt-2 btn-premium text-xs">
+                      Add your first event
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {agendaGroups.today.length > 0 && (
+                    <AgendaSection title="Today" events={agendaGroups.today} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
+                  )}
+                  <AgendaSection title="This Week" events={agendaGroups.thisWeek} colors={COLORS} labels={LABELS} icons={iconMap} onAdd={canAdd ? () => openAddModal(new Date()) : null} navigate={navigate} />
+                  {agendaGroups.nextWeek.length > 0 && (
+                    <AgendaSection title="Next Week" events={agendaGroups.nextWeek} colors={COLORS} labels={LABELS} icons={iconMap} navigate={navigate} />
+                  )}
+                  {agendaGroups.later.length > 0 && (
+                    <AgendaSection title="Later" events={agendaGroups.later} colors={COLORS} labels={LABELS} icons={iconMap} navigate={navigate} />
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
-      {showAddModal && (
-        <AddCalendarItemModal defaultDate={addDate} onClose={() => setShowAddModal(false)} onCreated={handleEventCreated} syncToOutlook={syncToOutlook} />
-      )}
+          {canAdd && (
+            <button onClick={() => openAddModal(new Date())}
+              className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 w-12 h-12 bg-brand-600 dark:bg-brand-500 text-white rounded-full shadow-elevation flex items-center justify-center text-xl hover:bg-brand-700 dark:hover:bg-brand-600 transition-all cursor-pointer border-none z-40 hover:scale-110 active:scale-95">
+              +
+            </button>
+          )}
+
+          {showAddModal && (
+            <AddCalendarItemModal defaultDate={addDate} onClose={() => setShowAddModal(false)} onCreated={handleEventCreated} syncToOutlook={syncToOutlook} />
+          )}
         </div>
       </div>
     </div>
@@ -363,27 +368,27 @@ export default function Calendar() {
 
 function AgendaSection({ title, events, colors, labels, icons, onAdd, navigate }) {
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-[10px] font-bold text-neutral-500 dark:text-[var(--text-muted)] uppercase tracking-widest">{title}</h3>
         {onAdd && (
           <button onClick={onAdd}
-            className="text-[10px] font-semibold text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer bg-transparent border-none transition-colors">
-            + Add
-          </button>
+            className="btn-premium text-[10px] px-2.5 py-1">+ Add</button>
         )}
       </div>
       <div className="space-y-1.5">
         {events.map(e => (
           <div key={e._id} onClick={() => { if (e.projectId) navigate(`/projects/${e.projectId}`); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm ${e.projectId ? 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700/50' : ''}`}>
+            className={`card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] px-3 py-2.5 flex items-center gap-3 transition-all shadow-sm hover:shadow-elevation ${
+              e.projectId ? 'cursor-pointer hover:border-neutral-300 dark:hover:border-[var(--glass-border)]' : ''
+            }`}>
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colors[e.type] || '#6b7280' }} />
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 w-14 shrink-0">
+            <span className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)] w-14 shrink-0 font-medium">
               {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-neutral-900 dark:text-white truncate">{e.title}</p>
-              <p className="text-[10px] text-neutral-400 dark:text-neutral-500">{labels[e.type] || e.type}{e.projectName ? ` \u00B7 ${e.projectName}` : ''}</p>
+              <p className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)] truncate">{e.title}</p>
+              <p className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)]">{labels[e.type] || e.type}{e.projectName ? ` \u00B7 ${e.projectName}` : ''}</p>
               {e.link && e.source === 'custom' && (
                 <a href={e.link} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
@@ -393,7 +398,7 @@ function AgendaSection({ title, events, colors, labels, icons, onAdd, navigate }
                 </a>
               )}
             </div>
-            <span className="text-xs opacity-60">{icons[e.type] || '\u2022'}</span>
+            <span className="text-xs opacity-60 dark:opacity-70">{icons[e.type] || '\u2022'}</span>
           </div>
         ))}
       </div>

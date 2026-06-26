@@ -34,7 +34,6 @@ const myTasksRoutes = require('./routes/myTasks');
 const reportRoutes = require('./routes/reports');
 const reportDraftRoutes = require('./routes/reportDrafts');
 const searchRoutes = require('./routes/search');
-const chainRoutes = require('./routes/chains');
 const { router: superAdminRoutes, seedSuperAdmin, startNotificationPolling } = require('./routes/superAdmin');
 
 const app = express();
@@ -126,7 +125,6 @@ app.use('/api/calendar', require('./routes/calendar'));
 app.use('/api/timeline', require('./routes/timeline'));
 
 app.use('/api/search', searchRoutes);
-app.use('/api/chains', chainRoutes);
 app.use('/api/work-dna', require('./routes/workDna'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/ai-agent', require('./routes/aiAgent'));
@@ -596,6 +594,18 @@ async function checkOverdueProjects() {
     }
   } catch (e) { console.error('Overdue/at-risk projects check error:', e.message); }
 }
+// ClickUp incremental sync — twice daily at 7 AM and 6 PM
+const clickupService = require('./services/clickupService');
+cron.schedule('0 7,18 * * *', async () => {
+  console.log('ClickUp auto-sync started...');
+  try {
+    const result = await clickupService.sync();
+    console.log('ClickUp auto-sync completed:', JSON.stringify(result));
+  } catch (e) {
+    console.error('ClickUp auto-sync error:', e.message);
+  }
+});
+
 cron.schedule('0 * * * *', () => { checkOverdueProjects(); });
 
 app.post('/api/check-overdue-projects', auth, authorize('admin'), async (req, res) => {

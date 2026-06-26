@@ -62,19 +62,21 @@ const FAQS = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
       <section className="pt-36 pb-20 px-5">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-surface-900 text-center mb-10">Frequently asked questions</h1>
+        <div className="max-w-3xl mx-auto animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] text-center">Frequently asked questions</h1>
+          </div>
           <div className="space-y-3">
             {FAQS.map((item, i) => (
-              <details key={i} className="bg-white rounded-xl border border-surface-200 p-4 group">
-                <summary className="text-sm font-medium text-surface-900 cursor-pointer list-none flex items-center justify-between">
+              <details key={i} className="card-premium glow-card p-4 group">
+                <summary className="text-sm font-medium text-[var(--text-primary)] cursor-pointer list-none flex items-center justify-between">
                   {item.q}
-                  <span className="text-surface-400 group-open:rotate-180 transition-transform shrink-0 ml-2">▼</span>
+                  <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform shrink-0 ml-2">▼</span>
                 </summary>
-                <p className="text-xs text-surface-500 mt-2 leading-relaxed">{item.a}</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-2 leading-relaxed">{item.a}</p>
               </details>
             ))}
           </div>

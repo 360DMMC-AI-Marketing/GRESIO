@@ -28,7 +28,7 @@ exports.chat = async (req, res) => {
     res.json({ reply: reply || 'AI not available. Set OPENAI_API_KEY.', history: chatDoc.messages.slice(-10) });
   } catch (err) {
     console.error('AI chat error:', err);
-    res.json({ reply: `Error: ${err.message}`, history: [] });
+    res.status(500).json({ reply: `Error: ${err.message}`, history: [] });
   }
 };
 

@@ -163,13 +163,6 @@ const VOICE_ACTIONS = {
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
   ],
 
-  projectRelay: [
-    { match: p(/new\s*chain/i), action: 'click', payload: 'new-chain' },
-    { match: p(/create\s*chain/i), action: 'click', payload: 'create-chain' },
-    { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
-    { match: p(/go\s*to\s*project/i), action: 'navigate', payload: '/projects' },
-  ],
-
   onboardingGuide: [
     { match: p(/acknowledge/i), action: 'click', payload: 'acknowledge-guide' },
     { match: p(/go\s*to\s*dashboard/i), action: 'navigate', payload: '/' },
@@ -341,7 +334,7 @@ const VOICE_ACTIONS = {
     { match: p(/go\s*to\s*profile/i), action: 'navigate', payload: '/profile' },
     { match: p(/go\s*to\s*work.?log/i), action: 'navigate', payload: '/work-logs' },
     { match: p(/go\s*to\s*test.?case/i), action: 'navigate', payload: '/test-cases' },
-    { match: p(/go\s*to\s*relay/i), action: 'navigate', payload: '/project-relay' },
+
     { match: p(/go\s*to\s*guide/i), action: 'navigate', payload: '/onboarding-guide' },
     { match: p(/go\s*to\s*github/i), action: 'navigate', payload: '/github' },
     { match: p(/go\s*to\s*dna/i), action: 'navigate', payload: '/work-dna' },

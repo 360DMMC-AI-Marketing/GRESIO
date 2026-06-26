@@ -128,10 +128,12 @@ async function chat(messages, options = {}) {
     messages,
     temperature: isKimi ? 0.6 : (options.temperature ?? 0.3),
     max_tokens: options.maxTokens ?? 2000,
+    timeout: 30000,
     response_format: options.responseFormat ? { type: 'json_object' } : undefined,
     ...(isKimi ? { thinking: { type: 'disabled' } } : {}),
   });
-  return response.choices?.[0]?.message?.content || '';
+  const msg = response.choices?.[0]?.message;
+  return msg?.content || msg?.reasoning_content || '';
 }
 
 // -------------------------------------------------- //

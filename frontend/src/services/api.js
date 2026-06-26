@@ -96,6 +96,7 @@ export const projects = {
   createTeamsChannel: (id) => api.post(`/projects/${id}/teams-channel`),
   updateReviewCall: (id, data) => api.patch(`/projects/${id}/review-call`, data),
   deleteReviewCall: (id) => api.delete(`/projects/${id}/review-call`),
+  getDepartments: (id) => api.get(`/projects/${id}/departments`),
 };
 
 export const tasks = {
@@ -126,7 +127,7 @@ export const integrations = {
   getAll: () => api.get('/integrations'),
   update: (name, data) => api.patch(`/integrations/${name}`, data),
   sync: (name) => api.post(`/integrations/${name}/sync`),
-  syncPlatform: (name, platform) => api.post(`/integrations/${name}/sync?platform=${platform}`),
+  syncPlatform: (name, platform) => api.post(`/integrations/${name}/sync${platform ? `?platform=${platform}` : ''}`),
   createMeeting: (data) => api.post('/integrations/create-meeting', data),
 };
 
@@ -197,14 +198,6 @@ export const interests = {
   restoreFlagged: (id) => api.post(`/interests/flagged/${id}/restore`),
   restoreAllFlagged: () => api.post('/interests/flagged/restore-all'),
   deleteAllFlagged: () => api.delete('/interests/flagged'),
-};
-
-export const chains = {
-  getAll: () => api.get('/chains'),
-  getById: (id) => api.get(`/chains/${id}`),
-  create: (data) => api.post('/chains', data),
-  update: (id, data) => api.put(`/chains/${id}`, data),
-  remove: (id) => api.delete(`/chains/${id}`),
 };
 
 export const bugs = {
@@ -312,6 +305,9 @@ export const clickupImport = {
   execute: (plan, apiKey) => api.post('/clickup-import/import', { plan }, addApiKey(apiKey)),
   importAll: (data, apiKey) => api.post('/clickup-import/import-all', data, addApiKey(apiKey)),
   cleanupImport: () => api.post('/clickup-import/cleanup'),
+  saveConfig: (data) => api.post('/clickup-import/save-config', data),
+  getConfig: () => api.get('/clickup-import/config'),
+  syncWorkspace: (workspaceId) => api.post('/clickup-import/sync-workspace', { workspaceId }),
 };
 
 export const templates = {

@@ -14,7 +14,7 @@ function getCurrentPage() {
   if (path === '/admin' || path.startsWith('/admin')) return 'admin';
   if (path === '/work-logs' || path.startsWith('/work-logs')) return 'workLogs';
   if (path === '/test-cases' || path.startsWith('/test-cases')) return 'testCases';
-  if (path === '/relay' || path.startsWith('/relay')) return 'projectRelay';
+
   if (path === '/onboarding-guide' || path.startsWith('/onboarding-guide')) return 'onboardingGuide';
   if (path === '/reports' || path.startsWith('/reports')) return 'reports';
   if (path.match(/^\/projects\/[^/]+\/reports\/edit/)) return 'reportEdit';
@@ -768,7 +768,7 @@ const PAGE_PATHS = {
   admin: '/admin',
   workLogs: '/work-logs',
   testCases: '/test-cases',
-  projectRelay: '/relay',
+
   onboardingGuide: '/onboarding-guide',
   reports: '/reports',
   reportEdit: '/reports',

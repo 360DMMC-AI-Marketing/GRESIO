@@ -3,46 +3,17 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import executeCommand from '../services/voiceActionRouter';
 import { useAuth } from '../context/AuthContext';
 
-const STYLES = `
-@keyframes radiance-pulse {
-  0%, 100% { box-shadow: 0 0 60px rgba(35,71,232,0.06), 0 0 120px rgba(35,71,232,0.02); }
-  50% { box-shadow: 0 0 80px rgba(35,71,232,0.1), 0 0 160px rgba(35,71,232,0.04); }
-}
-@keyframes bubble-in {
-  from { opacity: 0; transform: translateY(20px) scale(0.92); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes card-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes wave-move {
-  0%, 100% { transform: translateY(0) scaleY(1); }
-  25% { transform: translateY(-5px) scaleY(1.15); }
-  50% { transform: translateY(0) scaleY(0.85); }
-  75% { transform: translateY(3px) scaleY(1.05); }
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 0.3; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
-`;
-
 function WaveAnimation() {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 4, height: 36,
-    }}>
+    <div className="flex items-center justify-center gap-[3px] h-9">
       {[0,1,2,3,4,5,6,7].map(i => (
-        <div key={i} style={{
-          width: 3, borderRadius: 3,
-          background: 'linear-gradient(to top, #6088ff, #8aaaff)',
-          height: 12 + Math.sin(i * 0.8) * 10 + 6,
-          animation: `wave-move 1.4s ease-in-out infinite`,
-          animationDelay: `${i * 0.1}s`,
-          opacity: 0.6,
-        }} />
+        <div key={i} className="w-[3px] rounded-[3px] bg-gradient-to-t from-brand-400 to-brand-300"
+          style={{
+            height: `${12 + Math.sin(i * 0.8) * 10 + 6}px`,
+            animation: `wave-move 1.4s ease-in-out infinite`,
+            animationDelay: `${i * 0.1}s`,
+            opacity: 0.6,
+          }} />
       ))}
     </div>
   );
@@ -50,14 +21,13 @@ function WaveAnimation() {
 
 function VoiceIndicator() {
   return (
-    <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+    <div className="flex gap-[3px] items-center">
       {[0,1,2].map(i => (
-        <span key={i} style={{
-          width: 5, height: 5, borderRadius: '50%',
-          background: '#4ade80',
-          animation: `pulse-dot 1.4s ease-in-out infinite`,
-          animationDelay: `${i * 0.2}s`,
-        }} />
+        <span key={i} className="w-[5px] h-[5px] rounded-full bg-success-400"
+          style={{
+            animation: 'pulse-dot 1.4s ease-in-out infinite',
+            animationDelay: `${i * 0.2}s`,
+          }} />
       ))}
     </div>
   );
@@ -99,7 +69,7 @@ export default function AiAssistantPanel() {
     setMode('voice');
     setVoiceMode('listening');
     setVoiceTranscript('');
-    speech.start(true);
+    speech.start();
   }, [speech]);
 
   const close = useCallback(() => {
@@ -158,7 +128,7 @@ export default function AiAssistantPanel() {
 
   const isDismissCommand = useCallback((text) => {
     const t = text.trim().toLowerCase();
-    return /\bthank\s*you\s*gresio\b/i.test(t)
+    return /\bthank\s*you\b/i.test(t)
       || /\bstop\s*listening\b/i.test(t)
       || /\bgo\s*to\s*sleep\b/i.test(t)
       || /\bcancel\b/i.test(t)
@@ -209,7 +179,7 @@ export default function AiAssistantPanel() {
 
   useEffect(() => {
     if (mode === 'voice' && voiceMode === 'listening' && !speech.isListening) {
-      speech.start(true);
+      speech.start();
     }
   }, [mode, voiceMode, speech]);
 
@@ -226,53 +196,31 @@ export default function AiAssistantPanel() {
 
   return (
     <>
-      <style>{STYLES}</style>
-
-      {/* Attached Control Bar - centered at bottom, cloned inline design for both */}
-      <div data-assist-toggle style={{
-        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 100000,
-        display: 'flex', alignItems: 'center',
-        background: '#ffffff',
-        borderRadius: 40,
-        border: '0.5px solid #f3f4f6',
-        boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)',
-        overflow: 'hidden',
-      }}>
+      {/* Control Bar */}
+      <div data-assist-toggle
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100000] flex items-center bg-white dark:bg-[var(--bg-primary)] rounded-full border border-neutral-200 dark:border-[var(--border-primary)] shadow-elevation overflow-hidden backdrop-blur-md glass-panel">
         <button data-assist-toggle onClick={openVoice}
-          style={{
-            padding: '8px 18px', background: 'transparent', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 8,
-            fontSize: 12, color: isVoiceActive ? '#2347e8' : '#6b7280', fontWeight: 500,
-            transition: 'all 0.12s',
-          }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: '#4ade80',
-            animation: isVoiceActive ? 'pulse-dot 1.4s ease-in-out infinite' : 'none',
-          }} />
+          className={`flex items-center gap-2 px-4 py-2 bg-transparent border-none cursor-pointer text-xs font-medium transition-all ${
+            isVoiceActive ? 'text-brand-600 dark:text-brand-400' : 'text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)]'
+          }`}>
+          <span className="w-[7px] h-[7px] rounded-full bg-success-400"
+            style={{ animation: isVoiceActive ? 'pulse-dot 1.4s ease-in-out infinite' : 'none' }} />
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
             <line x1="12" y1="19" x2="12" y2="22"/>
           </svg>
-          <span>Say "hey gresio" for voice</span>
+          <span>Voice</span>
         </button>
 
-        <div style={{ width: 1, height: 18, background: '#f3f4f6', borderRadius: 1 }} />
+        <div className="w-px h-4 bg-neutral-200 dark:bg-[var(--border-primary)] rounded-full" />
 
         <button data-assist-toggle onClick={openChat}
-          style={{
-            padding: '8px 18px', background: 'transparent', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 8,
-            fontSize: 12, color: isChatActive ? '#2347e8' : '#6b7280', fontWeight: 500,
-            transition: 'all 0.12s',
-          }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: '#6088ff',
-            animation: isChatActive ? 'pulse-dot 1.4s ease-in-out infinite' : 'none',
-          }} />
+          className={`flex items-center gap-2 px-4 py-2 bg-transparent border-none cursor-pointer text-xs font-medium transition-all ${
+            isChatActive ? 'text-brand-600 dark:text-brand-400' : 'text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)]'
+          }`}>
+          <span className="w-[7px] h-[7px] rounded-full bg-brand-400"
+            style={{ animation: isChatActive ? 'pulse-dot 1.4s ease-in-out infinite' : 'none' }} />
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
@@ -280,50 +228,21 @@ export default function AiAssistantPanel() {
         </button>
       </div>
 
-      {/* Unified Centered Radiance Bubble - same container for Voice and Chat */}
+      {/* Voice / Chat Panel */}
       {mode && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 99999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-        }}>
-          {/* Subtle backdrop */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'rgba(255,255,255,0.3)',
-            backdropFilter: 'blur(2px)',
-          }} />
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center"
+          style={{ pointerEvents: 'none' }}>
+          <div className="absolute inset-0 bg-black/10 dark:bg-black/30 backdrop-blur-sm" />
 
-          {/* Radiance glow ring */}
-          <div style={{
-            position: 'relative',
-            animation: 'radiance-pulse 3s ease-in-out infinite',
-            pointerEvents: 'auto',
-          }}>
-            <div ref={panelRef} style={{
-              width: 370,
-              minHeight: 380,
-              borderRadius: 24,
-              background: '#ffffff',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-              border: '0.5px solid rgba(255,255,255,0.5)',
-              display: 'flex', flexDirection: 'column',
-              overflow: 'hidden',
-              animation: 'bubble-in 0.25s cubic-bezier(.4,0,.2,1)',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              position: 'relative',
-            }}>
+          <div className="relative animate-scale-in"
+            style={{ pointerEvents: 'auto' }}>
+            <div ref={panelRef}
+              className="w-[370px] min-h-[380px] flex flex-col overflow-hidden rounded-[var(--radius-xl)] bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--glass-border)] shadow-elevation glow-card"
+              style={{ animation: 'bubble-in 0.25s cubic-bezier(.4,0,.2,1)' }}>
+
               {/* Close button */}
               <button onClick={close}
-                style={{
-                  position: 'absolute', top: 14, right: 14, zIndex: 2,
-                  width: 28, height: 28, borderRadius: 8,
-                  background: '#f9fafb', border: '0.5px solid #f3f4f6',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#9ca3af',
-                  transition: 'all 0.12s',
-                }}>
+                className="absolute top-3 right-3 z-10 w-7 h-7 rounded-[var(--radius-md)] bg-neutral-50 dark:bg-[var(--bg-tertiary)] border border-neutral-200 dark:border-[var(--border-primary)] cursor-pointer flex items-center justify-center text-neutral-400 dark:text-[var(--text-muted)] hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] transition-all">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -331,101 +250,60 @@ export default function AiAssistantPanel() {
 
               {/* VOICE MODE */}
               {isVoiceActive && (
-                <div style={{
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 20, padding: 40, minHeight: 380,
-                  textAlign: 'center',
-                  background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.98) 0%, rgba(249,250,251,0.9) 100%)',
-                }}>
-                  {/* Header */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: 7,
-                      background: 'linear-gradient(135deg, #6088ff 0%, #2347e8 100%)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 600, color: '#fff',
-                    }}>G</div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#1f2937' }}>GRESIO Voice</span>
+                <div className="flex flex-col items-center justify-center gap-5 p-10 min-h-[380px] text-center"
+                  style={{background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.98) 0%, rgba(249,250,251,0.9) 100%)'}}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-[var(--radius-md)] bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-[10px] font-bold text-white">G</div>
+                    <span className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">GRESIO Voice</span>
                     <VoiceIndicator />
                   </div>
 
-                  {/* Wave + transcript when no conversation yet */}
                   {conversation.length === 0 && (
                     <>
-                      <div style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
-                      }}>
+                      <div className="flex flex-col items-center gap-3.5">
                         <WaveAnimation />
-                        <div style={{
-                          fontSize: 12, color: '#6b7280', fontWeight: 450,
-                        }}>
+                        <div className="text-xs text-neutral-500 dark:text-[var(--text-tertiary)] font-medium">
                           {voiceTranscript || "I'm listening..."}
                         </div>
                       </div>
-                      <div style={{
-                        fontSize: 10, color: '#9ca3af', lineHeight: 1.5, maxWidth: 200,
-                      }}>
-                        Say "thank you gresio" to finish
+                      <div className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)] leading-relaxed max-w-[180px]">
+                        Say your command — "create a task", "go to dashboard", etc.
                       </div>
                     </>
                   )}
 
-                  {/* Transcript after command */}
                   {voiceTranscript && conversation.length > 0 && (
-                    <div style={{
-                      background: '#ffffff',
-                      borderRadius: 10, padding: '10px 16px',
-                      border: '0.5px solid #f3f4f6',
-                      fontSize: 12, color: '#6b7280',
-                      display: 'flex', alignItems: 'center', gap: 8, maxWidth: '90%',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6088ff" strokeWidth="1.5">
+                    <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] px-4 py-2.5 rounded-[var(--radius-lg)] text-xs text-neutral-500 dark:text-[var(--text-tertiary)] flex items-center gap-2 max-w-[90%]">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-brand-500 shrink-0">
                         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                       </svg>
-                      <span style={{ color: '#1f2937', fontWeight: 450 }}>"{voiceTranscript}"</span>
+                      <span className="text-neutral-800 dark:text-[var(--text-primary)] font-medium">"{voiceTranscript}"</span>
                     </div>
                   )}
 
-                  {/* Conversation results */}
                   {conversation.map((msg, i) => (
-                    <div key={i} style={{ width: '100%', animation: 'card-in 0.2s ease' }}>
+                    <div key={i} className="w-full animate-fade-in">
                       {msg.role === 'user' ? (
-                        <div style={{
-                          background: '#ffffff',
-                          borderRadius: 12, padding: '10px 15px',
-                          border: '0.5px solid #e5e7eb',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                          fontSize: 12, color: '#1f2937', lineHeight: 1.5,
-                          display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left',
-                        }}>
-                          <span style={{ color: '#6088ff', fontWeight: 500, fontSize: 11 }}>&gt;</span>
+                        <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] px-3.5 py-2.5 rounded-[var(--radius-lg)] text-xs text-neutral-800 dark:text-[var(--text-primary)] leading-relaxed flex items-start gap-2 text-left shadow-sm">
+                          <span className="text-brand-500 font-semibold text-[11px]">&gt;</span>
                           <span>{msg.text}</span>
                         </div>
                       ) : (
-                        <div style={{
-                          background: msg.type === 'error' ? '#fef8f8' : '#ffffff',
-                          borderRadius: 12, padding: '10px 15px',
-                          border: msg.type === 'error' ? '0.5px solid #fce4e4' : '0.5px solid #e5e7eb',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                          fontSize: 12, color: msg.type === 'error' ? '#b91c1c' : '#4b5563',
-                          lineHeight: 1.5, textAlign: 'left',
-                          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                        }}>
+                        <div className={`px-3.5 py-2.5 rounded-[var(--radius-lg)] text-xs leading-relaxed text-left shadow-sm ${
+                          msg.type === 'error' ? 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-400' :
+                          'bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] text-neutral-600 dark:text-[var(--text-secondary)]'
+                        }`}>
                           {msg.text}
                         </div>
                       )}
                     </div>
                   ))}
 
-                  {/* Loading */}
                   {loading && (
-                    <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '4px 0' }}>
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite' }} />
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite 0.15s' }} />
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite 0.3s' }} />
+                    <div className="flex gap-[5px] items-center py-1">
+                      <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" />
+                      <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" style={{ animationDelay: '0.15s' }} />
+                      <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" style={{ animationDelay: '0.3s' }} />
                     </div>
                   )}
                 </div>
@@ -433,82 +311,48 @@ export default function AiAssistantPanel() {
 
               {/* CHAT MODE */}
               {isChatActive && (
-                <div style={{
-                  display: 'flex', flexDirection: 'column',
-                  width: '100%', height: '100%', minHeight: 380,
-                }}>
-                  {/* Header */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '16px 18px',
-                    borderBottom: '0.5px solid #f3f4f6',
-                    background: '#ffffff',
-                  }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 9,
-                      background: 'linear-gradient(135deg, #6088ff 0%, #2347e8 100%)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 600, color: '#fff',
-                    }}>G</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1f2937' }}>GRESIO Assistant</div>
-                      <div style={{ fontSize: 10, color: '#9ca3af' }}>Type a command</div>
+                <div className="flex flex-col w-full h-full min-h-[380px]">
+                  <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-neutral-100 dark:border-[var(--border-secondary)] bg-white dark:bg-[var(--bg-primary)]">
+                    <div className="w-7 h-7 rounded-[var(--radius-md)] bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-[11px] font-bold text-white">G</div>
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">GRESIO Assistant</div>
+                      <div className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)]">Type a command</div>
                     </div>
                   </div>
 
-                  {/* Scrollable content area */}
-                  <div style={{
-                    flex: 1, overflowY: 'auto', padding: '14px 16px',
-                    display: 'flex', flexDirection: 'column', gap: 10,
-                    background: '#f9fafb',
-                  }}>
+                  <div className="flex-1 overflow-y-auto px-4 py-3.5 flex flex-col gap-2.5 bg-neutral-50 dark:bg-[var(--bg-secondary)]">
                     {conversation.length === 0 && (
                       <>
-                        <div style={{
-                          background: '#ffffff', borderRadius: 12, padding: 16,
-                          border: '0.5px solid #f3f4f6',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                          animation: 'card-in 0.25s ease',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6088ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-4 rounded-[var(--radius-lg)] animate-fade-in">
+                          <div className="flex items-center gap-2 mb-2.5">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand-500">
                               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                             </svg>
-                            <span style={{ fontSize: 11.5, fontWeight: 600, color: '#1f2937' }}>Quick Actions</span>
+                            <span className="text-[11.5px] font-semibold text-neutral-800 dark:text-[var(--text-primary)]">Quick Actions</span>
                           </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          <div className="flex flex-wrap gap-1.5">
                             {[
                               { label: 'Create project', cmd: 'create a project called new project' },
                               { label: 'Add task', cmd: 'add task implement feature to current project' },
                               { label: 'Generate report', cmd: 'generate a weekly report' },
                               { label: 'Launch', cmd: 'launch the current project' },
                             ].map((a, i) => (
-                              <button key={i}
-                                onClick={() => { setTextInput(a.cmd); inputRef.current?.focus(); }}
-                                style={{
-                                  fontSize: 10, padding: '5px 11px', borderRadius: 7,
-                                  background: '#f8faff', border: '0.5px solid #dce6ff',
-                                  color: '#2347e8', cursor: 'pointer', fontWeight: 500,
-                                }}>
+                              <button key={i} onClick={() => { setTextInput(a.cmd); inputRef.current?.focus(); }}
+                                className="text-[10px] px-2.5 py-1 rounded-[var(--radius-md)] bg-indigo-50 dark:bg-brand-900/20 border border-indigo-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 cursor-pointer font-medium hover:bg-indigo-100 dark:hover:bg-brand-900/30 transition-all">
                                 {a.label}
                               </button>
                             ))}
                           </div>
                         </div>
 
-                        <div style={{
-                          background: '#ffffff', borderRadius: 12, padding: 16,
-                          border: '0.5px solid #f3f4f6',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                          animation: 'card-in 0.25s ease 0.05s both',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6088ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] p-4 rounded-[var(--radius-lg)] animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                          <div className="flex items-center gap-2 mb-2.5">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand-500">
                               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                             </svg>
-                            <span style={{ fontSize: 11.5, fontWeight: 600, color: '#1f2937' }}>Try saying</span>
+                            <span className="text-[11.5px] font-semibold text-neutral-800 dark:text-[var(--text-primary)]">Try saying</span>
                           </div>
-                          <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.8 }}>
+                          <div className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] leading-relaxed">
                             "Assign login task to Sarah"<br />
                             "Create sprint 5 with goal launch MVP"<br />
                             "Mark task fix auth as done"
@@ -518,27 +362,17 @@ export default function AiAssistantPanel() {
                     )}
 
                     {conversation.map((msg, i) => (
-                      <div key={i} style={{ animation: 'card-in 0.2s ease' }}>
+                      <div key={i} className="animate-fade-in">
                         {msg.role === 'user' ? (
-                          <div style={{
-                            background: '#ffffff', borderRadius: 12, padding: '11px 15px',
-                            border: '0.5px solid #e5e7eb',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                            fontSize: 12, color: '#1f2937', lineHeight: 1.5,
-                            display: 'flex', alignItems: 'flex-start', gap: 8,
-                          }}>
-                            <span style={{ color: '#6088ff', fontWeight: 500, fontSize: 11 }}>&gt;</span>
+                          <div className="card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] px-3.5 py-2.5 rounded-[var(--radius-lg)] text-xs text-neutral-800 dark:text-[var(--text-primary)] leading-relaxed flex items-start gap-2 shadow-sm">
+                            <span className="text-brand-500 font-semibold text-[11px]">&gt;</span>
                             <span>{msg.text}</span>
                           </div>
                         ) : (
-                          <div style={{
-                            background: msg.type === 'error' ? '#fef8f8' : '#ffffff',
-                            borderRadius: 12, padding: '11px 15px',
-                            border: msg.type === 'error' ? '0.5px solid #fce4e4' : '0.5px solid #e5e7eb',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                            fontSize: 12, color: msg.type === 'error' ? '#b91c1c' : '#4b5563',
-                            lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                          }}>
+                          <div className={`px-3.5 py-2.5 rounded-[var(--radius-lg)] text-xs leading-relaxed shadow-sm ${
+                            msg.type === 'error' ? 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-400' :
+                            'bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] text-neutral-600 dark:text-[var(--text-secondary)]'
+                          }`}>
                             {msg.text}
                           </div>
                         )}
@@ -546,46 +380,28 @@ export default function AiAssistantPanel() {
                     ))}
 
                     {loading && (
-                      <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '10px 0' }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite' }} />
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite 0.15s' }} />
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6088ff', animation: 'pulse-dot 1s ease-in-out infinite 0.3s' }} />
+                      <div className="flex gap-[5px] items-center py-2.5">
+                        <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" />
+                        <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" style={{ animationDelay: '0.15s' }} />
+                        <span className="w-[5px] h-[5px] rounded-full bg-brand-400 animate-pulse-dot" style={{ animationDelay: '0.3s' }} />
                       </div>
                     )}
                     <div ref={bottomRef} />
                   </div>
 
                   {/* Input */}
-                  <div style={{
-                    padding: '12px 16px 14px',
-                    borderTop: '0.5px solid #f3f4f6',
-                    background: '#ffffff',
-                  }}>
-                    <div style={{
-                      display: 'flex', gap: 8, alignItems: 'center',
-                      background: '#f9fafb', borderRadius: 10,
-                      padding: '2px 2px 2px 14px',
-                      border: '0.5px solid #f3f4f6',
-                    }}>
+                  <div className="px-4 py-3 border-t border-neutral-100 dark:border-[var(--border-secondary)] bg-white dark:bg-[var(--bg-primary)]">
+                    <div className="flex gap-2 items-center bg-neutral-50 dark:bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-0.5 pl-3.5 border border-neutral-100 dark:border-[var(--border-secondary)]">
                       <input ref={inputRef} value={textInput}
                         onChange={e => setTextInput(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
                         placeholder="Ask or command..."
-                        style={{
-                          flex: 1, border: 'none', outline: 'none',
-                          background: 'transparent', fontSize: 12, color: '#374151',
-                          padding: '7px 0',
-                        }}
+                        className="flex-1 border-none outline-none bg-transparent text-xs text-neutral-700 dark:text-[var(--text-secondary)] py-[7px] placeholder-neutral-400 dark:placeholder-[var(--text-muted)]"
                       />
                       <button onClick={handleSubmit} disabled={loading || !textInput.trim()}
-                        style={{
-                          width: 32, height: 32, borderRadius: 8,
-                          background: loading || !textInput.trim() ? '#f3f4f6' : '#2347e8',
-                          color: loading || !textInput.trim() ? '#d1d5db' : '#fff',
-                          border: 'none', cursor: loading || !textInput.trim() ? 'default' : 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          transition: 'all 0.12s',
-                        }}>
+                        className={`w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center border-none transition-all ${
+                          loading || !textInput.trim() ? 'bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-300 dark:text-[var(--text-muted)]' : 'bg-brand-600 text-white cursor-pointer hover:bg-brand-700'
+                        }`}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                         </svg>

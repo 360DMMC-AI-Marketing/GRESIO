@@ -104,24 +104,24 @@ export default function AzureADImport() {
   const isProtected = (u) => u.email === 'admin@gresio.com' || u.email === user?.email;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-surface-900">👥 Azure AD Import</h1>
-        <p className="text-surface-500 text-sm mt-1">Import users from your Microsoft 365 organization</p>
+    <div className="page-enter space-y-6">
+      <div className="glass-panel">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">👥 Azure AD Import</h1>
+        <p className="text-[var(--text-secondary)] text-sm mt-1">Import users from your Microsoft 365 organization</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-surface-200 p-5">
-        <h2 className="text-lg font-semibold text-surface-900 mb-1">Import Users</h2>
-        <p className="text-xs text-surface-500 mb-4">
+      <div className="card-premium animate-fade-in bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)] p-5">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Import Users</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-4">
           Enter your company's email domain (the part after @ in your users' emails).
           Example: if your users are <strong>name@360dmmc.com</strong>, enter <strong>360dmmc.com</strong>.
           This is <em>not</em> your personal login email.
         </p>
 
         <div className="mb-4">
-          <label className="block text-xs font-medium text-surface-500 mb-1">Company</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Company</label>
           <select value={company?._id || ''} onChange={handleCompanyChange}
-            className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500">
+            className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500">
             {allCompanies.map(c => (
               <option key={c._id} value={c._id}>{c.name} — @{c.domain}</option>
             ))}
@@ -130,15 +130,15 @@ export default function AzureADImport() {
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-surface-500 mb-1">Email domain to import</label>
-            <div className="flex items-center border border-surface-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-500">
-              <span className="px-2 text-xs text-surface-400 bg-surface-50 py-1.5 border-r border-surface-200">@</span>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Email domain to import</label>
+            <div className="flex items-center border border-[var(--border-primary)] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-500">
+              <span className="px-2 text-xs text-[var(--text-muted)] bg-[var(--bg-tertiary)] py-1.5 border-r border-[var(--border-primary)]">@</span>
               <input type="text" value={importDomain} onChange={e => setImportDomain(e.target.value)}
-                placeholder="yourcompany.com" className="flex-1 px-2 py-1.5 text-xs outline-none bg-white" />
+                placeholder="yourcompany.com"                     className="flex-1 px-2 py-1.5 text-xs outline-none bg-white dark:bg-[var(--bg-secondary)]" />
             </div>
           </div>
           <button data-voice="import-users" onClick={handleImport} disabled={importing || !importDomain.trim()}
-            className="px-3 py-1.5 text-xs font-medium bg-[#2F2F2F] text-white rounded-lg hover:bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+            className="btn-premium px-3 py-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
             {importing ? 'Importing...' : 'Import Users'}
           </button>
         </div>
@@ -152,9 +152,9 @@ export default function AzureADImport() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-surface-200 p-5">
+      <div className="card-premium animate-fade-in bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)] p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-surface-900">📧 Users with Outlook email</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">📧 Users with Outlook email</h2>
           {importedUsers.length > 0 && (
             <button onClick={() => setDeleteUserConfirm('__all__')} disabled={deletingUsers}
               className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 disabled:opacity-50">
@@ -167,35 +167,35 @@ export default function AzureADImport() {
             <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full"></div>
           </div>
         ) : importedUsers.length === 0 ? (
-          <div className="text-center py-10 text-surface-400">
+          <div className="text-center py-10 text-[var(--text-muted)]">
             <p className="text-3xl mb-2">📧</p>
             <p className="text-sm">No users with Outlook email configured.</p>
-            <p className="text-xs text-surface-400 mt-1">Import users using the form above.</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Import users using the form above.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {importedUsers.map((u) => (
-              <div key={u._id} className="flex items-center justify-between p-3 border border-surface-200 rounded-lg">
+              <div key={u._id} className="flex items-center justify-between p-3 border border-[var(--border-primary)] rounded-lg">
                 <div>
-                  <p className="font-medium text-surface-900 text-sm">{u.name}</p>
-                  <p className="text-xs text-surface-400">{u.outlookEmail} · {ROLE_LABELS[u.role] || u.role}</p>
+                  <p className="font-medium text-[var(--text-primary)] text-sm">{u.name}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{u.outlookEmail} · {ROLE_LABELS[u.role] || u.role}</p>
                   {Array.isArray(u.department) && u.department.length > 0 && (
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {u.department.map(d => (
-                        <span key={d} className="text-[10px] bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded">{d}</span>
+                        <span key={d} className="text-[10px] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{d}</span>
                       ))}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-surface-100 text-surface-500'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'}`}>
                     {u.status}
                   </span>
                   {!isProtected(u) && (
                     <button onClick={() => setDeleteUserConfirm(u._id)} className="text-xs text-red-500 hover:text-red-700 underline">Delete</button>
                   )}
                   {isProtected(u) && (
-                    <span className="text-xs text-surface-400 italic">Protected</span>
+                    <span className="text-xs text-[var(--text-muted)] italic">Protected</span>
                   )}
                 </div>
               </div>

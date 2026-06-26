@@ -56,60 +56,60 @@ export default function TemplateDetail() {
     } finally { setUsing(false); }
   };
 
-  if (loading) return <div className="p-8 text-center text-surface-500 text-sm">Loading...</div>;
-  if (!template) return <div className="p-8 text-center text-surface-500 text-sm">Template not found</div>;
+  if (loading) return <div className="p-8 text-center text-surface-500 dark:text-[var(--text-muted)] text-sm">Loading...</div>;
+  if (!template) return <div className="p-8 text-center text-surface-500 dark:text-[var(--text-muted)] text-sm">Template not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-4xl mx-auto px-4 py-6 page-enter">
       <button data-voice="back-marketplace" onClick={() => navigate(-1)}
         className="text-xs text-primary-600 font-semibold mb-4 hover:underline cursor-pointer bg-transparent border-none">
         ← Back to marketplace
       </button>
 
-      <div className="bg-white rounded-xl border border-surface-200 p-6">
+      <div className="card-premium glow-card p-6 animate-fade-in">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-surface-900">{template.name}</h1>
-            <p className="text-xs text-surface-500 mt-1">{template.description}</p>
+            <h1 className="text-xl font-bold text-surface-900 dark:text-[var(--text-primary)]">{template.name}</h1>
+            <p className="text-xs text-surface-500 dark:text-[var(--text-muted)] mt-1">{template.description}</p>
             <div className="flex gap-2 mt-2">
-              <span className="text-[10px] bg-primary-50 text-primary-600 px-2 py-0.5 rounded font-semibold">{template.projectType}</span>
-              {template.tags?.map(t => <span key={t} className="text-[9px] bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded">{t}</span>)}
+              <span className="text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300 px-2 py-0.5 rounded font-semibold">{template.projectType}</span>
+              {template.tags?.map(t => <span key={t} className="text-[9px] bg-surface-100 dark:bg-[var(--bg-tertiary)] text-surface-500 dark:text-[var(--text-muted)] px-1.5 py-0.5 rounded">{t}</span>)}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-surface-900">{template.price > 0 ? `$${template.price}` : 'Free'}</div>
+            <div className="text-2xl font-bold text-surface-900 dark:text-[var(--text-primary)] num-mono">{template.price > 0 ? `$${template.price}` : 'Free'}</div>
             <div className="flex items-center justify-end gap-1 mt-1">
               {[1,2,3,4,5].map(star => (
                 <button key={star} data-voice={`rate-template-${star}`} onClick={() => rateTemplate(star)} disabled={rating}
                   onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}
-                  className={`text-sm cursor-pointer border-none bg-transparent p-0 leading-none transition-colors ${star <= (hoverRating || template.rating) ? 'text-amber-400' : 'text-surface-300'} disabled:opacity-50`}>
+                  className={`text-sm cursor-pointer border-none bg-transparent p-0 leading-none transition-colors ${star <= (hoverRating || template.rating) ? 'text-amber-400' : 'text-surface-300 dark:text-[var(--text-muted)]'} disabled:opacity-50`}>
                   ★
                 </button>
               ))}
-              <span className="text-[10px] text-surface-400 ml-1">({template.ratingCount})</span>
+              <span className="text-[10px] text-surface-400 dark:text-[var(--text-muted)] ml-1">({template.ratingCount})</span>
             </div>
-            <div className="text-[10px] text-surface-400 mt-0.5">⬇ {template.downloads}</div>
+            <div className="text-[10px] text-surface-400 dark:text-[var(--text-muted)] mt-0.5 num-mono">⬇ {template.downloads}</div>
           </div>
         </div>
 
         <div className="flex gap-2 mb-6">
           <button data-voice="use-template" onClick={useTemplate} disabled={using}
-            className="px-5 py-2 bg-[#2347e8] text-white rounded-lg text-sm font-semibold hover:bg-[#1d3dcc] disabled:opacity-50 transition-colors cursor-pointer border-none">
+            className="btn-premium text-sm disabled:opacity-50">
             {using ? 'Creating...' : 'Use This Template'}
           </button>
         </div>
 
         <div className="space-y-4">
           {template.phases?.map((phase, i) => (
-            <div key={i} className="border border-surface-200 rounded-lg overflow-hidden">
-              <div className="bg-surface-50 px-4 py-2 font-semibold text-sm text-surface-800 border-b border-surface-200">
+            <div key={i} className="card-premium glow-card overflow-hidden">
+              <div className="bg-surface-50 dark:bg-[var(--bg-tertiary)] px-4 py-2 font-semibold text-sm text-surface-800 dark:text-[var(--text-primary)] border-b border-surface-200 dark:border-[var(--border-primary)]">
                 Phase {i + 1}: {phase.name}
               </div>
-              <div className="divide-y divide-surface-100">
+              <div className="divide-y divide-surface-100 dark:divide-[var(--border-secondary)]">
                 {phase.tasks?.map((task, j) => (
-                  <div key={j} className="px-4 py-2 text-xs text-surface-600 flex items-center justify-between">
+                  <div key={j} className="px-4 py-2 text-xs text-surface-600 dark:text-[var(--text-secondary)] flex items-center justify-between">
                     <span>{task.title}</span>
-                    <span className="text-[9px] text-surface-400">{task.estimatedHours}h</span>
+                    <span className="text-[9px] text-surface-400 dark:text-[var(--text-muted)] num-mono">{task.estimatedHours}h</span>
                   </div>
                 ))}
               </div>

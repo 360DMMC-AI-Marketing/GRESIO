@@ -43,30 +43,32 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
       <section className="pt-36 pb-20 px-5">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">Privacy Policy</h1>
-          <p className="text-surface-500 mb-2">Last updated: June 2026</p>
-          <p className="text-sm text-surface-500 mb-10">This Privacy Policy explains how GRESIO ("we", "our", "us") collects, uses, and protects your information when you use our project management platform.</p>
+        <div className="max-w-3xl mx-auto animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-4">Privacy Policy</h1>
+            <p className="text-[var(--text-muted)] mb-2">Last updated: June 2026</p>
+            <p className="text-sm text-[var(--text-tertiary)] mb-10">This Privacy Policy explains how GRESIO ("we", "our", "us") collects, uses, and protects your information when you use our project management platform.</p>
 
-          <div className="space-y-8">
-            {SECTIONS.map((s, i) => (
-              <div key={i}>
-                <h2 className="text-lg font-semibold text-surface-900 mb-2">{s.title}</h2>
-                <p className="text-sm text-surface-600 leading-relaxed">{s.content}</p>
-              </div>
-            ))}
-          </div>
+            <div className="space-y-8">
+              {SECTIONS.map((s, i) => (
+                <div key={i}>
+                  <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{s.title}</h2>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{s.content}</p>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-12 pt-8 border-t border-surface-200">
-            <p className="text-sm text-surface-500">
-              Still have questions?{' '}
-              <Link to="/contact" className="text-primary-600 hover:text-primary-700 font-medium">Contact our support team</Link>
-              {' '}or email{' '}
-              <a href="mailto:Consult@360DMMC.com" className="text-primary-600 hover:text-primary-700 font-medium">Consult@360DMMC.com</a>.
-            </p>
+            <div className="mt-12 pt-8 border-t border-[var(--border-primary)]">
+              <p className="text-sm text-[var(--text-tertiary)]">
+                Still have questions?{' '}
+                <Link to="/contact" className="text-[var(--brand-primary)] hover:text-[var(--brand-hover)] font-medium">Contact our support team</Link>
+                {' '}or email{' '}
+                <a href="mailto:Consult@360DMMC.com" className="text-[var(--brand-primary)] hover:text-[var(--brand-hover)] font-medium">Consult@360DMMC.com</a>.
+              </p>
+            </div>
           </div>
         </div>
       </section>

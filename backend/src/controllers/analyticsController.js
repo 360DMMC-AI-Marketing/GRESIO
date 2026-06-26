@@ -12,8 +12,9 @@ exports.getDashboardStats = async (req, res, next) => {
   try {
     const isAdmin = req.user.role === 'admin';
     const domainFilter = isAdmin ? {} : { domain: req.user.domain };
-    const projectIds = isAdmin
-      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+    // For task/test counts, include sub-projects
+    const allProjectIds = isAdmin
+      ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
       : await getDomainProjectIds(req.user.domain);
 
     const userFilter = { isActive: true, ...domainFilter };
@@ -22,22 +23,23 @@ exports.getDashboardStats = async (req, res, next) => {
     const idleUsers = await User.countDocuments({ ...userFilter, status: 'idle' });
     const inactiveUsers = await User.countDocuments({ ...userFilter, status: { $in: ['inactive', 'offline'] } });
 
-    const projFilter = { isActive: true, ...domainFilter };
-    const totalProjects = await Project.countDocuments(projFilter);
-    const completedProjects = await Project.countDocuments({ status: 'completed', ...domainFilter });
-    const inProgressProjects = await Project.countDocuments({ isActive: true, status: { $in: ['on_track', 'ready_to_test'] }, ...domainFilter });
-    const atRiskProjects = await Project.countDocuments({ status: 'at_risk', ...domainFilter });
-    const blockedProjects = await Project.countDocuments({ status: 'blocked', ...domainFilter });
-    const delayedProjects = await Project.countDocuments({ status: 'delayed', ...domainFilter });
+    // Count only top-level projects (umbrellas + standalone). Sub-projects are part of their umbrella.
+    const topFilter = { isActive: true, parentProject: null, ...domainFilter };
+    const totalProjects = await Project.countDocuments(topFilter);
+    const completedProjects = await Project.countDocuments({ isActive: true, status: 'completed', parentProject: null, ...domainFilter });
+    const inProgressProjects = await Project.countDocuments({ isActive: true, status: { $in: ['on_track', 'ready_to_test'] }, parentProject: null, ...domainFilter });
+    const atRiskProjects = await Project.countDocuments({ isActive: true, status: 'at_risk', parentProject: null, ...domainFilter });
+    const blockedProjects = await Project.countDocuments({ isActive: true, status: 'blocked', parentProject: null, ...domainFilter });
+    const delayedProjects = await Project.countDocuments({ isActive: true, status: 'delayed', parentProject: null, ...domainFilter });
 
-    const totalTasks = await Task.countDocuments({ isActive: true, project: { $in: projectIds } });
-    const completedTasks = await Task.countDocuments({ status: 'done', project: { $in: projectIds } });
+    const totalTasks = await Task.countDocuments({ isActive: true, project: { $in: allProjectIds } });
+    const completedTasks = await Task.countDocuments({ status: 'done', project: { $in: allProjectIds } });
 
-    const totalTestingItems = await TestingItem.countDocuments({ isActive: true, project: { $in: projectIds } });
-    const passedTesting = await TestingItem.countDocuments({ status: 'passed', isActive: true, project: { $in: projectIds } });
-    const failedTesting = await TestingItem.countDocuments({ status: 'failed', isActive: true, project: { $in: projectIds } });
-    const blockedTesting = await TestingItem.countDocuments({ status: 'blocked', isActive: true, project: { $in: projectIds } });
-    const overdueTesting = await TestingItem.countDocuments({ isActive: true, deadline: { $lt: new Date() }, status: { $nin: ['passed', 'completed'] }, project: { $in: projectIds } });
+    const totalTestingItems = await TestingItem.countDocuments({ isActive: true, project: { $in: allProjectIds } });
+    const passedTesting = await TestingItem.countDocuments({ status: 'passed', isActive: true, project: { $in: allProjectIds } });
+    const failedTesting = await TestingItem.countDocuments({ status: 'failed', isActive: true, project: { $in: allProjectIds } });
+    const blockedTesting = await TestingItem.countDocuments({ status: 'blocked', isActive: true, project: { $in: allProjectIds } });
+    const overdueTesting = await TestingItem.countDocuments({ isActive: true, deadline: { $lt: new Date() }, status: { $nin: ['passed', 'completed'] }, project: { $in: allProjectIds } });
 
     const domainUsers = await User.find(userFilter).select('_id');
     const domainUserIds = domainUsers.map(u => u._id);
@@ -90,7 +92,7 @@ exports.getWorkloadBalance = async (req, res, next) => {
     const isAdmin = req.user.role === 'admin';
     const domainFilter = isAdmin ? {} : { domain: req.user.domain };
     const projectIds = isAdmin
-      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
       : await getDomainProjectIds(req.user.domain);
     const users = await User.find({ isActive: true, ...domainFilter }).populate('assignedProjects');
     const workload = users.map((u) => ({
@@ -109,14 +111,18 @@ exports.getWorkloadBalance = async (req, res, next) => {
 
 exports.getProjectPredictions = async (req, res, next) => {
   try {
-    const filter = { isActive: true };
+    const filter = { isActive: true, parentProject: null };
     if (req.user.role !== 'admin') filter.domain = req.user.domain;
-    const projects = await Project.find(filter).populate('tasks');
-    const predictions = projects.map((p) => {
-      const total = p.tasks.length;
-      const done = p.tasks.filter((t) => t.status === 'done').length;
-      const overdue = p.tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
-      const inProgress = p.tasks.filter((t) => t.status === 'in_progress').length;
+    const projects = await Project.find(filter).lean();
+    const predictions = await Promise.all(projects.map(async (p) => {
+      const projectIds = p.projectType === 'umbrella'
+        ? [p._id, ...(await Project.find({ parentProject: p._id, isActive: true }).select('_id').lean()).map(c => c._id)]
+        : [p._id];
+      const tasks = await Task.find({ project: { $in: projectIds }, isActive: true }).lean();
+      const total = tasks.length;
+      const done = tasks.filter((t) => t.status === 'done').length;
+      const overdue = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
+      const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
       const completionRate = total > 0 ? (done / total) * 100 : 0;
       const daysSinceStart = p.startDate ? Math.floor((new Date() - new Date(p.startDate)) / (1000 * 60 * 60 * 24)) : 0;
       const daysUntilDeadline = p.deadline ? Math.ceil((new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
@@ -124,7 +130,7 @@ exports.getProjectPredictions = async (req, res, next) => {
       if (overdue > 0 || (daysUntilDeadline !== null && daysUntilDeadline < 7 && completionRate < 80)) risk = 'high';
       else if (overdue === 0 && (daysUntilDeadline !== null && daysUntilDeadline < 14)) risk = 'medium';
       return { projectId: p._id, name: p.name, completionRate: Math.round(completionRate), overdue, inProgress, total, done, daysSinceStart, daysUntilDeadline, risk, status: p.status };
-    });
+    }));
     res.json(predictions);
   } catch (error) { next(error); }
 };
@@ -133,12 +139,21 @@ exports.getCompanyAnalytics = async (req, res, next) => {
   try {
     const isAdmin = req.user.role === 'admin';
     const domainFilter = isAdmin ? {} : { domain: req.user.domain };
+    // All non-umbrella project IDs for task/sprint queries
     const projectIds = isAdmin
-      ? (await Project.find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
+      ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
       : await getDomainProjectIds(req.user.domain);
 
-    // ── Company Overview ──
-    const allProjects = await Project.find(domainFilter).lean();
+    // ── Company Overview (top-level projects only) ──
+    const allProjects = await Project.find({ ...domainFilter, parentProject: null }).lean();
+    const allChildren = await Project.find({ ...domainFilter, parentProject: { $ne: null }, isActive: true }).lean();
+    const childrenByParent = {};
+    allChildren.forEach(c => {
+      const pid = c.parentProject.toString();
+      if (!childrenByParent[pid]) childrenByParent[pid] = [];
+      childrenByParent[pid].push(c);
+    });
+
     const totalProjects = allProjects.length;
     const activeOnly = allProjects.filter(p => p.isActive !== false);
     const activeProjects = activeOnly.filter(p => ['on_track','at_risk','ready_to_test'].includes(p.status)).length;
@@ -247,13 +262,14 @@ exports.getCompanyAnalytics = async (req, res, next) => {
 
     // ── Risk Dashboard ──
     const today = new Date();
-    const nearDeadline = allProjects.filter(p => p.deadline && new Date(p.deadline) > today && (new Date(p.deadline) - today) / 86400000 <= 7).length;
+    const allTopAndChildren = [...allProjects, ...allChildren];
+    const nearDeadline = allTopAndChildren.filter(p => p.deadline && new Date(p.deadline) > today && (new Date(p.deadline) - today) / 86400000 <= 7).length;
     const overdueTasks = allTasks.filter(t => t.deadline && new Date(t.deadline) < today && t.status !== 'done').length;
     const urgentProjects = allProjects.filter(p => p.settings?.priority === 'urgent').length;
     const unassignedTasks = allTasks.filter(t => !t.assignee).length;
-    const membersPopulated = await User.find({ _id: { $in: allProjects.flatMap(p => p.members || []) } }).lean();
+    const membersPopulated = await User.find({ _id: { $in: allTopAndChildren.flatMap(p => p.members || []) } }).lean();
     const pmUserIds = new Set(membersPopulated.filter(u => u.role === 'project_manager').map(u => u._id.toString()));
-    const projectsWithoutPM = allProjects.filter(p => !(p.members || []).some(m => pmUserIds.has(m.toString()))).length;
+    const projectsWithoutPM = allTopAndChildren.filter(p => !(p.members || []).some(m => pmUserIds.has(m.toString()))).length;
 
     // ── Resource Analytics ──
     const allResources = await Resource.find({ project: { $in: projectIds } }).lean();
@@ -265,8 +281,10 @@ exports.getCompanyAnalytics = async (req, res, next) => {
     // ── Per-project participation ──
     const projectParticipation = await Promise.all(allProjects.map(async (p) => {
       const pId = p._id.toString();
-      const pTasks = allTasks.filter(t => t.project?.toString() === pId || t.projectId?.toString() === pId);
-      const pTestCases = allTestCases.filter(tc => tc.project?.toString() === pId);
+      const childIds = (childrenByParent[pId] || []).map(c => c._id.toString());
+      const allIds = childIds.length > 0 ? [pId, ...childIds] : [pId];
+      const pTasks = allTasks.filter(t => t.project && allIds.includes(t.project.toString()));
+      const pTestCases = allTestCases.filter(tc => tc.project && allIds.includes(tc.project.toString()));
       const total = pTasks.length;
       const done = pTasks.filter(t => t.status === 'done').length;
       const taskCompletionRate = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -323,12 +341,14 @@ exports.getCompanyAnalytics = async (req, res, next) => {
 
     // ── AI Insights ──
     const insights = [];
-    const atRiskCount = allProjects.filter(p => p.status === 'at_risk').length;
-    const delayedCount = allProjects.filter(p => p.status === 'delayed').length;
+    const atRiskChildren = allChildren.filter(p => p.status === 'at_risk').length;
+    const atRiskParents = allProjects.filter(p => p.status === 'at_risk').length;
+    const atRiskCount = atRiskParents + atRiskChildren;
+    const delayedCount = allProjects.filter(p => p.status === 'delayed').length + allChildren.filter(p => p.status === 'delayed').length;
     if (atRiskCount > 0) insights.push(`${atRiskCount} project(s) are at risk of missing deadlines.`);
     if (delayedCount > 0) insights.push(`${delayedCount} project(s) are currently delayed.`);
     if (overdueTasks > 0) insights.push(`${overdueTasks} critical task(s) remain incomplete.`);
-    const blockedNearDeadline = allProjects.filter(p => p.status === 'blocked' && p.deadline && new Date(p.deadline) < today).length;
+    const blockedNearDeadline = allTopAndChildren.filter(p => p.status === 'blocked' && p.deadline && new Date(p.deadline) < today).length;
     if (blockedNearDeadline > 0) insights.push(`${blockedNearDeadline} project(s) have been blocked past their deadline.`);
     const avgParticipation = employeePerformance.length > 0 ? Math.round(employeePerformance.reduce((s, e) => s + e.participationScore, 0) / employeePerformance.length) : 0;
     if (avgParticipation < 60) insights.push(`Team participation is low (${avgParticipation}% avg). Consider team engagement initiatives.`);

@@ -21,7 +21,6 @@ const SEARCH_ICONS = {
   Bug: { icon: '🐛', color: '#EF4444' },
   'Test Case': { icon: '🧪', color: '#0D9488' },
   Report: { icon: '📊', color: '#4F46E5' },
-  Chain: { icon: '🔗', color: '#A855F7' },
 };
 
 const PLAN_INFO = {
@@ -304,41 +303,41 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
   };
 
   return (
-    <header style={{ left: sidebarWidth }} className="h-14 bg-white border-b border-neutral-200 fixed top-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out shadow-sm">
+    <header style={{ left: sidebarWidth }} className="h-14 glass-panel border-b border-neutral-200 dark:border-[var(--glass-border)] fixed top-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out shadow-sm rounded-none">
       {showHamburger && (
         <button onClick={onHamburgerClick}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 mr-2 cursor-pointer bg-transparent border-none transition-colors shrink-0">
+          className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 mr-2 cursor-pointer bg-transparent border-none transition-colors shrink-0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
       )}
       {toast && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] bg-neutral-800 text-white px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in">
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] tooltip-glass text-white px-4 py-2.5 text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in" style={{background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(255,255,255,0.1)'}}>
           {toast.title}
         </div>
       )}
       <div className="relative" ref={searchRef}>
-        <div className="flex items-center gap-2 bg-neutral-100 border border-neutral-200 rounded-lg px-3 py-1.5 w-[240px] focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20 transition-all">
+        <div className="flex items-center gap-2 bg-neutral-100 dark:bg-[var(--bg-tertiary)] border border-neutral-200 dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] px-3 py-1.5 w-[240px] focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20 transition-all">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-400 shrink-0">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
           <input type="text" placeholder="Search projects, tasks, wiki..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (!e.target.value.trim()) { setShowSearch(false); } }}
             onFocus={() => { if (searchResults.length > 0) setShowSearch(true); }}
-            className="bg-transparent border-none outline-none text-xs text-neutral-700 w-full placeholder:text-neutral-400" />
+            className="bg-transparent border-none outline-none text-xs text-neutral-700 dark:text-[var(--text-secondary)] w-full placeholder:text-neutral-400" />
         </div>
         {showSearch && (
-          <div className="absolute top-10 left-0 w-[400px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 max-h-96 overflow-y-auto animate-fade-in">
+          <div className="absolute top-10 left-0 w-[400px] glass-panel dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] shadow-2xl z-50 max-h-96 overflow-y-auto animate-scale-in">
             {searchResults.map((r, i) => {
               const meta = SEARCH_ICONS[r.type] || { icon: '🔍', color: '#6B7280' };
               return (
                 <div key={i} onClick={() => { navigate(r.to); setShowSearch(false); setSearchQuery(''); }}
-                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-100 last:border-0">
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)] cursor-pointer border-b border-neutral-100 dark:border-[var(--border-secondary)] last:border-0">
                   <span className="text-xs shrink-0">{meta.icon}</span>
                   <span className="text-[10px] font-semibold shrink-0 w-14" style={{color: meta.color}}>{r.type}</span>
                   <div className="min-w-0 flex-1">
-                    <span className="text-xs text-neutral-800 truncate block">{r.label}</span>
-                    {r._local && <span className="text-[9px] text-neutral-400 truncate block">{r.to}</span>}
+                    <span className="text-xs text-neutral-800 dark:text-[var(--text-primary)] truncate block">{r.label}</span>
+                    {r._local && <span className="text-[9px] text-neutral-400 dark:text-[var(--text-muted)] truncate block">{r.to}</span>}
                   </div>
                 </div>
               );
@@ -349,45 +348,45 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
       <div className="flex items-center gap-3">
         <div className="relative" ref={panelRef}>
           <button onClick={() => { setShowPanel(v => !v); setShowNotifSettings(false); }}
-            className="relative w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm transition-colors">
+            className="relative w-8 h-8 flex items-center justify-center rounded-[var(--radius-lg)] bg-neutral-50 dark:bg-[var(--bg-tertiary)] hover:bg-neutral-200 dark:hover:bg-[var(--border-primary)] cursor-pointer text-sm transition-all border border-neutral-200 dark:border-[var(--border-primary)]">
             🔔
             {unread > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-[16px] h-[16px] bg-danger-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-[2px] border-white">
+              <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-danger-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-[2px] border-white dark:border-[var(--bg-primary)] shadow-sm">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
           </button>
           {showPanel && (
-            <div className="absolute right-0 top-10 w-[380px] bg-white rounded-2xl border border-neutral-200 shadow-2xl z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
-                <span className="text-sm font-semibold text-neutral-900">Notifications</span>
+            <div className="absolute right-0 top-10 w-[380px] card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--glass-border)] rounded-[var(--radius-xl)] shadow-elevation z-50 overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-[var(--border-secondary)]">
+                <span className="text-sm font-semibold text-neutral-900 dark:text-[var(--text-primary)]">Notifications</span>
                 <div className="flex items-center gap-2">
                   {unread > 0 && (
                     <button onClick={handleMarkAllRead}
-                      className="flex items-center gap-1 text-[10px] font-semibold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer transition-colors">
-                      <span>✓✓</span> Mark all as read <span className="text-neutral-400 font-normal">({unread})</span>
+                      className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 border-none cursor-pointer transition-all">
+                      ✓✓ Mark all as read <span className="text-brand-400/70 font-normal">({unread})</span>
                     </button>
                   )}
                   <button onClick={() => setShowPanel(false)}
-                    className="text-neutral-400 hover:text-neutral-600 bg-transparent border-none cursor-pointer p-0.5 transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    className="w-6 h-6 rounded-[var(--radius-sm)] flex items-center justify-center text-neutral-400 dark:text-[var(--text-muted)] hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-tertiary)] bg-transparent border-none cursor-pointer transition-all">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                   </button>
                 </div>
               </div>
-              <div className="flex border-b border-neutral-100">
+              <div className="flex border-b border-neutral-100 dark:border-[var(--border-secondary)] bg-neutral-50/50 dark:bg-[var(--bg-secondary)]/30">
                 {TABS.map(tab => {
                   const count = notifs.filter(n => getColumn(n) === tab.key && !n.read).length;
                   const isActive = activeTab === tab.key;
                   return (
                     <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                      className="flex-1 flex items-center justify-center gap-1.5 h-11 text-xs font-medium transition-all duration-200 bg-transparent border-none cursor-pointer relative"
+                      className="flex-1 flex items-center justify-center gap-1.5 h-11 text-xs font-semibold transition-all duration-200 bg-transparent border-none cursor-pointer relative"
                       style={{
-                        color: isActive ? tab.color : '#6B7280',
-                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? tab.color : 'var(--text-muted)',
+                        fontWeight: isActive ? 600 : 500,
                         borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
-                        background: isActive ? tab.bg : '#FFFFFF',
+                        background: isActive ? `${tab.bg}40` : 'transparent',
                       }}>
                       <span>{tab.icon}</span>
                       <span>{tab.label}</span>
@@ -400,27 +399,33 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
                   );
                 })}
               </div>
-              <div className="max-h-[350px] overflow-y-auto p-4 space-y-1.5 transition-all duration-200">
+              <div className="max-h-[350px] overflow-y-auto p-3 space-y-1.5 transition-all duration-200">
                 {(() => {
                   const activeNotifs = notifs.filter(n => getColumn(n) === activeTab);
                   const cfg = COLUMN_CONFIG[activeTab];
                   if (activeNotifs.length === 0) {
                     const emptyMessages = { projects: 'No project notifications yet', tasks: 'No task notifications yet', other: 'No other notifications' };
                     return (
-                      <div className="flex flex-col items-center justify-center py-10 text-neutral-400 transition-opacity duration-200">
-                        <span className="text-2xl mb-2">{cfg.icon}</span>
-                        <p className="text-xs">{emptyMessages[activeTab]}</p>
+                      <div className="flex flex-col items-center justify-center py-12 text-neutral-400 dark:text-[var(--text-muted)]">
+                        <span className="text-3xl mb-3 opacity-60">{cfg.icon}</span>
+                        <p className="text-xs font-medium">{emptyMessages[activeTab]}</p>
                       </div>
                     );
                   }
                   return activeNotifs.map(n => (
                     <div key={n._id}
                       onClick={() => { if (n.link) { navigate(n.link); setShowPanel(false); } else if (!n.read) toggleRead(n); }}
-                      className="relative bg-white border rounded-lg px-3 py-2.5 cursor-pointer transition-all duration-200 group hover:shadow-sm"
-                      style={{borderColor:'#E5E7EB',borderLeftWidth:n.read ? 1 : 3,borderLeftColor:n.read ? '#E5E7EB' : cfg.borderColor,borderRadius:8}}>
+                      className="relative card-premium bg-white dark:bg-[var(--bg-primary)] border border-neutral-200 dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] px-3 py-2.5 cursor-pointer transition-all duration-200 group hover:shadow-sm hover:border-neutral-300 dark:hover:border-[var(--border-secondary)]"
+                      style={{
+                        borderLeftWidth: n.read ? 1 : 3,
+                        borderLeftColor: n.read ? 'var(--border-primary)' : cfg.borderColor,
+                        borderTopColor: 'var(--border-primary)',
+                        borderRightColor: 'var(--border-primary)',
+                        borderBottomColor: 'var(--border-primary)',
+                      }}>
                       <div className="flex items-start gap-1.5">
                         {activeTab === 'projects' && (
-                          <span className="w-2 h-2 rounded-full mt-0.5 shrink-0" style={{background:getProjectDot(n)}} />
+                          <span className="w-2 h-2 rounded-full mt-1 shrink-0" style={{background:getProjectDot(n)}} />
                         )}
                         {activeTab === 'tasks' && (
                           <span className="text-xs mt-0.5 shrink-0">{getTaskIcon(n)}</span>
@@ -429,15 +434,16 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
                           <span className="text-xs mt-0.5 shrink-0">{getOtherIcon(n)}</span>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs truncate ${n.read ? 'text-neutral-500' : 'font-semibold text-neutral-900'}`}>{n.title}</p>
-                          <p className="text-[11px] text-neutral-400 truncate mt-0.5">{n.message}</p>
-                          <p className="text-[10px] text-neutral-300 mt-1">{timeAgo(n.createdAt)}</p>
+                          <p className={`text-xs truncate ${n.read ? 'text-neutral-500 dark:text-[var(--text-tertiary)]' : 'font-semibold text-neutral-900 dark:text-[var(--text-primary)]'}`}>{n.title}</p>
+                          <p className="text-[11px] text-neutral-400 dark:text-[var(--text-muted)] truncate mt-0.5">{n.message}</p>
+                          <p className="text-[10px] text-neutral-300 dark:text-[var(--text-muted)] mt-1">{timeAgo(n.createdAt)}</p>
                           {n.actions && n.actions.length > 0 && !n.read && (
                             <div className="flex gap-1 mt-1.5">
                               {n.actions.map(a => (
                                 <button key={a.action} onClick={(e) => { e.stopPropagation(); handleAction(n, a.action); }}
-                                  className="text-[9px] font-semibold px-2 py-0.5 rounded border-none cursor-pointer transition-colors"
-                                  style={{background:a.action === 'accept_invite' ? '#2347e8' : '#f3f4f6',color:a.action === 'accept_invite' ? 'white' : '#374151'}}>
+                                  className={`text-[9px] font-semibold px-2.5 py-0.5 rounded-full border-none cursor-pointer transition-all ${
+                                    a.action === 'accept_invite' ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-600 dark:text-[var(--text-secondary)] hover:bg-neutral-200 dark:hover:bg-[var(--border-primary)]'
+                                  }`}>
                                   {a.label}
                                 </button>
                               ))}
@@ -445,22 +451,22 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
                           )}
                         </div>
                         <span onClick={(e) => { e.stopPropagation(); toggleRead(n); }}
-                          className="cursor-pointer text-xs select-none transition-colors hover:opacity-70"
+                          className="cursor-pointer text-xs select-none transition-all hover:scale-110 shrink-0 mt-0.5"
                           title={n.read ? 'Mark as unread' : 'Mark as read'}
-                          style={{ color: n.read ? '#2563EB' : '#9CA3AF' }}>
-                          {n.read ? '✓✓' : '✓'}
+                          style={{ color: n.read ? 'var(--brand-primary)' : 'var(--text-muted)' }}>
+                          {n.read ? '✓✓' : '○'}
                         </span>
                       </div>
                     </div>
                   ));
                 })()}
               </div>
-              <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100">
+              <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 dark:border-[var(--border-secondary)] bg-neutral-50/50 dark:bg-[var(--bg-secondary)]/30">
                 <span />
                 <button onClick={() => { setShowPanel(false); setShowNotifSettings(true); }}
-                  className="text-neutral-400 hover:text-neutral-600 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-neutral-100"
+                  className="w-7 h-7 rounded-[var(--radius-sm)] flex items-center justify-center text-neutral-400 dark:text-[var(--text-muted)] hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] hover:bg-neutral-100 dark:hover:bg-[var(--bg-tertiary)] bg-transparent border-none cursor-pointer transition-all"
                   title="Notification settings">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                   </svg>
                 </button>

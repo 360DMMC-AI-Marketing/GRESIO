@@ -11,19 +11,21 @@ const posts = [
 
 export default function Blog() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
       <section className="pt-36 pb-20 px-5">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-surface-900 mb-4">Blog</h1>
-          <p className="text-lg text-surface-500 mb-12">Product updates, tips, and insights from the GRESIO team.</p>
+        <div className="max-w-4xl mx-auto animate-fade-in">
+          <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-10">
+            <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-4">Blog</h1>
+            <p className="text-lg text-[var(--text-tertiary)]">Product updates, tips, and insights from the GRESIO team.</p>
+          </div>
           <div className="space-y-8">
             {posts.map((post, i) => (
-              <article key={i} className="border-b border-surface-200 pb-8">
-                <p className="text-xs text-surface-400 mb-1">{post.date}</p>
-                <h2 className="text-xl font-semibold text-surface-900 mb-2">{post.title}</h2>
-                <p className="text-sm text-surface-500 mb-3">{post.excerpt}</p>
-                <Link to="/blog" className="text-sm font-medium text-primary-600 hover:text-primary-700">Read more →</Link>
+              <article key={i} className="card-premium glow-card p-6">
+                <p className="text-xs text-[var(--text-muted)] mb-1">{post.date}</p>
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">{post.title}</h2>
+                <p className="text-sm text-[var(--text-tertiary)] mb-3">{post.excerpt}</p>
+                <Link to="/blog" className="text-sm font-medium text-[var(--brand-primary)] hover:text-[var(--brand-hover)] transition-colors">Read more →</Link>
               </article>
             ))}
           </div>

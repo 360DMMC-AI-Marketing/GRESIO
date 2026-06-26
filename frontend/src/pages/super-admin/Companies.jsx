@@ -55,54 +55,56 @@ export default function Companies() {
       render: (val, row) => (
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-          <span className="font-medium text-surface-900">{val}</span>
+          <span className="font-medium text-[var(--text-primary)]">{val}</span>
         </div>
       ),
     },
     { key: 'plan', label: 'Plan', render: (val) => <PlanBadge plan={val} /> },
     { key: 'userCount', label: 'Users' },
     { key: 'projectCount', label: 'Projects' },
-    { key: 'mrr', label: 'MRR', render: (val) => <span className="text-xs font-medium text-surface-600">{val !== undefined && val !== null ? `$${Number(val).toLocaleString()}` : '$0'}</span> },
+    { key: 'mrr', label: 'MRR', render: (val) => <span className="num-mono text-xs font-medium text-[var(--text-secondary)]">{val !== undefined && val !== null ? `$${Number(val).toLocaleString()}` : '$0'}</span> },
     { key: 'status', label: 'Status', render: (val, row) => <StatusBadge status={row.isActive !== false ? 'active' : 'inactive'} /> },
   ];
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-5 page-enter">
+      <div className="flex items-center justify-between glass-panel">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900">Companies</h1>
-          <p className="text-xs text-surface-400 mt-0.5">{filtered.length} companies</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Companies</h1>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">{filtered.length} companies</p>
         </div>
         <button data-voice="add-company" onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-3 py-2 bg-[#2347e8] text-white rounded-lg text-xs font-semibold hover:bg-[#1d3dcc] transition-colors">
+          className="btn-premium flex items-center gap-1.5 px-3 py-2 bg-[var(--brand-primary)] dark:bg-[var(--brand-primary)] text-white rounded-[var(--radius-lg)] text-xs font-semibold hover:bg-[var(--brand-secondary)] dark:hover:bg-[var(--brand-secondary)] transition-colors">
           <Plus size={14} /> Add Company
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 stagger">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input data-voice="search-company" type="text" placeholder="Search companies..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-sm bg-white border border-surface-200 rounded-lg placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+            className="w-full pl-9 pr-3 py-1.5 text-sm bg-[var(--bg-secondary)] dark:bg-[var(--bg-secondary)] border border-[var(--border-primary)] dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]" />
         </div>
         <Dropdown value={planFilter} onChange={v => setPlanFilter(v)}
           options={[{value:'all', label:'All Plans'}, ...plans.map(p => ({value:p, label:p}))]} />
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex items-center gap-2 text-surface-400 text-sm">
+        <div className="flex items-center justify-center py-16 animate-fade-in">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
             <Loader size={16} className="animate-spin" />
             Loading companies...
           </div>
         </div>
       ) : (
-        <DataTable columns={columns} data={filtered} onRowClick={(row) => navigate(`/super/companies/${row._id}`)} />
+        <div className="animate-fade-in">
+          <DataTable columns={columns} data={filtered} onRowClick={(row) => navigate(`/super/companies/${row._id}`)} />
+        </div>
       )}
 
       {/* Add Company Modal */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Create New Company">
-        {error && <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">{error}</div>}
+        {error && <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-[var(--radius-lg)] text-xs text-red-600">{error}</div>}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -119,8 +121,8 @@ export default function Companies() {
             <Dropdown value={form.plan} onChange={v => setForm({...form, plan:v})}
               options={[{value:'starter', label:'Starter'}, {value:'team', label:'Team'}, {value:'enterprise', label:'Enterprise'}]} />
           </div>
-          <hr className="border-surface-200" />
-          <p className="text-xs font-semibold text-surface-700">Company Admin Account</p>
+          <hr className="border-[var(--border-primary)]" />
+          <p className="text-xs font-semibold text-[var(--text-secondary)]">Company Admin Account</p>
           <div>
             <label className="s-label">Admin Name</label>
             <input className="select" value={form.adminName} onChange={e => setForm({...form, adminName: e.target.value})} placeholder="John Doe" />
@@ -135,9 +137,9 @@ export default function Companies() {
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none">Cancel</button>
+          <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-tertiary)] dark:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-[var(--radius-lg)] hover:bg-[var(--bg-tertiary)] dark:hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer border-none">Cancel</button>
           <button data-voice="create-company" onClick={handleCreate} disabled={saving}
-            className="px-3 py-1.5 text-xs font-medium bg-[#2347e8] text-white rounded-lg hover:bg-[#1d3dcc] transition-colors cursor-pointer border-none disabled:opacity-50">
+            className="btn-premium px-3 py-1.5 text-xs font-medium bg-[var(--brand-primary)] dark:bg-[var(--brand-primary)] text-white rounded-[var(--radius-lg)] hover:bg-[var(--brand-secondary)] dark:hover:bg-[var(--brand-secondary)] transition-colors cursor-pointer border-none disabled:opacity-50">
             {saving ? 'Creating...' : 'Create Company'}
           </button>
         </div>
@@ -145,4 +147,3 @@ export default function Companies() {
     </div>
   );
 }
-

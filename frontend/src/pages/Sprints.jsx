@@ -6,23 +6,23 @@ import Dropdown from '../components/Dropdown';
 import toast from 'react-hot-toast';
 
 const STATUS_META = {
-  planning: { label:'Planning', cls:'bg-neutral-100 text-neutral-600' },
-  active:   { label:'Active',   cls:'bg-info-50 text-info-700' },
-  completed:{ label:'Done',     cls:'bg-success-50 text-success-700' },
-  cancelled:{ label:'Cancelled',cls:'bg-danger-50 text-danger-700' },
+  planning: { label:'Planning', cls:'bg-neutral-100 text-neutral-600 dark:bg-[var(--bg-tertiary)] dark:text-[var(--text-tertiary)]' },
+  active:   { label:'Active',   cls:'bg-info-50 text-info-700 dark:bg-[var(--info-bg)] dark:text-[var(--info-text)]' },
+  completed:{ label:'Done',     cls:'bg-success-50 text-success-700 dark:bg-[var(--success-bg)] dark:text-[var(--success-text)]' },
+  cancelled:{ label:'Cancelled',cls:'bg-danger-50 text-danger-700 dark:bg-[var(--danger-bg)] dark:text-[var(--danger-text)]' },
 };
-const STATUS_DOT = { planning:'#e5e7eb', active:'#2347e8', completed:'#22c55e', cancelled:'#dc2626' };
+const STATUS_DOT = { planning:'var(--border-primary)', active:'var(--brand-primary)', completed:'var(--success-text)', cancelled:'var(--danger-text)' };
 const BAR_GRADIENT = {
-  planning: 'linear-gradient(90deg, #9ca3af, #d1d5db)',
-  active:   'linear-gradient(90deg, #1e40af, #3b82f6)',
-  completed:'linear-gradient(90deg, #047857, #34d399)',
-  cancelled:'linear-gradient(90deg, #78716c, #a8a29e)',
+  planning: 'linear-gradient(90deg, var(--text-muted), var(--border-primary))',
+  active:   'linear-gradient(90deg, var(--brand-hover), var(--brand-primary))',
+  completed:'linear-gradient(90deg, var(--success-text), var(--success-border))',
+  cancelled:'linear-gradient(90deg, var(--text-tertiary), var(--text-muted))',
 };
 const BAR_GLOW = {
-  planning: '#9ca3af',
-  active:   '#3b82f6',
-  completed:'#34d399',
-  cancelled:'#a8a29e',
+  planning: 'var(--text-muted)',
+  active:   'var(--brand-primary)',
+  completed:'var(--success-border)',
+  cancelled:'var(--text-muted)',
 };
 const CAN_MANAGE = ['admin','team_lead','project_manager'];
 const PRIORITY_CLS = { blocker:'priority-blocker', critical:'priority-critical', urgent:'priority-urgent', high:'priority-high', medium:'priority-medium', low:'text-neutral-400' };
@@ -95,7 +95,7 @@ export default function Sprints() {
     finally { setCreatingTask(null); }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-[var(--radius-full)]" /></div>;
 
   return (
     <>
@@ -104,7 +104,7 @@ export default function Sprints() {
   0%, 100% { opacity: 0.4; transform: scaleY(1); }
   50% { opacity: 0.7; transform: scaleY(1.15); }
 }
-.sprint-bar-track { background: linear-gradient(90deg, #f1f5f9, #e2e8f0); }
+.sprint-bar-track { background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary)); }
 .sprint-bar-glow {
   position: absolute;
   border-radius: 9999px;
@@ -121,12 +121,12 @@ export default function Sprints() {
   transition: width 0.7s ease-out;
 }
     `}</style>
-    <div>
+    <div className="page-enter">
       <div className="flex items-center justify-between mb-3">
-        <div><h1 className="text-lg font-bold text-surface-900">Sprints</h1><p className="text-xs text-surface-400">{list.length} sprints</p></div>
+        <div><h1 className="text-lg font-bold text-surface-900">Sprints</h1><p className="text-xs text-surface-400"><span className="num-mono">{list.length}</span> sprints</p></div>
       </div>
 
-      <div className="bg-white rounded-xl border border-surface-200 px-3 py-2 mb-3 flex gap-2">
+      <div className="glass-panel px-3 py-2 mb-3 flex gap-2">
         <Dropdown value={filterProject} onChange={v => setFilterProject(v)}
           options={[{value:'', label:'All projects'}, ...allProjects.map(p => ({value:p._id, label:p.name}))]} style={{width:200}} />
         <Dropdown value={filterStatus} onChange={v => setFilterStatus(v)}
@@ -136,7 +136,7 @@ export default function Sprints() {
       {list.length === 0 ? (
         <div className="text-center py-20 text-surface-400"><p className="text-sm">No sprints found</p></div>
       ) : (
-        <div className="bg-white rounded-xl border border-surface-200 overflow-hidden">
+        <div className="card-premium stagger overflow-hidden">
           {list.map(s => {
             const total = s.tasks?.length || 0;
             const done = s.tasks?.filter(t => t.status === 'done').length || 0;
@@ -145,11 +145,11 @@ export default function Sprints() {
 
             return (
               <div key={s._id} id={`sprint-${s._id}`}
-                className={`border-b border-surface-100 last:border-b-0 transition-all ${
+                className={`glow-card border-b border-surface-100 dark:border-[var(--border-secondary)] last:border-b-0 transition-all ${
                   highlightId === s._id ? 'ring-2 ring-primary-500 ring-offset-1' : ''
                 }`}>
                 <div className="flex items-center gap-3 px-4 py-2.5 transition-colors">
-                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${STATUS_META[s.status]?.cls}`}>
+                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-[var(--radius-full)] uppercase tracking-wider ${STATUS_META[s.status]?.cls}`}>
                     {STATUS_META[s.status]?.label}
                   </span>
                   <div className="min-w-0 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -157,12 +157,12 @@ export default function Sprints() {
                     <span className="text-xs font-semibold text-surface-900">{s.name}</span>
                     {s.project && <span className="text-[10px] text-surface-400 ml-1.5">in {s.project.name}</span>}
                   </div>
-                  <span className="text-[10px] text-surface-400 whitespace-nowrap">{fmtDate(s.startDate)} — {fmtDate(s.endDate)}</span>
-                  <span className={`text-[10px] font-semibold whitespace-nowrap ${pct === 100 ? 'text-success-700' : 'text-surface-500'}`}>
+                  <span className="text-[10px] text-surface-400 whitespace-nowrap num-mono">{fmtDate(s.startDate)} — {fmtDate(s.endDate)}</span>
+                  <span className={`text-[10px] font-semibold whitespace-nowrap num-mono ${pct === 100 ? 'text-success-700' : 'text-surface-500'}`}>
                     {done}/{total} {pct}%
                   </span>
                   <button onClick={() => setExpandedSprint(isExpanded ? null : s._id)}
-                    className="p-0.5 rounded hover:bg-surface-100 transition-colors cursor-pointer border-none bg-transparent">
+                    className="btn btn-gray p-0.5 rounded transition-colors cursor-pointer border-none">
                     <svg className={`w-3 h-3 text-surface-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -170,7 +170,7 @@ export default function Sprints() {
                 </div>
 
                 <div className="px-4 pb-2.5">
-                  <div className="relative h-2 sprint-bar-track rounded-full overflow-hidden">
+                  <div className="relative h-2 sprint-bar-track rounded-[var(--radius-full)] overflow-hidden">
                     <div className="sprint-bar-glow" style={{ width: `${pct}%`, background: BAR_GLOW[s.status] }} />
                     <div className="sprint-bar-fill" style={{ width: `${pct}%`, background: BAR_GRADIENT[s.status] }} />
                   </div>
@@ -182,24 +182,24 @@ export default function Sprints() {
                       <div className="space-y-0.5 mb-2">
                         {s.tasks.map(t => (
                           <div key={t._id} className="flex items-center gap-2 py-0.5">
-                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            <div className={`w-1.5 h-1.5 rounded-[var(--radius-full)] shrink-0 ${
                               t.status === 'done' ? 'bg-emerald-500' :
                               t.status === 'in_progress' ? 'bg-blue-500' : 'bg-surface-300'
                             }`} />
                             <span className="flex-1 text-[10px] text-surface-700 truncate">{t.title}</span>
                             {t.priority && <span className={PRIORITY_CLS[t.priority] || 'priority-medium'} style={{fontSize:8,whiteSpace:'nowrap'}}>{t.priority}</span>}
                             {t.deadline && (
-                              <span className={`text-[8px] whitespace-nowrap ${
+                              <span className={`text-[8px] whitespace-nowrap num-mono ${
                                 new Date(t.deadline) < new Date() && t.status !== 'done' ? 'text-danger-500 font-semibold' : 'text-surface-400'
                               }`}>
                                 {new Date(t.deadline).toLocaleDateString('en',{month:'short',day:'numeric'})}
                               </span>
                             )}
                             {t.assignee && (
-                              <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold shrink-0"
+                              <div className="w-3.5 h-3.5 rounded-[var(--radius-full)] flex items-center justify-center text-[6px] font-bold shrink-0"
                                 style={{
-                                  background: t.assignee.role === 'developer' ? '#f0fdf4' : t.assignee.role === 'intern' ? '#fff7ed' : '#dce6ff',
-                                  color: t.assignee.role === 'developer' ? '#16a34a' : t.assignee.role === 'intern' ? '#c2410c' : '#1a35c4',
+                                  background: t.assignee.role === 'developer' ? 'var(--success-bg)' : t.assignee.role === 'intern' ? 'var(--warning-bg)' : 'var(--info-bg)',
+                                  color: t.assignee.role === 'developer' ? 'var(--success-text)' : t.assignee.role === 'intern' ? 'var(--warning-text)' : 'var(--brand-hover)',
                                 }}>
                                 {t.assignee.name?.charAt(0)}
                               </div>
@@ -230,20 +230,20 @@ export default function Sprints() {
                             <input type="date" className="select" value={taskForm.deadline} onChange={e => setTaskForm({...taskForm, deadline:e.target.value})} />
                             <div className="flex gap-1.5">
                               <button data-voice="create-task" onClick={() => handleCreateTaskInSprint(s._id)} disabled={creatingTask === s._id || !taskForm.title.trim()}
-                                className={`flex-1 px-2 py-1 rounded text-[9px] font-semibold border-none transition-colors ${
+                                className={`flex-1 text-[9px] font-semibold ${
                                   creatingTask === s._id || !taskForm.title.trim()
                                     ? 'bg-surface-200 text-surface-400 cursor-not-allowed'
-                                    : 'bg-primary-600 text-white cursor-pointer hover:bg-primary-700'
+                                    : 'btn-premium'
                                 }`}>
                                 {creatingTask === s._id ? 'Creating…' : 'Create Task'}
                               </button>
                               <button onClick={() => { setShowAddTask(null); setTaskForm({title:'',priority:'medium',assignee:'',deadline:''}); }}
-                                className="px-2 py-1 bg-surface-100 text-surface-600 rounded text-[9px] border-none cursor-pointer font-medium hover:bg-surface-200 transition-colors">Cancel</button>
+                                className="btn btn-gray text-[9px]">Cancel</button>
                             </div>
                           </div>
                         ) : (
                           <button data-voice="add-task" onClick={() => setShowAddTask(s._id)}
-                            className="w-full px-2 py-1 bg-primary-50 text-primary-700 rounded text-[9px] font-semibold border-none cursor-pointer hover:bg-primary-100 transition-colors">
+                            className="btn-premium w-full text-[9px]">
                             + Add Task
                           </button>
                         )}

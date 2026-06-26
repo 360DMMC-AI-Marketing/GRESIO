@@ -32,10 +32,10 @@ export default function Layout() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-neutral-50">
+      <div className="h-screen flex items-center justify-center" style={{background: 'var(--bg-primary)'}}>
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-neutral-500 text-sm">Loading...</p>
+          <p className="text-sm" style={{color: 'var(--text-tertiary)'}}>Loading...</p>
         </div>
       </div>
     );
@@ -46,7 +46,7 @@ export default function Layout() {
   const sidebarWidth = (isMobile && !mobileOpen) ? 0 : (sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED);
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]">
+    <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
       <Sidebar
         user={user}
         collapsed={sidebarCollapsed}
@@ -61,26 +61,26 @@ export default function Layout() {
         onHamburgerClick={() => setMobileOpen(true)}
       />
       <main style={{ paddingLeft: isMobile ? 0 : sidebarWidth }} className="pt-14 transition-all duration-300 ease-in-out pb-10">
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto page-enter">
           <Outlet />
         </div>
       </main>
       <VoiceController />
       <AiAssistantPanel />
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-surface-200 z-20" style={{ paddingLeft: isMobile ? 0 : sidebarWidth }}>
+      <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingLeft: isMobile ? 0 : sidebarWidth, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderTop: '0.5px solid var(--border-primary)' }}>
         <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 max-w-7xl mx-auto text-xs">
           <div className="flex items-center gap-2.5">
-            <span className="font-semibold text-surface-600">GRESIO</span>
-            <span className="text-surface-300">|</span>
-            <span className="text-surface-400">&copy; {new Date().getFullYear()} All rights reserved.</span>
+            <span className="font-semibold" style={{color: 'var(--text-secondary)'}}>GRESIO</span>
+            <span style={{color: 'var(--border-primary)'}}>|</span>
+            <span style={{color: 'var(--text-muted)'}}>&copy; {new Date().getFullYear()} All rights reserved.</span>
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <a href="mailto:Consult@360DMMC.com" className="text-surface-400 hover:text-primary-600 transition-colors flex items-center gap-1.5">
+            <a href="mailto:Consult@360DMMC.com" className="transition-colors flex items-center gap-1.5" style={{color: 'var(--text-muted)'}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
               Consult@360DMMC.com
             </a>
-            <span className="w-px h-3.5 bg-surface-200"></span>
-            <a href="https://360dmmc.com/" target="_blank" rel="noopener noreferrer" className="text-surface-400 hover:text-primary-600 transition-colors font-medium">
+            <span className="w-px h-3.5" style={{background: 'var(--border-primary)'}}></span>
+            <a href="https://360dmmc.com/" target="_blank" rel="noopener noreferrer" className="transition-colors font-medium" style={{color: 'var(--text-muted)'}}>
               Powered by 360 DMMC
             </a>
           </div>

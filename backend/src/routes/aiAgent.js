@@ -7,12 +7,12 @@ const Project = require('../models/Project');
 router.post('/command', auth, async (req, res) => {
   try {
     const { command, projectId } = req.body;
-    if (!command) return res.json({ success: false, message: 'I need a command to work with. Try "create a project", "show me tasks", or "go to projects".' });
+    if (!command) return res.status(400).json({ success: false, message: 'I need a command to work with. Try "create a project", "show me tasks", or "go to projects".' });
 
     const actionPlan = await aiService.interpretCommand(command);
 
     if (actionPlan.action === 'unknown') {
-      return res.json({
+      return res.status(422).json({
         success: false,
         message: "I understood your message but couldn't map it to an action. You can ask me to: create/update projects/tasks/sprints, assign people, generate reports, or navigate anywhere. Want me to show you around?",
       });
@@ -24,10 +24,11 @@ router.post('/command', auth, async (req, res) => {
     }
 
     const result = await aiService.executeAction(actionPlan, req.user._id);
+    if (!result.success) return res.status(422).json(result);
     res.json(result);
   } catch (err) {
     console.error('AI Agent command error:', err);
-    res.json({ success: false, message: "Ran into an issue processing that. I can still help you navigate, check project status, or generate reports. What would you like to do?" });
+    res.status(500).json({ success: false, message: "Ran into an issue processing that. I can still help you navigate, check project status, or generate reports. What would you like to do?" });
   }
 });
 
@@ -60,7 +61,7 @@ router.get('/suggestions', auth, async (req, res) => {
 router.post('/chat', auth, async (req, res) => {
   try {
     const { message, history, page } = req.body;
-    if (!message) return res.json({ reply: "Hey! I'm GRESIO AI. You can ask me about your projects, tasks, team, or tell me where to navigate. What do you need?" });
+    if (!message) return res.status(400).json({ reply: "Hey! I'm GRESIO AI. You can ask me about your projects, tasks, team, or tell me where to navigate. What do you need?" });
 
     const conversationHistory = Array.isArray(history) ? history : [];
     const pageContext = page || '';
@@ -69,12 +70,7 @@ router.post('/chat', auth, async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error('AI Agent chat error:', err);
-    const fallbackMessages = [
-      "I'm here! I can check your projects, navigate to any section, or help you manage tasks. What would you like?",
-      "Quick heads up — I hit a snag. But I can still help you navigate around or check project status. Try asking me something!",
-      "I'm still learning! In the meantime, try asking me to go to the dashboard, show your projects, or check who's overloaded.",
-    ];
-    res.json({ reply: fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)] });
+    res.status(500).json({ reply: "I hit a snag. I can still help you navigate or check project status. Try asking me something!" });
   }
 });
 

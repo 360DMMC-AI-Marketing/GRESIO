@@ -134,7 +134,7 @@ class ClickUpService {
               }
             }
             try {
-              await Task.create({
+              const createdTask = await Task.create({
                 title: t.name,
                 description: t.description || '',
                 status: taskStatus,
@@ -146,6 +146,7 @@ class ClickUpService {
                 priority: mapPriorityFromClickUp(t.priority),
                 deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
               });
+              await Project.findByIdAndUpdate(project._id, { $push: { tasks: createdTask._id } });
               taskCount++;
             } catch (e) {
               results.errors.push(`Task "${t.name}": ${e.message}`);
@@ -174,7 +175,7 @@ class ClickUpService {
     try {
       const tasks = await this.getListTasks(listId, { includeClosed: true, subtasks: false }, apiKey);
       for (const t of tasks) {
-        const existing = await Task.findOne({ clickupTaskId: t.id });
+        const existing = await Task.findOne({ clickupTaskId: t.id, isActive: true });
         if (existing) {
           existing.status = mapClickUpStatus(t.status.status);
           existing.title = t.name;
@@ -289,7 +290,7 @@ class ClickUpService {
 
         for (const folder of folders) {
           try {
-            const existingProject = await Project.findOne({ clickupFolderId: folder.id });
+            const existingProject = await Project.findOne({ clickupFolderId: folder.id, isActive: true });
             if (existingProject) {
               result.skipped.projects++;
               continue;
@@ -326,7 +327,7 @@ class ClickUpService {
 
             for (const { list, tasks } of allListTasks) {
               try {
-                const existingSprint = await Sprint.findOne({ clickupListId: list.id });
+                const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
                 if (existingSprint) {
                   result.skipped.sprints++;
                   continue;
@@ -359,7 +360,7 @@ class ClickUpService {
                 const sprintAssigneeIds = new Set();
 
                 for (const t of tasks) {
-                  const existingTask = await Task.findOne({ clickupTaskId: t.id });
+                  const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
                   if (existingTask) {
                     result.skipped.tasks++;
                     continue;
@@ -418,7 +419,7 @@ class ClickUpService {
         const folderlessLists = await this.getSpaceLists(space.id, apiKey);
         for (const list of folderlessLists) {
           try {
-            const existingProject = await Project.findOne({ clickupListId: list.id });
+            const existingProject = await Project.findOne({ clickupListId: list.id, isActive: true });
             if (existingProject) {
               result.skipped.projects++;
               continue;
@@ -464,7 +465,7 @@ class ClickUpService {
             const sprintAssigneeIds = new Set();
 
             for (const t of tasks) {
-              const existingTask = await Task.findOne({ clickupTaskId: t.id });
+              const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
               if (existingTask) {
                 result.skipped.tasks++;
                 continue;
@@ -520,6 +521,183 @@ class ClickUpService {
     return result;
   }
 
+  // ---- INCREMENTAL SYNC (additive, no delete, twice daily) ---- //
+  async incrementalSync(apiKey, workspaceIds = [], domain = '') {
+    const User = require('../models/User');
+    const Project = require('../models/Project');
+    const Sprint = require('../models/Sprint');
+    const Task = require('../models/Task');
+    // Fallback: lookup domain from any existing project or user
+    if (!domain) {
+      const anyProject = await Project.findOne({ domain: { $ne: '' } }).select('domain').lean();
+      if (anyProject?.domain) domain = anyProject.domain;
+      else {
+        const anyUser = await User.findOne({ domain: { $ne: '' } }).select('domain').lean();
+        if (anyUser?.domain) domain = anyUser.domain;
+      }
+    }
+
+    const result = { projectsCreated: 0, projectsUpdated: 0, sprintsCreated: 0, sprintsUpdated: 0, tasksCreated: 0, tasksUpdated: 0, errors: [] };
+
+    let teams;
+    try { teams = await this.getAuthorizedTeams(apiKey); }
+    catch (e) { result.errors.push(`Failed to fetch workspaces: ${e.message}`); return result; }
+    if (workspaceIds.length > 0) teams = teams.filter(t => workspaceIds.includes(t.id));
+
+    for (const team of teams) {
+      let spaces;
+      try { spaces = await this.getTeamSpaces(team.id, apiKey); }
+      catch (e) { result.errors.push(`Team "${team.name}": spaces - ${e.message}`); continue; }
+
+      for (const space of spaces) {
+        let folders;
+        try { folders = await this.getSpaceFolders(space.id, apiKey); }
+        catch (e) { result.errors.push(`Space "${space.name}": folders - ${e.message}`); continue; }
+
+        for (const folder of folders) {
+          try {
+            const existingProject = await Project.findOne({ clickupFolderId: folder.id, isActive: true });
+            let project;
+            if (existingProject) {
+              await Project.findByIdAndUpdate(existingProject._id, { name: folder.name, description: folder.description || '' });
+              project = existingProject;
+              result.projectsUpdated++;
+            } else {
+              project = await Project.create({
+                name: folder.name, description: folder.description || '', projectType: 'software',
+                domain: domain || '', isActive: true, clickupFolderId: folder.id,
+              });
+              result.projectsCreated++;
+            }
+
+            const lists = await this.getFolderLists(folder.id, apiKey);
+            for (const list of lists) {
+              try {
+                const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
+                let sprint;
+                if (existingSprint) {
+                  await Sprint.findByIdAndUpdate(existingSprint._id, { name: list.name });
+                  sprint = existingSprint;
+                  result.sprintsUpdated++;
+                } else {
+                  sprint = await Sprint.create({
+                    name: list.name, project: project._id, startDate: new Date(),
+                    endDate: new Date(Date.now() + 14 * 86400000), status: 'planning', clickupListId: list.id,
+                  });
+                  result.sprintsCreated++;
+                }
+
+                const tasks = await this.getListTasks(list.id, { includeClosed: true, subtasks: true }, apiKey);
+                for (const t of tasks) {
+                  try {
+                    const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
+                    let assigneeId = null;
+                    if (t.assignees && t.assignees.length > 0) {
+                      for (const a of t.assignees) {
+                        let mu = null;
+                        if (a.username) mu = await User.findOne({ name: a.username });
+                        if (!mu && a.email) mu = await User.findOne({ email: a.email });
+                        if (mu) { assigneeId = mu._id; break; }
+                      }
+                    }
+                    if (existingTask) {
+                      await Task.findByIdAndUpdate(existingTask._id, {
+                        title: t.name, description: t.description || '',
+                        status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
+                        assignee: assigneeId, deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                      });
+                      result.tasksUpdated++;
+                    } else {
+                      const created = await Task.create({
+                        title: t.name, description: t.description || '',
+                        status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
+                        project: project._id, sprint: sprint._id, domain: domain || '',
+                        clickupTaskId: t.id, assignee: assigneeId,
+                        deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                      });
+                      await Project.findByIdAndUpdate(project._id, { $push: { tasks: created._id } });
+                      await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: created._id } });
+                      result.tasksCreated++;
+                    }
+                  } catch (e) { result.errors.push(`Task "${t.name}": ${e.message}`); }
+                }
+              } catch (e) { result.errors.push(`List "${list.name}" in folder "${folder.name}": ${e.message}`); }
+            }
+          } catch (e) { result.errors.push(`Folder "${folder.name}": ${e.message}`); }
+        }
+
+        const folderlessLists = await this.getSpaceLists(space.id, apiKey);
+        for (const list of folderlessLists) {
+          try {
+            const existingProject = await Project.findOne({ clickupListId: list.id, isActive: true });
+            let project;
+            if (existingProject) {
+              await Project.findByIdAndUpdate(existingProject._id, { name: list.name, description: list.description || '' });
+              project = existingProject;
+              result.projectsUpdated++;
+            } else {
+              project = await Project.create({
+                name: list.name, description: list.description || '', projectType: 'software',
+                domain, isActive: true, clickupListId: list.id,
+              });
+              result.projectsCreated++;
+            }
+
+            const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
+            let sprint;
+            if (existingSprint) {
+              await Sprint.findByIdAndUpdate(existingSprint._id, { name: list.name });
+              sprint = existingSprint;
+              result.sprintsUpdated++;
+            } else {
+              sprint = await Sprint.create({
+                name: list.name, project: project._id, startDate: new Date(),
+                endDate: new Date(Date.now() + 14 * 86400000), status: 'planning', clickupListId: list.id,
+              });
+              result.sprintsCreated++;
+            }
+
+            const tasks = await this.getListTasks(list.id, { includeClosed: true, subtasks: true }, apiKey);
+            for (const t of tasks) {
+              try {
+                const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
+                let assigneeId = null;
+                if (t.assignees && t.assignees.length > 0) {
+                  for (const a of t.assignees) {
+                    let mu = null;
+                    if (a.username) mu = await User.findOne({ name: a.username });
+                    if (!mu && a.email) mu = await User.findOne({ email: a.email });
+                    if (mu) { assigneeId = mu._id; break; }
+                  }
+                }
+                if (existingTask) {
+                  await Task.findByIdAndUpdate(existingTask._id, {
+                    title: t.name, description: t.description || '',
+                    status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
+                    assignee: assigneeId, deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                  });
+                  result.tasksUpdated++;
+                } else {
+                  const created = await Task.create({
+                    title: t.name, description: t.description || '',
+                    status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
+                    project: project._id, sprint: sprint._id, domain: domain,
+                    clickupTaskId: t.id, assignee: assigneeId,
+                    deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                  });
+                  await Project.findByIdAndUpdate(project._id, { $push: { tasks: created._id } });
+                  await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: created._id } });
+                  result.tasksCreated++;
+                }
+              } catch (e) { result.errors.push(`Task "${t.name}": ${e.message}`); }
+            }
+          } catch (e) { result.errors.push(`Folderless list "${list.name}": ${e.message}`); }
+        }
+      }
+    }
+    return result;
+  }
+
   async createTask(clickupListId, taskData, apiKey) {
     const api = this._getApi(apiKey);
     try {
@@ -561,17 +739,24 @@ function mapPriorityFromClickUp(priority) {
 
 ClickUpService.prototype.sync = async function() {
   try {
-    const Project = require('../models/Project');
-    const projects = await Project.find({ clickupListId: { $ne: '' }, isActive: true });
-    let total = { projects: 0, synced: 0 };
-    for (const p of projects) {
-      const result = await this.syncTasks(p.clickupListId, p._id);
-      if (result) {
-        total.projects++;
-        total.synced += result.synced;
-      }
-    }
-    return total;
+    const Integration = require('../models/Integration');
+    const integration = await Integration.findOne({ name: 'clickup' });
+    if (!integration) return { message: 'ClickUp integration not configured' };
+    const creds = integration.getDecryptedCredentials();
+    const apiKey = creds?.apiKey || '';
+    const workspaceIds = integration.config?.workspaceIds || [];
+    if (!apiKey) return { message: 'No ClickUp API key saved' };
+    const result = await this.incrementalSync(apiKey, workspaceIds);
+    // Record per-workspace sync times
+    const now = new Date();
+    const config = integration.config || {};
+    const workspaceSyncTimes = config.workspaceSyncTimes || {};
+    workspaceIds.forEach(id => { workspaceSyncTimes[id] = now; });
+    await Integration.findOneAndUpdate(
+      { name: 'clickup' },
+      { $set: { 'config.workspaceSyncTimes': workspaceSyncTimes, lastSync: now } }
+    );
+    return result;
   } catch (error) {
     console.error('ClickUp auto-sync error:', error.message);
     return null;

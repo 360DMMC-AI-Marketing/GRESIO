@@ -27,7 +27,6 @@ const Teams = lazy(() => import('./pages/Teams'));
 const Outlook = lazy(() => import('./pages/Outlook'));
 const WorkLogs = lazy(() => import('./pages/WorkLogs'));
 const TestCaseDashboard = lazy(() => import('./pages/TestCaseDashboard'));
-const ProjectRelay = lazy(() => import('./pages/ProjectRelay'));
 const OnboardingGuide = lazy(() => import('./pages/OnboardingGuide'));
 const WorkDNA = lazy(() => import('./pages/WorkDNA'));
 const About = lazy(() => import('./pages/About'));
@@ -117,7 +116,6 @@ export default function App() {
               <Route path="/work-logs" element={<WorkLogs />} />
               <Route path="/test-cases" element={<TestCaseDashboard />} />
               <Route path="/test-cases/:projectId" element={<TestCaseDashboard />} />
-              <Route path="/relay" element={<ProjectRelay />} />
               <Route path="/onboarding-guide" element={<OnboardingGuide />} />
               <Route path="/users" element={<Users />} />
               <Route path="/analytics" element={<Analytics />} />

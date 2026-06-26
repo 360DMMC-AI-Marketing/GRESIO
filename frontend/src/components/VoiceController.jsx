@@ -3,45 +3,19 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import executeCommand from '../services/voiceActionRouter';
 import { useAuth } from '../context/AuthContext';
 
-const STYLES = `
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-`;
-
 export default function VoiceController() {
-  const { isSupported, isListening, transcript, interimTranscript, wakeWordDetected, command, start, stop, reset, clearCommand } = useSpeechRecognition();
+  const { isSupported, isListening, command, start, stop, clearCommand } = useSpeechRecognition();
   const { company } = useAuth();
-  const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackType, setFeedbackType] = useState('');
+  const [feedback, setFeedback] = useState(null);
   const activatedRef = useRef(false);
   const feedbackTimerRef = useRef(null);
-  const deactivatedAtRef = useRef(0);
-
-  const activate = useCallback(() => {
-    start(true);
-    activatedRef.current = true;
-  }, [start]);
-
-  const deactivate = useCallback(() => {
-    stop();
-    activatedRef.current = false;
-    deactivatedAtRef.current = Date.now();
-    setTimeout(() => start(), 300);
-  }, [stop, start]);
 
   const showFeedback = useCallback((text, type) => {
-    setFeedbackText(text);
-    setFeedbackType(type);
+    setFeedback({ text, type });
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    feedbackTimerRef.current = setTimeout(() => {
-      setFeedbackText('');
-      setFeedbackType('');
-    }, 3000);
+    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 3000);
   }, []);
 
-  // Auto-execute pending command after cross-page navigation
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem('voice_pending');
@@ -64,7 +38,23 @@ export default function VoiceController() {
     } catch {}
   }, []);
 
-  // Alt+V toggles voice on/off
+  const isDismiss = useCallback((text) => {
+    const t = text.trim().toLowerCase();
+    return /\bthank\s*you\b/i.test(t) || /\bstop\s*listening\b/i.test(t) || /\bgo\s*to\s*sleep\b/i.test(t) || /\bcancel\b/i.test(t) || /\bnever\s*mind\b/i.test(t);
+  }, []);
+
+  const activate = useCallback(() => {
+    start();
+    activatedRef.current = true;
+    showFeedback('Voice activated', 'wake');
+  }, [start, showFeedback]);
+
+  const deactivate = useCallback(() => {
+    stop();
+    activatedRef.current = false;
+    setTimeout(() => start(), 300);
+  }, [stop, start]);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.altKey && e.key === 'v') {
@@ -74,7 +64,6 @@ export default function VoiceController() {
           showFeedback('Voice off', 'info');
         } else {
           activate();
-          showFeedback('Voice activated', 'wake');
         }
       }
     };
@@ -82,62 +71,32 @@ export default function VoiceController() {
     return () => window.removeEventListener('keydown', handler);
   }, [activate, deactivate, showFeedback]);
 
-  const isDismissCommand = useCallback((text) => {
-    const t = text.trim().toLowerCase();
-    return /\bthank\s*you\s*gresio\b/i.test(t) || /\bstop\s*listening\b/i.test(t) || /\bgo\s*to\s*sleep\b/i.test(t);
-  }, []);
-
-  // Execute command directly
   useEffect(() => {
-    if (!command) return;
-    if (!activatedRef.current) return;
-
-    if (isDismissCommand(command)) {
+    if (!command || !activatedRef.current) return;
+    if (isDismiss(command)) {
       executeCommand(command);
       clearCommand();
       setTimeout(() => deactivate(), 300);
       showFeedback('Voice off', 'info');
       return;
     }
-
     const result = executeCommand(command);
     clearCommand();
     showFeedback(result.message, result.success ? 'success' : 'error');
-  }, [command, isDismissCommand, deactivate, showFeedback, clearCommand]);
+  }, [command, isDismiss, deactivate, showFeedback, clearCommand]);
 
-  // Wake word
   useEffect(() => {
-    if (wakeWordDetected && !activatedRef.current) {
-      if (Date.now() - deactivatedAtRef.current < 1500) return;
-      activatedRef.current = true;
-      showFeedback('Listening...', 'wake');
-      window.dispatchEvent(new CustomEvent('voice-activated'));
-    }
-  }, [wakeWordDetected, showFeedback]);
-
-  // Chat opened = stop listening
-  useEffect(() => {
-    const handler = () => {
-      stop();
-      activatedRef.current = false;
-      deactivatedAtRef.current = Date.now();
-    };
+    const handler = () => { stop(); activatedRef.current = false; };
     window.addEventListener('voice-chat-opened', handler);
     return () => window.removeEventListener('voice-chat-opened', handler);
   }, [stop]);
 
-  // Assistant panel opened = stop VoiceController's SR (panel has its own)
   useEffect(() => {
-    const handler = () => {
-      stop();
-      activatedRef.current = false;
-      deactivatedAtRef.current = Date.now();
-    };
+    const handler = () => { stop(); activatedRef.current = false; };
     window.addEventListener('assistant-opened', handler);
     return () => window.removeEventListener('assistant-opened', handler);
   }, [stop]);
 
-  // AI response feedback
   useEffect(() => {
     const handler = (e) => {
       const detail = e.detail;
@@ -153,25 +112,17 @@ export default function VoiceController() {
 
   return (
     <>
-      <style>{STYLES}</style>
-
-      {/* Feedback toast */}
-      {feedbackText && (
-        <div style={{
-          position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 99999, padding: '8px 20px', borderRadius: 24, fontSize: 12, fontWeight: 500,
-          background: feedbackType === 'success' ? '#f0fdf4' : feedbackType === 'error' ? '#fef2f2' : feedbackType === 'ai' ? '#eef2ff' : '#f9fafb',
-          color: feedbackType === 'success' ? '#16a34a' : feedbackType === 'error' ? '#dc2626' : feedbackType === 'ai' ? '#2347e8' : '#374151',
-          border: `0.5px solid ${
-            feedbackType === 'success' ? '#bbf7d0' : feedbackType === 'error' ? '#fecaca' : feedbackType === 'ai' ? '#c7d2fe' : '#e5e7eb'
-          }`,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-          animation: 'toast-in 0.2s ease',
-          backdropFilter: 'blur(12px)',
-        }}>
-          {feedbackType === 'success' && '✓ '}
-          {feedbackType === 'error' && '✕ '}
-          {feedbackText}
+      {feedback && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-2.5 rounded-full text-xs font-medium animate-scale-in shadow-elevation border backdrop-blur-md ${
+          feedback.type === 'success' ? 'bg-success-50 dark:bg-[var(--success-bg)] text-success-700 dark:text-[var(--success-text)] border-success-200 dark:border-success-800' :
+          feedback.type === 'error' ? 'bg-danger-50 text-danger-700 border-danger-200' :
+          feedback.type === 'ai' ? 'bg-indigo-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 border-indigo-200 dark:border-brand-800' :
+          feedback.type === 'wake' ? 'bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-700 dark:text-[var(--text-secondary)] border-neutral-200 dark:border-[var(--border-primary)]' :
+          'bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-600 dark:text-[var(--text-secondary)] border-neutral-200 dark:border-[var(--border-primary)]'
+        }`}>
+          {feedback.type === 'success' && '✓ '}
+          {feedback.type === 'error' && '✕ '}
+          {feedback.text}
         </div>
       )}
     </>
