@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import executeCommand from '../services/voiceActionRouter';
+import Logo from './Logo';
 
 const STYLES = `
 @keyframes chat-pop {
@@ -146,16 +147,8 @@ export default function ChatInterface() {
             padding: '14px 16px',
             borderBottom: '0.5px solid #f0f0f0',
           }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: 'linear-gradient(135deg, #2347e8 0%, #1a36c4 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontSize: 13, fontWeight: 700,
-            }}>G</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>GRESIO</div>
-              <div style={{ fontSize: 10, color: '#9ca3af' }}>Type a command, get it done</div>
-            </div>
+            <Logo size="sm" showTagline tagline="Type a command, get it done" />
+            <div style={{ flex: 1 }} />
           </div>
 
           {/* Messages */}

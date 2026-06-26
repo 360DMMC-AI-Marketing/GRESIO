@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { analytics, projects, companies } from '../services/api';
 import { users as usersApi } from '../services/api';
+import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
+import GanttView from '../components/GanttView';
 import { useAuth } from '../context/AuthContext';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
 
@@ -19,6 +20,8 @@ const STATUS_COLOR = {
   completed: 'bg-neutral-100 text-neutral-600',
 };
 const RISK_COLOR = { low:'bg-success-50 text-success-700', medium:'bg-warning-50 text-warning-700', high:'bg-danger-50 text-danger-700' };
+
+const PHASES = ['discovery', 'planning', 'development', 'testing', 'review', 'launch', 'delivered', 'report'];
 
 function relativeTime(date) {
   const diff = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -148,6 +151,7 @@ export default function Dashboard() {
   const [hoveredCell, setHoveredCell] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [selectedCell, setSelectedCell] = useState(null);
+  const [projViewMode, setProjViewMode] = useState('list');
 
   const loadCapacity = useCallback(() => {
     setCapacityLoading(true);
@@ -257,47 +261,43 @@ export default function Dashboard() {
                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[11px] font-semibold cursor-pointer border-none transition-all bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)]">
                <span className="text-xs">✎</span> Customize</button>
 
-             {showCustomize && draftSections && createPortal(
-               <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowCustomize(false); setDraftSections(null); }}>
-                 <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] shadow-elevation border border-neutral-200 dark:border-[var(--border-primary)] p-6 w-[340px] animate-scale-in" onClick={e => e.stopPropagation()}>
-                   <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-sm font-bold text-neutral-900 dark:text-[var(--text-primary)]">Customize Dashboard</h3>
-                     <button onClick={() => { setShowCustomize(false); setDraftSections(null); }} className="w-6 h-6 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-400 hover:text-neutral-600 dark:hover:text-[var(--text-secondary)] transition-colors cursor-pointer border-none text-xs">✕</button>
-                   </div>
-                   <div className="space-y-1 mb-5">
-                     {[
-                       { key: 'statsGrid', label: 'Stats Grid' },
-                       { key: 'insights', label: "Today's Pulse" },
-                       { key: 'atRisk', label: 'Projects at Risk' },
-                       { key: 'projects', label: 'Projects' },
-                       { key: 'capacity', label: 'Department Workload' },
-                       { key: 'plan', label: 'Plan' },
-                       { key: 'matrix', label: 'Portfolio Matrix' },
-                     ].map(item => (
-                       <div key={item.key} onClick={() => setDraftSections(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                         className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-[var(--radius-lg)] text-xs text-neutral-700 dark:text-[var(--text-secondary)] hover:bg-neutral-50 dark:hover:bg-[var(--bg-tertiary)] transition-colors">
-                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${draftSections[item.key] ? 'bg-primary-600 border-primary-600 dark:bg-brand-500 dark:border-brand-500' : 'border-neutral-300 dark:border-[var(--border-primary)] bg-transparent'}`}>
-                           {draftSections[item.key] && <span className="text-white text-[10px] leading-none font-bold">✓</span>}
-                         </div>
-                         <span className="font-medium">{item.label}</span>
-                       </div>
-                     ))}
-                   </div>
-                   <div className="flex gap-2">
-                     <button onClick={() => { setShowCustomize(false); setDraftSections(null); }}
-                       className="flex-1 px-3 py-2 text-xs font-semibold rounded-[var(--radius-lg)] bg-neutral-100 dark:bg-[var(--bg-tertiary)] text-neutral-600 dark:text-[var(--text-secondary)] hover:bg-neutral-200 dark:hover:bg-[var(--border-secondary)] transition-colors cursor-pointer border-none">Cancel</button>
-                     <button onClick={() => {
-                       setSections(draftSections);
-                       localStorage.setItem('dash_sections', JSON.stringify(draftSections));
-                       setShowCustomize(false);
-                       setDraftSections(null);
-                     }}
-                       className="flex-1 px-3 py-2 text-xs font-semibold rounded-[var(--radius-lg)] bg-primary-600 dark:bg-brand-600 text-white hover:bg-primary-700 dark:hover:bg-brand-700 transition-colors cursor-pointer border-none shadow-sm">Save</button>
-                   </div>
-                 </div>
-               </div>,
-               document.body
-             )}
+              {showCustomize && draftSections && (
+                <Modal open onClose={() => { setShowCustomize(false); setDraftSections(null); }} title="Customize Dashboard"
+                  footer={
+                    <>
+                      <button onClick={() => { setShowCustomize(false); setDraftSections(null); }}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
+                      <button onClick={() => {
+                        setSections(draftSections);
+                        localStorage.setItem('dash_sections', JSON.stringify(draftSections));
+                        setShowCustomize(false);
+                        setDraftSections(null);
+                      }}
+                        className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all cursor-pointer border-none btn-premium"
+                        style={{padding:'0.375rem 0.75rem'}}>Save</button>
+                    </>
+                  }>
+                  <div className="space-y-1">
+                    {[
+                      { key: 'statsGrid', label: 'Stats Grid' },
+                      { key: 'insights', label: "Today's Pulse" },
+                      { key: 'atRisk', label: 'Projects at Risk' },
+                      { key: 'projects', label: 'Projects' },
+                      { key: 'capacity', label: 'Department Workload' },
+                      { key: 'plan', label: 'Plan' },
+                      { key: 'matrix', label: 'Portfolio Matrix' },
+                    ].map(item => (
+                      <div key={item.key} onClick={() => setDraftSections(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                        className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-[var(--radius-lg)] text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${draftSections[item.key] ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)]' : 'border-[var(--border-primary)] bg-transparent'}`}>
+                          {draftSections[item.key] && <span className="text-white text-[10px] leading-none font-bold">✓</span>}
+                        </div>
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Modal>
+              )}
         </div>
       </div>
 
@@ -434,11 +434,32 @@ export default function Dashboard() {
       {/* ── Bottom Row ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '12px' }}>
         {sections.projects && (
-        <div className="card">
-          <div className="card-header"><span className="card-title">Projects</span><Link data-voice="view-all-projects" to="/projects" className="card-link">View all →</Link></div>
-          {projectList.length === 0 && <p className="text-center text-neutral-400 text-sm py-10">No projects yet</p>}
-          {projectList.map(p => {
+        <div className="card" style={{ overflow: 'visible' }}>
+          <div className="card-header">
+            <span className="card-title">Projects</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="view-toggle">
+                <button onClick={() => setProjViewMode('list')}
+                  className={`view-toggle-btn ${projViewMode === 'list' ? 'active' : ''}`}>
+                  📋 List
+                </button>
+                <button onClick={() => setProjViewMode('timeline')}
+                  className={`view-toggle-btn ${projViewMode === 'timeline' ? 'active' : ''}`}>
+                  📊 Phase View
+                </button>
+              </div>
+              <Link data-voice="view-all-projects" to="/projects" className="card-link">View all →</Link>
+            </div>
+          </div>
+          {projViewMode === 'timeline' ? (
+            <div style={{ padding: '8px 12px' }}>
+              <GanttView projects={projectList} predictions={predictions} onBack={() => setProjViewMode('list')} />
+            </div>
+          ) : projectList.length === 0 ? (
+            <p className="text-center text-neutral-400 text-sm py-10">No projects yet</p>
+          ) : projectList.map(p => {
             const pred = predictions.find(pr => String(pr.projectId) === String(p._id));
+            const phaseIdx = PHASES.indexOf(p.phase || 'planning');
             return (
               <Link to={`/projects/${p._id}`} key={p._id} className="proj-row">
                 <div style={{ flex: 1 }}>
@@ -455,6 +476,11 @@ export default function Dashboard() {
                       style={{ textTransform: 'capitalize' }}>{(p.phase || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
                     {p.projectType && <span style={{ fontSize: 8, marginLeft: 4, color: '#6b7280', background: '#f3f4f6', padding: '1px 5px', borderRadius: 3 }}>{p.projectType}</span>}
                     {pred?.overdue > 0 && <span className="status-badge bg-danger-50 text-danger-700">{pred.overdue} overdue</span>}
+                  </div>
+                  <div className="mini-phase-strip">
+                    {PHASES.map((phase, i) => (
+                      <div key={phase} className={`mini-phase-seg ${i < phaseIdx ? 'done' : i === phaseIdx ? 'active' : 'future'}`} />
+                    ))}
                   </div>
                 </div>
                 <span className="prog-text">{p.progress}%</span>

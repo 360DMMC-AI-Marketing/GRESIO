@@ -3,12 +3,12 @@ const Project = require('../models/Project');
 const Notification = require('../models/Notification');
 const { getDomainProjectIds } = require('../config/planLimits');
 
-const populate = q => q.populate('addedBy', 'name role');
+const populate = q => q.populate('addedBy', 'name role').lean();
 
 exports.getResources = async (req, res, next) => {
   try {
     const { category, type, search } = req.query;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { project: { $in: projectIds } };
     if (category) filter.category = category;
     if (type) filter.type = type;
@@ -20,7 +20,7 @@ exports.getResources = async (req, res, next) => {
 
 exports.addResource = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -68,7 +68,7 @@ exports.updateResource = async (req, res, next) => {
       data.fileSize = req.file.size;
       data.fileType = req.file.mimetype;
     }
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const resource = await populate(Resource.findOneAndUpdate(
       { _id: req.params.id, project: { $in: projectIds } },
       data,
@@ -102,7 +102,7 @@ exports.updateResource = async (req, res, next) => {
 
 exports.deleteResource = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const resource = await Resource.findOneAndDelete({ _id: req.params.id, project: { $in: projectIds } });
     if (!resource) return res.status(404).json({ message: 'Resource not found' });
     const project = await Project.findById(resource.project).select('name members');

@@ -5,7 +5,7 @@ const { getIO } = require('../socket/ioProvider');
 const fs = require('fs');
 const path = require('path');
 
-const populateRefs = q => q.populate('createdBy', 'name email avatar role').populate('updatedBy', 'name email avatar role');
+const populateRefs = q => q.populate('createdBy', 'name email avatar role').populate('updatedBy', 'name email avatar role').lean();
 
 function makeSlug(title) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -38,7 +38,15 @@ exports.getPages = async (req, res, next) => {
         { content: { $regex: search, $options: 'i' } },
       ];
     }
-    const pages = await populateRefs(Wiki.find(filter).sort({ updatedAt: -1 }));
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = populateRefs(Wiki.find(filter).sort({ updatedAt: -1 }));
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const pages = await query;
+    if (page && limit) {
+      const total = await Wiki.countDocuments(filter);
+      return res.json({ data: pages, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(pages);
   } catch (e) { next(e); }
 };

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { api } from '../../services/api';
 import Flash from '../../components/super-admin/Flash';
+import Logo from '../../components/Logo';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -29,8 +30,9 @@ export default function Login({ onLogin }) {
       {flash && <Flash message={flash.message} type={flash.type} onClose={clearFlash} />}
       <div className="bg-[var(--bg-secondary)] dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] shadow-[var(--elevation-low)] w-full max-w-sm mx-4 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">GRESIO</h1>
-          <p className="text-[var(--text-tertiary)] text-sm mt-1">Super Admin Console</p>
+          <div className="flex flex-col items-center">
+            <Logo size="md" showTagline tagline="Super Admin Console" />
+          </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

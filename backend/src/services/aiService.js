@@ -624,7 +624,7 @@ async function buildAppContext(userId, domain) {
   const overloaded = teamLoad.filter(m => m.tasks > 5);
 
   const atRiskProjects = projectsSummary.filter(p => {
-    if (p.status === 'blocked' || p.phase === 'delayed') return true;
+    if (p.status === 'blocked' || p.status === 'delayed') return true;
     if (p.deadline !== '-') {
       const d = new Date(p.deadline);
       return d < new Date(now.getTime() + 7 * 86400000) && p.progress < 80;

@@ -1,12 +1,13 @@
 const { Router } = require('express');
 const { getTestingItems, getTestingItemById, createTestingItem, updateTestingItem, deleteTestingItem, addAttachment, addComment } = require('../controllers/testingController');
 const { auth, authorize } = require('../middleware/auth');
+const validate = require('../middleware/validate');
 const upload = require('../middleware/upload');
 const router = Router();
 router.use(auth);
 router.get('/', getTestingItems);
 router.get('/:id', getTestingItemById);
-router.post('/', createTestingItem);
+router.post('/', validate.testing.create, createTestingItem);
 router.patch('/:id', updateTestingItem);
 router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), deleteTestingItem);
 router.post('/:id/attachments', upload.single('file'), addAttachment);

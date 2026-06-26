@@ -5,8 +5,16 @@ const User = require('../models/User');
 
 exports.getNotifications = async (req, res, next) => {
   try {
-    const notifs = await Notification.find({ user: req.user._id, domain: req.user.domain })
-      .sort({ createdAt: -1 });
+    const filter = { user: req.user._id, domain: req.user.domain };
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = Notification.find(filter).sort({ createdAt: -1 });
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const notifs = await query;
+    if (page && limit) {
+      const total = await Notification.countDocuments(filter);
+      return res.json({ data: notifs, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(notifs);
   } catch (error) {
     next(error);

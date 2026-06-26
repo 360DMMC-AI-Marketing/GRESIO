@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function Login() {
   const { user, login, verify2fa } = useAuth();
@@ -52,7 +53,7 @@ export default function Login() {
       <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
         <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md shadow-sm border-b border-[var(--glass-border)]' : 'bg-transparent'}`}>
           <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span></Link>
+            <Link to="/"><Logo size="sm" /></Link>
           </div>
         </nav>
         <div className="pt-24 pb-16 px-5">
@@ -97,7 +98,7 @@ export default function Login() {
     <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md shadow-sm border-b border-[var(--glass-border)]' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span></Link>
+          <Link to="/"><Logo size="sm" /></Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-[var(--brand-primary)] px-3 py-1.5 transition-colors">Sign In</Link>
             <Link to="/register" className="text-sm font-medium btn-premium px-4 py-2">Get Started</Link>

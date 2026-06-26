@@ -11,7 +11,8 @@ const taskPopulate = q => q
   .populate('createdBy', 'name email avatar role')
   .populate('project', 'name status')
   .populate('sprint', 'name status')
-  .populate('subtasks.assignee', 'name email');
+  .populate('subtasks.assignee', 'name email')
+  .lean();
 
 const tcPopulate = q => q
   .populate('assignee', 'name email avatar role')
@@ -19,12 +20,13 @@ const tcPopulate = q => q
   .populate('sprint', 'name status')
   .populate('linkedTask', 'title status')
   .populate('linkedBug', 'title status')
-  .populate('executedBy', 'name');
+  .populate('executedBy', 'name')
+  .lean();
 
 exports.getMyTasks = async (req, res, next) => {
   try {
     const { role } = req.user;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
 
     switch (role) {
       case 'developer':
@@ -220,7 +222,7 @@ async function adminView(domain) {
 exports.getMyWidgets = async (req, res, next) => {
   try {
     const { role, _id: userId } = req.user;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
 
     let widgets = [];
 
@@ -266,7 +268,7 @@ exports.getMyWidgets = async (req, res, next) => {
 exports.getRoleAnalytics = async (req, res, next) => {
   try {
     const { role, _id: userId } = req.user;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
 
     let analytics = { metrics: [], charts: [], alerts: [] };
 

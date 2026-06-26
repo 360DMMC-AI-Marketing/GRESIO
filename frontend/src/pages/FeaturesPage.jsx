@@ -130,7 +130,8 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
 
-      <section className="pt-36 pb-20 px-5 gradient-wave" style={{ background: 'linear-gradient(135deg, var(--bg-primary), var(--bg-secondary), var(--bg-primary))' }}>
+      <section className="pt-36 pb-20 px-5 gradient-wave relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--bg-primary), var(--bg-secondary), var(--bg-primary))' }}>
+        <div className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.04] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
         <div className="max-w-5xl mx-auto text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', color: 'var(--brand-primary)' }}>
             🚀 180+ features to power your workflow
@@ -307,19 +308,22 @@ export default function FeaturesPage() {
       </section>
 
       <section className="py-20 px-5">
-        <div className="max-w-3xl mx-auto text-center animate-fade-in">
-          <div className="rounded-3xl p-12 shadow-2xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--brand-secondary), #0f172a)' }}>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />
-            <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to ship faster?</h2>
-            <p className="text-white/80 mb-8 max-w-lg mx-auto relative">Join teams that use GRESIO to manage projects, track tasks, and deliver quality software — all in one platform.</p>
-            <div className="flex items-center justify-center gap-4 relative">
-              <Link to="/pricing" className="px-8 py-3.5 bg-white text-[var(--text-primary)] font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg text-base">
-                Choose Your Plan
-              </Link>
-              <Link to="/register" className="px-8 py-3.5 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-base">
-                Start Free Trial
-              </Link>
+        <div className="max-w-3xl mx-auto text-center animate-fade-in relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/20 via-[var(--brand-primary)]/10 to-[var(--brand-primary)]/20 rounded-3xl blur-3xl" />
+          <div className="relative rounded-2xl p-12 md:p-16 overflow-hidden shadow-2xl border border-[var(--glass-border)]" style={{ background: 'var(--bg-secondary)' }}>
+            <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
+            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-secondary), transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+            <div className="relative">
+              <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4 tracking-tight">Ready to ship faster?</h2>
+              <p className="text-[var(--text-tertiary)] mb-10 max-w-lg mx-auto">Join teams that use GRESIO to manage projects, track tasks, and deliver quality software — all in one platform.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/pricing" className="btn-premium px-10 py-3.5 text-sm">
+                  Choose Your Plan
+                </Link>
+                <Link to="/register" className="px-10 py-3.5 font-semibold rounded-xl transition-all duration-300 text-sm border border-[var(--glass-border)] hover:border-[var(--brand-primary)]/30 hover:shadow-lg" style={{ color: 'var(--text-secondary)', background: 'var(--glass-bg)' }}>
+                  Start Free Trial
+                </Link>
+              </div>
             </div>
           </div>
         </div>

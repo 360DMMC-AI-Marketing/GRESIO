@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { auth } from '../services/api';
+import Logo from '../components/Logo';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -45,8 +46,8 @@ export default function ForgotPassword() {
     <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
       <nav className="border-b border-[var(--glass-border)] bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span>
+          <Link to="/">
+            <Logo size="sm" />
           </Link>
         </div>
       </nav>

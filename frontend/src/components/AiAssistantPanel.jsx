@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import executeCommand from '../services/voiceActionRouter';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 
 function WaveAnimation() {
   return (
@@ -253,8 +254,8 @@ export default function AiAssistantPanel() {
                 <div className="flex flex-col items-center justify-center gap-5 p-10 min-h-[380px] text-center"
                   style={{background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.98) 0%, rgba(249,250,251,0.9) 100%)'}}>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-[var(--radius-md)] bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-[10px] font-bold text-white">G</div>
-                    <span className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">GRESIO Voice</span>
+                    <Logo variant="iconOnly" size="sm" />
+                    <span className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">Voice</span>
                     <VoiceIndicator />
                   </div>
 
@@ -313,9 +314,9 @@ export default function AiAssistantPanel() {
               {isChatActive && (
                 <div className="flex flex-col w-full h-full min-h-[380px]">
                   <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-neutral-100 dark:border-[var(--border-secondary)] bg-white dark:bg-[var(--bg-primary)]">
-                    <div className="w-7 h-7 rounded-[var(--radius-md)] bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-[11px] font-bold text-white">G</div>
+                    <Logo variant="iconOnly" size="sm" />
                     <div className="flex-1">
-                      <div className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">GRESIO Assistant</div>
+                      <div className="text-xs font-semibold text-neutral-900 dark:text-[var(--text-primary)]">Assistant</div>
                       <div className="text-[10px] text-neutral-400 dark:text-[var(--text-muted)]">Type a command</div>
                     </div>
                   </div>

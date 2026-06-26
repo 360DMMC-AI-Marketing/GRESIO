@@ -11,7 +11,7 @@ const Integration = require('../models/Integration');
 const Company = require('../models/Company');
 const microsoftGraphService = require('../services/microsoftGraphService');
 const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
-const { enforceProjectLimit } = require('../config/planLimits');
+const { enforceProjectLimit, getUserAccessibleProjectIds } = require('../config/planLimits');
 
 
 exports.getProjects = async (req, res, next) => {
@@ -111,6 +111,10 @@ exports.getProjects = async (req, res, next) => {
 
 exports.getProjectById = async (req, res, next) => {
   try {
+    if (req.user.role !== 'admin') {
+      const projectIds = await getUserAccessibleProjectIds(req.user.domain, req.user._id);
+      if (!projectIds.includes(req.params.id)) return res.status(404).json({ message: 'Project not found' });
+    }
     const filter = { _id: req.params.id, isActive: true };
     if (req.user.role !== 'admin') filter.domain = req.user.domain;
     const project = await Project.findOne(filter)
@@ -200,6 +204,14 @@ exports.createProject = async (req, res, next) => {
     const project = await Project.create({ ...req.body, domain, phase: 'discovery' });
     if (req.body.members && req.body.members.length > 0) {
       await updateUserProjects(req.body.members, project._id);
+    }
+    // Auto-add creator to members so they receive notifications
+    if (!project.members.some(m => m.toString() === req.user._id.toString())) {
+      project.members.push(req.user._id);
+      await project.save();
+      if (req.user._id) {
+        await updateUserProjects([req.user._id], project._id);
+      }
     }
 
     autoCreateTeamsChannel(project, req.user).catch(() => {});

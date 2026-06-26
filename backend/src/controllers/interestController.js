@@ -32,7 +32,7 @@ function calculateInterestScore(tc, interests) {
 
 exports.getProjectInterests = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.params.projectId)) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -46,7 +46,7 @@ exports.getProjectInterests = async (req, res, next) => {
 
 exports.updateProjectInterests = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.params.projectId)) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -70,7 +70,7 @@ exports.updateProjectInterests = async (req, res, next) => {
 exports.runInterestFilter = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === projectId)) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -117,9 +117,9 @@ exports.runInterestFilter = async (req, res, next) => {
 
 exports.getFlaggedTests = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { project: { $in: projectIds }, flaggedForDeletion: true, isActive: true };
-    if (req.params.projectId) filter.project = req.params.projectId;
+    if (req.params.projectId && projectIds.includes(req.params.projectId)) filter.project = req.params.projectId;
     const tests = await TestCase.find(filter)
       .populate('assignee', 'name email avatar role')
       .populate('sprint', 'name')
@@ -131,7 +131,7 @@ exports.getFlaggedTests = async (req, res, next) => {
 
 exports.restoreFlaggedTest = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const tc = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds }, flaggedForDeletion: true });
     if (!tc) return res.status(404).json({ message: 'Flagged test case not found' });
     tc.flaggedForDeletion = false;
@@ -165,7 +165,7 @@ exports.restoreFlaggedTest = async (req, res, next) => {
 
 exports.restoreAllFlagged = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const tests = await TestCase.find({ project: { $in: projectIds }, flaggedForDeletion: true, isActive: true });
     let count = 0;
     for (const tc of tests) {
@@ -184,7 +184,7 @@ exports.restoreAllFlagged = async (req, res, next) => {
 
 exports.deleteAllFlagged = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const result = await TestCase.deleteMany({ project: { $in: projectIds }, flaggedForDeletion: true, isActive: true });
     res.json({ message: `Deleted ${result.deletedCount} flagged test cases`, count: result.deletedCount });
   } catch (e) { next(e); }
@@ -209,9 +209,9 @@ exports.runAutoDelete = async () => {
 
 exports.getInterestStats = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { project: { $in: projectIds }, isActive: true };
-    if (req.params.projectId) filter.project = req.params.projectId;
+    if (req.params.projectId && projectIds.includes(req.params.projectId)) filter.project = req.params.projectId;
     const all = await TestCase.find(filter).select('interestMatchStatus interestMatchScore flaggedForDeletion');
     const total = all.length;
     const high = all.filter(t => t.interestMatchStatus === 'high').length;

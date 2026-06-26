@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { reportsService } from '../services/reports';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
@@ -27,6 +26,10 @@ export default function ReportPreviewPage() {
     if (!reportRef.current) return;
     setExporting(true);
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         useCORS: true,
@@ -118,7 +121,7 @@ export default function ReportPreviewPage() {
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl font-bold text-white tracking-tight">GRESIO</span>
+                  <Logo variant="textOnly" size="md" inverted />
                   <span className="text-white/40 text-sm">|</span>
                   <span className="text-white/70 text-sm font-medium">Certified by 360 DMMC</span>
                 </div>
@@ -774,7 +777,7 @@ export default function ReportPreviewPage() {
           <div className="border-t border-[var(--border-primary)] px-10 py-5">
             <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[var(--text-secondary)]">GRESIO</span>
+                <Logo variant="textOnly" size="sm" />
                 <span>·</span>
                 <span>Certified by <strong>360 DMMC</strong></span>
               </div>

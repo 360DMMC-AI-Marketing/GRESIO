@@ -40,9 +40,37 @@ async function getCompanyUsage(domain) {
   return { userCount, projectCount };
 }
 
-async function getDomainProjectIds(domain) {
+async function getUserAccessibleProjectIds(domain, userId) {
+  const Task = require('../models/Task');
+
+  const memberProjectIds = await Project.distinct('_id', {
+    domain, isActive: true, members: userId
+  });
+
+  const taskProjectIds = await Task.distinct('project', {
+    assignee: userId, isActive: true, scope: 'project'
+  });
+
+  const umbrellaIds = await Project.distinct('_id', {
+    domain, isActive: true, members: userId, hasChildren: true
+  });
+  const subProjectIds = await Project.distinct('_id', {
+    domain, isActive: true, parentProject: { $in: umbrellaIds }
+  });
+
+  return [...new Set([
+    ...memberProjectIds.map(id => String(id)),
+    ...taskProjectIds.map(id => String(id)),
+    ...subProjectIds.map(id => String(id))
+  ])];
+}
+
+async function getDomainProjectIds(domain, user = null) {
+  if (user && user.role !== 'admin') {
+    return getUserAccessibleProjectIds(domain, user._id);
+  }
   const projects = await Project.find({ domain }).select('_id');
   return projects.map(p => String(p._id));
 }
 
-module.exports = { PLAN_LIMITS, getPlanLimit, enforceUserLimit, enforceProjectLimit, getCompanyUsage, getDomainProjectIds };
+module.exports = { PLAN_LIMITS, getPlanLimit, enforceUserLimit, enforceProjectLimit, getCompanyUsage, getDomainProjectIds, getUserAccessibleProjectIds };

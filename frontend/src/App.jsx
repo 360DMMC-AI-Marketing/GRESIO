@@ -82,7 +82,7 @@ function SuspenseWrapper({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: 'var(--toast-bg)', color: '#fff', borderRadius: 'var(--radius-lg)', fontSize: '13px', border: '1px solid var(--glass-border)' } }} />
       <BrowserRouter>
         <ScrollToTop />
         <ErrorBoundary>

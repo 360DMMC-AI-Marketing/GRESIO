@@ -60,20 +60,20 @@ export default function AiCommandBar() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-[9999]" onClick={toggle} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-[540px] z-[10000] bg-white rounded-2xl shadow-2xl border border-surface-200 overflow-hidden">
-        <div className="p-3 border-b border-surface-100">
-          <div className="flex items-center gap-2 bg-surface-50 rounded-lg px-3 py-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-surface-400 shrink-0"><path d="M12 2a10 10 0 0 0-10 10c0 4.5 3 8.3 7 9.5V14H7l4-6v4h2v-4l4 6h-4v7.5c4-1.2 7-5 7-9.5A10 10 0 0 0 12 2z"/></svg>
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-[540px] z-[10000] glass-panel bg-[var(--bg-secondary)] border border-[var(--glass-border)] shadow-2xl overflow-hidden">
+        <div className="p-3 border-b border-[var(--border-secondary)]">
+          <div className="flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-[var(--radius-lg)] px-3 py-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-muted)] shrink-0"><path d="M12 2a10 10 0 0 0-10 10c0 4.5 3 8.3 7 9.5V14H7l4-6v4h2v-4l4 6h-4v7.5c4-1.2 7-5 7-9.5A10 10 0 0 0 12 2z"/></svg>
             <input
               autoFocus
               value={command}
               onChange={e => setCommand(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') toggle(); }}
               placeholder="Ask AI to manage your project..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-surface-900 placeholder:text-surface-400"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
             />
             <button onClick={handleSubmit} disabled={loading || !command.trim()}
-              className="px-3 py-1 bg-[#2347e8] text-white rounded-md text-xs font-semibold hover:bg-[#1d3dcc] disabled:opacity-50 transition-colors cursor-pointer border-none">
+              className="px-3 py-1 bg-[var(--brand-primary)] text-white rounded-[var(--radius-md)] text-xs font-semibold hover:bg-[var(--brand-hover)] disabled:opacity-50 transition-colors cursor-pointer border-none">
               {loading ? '...' : 'Run'}
             </button>
           </div>
@@ -81,7 +81,7 @@ export default function AiCommandBar() {
             <div className="flex gap-1.5 mt-2 flex-wrap">
               {SUGGESTIONS.map((s, i) => (
                 <button key={i} onClick={() => applySuggestion(s.command)}
-                  className="text-[10px] bg-surface-50 text-surface-600 px-2 py-1 rounded-md border border-surface-200 hover:bg-surface-100 transition-colors cursor-pointer">
+                  className="text-[10px] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-2 py-1 rounded-[var(--radius-md)] border border-[var(--border-primary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer">
                   {s.label}
                 </button>
               ))}
@@ -89,21 +89,21 @@ export default function AiCommandBar() {
           )}
         </div>
         {loading && (
-          <div className="p-4 text-center text-sm text-surface-500">
-            <div className="animate-spin inline-block w-4 h-4 border-2 border-surface-300 border-t-[#2347e8] rounded-full mr-2" />
+          <div className="p-4 text-center text-sm text-[var(--text-tertiary)]">
+            <div className="animate-spin inline-block w-4 h-4 border-2 border-[var(--border-primary)] border-t-[var(--brand-primary)] rounded-full mr-2" />
             Processing...
           </div>
         )}
         {result && (
-          <div className={`p-4 text-sm ${result.success ? 'text-surface-900' : 'text-danger-600'}`}>
+          <div className={`p-4 text-sm ${result.success ? 'text-[var(--text-primary)]' : 'text-[var(--danger-text)]'}`}>
             <div className="flex items-start gap-2">
-              <span className={result.success ? 'text-success-500' : 'text-danger-500'}>{result.success ? '✓' : '✕'}</span>
+              <span className={result.success ? 'text-[var(--success-text)]' : 'text-[var(--danger-text)]'}>{result.success ? '✓' : '✕'}</span>
               <div>
                 <p>{result.message || result.summary}</p>
                 {result.entities?.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {result.entities.map((e, i) => (
-                      <div key={i} className="text-xs text-primary-600">
+                      <div key={i} className="text-xs text-[var(--brand-primary)]">
                         Created {e.type}: <strong>{e.name}</strong>
                       </div>
                     ))}
@@ -112,7 +112,7 @@ export default function AiCommandBar() {
               </div>
             </div>
             <button onClick={toggle}
-              className="mt-3 text-xs text-primary-600 font-semibold hover:underline cursor-pointer bg-transparent border-none">
+              className="mt-3 text-xs text-[var(--brand-primary)] font-semibold hover:underline cursor-pointer bg-transparent border-none">
               Close
             </button>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { auth } from '../services/api';
+import Logo from '../components/Logo';
 
 const INDUSTRIES = [
   'Technology / Software', 'Healthcare / Medical', 'Finance / Banking',
@@ -97,7 +98,7 @@ export default function Register() {
     <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] page-enter">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-secondary)]/90 backdrop-blur-md shadow-sm border-b border-[var(--glass-border)]' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">GRESIO</span></Link>
+          <Link to="/"><Logo size="sm" /></Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] px-3 py-1.5 transition-colors">Sign In</Link>
             <Link to="/register" className="text-sm font-medium btn-premium px-4 py-2">Get Started</Link>

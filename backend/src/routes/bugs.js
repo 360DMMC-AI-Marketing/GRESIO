@@ -8,7 +8,7 @@ router.get('/', getBugs);
 router.get('/stats/:projectId?', getBugStats);
 router.post('/', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), validate.bug.create, createBug);
 router.get('/:id', getBugById);
-router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), updateBug);
+router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), validate.bug.update, updateBug);
 router.post('/:id/resolve', authorize('admin', 'project_manager', 'team_lead'), resolveBug);
 router.post('/:id/reopen', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), reopenBug);
 router.post('/:id/retest', authorize('admin', 'project_manager', 'team_lead', 'qa_tester'), triggerRetest);

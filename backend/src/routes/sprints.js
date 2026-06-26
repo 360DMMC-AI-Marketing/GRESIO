@@ -7,7 +7,7 @@ r.use(auth);
 r.get('/', c.getSprints);
 r.get('/:id', c.getSprintById);
 r.post('/', authorize('admin', 'project_manager', 'team_lead'), validate.sprint.create, c.createSprint);
-r.patch('/:id', c.updateSprint);
+r.patch('/:id', validate.sprint.update, c.updateSprint);
 r.post('/:id/tasks', authorize('admin', 'project_manager', 'team_lead'), c.addTaskToSprint);
 r.delete('/:id/tasks/:taskId', authorize('admin', 'project_manager', 'team_lead'), c.removeTaskFromSprint);
 r.delete('/:id', authorize('admin'), c.deleteSprint);

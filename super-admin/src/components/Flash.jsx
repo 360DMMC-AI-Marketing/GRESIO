@@ -15,7 +15,12 @@ export default function Flash({ message, type = 'error', onClose }) {
     <div
       className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-      } ${type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}
+      }`}
+      style={{
+        background: type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)',
+        borderColor: type === 'error' ? 'var(--danger-border)' : 'var(--success-border)',
+        color: type === 'error' ? 'var(--danger-text)' : 'var(--success-text)'
+      }}
     >
       {type === 'error' ? (
         <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -426,7 +426,7 @@ exports.generateReport = async (req, res) => {
 
 exports.listReports = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const reports = await Report.find({ project: { $in: projectIds } })
       .populate('project', 'name projectType phase status')
       .populate('generatedBy', 'name email')
@@ -438,7 +438,7 @@ exports.listReports = async (req, res, next) => {
 
 exports.getReport = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const report = await Report.findOne({ _id: req.params.id, project: { $in: projectIds } })
       .populate('project', 'name projectType phase status')
       .populate('generatedBy', 'name email')
@@ -450,7 +450,7 @@ exports.getReport = async (req, res, next) => {
 
 exports.deleteReport = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const report = await Report.findOneAndDelete({ _id: req.params.id, project: { $in: projectIds } });
     if (!report) return res.status(404).json({ error: 'Report not found' });
     res.json({ message: 'Report deleted' });

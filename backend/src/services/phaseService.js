@@ -58,6 +58,13 @@ function expandLabel(phase) {
 // In-memory transition cache — prevents circular transitions (2s cooldown)
 // Stores { timestamp, fromPhase, toPhase } per project
 const phaseTransitionCache = new Map();
+// Clean stale cache entries every 30s to prevent memory leak
+setInterval(() => {
+  const cutoff = Date.now() - 10000;
+  for (const [key, val] of phaseTransitionCache) {
+    if (val.timestamp < cutoff) phaseTransitionCache.delete(key);
+  }
+}, 30000);
 
 function getExecutionPhase(type) {
   const map = {
@@ -202,8 +209,9 @@ async function evaluateProjectPhase(projectId) {
     }
   }
 
-  // Rule 4: In COMPLETE/launched/delivered — tasks or tests added → move back to testing or execution
-  if (!targetPhase && !AUTO_PHASES.has(project.phase)) {
+  // Rule 4: Backward transition — tasks/tests added reverts execution/testing
+  // Exclude manual gates launched/delivered — they must not auto-revert
+  if (!targetPhase && !AUTO_PHASES.has(project.phase) && project.phase !== 'launched' && project.phase !== 'delivered') {
     if (totalTasks > 0 && doneTasks < totalTasks) {
       targetPhase = getExecutionPhase(type);
     } else if (totalTC > 0 && !allTestCasesPassed) {

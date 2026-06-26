@@ -200,8 +200,7 @@ export default function PricingPage() {
       <PublicNavbar />
 
       <section className="pt-36 pb-16 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--brand-primary)_0%,_transparent_70%)] opacity-[0.12]" />
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--brand-primary)]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[650px] h-[650px] rounded-full opacity-[0.035] pointer-events-none" style={{ background: 'radial-gradient(circle, #f59e0b, transparent 70%)' }} />
         <div className="relative max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/25 rounded-full text-xs font-semibold text-[var(--brand-primary)] mb-6 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)] animate-pulse" />
@@ -485,22 +484,20 @@ export default function PricingPage() {
       <section className="pb-20 px-5">
         <div className="max-w-3xl mx-auto relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/20 via-[var(--brand-primary)]/10 to-[var(--brand-primary)]/20 rounded-3xl blur-3xl" />
-          <div className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[#0f172a] rounded-3xl p-12 text-center shadow-2xl overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />
-            <h2 className="text-3xl font-bold text-white mb-3 relative">Ready to transform your workflow?</h2>
-            <p className="text-white/80 mb-8 max-w-md mx-auto relative text-sm">
-              No credit card required. Start your free trial today and see why teams love GRESIO.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
-              <Link to="/register"
-                className="px-10 py-3.5 bg-white text-[var(--brand-secondary)] font-bold rounded-xl hover:bg-white/90 hover:scale-105 transition-all shadow-lg text-sm">
-                Start Free Trial
-              </Link>
-              <Link to="/contact"
-                className="px-10 py-3.5 border-2 border-white/30 text-white font-semibold rounded-xl hover:bg-white/10 transition-all text-sm">
-                Talk to Sales
-              </Link>
+          <div className="relative rounded-2xl p-12 md:p-16 text-center overflow-hidden shadow-2xl border border-[var(--glass-border)]" style={{ background: 'var(--bg-secondary)' }}>
+            <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
+            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, #f59e0b, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+            <div className="relative">
+              <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4 tracking-tight">Ready to transform your workflow?</h2>
+              <p className="text-[var(--text-tertiary)] mb-10 max-w-md mx-auto">No credit card required. Start your free trial today and see why teams love GRESIO.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/register" className="btn-premium px-10 py-3.5 text-sm">
+                  Start Free Trial
+                </Link>
+                <Link to="/contact" className="px-10 py-3.5 font-semibold rounded-xl transition-all duration-300 text-sm border border-[var(--glass-border)] hover:border-[var(--brand-primary)]/30 hover:shadow-lg" style={{ color: 'var(--text-secondary)', background: 'var(--glass-bg)' }}>
+                  Talk to Sales
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import Dashboard from './pages/Dashboard';
-import Companies from './pages/Companies';
-import CompanyDetail from './pages/CompanyDetail';
-import Admins from './pages/Admins';
-import Analytics from './pages/Analytics';
-import Health from './pages/Health';
-import Profile from './pages/Profile';
-import Notifications from './pages/Notifications';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Companies = lazy(() => import('./pages/Companies'));
+const CompanyDetail = lazy(() => import('./pages/CompanyDetail'));
+const Admins = lazy(() => import('./pages/Admins'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Health = lazy(() => import('./pages/Health'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Login = lazy(() => import('./pages/Login'));
 
 export default function App() {
   const [token, setToken] = useState(() => {
@@ -51,7 +51,7 @@ export default function App() {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  if (!token || !user) return <Login onLogin={handleLogin} />;
+  if (!token || !user) return <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}><Login onLogin={handleLogin} /></Suspense>;
 
   return (
     <div className="flex h-screen bg-[#f8fafc]">
@@ -59,6 +59,7 @@ export default function App() {
       <div className="flex-1 flex flex-col ml-60">
         <Header user={user} onLogout={handleLogout} />
         <main className="flex-1 overflow-y-auto p-6">
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/companies" element={<Companies />} />
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </main>
       </div>
     </div>

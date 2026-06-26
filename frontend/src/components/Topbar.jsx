@@ -313,7 +313,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
         </button>
       )}
       {toast && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] tooltip-glass text-white px-4 py-2.5 text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in" style={{background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(255,255,255,0.1)'}}>
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] glass-panel bg-[var(--bg-secondary)] border border-[var(--glass-border)] shadow-2xl px-4 py-2.5 rounded-full text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in">
           {toast.title}
         </div>
       )}

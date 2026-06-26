@@ -19,19 +19,28 @@ const populate = (q) =>
     .populate('linkedTask', 'title status')
     .populate('createdBy', 'name')
     .populate('comments.user', 'name avatar role')
-    .populate('attachments.uploadedBy', 'name');
+    .populate('attachments.uploadedBy', 'name')
+    .lean();
 
 exports.getTestingItems = async (req, res, next) => {
   try {
     const { project, sprint, status, assignee, type } = req.query;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { isActive: true, project: { $in: projectIds } };
     if (project) filter.project = project;
     if (sprint) filter.sprint = sprint;
     if (status) filter.status = status;
     if (assignee) filter.assignee = assignee;
     if (type) filter.type = type;
-    const items = await populate(TestingItem.find(filter).sort({ createdAt: -1 }));
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = populate(TestingItem.find(filter).sort({ createdAt: -1 }));
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const items = await query;
+    if (page && limit) {
+      const total = await TestingItem.countDocuments(filter);
+      return res.json({ data: items, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(items);
   } catch (error) {
     next(error);
@@ -40,7 +49,7 @@ exports.getTestingItems = async (req, res, next) => {
 
 exports.getTestingItemById = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await populate(TestingItem.findOne({ _id: req.params.id, project: { $in: projectIds } }));
     if (!item) return res.status(404).json({ message: 'Testing item not found' });
     res.json(item);
@@ -57,7 +66,7 @@ exports.createTestingItem = async (req, res, next) => {
     if (!req.body.title || !req.body.project) {
       return res.status(400).json({ message: 'Title and project are required' });
     }
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.includes(req.body.project)) {
       return res.status(403).json({ message: 'Project not in your domain' });
     }
@@ -116,7 +125,7 @@ exports.updateTestingItem = async (req, res, next) => {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
 
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const old = await TestingItem.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!old) return res.status(404).json({ message: 'Testing item not found' });
 
@@ -180,7 +189,7 @@ exports.deleteTestingItem = async (req, res, next) => {
     if (!MANAGER_ROLES.includes(req.user.role)) {
       return res.status(403).json({ message: 'Only managers can delete testing items' });
     }
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestingItem.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { isActive: false }, { new: true });
     if (!item) return res.status(404).json({ message: 'Testing item not found' });
     if (item.sprint) {
@@ -195,7 +204,7 @@ exports.deleteTestingItem = async (req, res, next) => {
 
 exports.addAttachment = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestingItem.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!item) return res.status(404).json({ message: 'Testing item not found' });
     if (!req.file) return res.status(400).json({ message: 'No file provided' });
@@ -217,7 +226,7 @@ exports.addAttachment = async (req, res, next) => {
 exports.addComment = async (req, res, next) => {
   try {
     if (!req.body.text) return res.status(400).json({ message: 'Comment text is required' });
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestingItem.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!item) return res.status(404).json({ message: 'Testing item not found' });
     item.comments.push({ text: req.body.text, user: req.user._id });

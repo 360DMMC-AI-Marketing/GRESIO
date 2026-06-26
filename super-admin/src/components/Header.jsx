@@ -67,7 +67,7 @@ export default function Header({ user, onLogout }) {
             </button>
 
             {showNotifs && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-surface-200 shadow-xl overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-80 overflow-hidden" style={{background:'var(--glass-bg)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-xl)',boxShadow:'var(--glass-shadow)'}}>
                 <div className="flex items-center justify-between px-4 py-3 border-b border-surface-100">
                   <span className="text-sm font-semibold text-surface-900">Notifications</span>
                   {unreadCount > 0 && (
@@ -113,7 +113,7 @@ export default function Header({ user, onLogout }) {
               <p className="text-[10px] text-neutral-400 leading-tight capitalize">super admin</p>
             </div>
             <div className="relative shrink-0">
-              <div className="w-8 h-8 bg-[#2347e8] rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden" style={{background:'var(--brand-primary)'}}>
                 {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'SA'}
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Logo from './Logo';
 
 export default function PublicFooter() {
   return (
@@ -7,7 +8,7 @@ export default function PublicFooter() {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div>
             <div className="mb-3">
-              <Link to="/" className="text-3xl font-bold text-page-text tracking-tight">GRESIO</Link>
+              <Link to="/"><Logo size="lg" /></Link>
             </div>
             <p className="text-base text-page-muted leading-relaxed">The internal operating system for modern software teams.</p>
           </div>

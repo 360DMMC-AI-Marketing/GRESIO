@@ -13,9 +13,11 @@ export default function Flash({ message, type = 'error', onClose }) {
 
   return (
     <div
-      className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border transition-all duration-300 ${
+      className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-[var(--radius-xl)] shadow-2xl border transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-      } ${type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}
+      } ${type === 'error' 
+        ? 'bg-[var(--danger-bg)] border-[var(--danger-border)] text-[var(--danger-text)]' 
+        : 'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]'}`}
     >
       {type === 'error' ? (
         <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -27,7 +29,7 @@ export default function Flash({ message, type = 'error', onClose }) {
         </svg>
       )}
       <span className="text-sm font-medium">{message}</span>
-      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="ml-2 opacity-50 hover:opacity-100 transition-opacity">
+      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="ml-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer bg-transparent border-none p-0">
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>

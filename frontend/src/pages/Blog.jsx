@@ -13,7 +13,8 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] page-enter">
       <PublicNavbar />
-      <section className="pt-36 pb-20 px-5">
+      <section className="pt-36 pb-20 px-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-secondary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
         <div className="max-w-4xl mx-auto animate-fade-in">
           <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-10">
             <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-4">Blog</h1>

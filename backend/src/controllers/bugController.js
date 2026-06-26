@@ -16,26 +16,34 @@ const SEVERITY_MAP = { critical: 'critical', high: 'high', medium: 'medium', low
 
 exports.getBugs = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { project: { $in: projectIds }, isActive: true };
-    if (req.query.projectId) filter.project = req.query.projectId;
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+    const filter = { project: { $in: projectIds } };
+    if (req.query.projectId && projectIds.includes(req.query.projectId)) filter.project = req.query.projectId;
     if (req.query.status) filter.status = req.query.status;
     if (req.query.severity) filter.severity = req.query.severity;
     if (req.query.assignee) filter.assignee = req.query.assignee;
-    const bugs = await Bug.find(filter)
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = Bug.find(filter)
       .populate('testCase', 'testCaseId title')
       .populate('task', 'title status')
       .populate('sprint', 'name')
       .populate('assignee', 'name email avatar')
       .populate('reporter', 'name email avatar')
       .sort({ createdAt: -1 });
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const bugs = await query;
+    if (page && limit) {
+      const total = await Bug.countDocuments(filter);
+      return res.json({ data: bugs, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(bugs);
   } catch (e) { next(e); }
 };
 
 exports.getBugById = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const bug = await Bug.findOne({ _id: req.params.id, project: { $in: projectIds } })
       .populate('testCase', 'testCaseId title description steps')
       .populate('task', 'title status')
@@ -265,7 +273,7 @@ exports.triggerRetest = async (req, res, next) => {
 
 exports.createBug = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.body.project)) {
       return res.status(403).json({ message: 'Project not in your domain' });
     }
@@ -352,9 +360,9 @@ exports.updateBug = async (req, res, next) => {
 
 exports.getBugStats = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
-    const filter = { project: { $in: projectIds }, isActive: true };
-    if (req.params.projectId) filter.project = req.params.projectId;
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+    const filter = { project: { $in: projectIds } };
+    if (req.params.projectId && projectIds.includes(req.params.projectId)) filter.project = req.params.projectId;
     const bugs = await Bug.find(filter);
     const total = bugs.length;
     const open = bugs.filter(b => b.status === 'open').length;

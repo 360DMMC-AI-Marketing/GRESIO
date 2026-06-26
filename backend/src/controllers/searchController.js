@@ -123,7 +123,7 @@ exports.search = async (req, res, next) => {
     if (!q) return res.json({ results: [] });
 
     const domain = req.user.domain;
-    const projectIds = await getDomainProjectIds(domain);
+    const projectIds = await getDomainProjectIds(domain, req.user);
 
     const queries = SEARCHABLE.map(cfg => queryCollection(cfg, q, domain, projectIds));
     const docs = await Promise.all(queries);

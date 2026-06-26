@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
@@ -276,10 +277,8 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
         <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={onMobileClose} />
         <aside className="bg-gradient-to-b from-[#0F172A] to-[#0B1120] h-screen fixed top-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out w-[280px] shadow-2xl">
           <div className="px-5 py-6 border-b border-white/[0.08] flex items-center justify-between">
-            <NavLink to="/dashboard" onClick={onMobileClose} className="flex flex-col items-center hover:opacity-90 transition-all duration-200 cursor-pointer">
-              <span className="text-white font-bold text-2xl tracking-tight"
-                style={{textShadow: '0 0 20px rgba(35,71,232,0.3)'}}>GRESIO</span>
-              <span className="text-slate-500 text-xs font-medium mt-0.5 tracking-[0.15em]">Internal OS</span>
+            <NavLink to="/dashboard" onClick={onMobileClose} className="hover:opacity-90 transition-opacity">
+              <Logo variant="textOnly" size="md" showTagline tagline="Internal OS" />
             </NavLink>
             <button onClick={onMobileClose}
               className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-white/[0.08] text-slate-500 hover:text-white transition-colors cursor-pointer bg-transparent border-none">
@@ -307,8 +306,7 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
       <aside className="bg-gradient-to-b from-[#0F172A] to-[#0B1120] h-screen fixed top-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out w-[64px]">
         <div className="flex items-center justify-center px-0 py-4" style={{borderBottom: '0.5px solid rgba(255,255,255,0.06)'}}>
           <NavLink to="/dashboard" className="flex items-center justify-center hover:opacity-90 transition-opacity">
-            <span className="text-white font-bold text-lg tracking-tight"
-              style={{textShadow: '0 0 20px rgba(35,71,232,0.3)'}}>GRESIO</span>
+            <Logo variant="iconOnly" size="md" />
           </NavLink>
         </div>
         <nav className="flex-1 px-2 py-3 flex flex-col gap-1 overflow-y-auto">
@@ -335,10 +333,8 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
   return (
     <aside className="bg-gradient-to-b from-[#0F172A] to-[#0B1120] h-screen fixed top-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out w-[280px]">
       <div className="px-5 py-6 relative" style={{borderBottom: '0.5px solid rgba(255,255,255,0.06)'}}>
-        <NavLink to="/dashboard" className="flex flex-col items-center hover:opacity-90 transition-all duration-200 cursor-pointer">
-          <span className="text-white font-bold text-2xl tracking-tight"
-            style={{textShadow: '0 0 20px rgba(35,71,232,0.3)'}}>GRESIO</span>
-          <span className="text-slate-500 text-xs font-medium mt-0.5 tracking-[0.15em]">Internal OS</span>
+        <NavLink to="/dashboard" className="hover:opacity-90 transition-opacity">
+          <Logo variant="textOnly" size="md" showTagline tagline="Internal OS" />
         </NavLink>
         <button onClick={onToggle}
           className="absolute right-3 top-7 w-6 h-6 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-white/[0.08] text-slate-500 hover:text-white transition-colors cursor-pointer bg-transparent border-none">

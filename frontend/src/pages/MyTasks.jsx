@@ -362,11 +362,15 @@ function PriorityBadge({ p }) {
 }
 
 function AlertBanner({ type, message }) {
-  const colors = { warning:{bg:'#fffbeb',border:'#fde68a',color:'#92400e'}, error:{bg:'#fef2f2',border:'#fecaca',color:'#991b1b'}, info:{bg:'#eff6ff',border:'#bfdbfe',color:'#1e40af'} };
-  const c = colors[type] || colors.info;
+  const config = {
+    warning: { bg:'var(--warning-bg)', border:'var(--warning-border)', color:'var(--warning-text)', icon:'⚠️' },
+    error:   { bg:'var(--danger-bg)',  border:'var(--danger-border)',  color:'var(--danger-text)',  icon:'🚨' },
+    info:    { bg:'var(--info-bg)',    border:'var(--border-primary)', color:'var(--info-text)',   icon:'ℹ️' }
+  };
+  const c = config[type] || config.info;
   return (
     <div style={{padding:'10px 14px',background:c.bg,border:`1px solid ${c.border}`,borderRadius:'var(--radius-lg)',fontSize:12,color:c.color,display:'flex',alignItems:'center',gap:8}}>
-      <span>{type === 'warning' ? '⚠️' : type === 'error' ? '🚨' : 'ℹ️'}</span>
+      <span>{c.icon}</span>
       {message}
     </div>
   );
@@ -486,7 +490,7 @@ function AlertsPanel({ alerts }) {
       </div>
       <div style={{padding:'8px 16px'}}>
         {alerts.map((a, i) => {
-          const colors = { high:{bg:'#fef2f2',color:'#991b1b',icon:'🔴'}, medium:{bg:'#fffbeb',color:'#92400e',icon:'🟡'}, low:{bg:'#eff6ff',color:'#1e40af',icon:'🔵'} };
+          const colors = { high:{bg:'var(--danger-bg)',color:'var(--danger-text)',icon:'🔴'}, medium:{bg:'var(--warning-bg)',color:'var(--warning-text)',icon:'🟡'}, low:{bg:'var(--info-bg)',color:'var(--info-text)',icon:'🔵'} };
           const c = colors[a.severity] || colors.low;
           return (
             <div key={i} style={{padding:'8px 0',display:'flex',alignItems:'center',gap:8,borderBottom:i<alerts.length-1?'1px solid var(--border-subtle)':'none'}}>

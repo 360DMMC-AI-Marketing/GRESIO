@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CONTENT_INDEX from '../data/contentIndex';
+import Logo from './Logo';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -78,8 +79,8 @@ export default function PublicNavbar() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'glass-panel' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-5 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center group">
-          <span className="text-3xl font-bold tracking-tight" style={{ background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08))' }}>GRESIO</span>
+        <Link to="/">
+          <Logo size="lg" />
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
           {[

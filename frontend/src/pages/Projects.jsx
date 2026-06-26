@@ -11,16 +11,13 @@ const STATUS_CLASS = {
   delayed:'bg-danger-50 text-danger-700', ready_to_test:'bg-info-50 text-info-700',
   completed:'bg-neutral-100 text-neutral-600',
 };
-const labelStyle = {display:'block',fontSize:9,fontWeight:600,color:'var(--text-secondary)',marginBottom:3,textTransform:'uppercase',letterSpacing:'0.05em'};
-const inputStyle = {width:'100%',padding:'6px 10px',fontSize:11,border:'0.5px solid var(--border-primary)',borderRadius:'var(--radius-md)',outline:'none',boxSizing:'border-box',background:'var(--bg-elevated)'};
-
 export default function Projects() {
   const navigate = useNavigate();
   const location = useLocation();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', departments: [{ name: '', type: 'software' }] });
+  const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', projectType: 'umbrella', departments: [{ name: '', type: 'software' }] });
   const [expanded, setExpanded] = useState({});
   const [confirmState, setConfirmState] = useState(null);
   const [reportProject, setReportProject] = useState(null);
@@ -36,20 +33,23 @@ export default function Projects() {
 
   const handleCreate = async () => {
     try {
-      const depts = form.departments.filter(d => d.name.trim()).map(d => ({ name: d.name.trim(), type: d.type }));
-      if (depts.length === 0) return;
-      const res = await projects.create({
+      const payload = {
         name: form.name,
         description: form.description,
         client: form.client,
         deadline: form.deadline || undefined,
-        departments: depts,
         members: [user._id],
-      });
-      const umb = res.data;
-      setList((prev) => [umb, ...prev]);
+      };
+      if (form.projectType === 'umbrella') {
+        const depts = form.departments.filter(d => d.name.trim()).map(d => ({ name: d.name.trim(), type: d.type }));
+        if (depts.length === 0) return;
+        payload.departments = depts;
+      }
+      const res = await projects.create(payload);
+      const created = res.data;
+      setList((prev) => [created, ...prev]);
       setShowForm(false);
-      setForm({ name: '', description: '', client: '', deadline: '', departments: [{ name: '', type: 'software' }] });
+      setForm({ name: '', description: '', client: '', deadline: '', projectType: 'umbrella', departments: [{ name: '', type: 'software' }] });
     } catch (err) { console.error(err); }
   };
 
@@ -86,55 +86,100 @@ export default function Projects() {
       <Modal open={showForm} onClose={() => setShowForm(false)} title="New Project" icon="📁"
         footer={
           <>
-            <button onClick={() => setShowForm(false)} className="btn btn-gray">Cancel</button>
-            <button data-voice="create-project" onClick={handleCreate} className="btn-premium">Create</button>
+            <button onClick={() => setShowForm(false)}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
+            <button data-voice="create-project" onClick={handleCreate} disabled={!form.name.trim()}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer border-none ${
+                !form.name.trim() ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]' : 'btn-premium text-white'
+              }`}
+              style={form.name.trim() ? {padding:'0.375rem 0.75rem'} : {}}>
+              Create
+            </button>
           </>
         }>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          <div style={{gridColumn:'1/-1'}}><label style={labelStyle}>Project name *</label>
-            <input data-voice="field-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Project name"
-              style={inputStyle} required /></div>
-          <div style={{gridColumn:'1/-1'}}><label style={labelStyle}>Description</label>
-            <input data-voice="field-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description"
-              style={inputStyle} /></div>
-          <div><label style={labelStyle}>Client name</label>
-            <input data-voice="field-client" value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name"
-              style={inputStyle} /></div>
-          <div><label style={labelStyle}>Deadline</label>
-            <input type="date" className="select" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-              style={inputStyle} /></div>
-          <div style={{gridColumn:'1/-1'}}>
-            <label style={labelStyle}>Departments (sub-projects) *</label>
-            {form.departments.map((dept, i) => (
-              <div key={i} style={{display:'flex',gap:6,marginBottom:6,alignItems:'center'}}>
-                <input value={dept.name} onChange={(e) => {
-                  const depts = [...form.departments];
-                  depts[i] = { ...depts[i], name: e.target.value };
-                  setForm({ ...form, departments: depts });
-                }} placeholder="Department name" style={{...inputStyle,flex:1}} />
-                <select value={dept.type} onChange={(e) => {
-                  const depts = [...form.departments];
-                  depts[i] = { ...depts[i], type: e.target.value };
-                  setForm({ ...form, departments: depts });
-                }} className="select" style={{...inputStyle,width:120,fontSize:10}}>
-                  <option value="software">Software</option>
-                  <option value="design">Design</option>
-                  <option value="business">Business</option>
-                  <option value="content">Content</option>
-                  <option value="research">Research</option>
-                </select>
-                {form.departments.length > 1 && (
-                  <button onClick={() => {
-                    const depts = form.departments.filter((_, j) => j !== i);
-                    setForm({ ...form, departments: depts.length ? depts : [{ name: '', type: 'software' }] });
-                  }} className="btn btn-gray" style={{color:'var(--text-danger)',background:'var(--bg-danger-subtle)',padding:'4px 8px',fontSize:11,whiteSpace:'nowrap'}}>✕</button>
-                )}
-              </div>
-            ))}
-            <button onClick={() => setForm({ ...form, departments: [...form.departments, { name: '', type: 'software' }] })} className="btn btn-gray" style={{padding:'4px 10px',fontSize:10}}>
-              + Add department
-            </button>
+        <div className="space-y-2.5">
+          <div>
+            <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Project type</label>
+            <div className="flex gap-1.5">
+              <button type="button" onClick={() => setForm({ ...form, projectType: 'standalone' })}
+                className={`flex-1 text-xs font-medium rounded-lg transition-all cursor-pointer border-none px-3 py-1.5 ${
+                  form.projectType === 'standalone'
+                    ? 'btn-premium text-white'
+                    : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-primary)]'
+                }`}
+                style={form.projectType === 'standalone' ? {padding:'0.375rem 0.75rem'} : {}}>
+                📄 Standalone Project
+              </button>
+              <button type="button" onClick={() => setForm({ ...form, projectType: 'umbrella' })}
+                className={`flex-1 text-xs font-medium rounded-lg transition-all cursor-pointer border-none px-3 py-1.5 ${
+                  form.projectType === 'umbrella'
+                    ? 'btn-premium text-white'
+                    : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-primary)]'
+                }`}
+                style={form.projectType === 'umbrella' ? {padding:'0.375rem 0.75rem'} : {}}>
+                🏢 Umbrella + Sub-Projects
+              </button>
+            </div>
           </div>
+          <div>
+            <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Project name *</label>
+            <input data-voice="field-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Project name"
+              className="w-full px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition-all box-border" required />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Description</label>
+            <input data-voice="field-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description"
+              className="w-full px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition-all box-border" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Client name</label>
+              <input data-voice="field-client" value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name"
+                className="w-full px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition-all box-border" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Deadline</label>
+              <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+                className="select w-full" />
+            </div>
+          </div>
+          {form.projectType === 'umbrella' && (
+            <div>
+              <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Departments (sub-projects) *</label>
+              {form.departments.map((dept, i) => (
+                <div key={i} className="flex gap-1.5 mb-1.5 items-center">
+                  <input value={dept.name} onChange={(e) => {
+                    const depts = [...form.departments];
+                    depts[i] = { ...depts[i], name: e.target.value };
+                    setForm({ ...form, departments: depts });
+                  }} placeholder="Department name"
+                    className="flex-1 px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition-all box-border" />
+                  <select value={dept.type} onChange={(e) => {
+                    const depts = [...form.departments];
+                    depts[i] = { ...depts[i], type: e.target.value };
+                    setForm({ ...form, departments: depts });
+                  }} className="select w-[120px] text-xs">
+                    <option value="software">Software</option>
+                    <option value="design">Design</option>
+                    <option value="business">Business</option>
+                    <option value="content">Content</option>
+                    <option value="research">Research</option>
+                  </select>
+                  {form.departments.length > 1 && (
+                    <button onClick={() => {
+                      const depts = form.departments.filter((_, j) => j !== i);
+                      setForm({ ...form, departments: depts.length ? depts : [{ name: '', type: 'software' }] });
+                    }} className="px-2 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer border-none whitespace-nowrap"
+                      style={{color:'var(--text-danger)',background:'var(--bg-danger-subtle)'}}>✕</button>
+                  )}
+                </div>
+              ))}
+              <button onClick={() => setForm({ ...form, departments: [...form.departments, { name: '', type: 'software' }] })}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">
+                + Add department
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
 

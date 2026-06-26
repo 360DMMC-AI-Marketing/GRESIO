@@ -15,7 +15,7 @@ exports.getDashboardStats = async (req, res, next) => {
     // For task/test counts, include sub-projects
     const allProjectIds = isAdmin
       ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
-      : await getDomainProjectIds(req.user.domain);
+      : await getDomainProjectIds(req.user.domain, req.user);
 
     const userFilter = { isActive: true, ...domainFilter };
     const totalUsers = await User.countDocuments(userFilter);
@@ -93,7 +93,7 @@ exports.getWorkloadBalance = async (req, res, next) => {
     const domainFilter = isAdmin ? {} : { domain: req.user.domain };
     const projectIds = isAdmin
       ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
-      : await getDomainProjectIds(req.user.domain);
+      : await getDomainProjectIds(req.user.domain, req.user);
     const users = await User.find({ isActive: true, ...domainFilter }).populate('assignedProjects');
     const workload = users.map((u) => ({
       userId: u._id, name: u.name, role: u.role, activityScore: u.activityScore,
@@ -113,12 +113,27 @@ exports.getProjectPredictions = async (req, res, next) => {
   try {
     const filter = { isActive: true, parentProject: null };
     if (req.user.role !== 'admin') filter.domain = req.user.domain;
-    const projects = await Project.find(filter).lean();
-    const predictions = await Promise.all(projects.map(async (p) => {
-      const projectIds = p.projectType === 'umbrella'
-        ? [p._id, ...(await Project.find({ parentProject: p._id, isActive: true }).select('_id').lean()).map(c => c._id)]
-        : [p._id];
-      const tasks = await Task.find({ project: { $in: projectIds }, isActive: true }).lean();
+    const projects = await Project.find(filter).select('_id name projectType status startDate deadline').lean();
+    const rootIds = projects.map(p => p._id);
+    const childProjects = await Project.find({ parentProject: { $in: rootIds }, isActive: true }).select('_id parentProject').lean();
+    const childIdsByParent = {};
+    for (const c of childProjects) {
+      const pid = String(c.parentProject);
+      if (!childIdsByParent[pid]) childIdsByParent[pid] = [];
+      childIdsByParent[pid].push(c._id);
+    }
+    const allProjectIds = [...rootIds, ...childProjects.map(c => c._id)];
+    const allTasks = await Task.find({ project: { $in: allProjectIds }, isActive: true }).select('project status deadline').lean();
+    const tasksByProject = {};
+    for (const t of allTasks) {
+      const pid = String(t.project);
+      if (!tasksByProject[pid]) tasksByProject[pid] = [];
+      tasksByProject[pid].push(t);
+    }
+    const predictions = projects.map((p) => {
+      const childIds = childIdsByParent[String(p._id)] || [];
+      const projectIds = p.projectType === 'umbrella' ? [String(p._id), ...childIds.map(c => String(c))] : [String(p._id)];
+      const tasks = projectIds.flatMap(pid => tasksByProject[pid] || []);
       const total = tasks.length;
       const done = tasks.filter((t) => t.status === 'done').length;
       const overdue = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
@@ -130,7 +145,7 @@ exports.getProjectPredictions = async (req, res, next) => {
       if (overdue > 0 || (daysUntilDeadline !== null && daysUntilDeadline < 7 && completionRate < 80)) risk = 'high';
       else if (overdue === 0 && (daysUntilDeadline !== null && daysUntilDeadline < 14)) risk = 'medium';
       return { projectId: p._id, name: p.name, completionRate: Math.round(completionRate), overdue, inProgress, total, done, daysSinceStart, daysUntilDeadline, risk, status: p.status };
-    }));
+    });
     res.json(predictions);
   } catch (error) { next(error); }
 };
@@ -142,7 +157,7 @@ exports.getCompanyAnalytics = async (req, res, next) => {
     // All non-umbrella project IDs for task/sprint queries
     const projectIds = isAdmin
       ? (await Project.find({ isActive: true, projectType: { $ne: 'umbrella' } }).select('_id').lean()).map(p => String(p._id))
-      : await getDomainProjectIds(req.user.domain);
+      : await getDomainProjectIds(req.user.domain, req.user);
 
     // ── Company Overview (top-level projects only) ──
     const allProjects = await Project.find({ ...domainFilter, parentProject: null }).lean();
@@ -397,32 +412,42 @@ exports.getCompanyAnalytics = async (req, res, next) => {
 exports.getProjectTeamAnalytics = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
     const TeamGroup = require('../models/TeamGroup');
     const ProjectMember = require('../models/ProjectMember');
-    const groups = await TeamGroup.find({ project: projectId, isArchived: false }).sort({ order: 1 });
-    const result = [];
-    for (const g of groups) {
-      const memberIds = await ProjectMember.find({ project: projectId, teamGroup: g._id, status: 'active' })
+    const [groups, allMembers, tasksByUser] = await Promise.all([
+      TeamGroup.find({ project: projectId, isArchived: false }).sort({ order: 1 }).lean(),
+      ProjectMember.find({ project: projectId, status: 'active' })
         .populate('user', 'name email avatar role')
-        .then(members => members.filter(m => m.user));
-      const userIds = memberIds.map(m => m.user._id);
-      const totalTasks = await Task.countDocuments({ project: projectId, assignee: { $in: userIds }, isActive: true });
-      const doneTasks = await Task.countDocuments({ project: projectId, assignee: { $in: userIds }, status: 'done', isActive: true });
-      result.push({
+        .then(members => members.filter(m => m.user)),
+      Task.aggregate([
+        { $match: { project: projectId, isActive: true } },
+        { $group: { _id: '$assignee', total: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } },
+      ]),
+    ]);
+    const taskCounts = {};
+    for (const t of tasksByUser) {
+      taskCounts[String(t._id)] = { total: t.total, done: t.done };
+    }
+    const result = groups.map((g) => {
+      const groupMembers = allMembers.filter(m => String(m.teamGroup || '') === String(g._id));
+      const userIds = groupMembers.map(m => String(m.user._id));
+      const totalTasks = userIds.reduce((sum, uid) => sum + (taskCounts[uid]?.total || 0), 0);
+      const doneTasks = userIds.reduce((sum, uid) => sum + (taskCounts[uid]?.done || 0), 0);
+      return {
         groupId: g._id,
         name: g.name,
         icon: g.icon,
-        memberCount: memberIds.length,
-        members: memberIds.map(m => ({ _id: m.user._id, name: m.user.name, email: m.user.email, role: m.projectRole })),
+        memberCount: groupMembers.length,
+        members: groupMembers.map(m => ({ _id: m.user._id, name: m.user.name, email: m.user.email, role: m.projectRole })),
         totalTasks,
         doneTasks,
         completionRate: totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0,
-      });
-    }
+      };
+    });
     const totalAll = result.reduce((s, g) => s + g.totalTasks, 0);
     const withPct = result.map(g => ({
       ...g,

@@ -426,32 +426,49 @@ async function checkOverdueDeadlines() {
     const Notification = require('./models/Notification');
     const User = require('./models/User');
     const now = new Date();
-    const overdueTasks = await Task.find({ deadline: { $lt: now }, status: { $ne: 'done' } }).populate('project', 'name domain members');
+    const overdueTasks = await Task.find({ deadline: { $lt: now }, status: { $ne: 'done' } }).populate('project', 'name domain members').lean();
+
+    // Batch-check which tasks already have notifications
+    const taskIds = overdueTasks.map(t => String(t._id));
+    const existingNotifs = taskIds.length > 0
+      ? await Notification.find({ type: 'deadline_alert', 'metadata.taskId': { $in: taskIds } }).select('metadata.taskId').lean()
+      : [];
+    const notifiedTasks = new Set(existingNotifs.map(n => n.metadata?.taskId));
+
+    // Collect unique domains for batch admin lookup
+    const domains = [...new Set(overdueTasks.filter(t => t.project?.domain).map(t => t.project.domain))];
+    const adminsByDomain = {};
+    if (domains.length > 0) {
+      const allAdmins = await User.find({ role: 'admin', domain: { $in: domains } }).select('_id domain').lean();
+      for (const a of allAdmins) {
+        if (!adminsByDomain[a.domain]) adminsByDomain[a.domain] = [];
+        adminsByDomain[a.domain].push(a._id);
+      }
+    }
+
     for (const task of overdueTasks) {
-      const existing = await Notification.countDocuments({ type: 'deadline_alert', 'metadata.taskId': String(task._id) });
-      if (existing > 0) continue;
-      const notifData = {
-        type: 'deadline_alert',
-        title: `Overdue: ${task.title}`,
-        message: `Task was due ${Math.ceil((now - new Date(task.deadline)) / 86400000)} day(s) ago`,
-        link: task.project?._id ? `/projects/${task.project._id}` : '/tasks',
-        domain: task.project?.domain || '',
-        metadata: { taskId: String(task._id) },
-      };
+      if (notifiedTasks.has(String(task._id))) continue;
+      const domain = task.project?.domain || '';
       const recipients = [];
       if (task.assignee) recipients.push(task.assignee);
       if (task.project?.members) {
-        const admins = await User.find({ role: 'admin', domain: task.project.domain, _id: { $nin: recipients } }).select('_id');
-        admins.forEach(a => { if (!recipients.some(r => r.toString() === a._id.toString())) recipients.push(a._id); });
+        const domainAdmins = adminsByDomain[domain] || [];
+        for (const aId of domainAdmins) {
+          if (!recipients.some(r => r.toString() === aId.toString())) recipients.push(aId);
+        }
       }
       if (recipients.length) {
-        const docs = recipients.map(user => ({ ...notifData, user }));
+        const docs = recipients.map(user => ({
+          type: 'deadline_alert', title: `Overdue: ${task.title}`,
+          message: `Task was due ${Math.ceil((now - new Date(task.deadline)) / 86400000)} day(s) ago`,
+          link: task.project?._id ? `/projects/${task.project._id}` : '/tasks',
+          domain, user,
+          metadata: { taskId: String(task._id) },
+        }));
         const created = await Notification.insertMany(docs);
         const { getIO } = require('./socket/ioProvider');
         const io = getIO();
-        for (const n of created) {
-          try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {}
-        }
+        for (const n of created) { try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} }
       }
     }
   } catch (e) { console.error('Overdue check error:', e.message); }
@@ -464,20 +481,50 @@ async function checkUpcomingDeadlines() {
     const Sprint = require('./models/Sprint');
     const Project = require('./models/Project');
     const Notification = require('./models/Notification');
+    const User = require('./models/User');
     const tomorrow = new Date(Date.now() + 86400000);
     tomorrow.setHours(23, 59, 59, 999);
     const dayAfter = new Date(Date.now() + 2 * 86400000);
     dayAfter.setHours(0, 0, 0, 0);
 
-    const tasksDue = await Task.find({
-      deadline: { $gte: dayAfter, $lte: tomorrow },
-      status: { $ne: 'done' },
-      isActive: true,
-    }).populate('project', 'name domain members').lean();
+    const [tasksDue, sprintsEnding] = await Promise.all([
+      Task.find({
+        deadline: { $gte: dayAfter, $lte: tomorrow },
+        status: { $ne: 'done' },
+        isActive: true,
+      }).populate('project', 'name domain members').lean(),
+      Sprint.find({
+        endDate: { $gte: dayAfter, $lte: tomorrow },
+      }).populate('project', 'name domain').lean(),
+    ]);
+
+    // Batch-check existing notifications
+    const taskIds = tasksDue.map(t => String(t._id));
+    const sprintIds = sprintsEnding.map(s => String(s._id));
+    const [existingTaskNotifs, existingSprintNotifs] = await Promise.all([
+      taskIds.length > 0
+        ? Notification.find({ type: 'deadline_alert', 'metadata.subtype': 'upcoming', 'metadata.taskId': { $in: taskIds } }).select('metadata.taskId').lean()
+        : [],
+      sprintIds.length > 0
+        ? Notification.find({ type: 'deadline_alert', 'metadata.subtype': 'sprint_ending', 'metadata.sprintId': { $in: sprintIds } }).select('metadata.sprintId').lean()
+        : [],
+    ]);
+    const notifiedTasks = new Set(existingTaskNotifs.map(n => n.metadata?.taskId));
+    const notifiedSprints = new Set(existingSprintNotifs.map(n => n.metadata?.sprintId));
+
+    // Batch-fetch users per domain
+    const allDomains = [...new Set([...tasksDue, ...sprintsEnding].filter(x => x.project?.domain).map(x => x.project.domain))];
+    const usersByDomain = {};
+    if (allDomains.length > 0) {
+      const allUsers = await User.find({ domain: { $in: allDomains } }).select('_id domain').lean();
+      for (const u of allUsers) {
+        if (!usersByDomain[u.domain]) usersByDomain[u.domain] = [];
+        usersByDomain[u.domain].push(u._id);
+      }
+    }
 
     for (const task of tasksDue) {
-      const existing = await Notification.countDocuments({ type: 'deadline_alert', 'metadata.taskId': String(task._id), 'metadata.subtype': 'upcoming' });
-      if (existing > 0) continue;
+      if (notifiedTasks.has(String(task._id))) continue;
       const recipients = task.assignee ? [task.assignee] : [];
       if (task.project?.members) {
         for (const m of task.project.members) {
@@ -498,19 +545,15 @@ async function checkUpcomingDeadlines() {
       }
     }
 
-    const sprintsEnding = await Sprint.find({
-      endDate: { $gte: dayAfter, $lte: tomorrow },
-    }).populate('project', 'name domain').lean();
-
     for (const sprint of sprintsEnding) {
-      const existing = await Notification.countDocuments({ type: 'deadline_alert', 'metadata.sprintId': String(sprint._id), 'metadata.subtype': 'sprint_ending' });
-      if (existing > 0) continue;
-      const recipients = sprint.project ? await require('./models/User').find({ domain: sprint.project.domain }).select('_id').lean() : [];
-      if (recipients.length) {
-        const docs = recipients.map(u => ({
+      if (notifiedSprints.has(String(sprint._id))) continue;
+      const domain = sprint.project?.domain || '';
+      const domainUsers = usersByDomain[domain] || [];
+      if (domainUsers.length) {
+        const docs = domainUsers.map(_id => ({
           type: 'deadline_alert', title: `Sprint ending tomorrow: ${sprint.name}`,
           message: `Sprint "${sprint.name}" (${sprint.project?.name}) ends tomorrow`,
-          link: `/sprints`, domain: sprint.project?.domain || '', user: u._id,
+          link: `/sprints`, domain, user: _id,
           metadata: { sprintId: String(sprint._id), subtype: 'sprint_ending' },
         }));
         const created = await Notification.insertMany(docs);

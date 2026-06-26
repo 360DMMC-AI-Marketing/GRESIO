@@ -11,22 +11,31 @@ const populate = q => q
   .populate('project', 'name status')
   .populate('createdBy', 'name')
   .populate({ path: 'tasks', populate: { path: 'assignee', select: 'name avatar role' } })
-  .populate({ path: 'testingItems', populate: { path: 'assignee', select: 'name avatar role' } });
+  .populate({ path: 'testingItems', populate: { path: 'assignee', select: 'name avatar role' } })
+  .lean();
 
 exports.getSprints = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { project: { $in: projectIds }, isActive: true };
     if (req.query.project) filter.project = req.query.project;
     if (req.query.status) filter.status = req.query.status;
-    const sprints = await populate(Sprint.find(filter).sort({ startDate: -1 }));
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = populate(Sprint.find(filter).sort({ startDate: -1 }));
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const sprints = await query;
+    if (page && limit) {
+      const total = await Sprint.countDocuments(filter);
+      return res.json({ data: sprints, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(sprints);
   } catch (e) { next(e); }
 };
 
 exports.getSprintById = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const sprint = await populate(Sprint.findOne({ _id: req.params.id, project: { $in: projectIds } }));
     if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
     res.json(sprint);
@@ -35,7 +44,7 @@ exports.getSprintById = async (req, res, next) => {
 
 exports.createSprint = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (req.body.project && !projectIds.includes(req.body.project)) {
       return res.status(403).json({ message: 'Project not in your domain' });
     }
@@ -69,7 +78,7 @@ exports.createSprint = async (req, res, next) => {
 
 exports.updateSprint = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const allowed = ['name', 'goal', 'startDate', 'endDate', 'status', 'completedAt'];
     const updates = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
@@ -114,7 +123,7 @@ exports.updateSprint = async (req, res, next) => {
 
 exports.addTaskToSprint = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const sprint = await populate(Sprint.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { $addToSet: { tasks: req.body.taskId } }, { new: true }));
     if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
     if (req.body.taskId) {
@@ -133,7 +142,7 @@ exports.addTaskToSprint = async (req, res, next) => {
 
 exports.removeTaskFromSprint = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const sprint = await populate(Sprint.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { $pull: { tasks: req.params.taskId } }, { new: true }));
     res.json(sprint);
   } catch (e) { next(e); }
@@ -141,7 +150,7 @@ exports.removeTaskFromSprint = async (req, res, next) => {
 
 exports.deleteSprint = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const sprint = await Sprint.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
     const projectId = sprint?.project;

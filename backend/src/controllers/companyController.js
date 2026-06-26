@@ -253,15 +253,19 @@ exports.importCompanyUsers = async (req, res, next) => {
     const adminUser = await User.findById(req.user._id);
     let imported = 0, skipped = 0;
     const newUsers = [];
+    const allEmails = graphUsers.map(gu => (gu.mail || gu.userPrincipalName || '').toLowerCase()).filter(Boolean);
+    const existingUsers = allEmails.length > 0 ? await User.find({ $or: [{ outlookEmail: { $in: allEmails } }, { email: { $in: allEmails } }] }).lean() : [];
+    const existingByEmail = new Map();
+    for (const u of existingUsers) {
+      if (u.email) existingByEmail.set(u.email.toLowerCase(), u);
+      if (u.outlookEmail) existingByEmail.set(u.outlookEmail.toLowerCase(), u);
+    }
     for (const gu of graphUsers) {
       const email = (gu.mail || gu.userPrincipalName || '').toLowerCase();
       if (!email) { skipped++; continue; }
-      const existing = await User.findOne({
-        $or: [{ outlookEmail: email }, { email }],
-      });
+      const existing = existingByEmail.get(email);
       const userRole = inferRoleFromJobTitle(gu.jobTitle, gu.department);
       if (existing) {
-        // Update existing user's role and outlookEmail if we have better data
         let updated = false;
         if (userRole !== 'developer' && existing.role !== userRole) {
           existing.role = userRole;
@@ -272,7 +276,7 @@ exports.importCompanyUsers = async (req, res, next) => {
           updated = true;
         }
         if (updated) {
-          await existing.save();
+          await User.findByIdAndUpdate(existing._id, { role: existing.role, outlookEmail: existing.outlookEmail });
         }
         skipped++;
         continue;
@@ -283,9 +287,9 @@ exports.importCompanyUsers = async (req, res, next) => {
       }
       const tempPassword = crypto.randomBytes(8).toString('hex') + 'Aa1!';
       const deptFromRole = GROUP_BY_USER_ROLE[userRole]?.groupName || 'Development Team';
-      const created = await User.create({
+      newUsers.push({
         name: gu.displayName || email.split('@')[0],
-        email: email,
+        email,
         password: tempPassword,
         role: userRole,
         department: [deptFromRole],
@@ -293,21 +297,22 @@ exports.importCompanyUsers = async (req, res, next) => {
         teamsId: gu.id || '',
         domain: company.domain,
         isActive: true,
+        _tempPassword: tempPassword,
       });
-      newUsers.push({ user: created, tempPassword });
       imported++;
     }
     if (newUsers.length > 0) {
+      const createdDocs = await User.insertMany(newUsers.map(({ _tempPassword, ...u }) => u));
       const { sendEmail } = require('../services/emailService');
-      for (const { user: u, tempPassword } of newUsers) {
+      for (let i = 0; i < createdDocs.length; i++) {
         try {
           await sendEmail({
-            to: u.email,
+            to: createdDocs[i].email,
             senderEmail: adminUser?.outlookEmail || req.user.email,
             subject: 'You have been added to GRESIO',
-            html: `<p>Hi ${u.name},</p><p>You have been added to GRESIO for <strong>${company.name}</strong> in the <strong>${u.role}</strong> role.</p><p>Login: ${env.FRONTEND_URL}<br>Email: ${u.email}<br>Temporary password: <strong>${tempPassword}</strong></p>`,
+            html: `<p>Hi ${createdDocs[i].name},</p><p>You have been added to GRESIO for <strong>${company.name}</strong> in the <strong>${createdDocs[i].role}</strong> role.</p><p>Login: ${env.FRONTEND_URL}<br>Email: ${createdDocs[i].email}<br>Temporary password: <strong>${newUsers[i]._tempPassword}</strong></p>`,
           });
-        } catch (e) { console.error(`Email failed for ${u.email}:`, e.message); }
+        } catch (e) { console.error(`Email failed for ${createdDocs[i].email}:`, e.message); }
       }
     }
     res.json({ imported, skipped, total: graphUsers.length, planLimitReached: planLimit !== Infinity && (currentActive + imported) >= planLimit });

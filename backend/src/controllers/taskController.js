@@ -34,7 +34,7 @@ async function isUserProjectMember(projectId, userId) {
 exports.getTasks = async (req, res, next) => {
   try {
     const { status, project, assignee, priority, sprint } = req.query;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { scope: 'project', project: { $in: projectIds }, isActive: true };
     if (status) {
       const statuses = status.split(',');
@@ -102,7 +102,7 @@ exports.getSeparateTasks = async (req, res, next) => {
 
 exports.getTaskById = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const task = await Task.findOne({
       _id: req.params.id,
       $or: [
@@ -128,7 +128,7 @@ exports.getTaskById = async (req, res, next) => {
 
 exports.createTask = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.includes(req.body.projectId)) {
       return res.status(403).json({ message: 'Project not found in your domain' });
     }
@@ -298,8 +298,8 @@ async function updateProjectProgress(projectId) {
 
 exports.updateProjectProgress = updateProjectProgress;
 
-async function findTaskInDomain(taskId, domain) {
-  const projectIds = await getDomainProjectIds(domain);
+async function findTaskInDomain(taskId, domain, user = null) {
+  const projectIds = await getDomainProjectIds(domain, user);
   return Task.findOne({
     _id: taskId,
     isActive: true,
@@ -312,7 +312,7 @@ async function findTaskInDomain(taskId, domain) {
 
 exports.updateTask = async (req, res, next) => {
   try {
-    const task = await findTaskInDomain(req.params.id, req.user.domain);
+    const task = await findTaskInDomain(req.params.id, req.user.domain, req.user);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     if (req.body.assigneeEmail) {
       const outlookUser = await User.findOne({ outlookEmail: req.body.assigneeEmail });
@@ -456,7 +456,7 @@ exports.updateTask = async (req, res, next) => {
 
 exports.deleteTask = async (req, res, next) => {
   try {
-    const task = await findTaskInDomain(req.params.id, req.user.domain);
+    const task = await findTaskInDomain(req.params.id, req.user.domain, req.user);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     const isCreator = task.createdBy && String(task.createdBy) === String(req.user._id);
     const isAdmin = req.user.role === 'admin';
@@ -487,7 +487,7 @@ exports.deleteTask = async (req, res, next) => {
 
 exports.addSubtask = async (req, res, next) => {
   try {
-    const task = await findTaskInDomain(req.params.id, req.user.domain);
+    const task = await findTaskInDomain(req.params.id, req.user.domain, req.user);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     task.subtasks.push(req.body);
     await task.save();
@@ -504,7 +504,7 @@ exports.addSubtask = async (req, res, next) => {
 
 exports.updateSubtask = async (req, res, next) => {
   try {
-    const task = await findTaskInDomain(req.params.id, req.user.domain);
+    const task = await findTaskInDomain(req.params.id, req.user.domain, req.user);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     const sub = task.subtasks.id(req.params.subtaskId);
     if (!sub) return res.status(404).json({ message: 'Subtask not found' });
@@ -523,7 +523,7 @@ exports.updateSubtask = async (req, res, next) => {
 
 exports.deleteSubtask = async (req, res, next) => {
   try {
-    const task = await findTaskInDomain(req.params.id, req.user.domain);
+    const task = await findTaskInDomain(req.params.id, req.user.domain, req.user);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     task.subtasks.pull(req.params.subtaskId);
     await task.save();
@@ -553,7 +553,7 @@ exports.bulkUpdateTasks = async (req, res, next) => {
       return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
     }
     const domain = req.user.domain;
-    const projectIds = await getDomainProjectIds(domain);
+    const projectIds = await getDomainProjectIds(domain, req.user);
     const tasks = await Task.find({ _id: { $in: taskIds }, project: { $in: projectIds }, isActive: true });
     if (tasks.length === 0) {
       return res.status(404).json({ message: 'No tasks found' });
@@ -649,7 +649,7 @@ exports.autoPrioritize = async (req, res, next) => {
 
 exports.getRiskForecast = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const tasks = await Task.find({
       project: { $in: projectIds },
       isActive: true,

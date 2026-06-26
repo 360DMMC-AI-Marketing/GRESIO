@@ -3,7 +3,7 @@ const { getDomainProjectIds } = require('../config/planLimits');
 
 exports.getGroups = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -15,7 +15,7 @@ exports.getGroups = async (req, res, next) => {
 
 exports.createGroup = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -34,7 +34,7 @@ exports.createGroup = async (req, res, next) => {
 
 exports.updateGroup = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const allowed = ['name', 'icon', 'roles', 'order'];
     const updates = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
@@ -50,7 +50,7 @@ exports.updateGroup = async (req, res, next) => {
 
 exports.archiveGroup = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const group = await TeamGroup.findOneAndUpdate(
       { _id: req.params.groupId, project: { $in: projectIds } },
       { isArchived: true },
@@ -81,7 +81,7 @@ exports.getAllDomainGrouped = async (req, res, next) => {
     const isAdmin = req.user.role === 'admin';
     const projectIds = isAdmin
       ? (await require('../models/Project').find({ isActive: true }).select('_id').lean()).map(p => String(p._id))
-      : await getDomainProjectIds(req.user.domain);
+      : await getDomainProjectIds(req.user.domain, req.user);
     const User = require('../models/User');
     const { DEFAULT_GROUPS } = require('../models/TeamGroup');
     const mongoose = require('mongoose');
@@ -218,7 +218,7 @@ exports.getAllDomainGrouped = async (req, res, next) => {
 
 exports.getGroupedMembers = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }

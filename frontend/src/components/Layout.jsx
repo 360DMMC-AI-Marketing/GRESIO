@@ -3,6 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import Logo from './Logo';
 import VoiceController from './VoiceController';
 import AiAssistantPanel from './AiAssistantPanel';
 
@@ -70,7 +71,7 @@ export default function Layout() {
       <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingLeft: isMobile ? 0 : sidebarWidth, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderTop: '0.5px solid var(--border-primary)' }}>
         <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 max-w-7xl mx-auto text-xs">
           <div className="flex items-center gap-2.5">
-            <span className="font-semibold" style={{color: 'var(--text-secondary)'}}>GRESIO</span>
+            <Logo variant="textOnly" size="sm" />
             <span style={{color: 'var(--border-primary)'}}>|</span>
             <span style={{color: 'var(--text-muted)'}}>&copy; {new Date().getFullYear()} All rights reserved.</span>
           </div>

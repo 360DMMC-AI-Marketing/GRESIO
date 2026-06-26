@@ -58,7 +58,7 @@ export default function Notifications() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-surface-200 shadow-sm overflow-hidden">
+      <div style={{background:'var(--glass-bg)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-xl)',boxShadow:'var(--glass-shadow)'}}>
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-surface-400">
             <Bell size={40} className="mb-3 opacity-30" />
@@ -75,7 +75,7 @@ export default function Notifications() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-surface-900">{n.title}</span>
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-[#2347e8] shrink-0" />}
+                    {!n.read && <span className="w-2 h-2 rounded-full shrink-0" style={{background:'var(--brand-primary)'}} />}
                   </div>
                   <p className="text-xs text-surface-500 mt-0.5 leading-relaxed">{n.message}</p>
                   <p className="text-[10px] text-surface-400 mt-1">{timeAgo(n.createdAt)}</p>

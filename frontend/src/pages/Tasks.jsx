@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { tasks, users as usersApi } from '../services/api';
+import { tasks, users as usersApi, projects as projectsApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
@@ -33,6 +33,8 @@ export default function Tasks() {
   const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
   const [allUsers, setAllUsers] = useState([]);
   const [draggedTask, setDraggedTask] = useState(null);
+  const [projectFilter, setProjectFilter] = useState('');
+  const [projectsList, setProjectsList] = useState([]);
 
   const canCreateSeparate = ['admin', 'project_manager', 'team_lead', 'manager'].includes(user?.role);
   const isManager = ['admin', 'project_manager', 'team_lead', 'manager'].includes(user?.role);
@@ -65,10 +67,11 @@ export default function Tasks() {
     }
   }, [tab]);
 
-  const fetchProjectTasks = useCallback((f) => {
+  const fetchProjectTasks = useCallback((f, proj) => {
     setLoading(true);
     const params = {};
     if (f !== 'all') params.status = f;
+    if (proj) params.project = proj;
     tasks.getAll(params).then((res) => setProjectTasks(res.data)).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -80,13 +83,18 @@ export default function Tasks() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'project') fetchProjectTasks(filter);
+    if (tab === 'project') fetchProjectTasks(filter, projectFilter);
     else fetchSeparateTasks(filter);
-  }, [tab, filter, fetchProjectTasks, fetchSeparateTasks]);
+  }, [tab, filter, projectFilter, fetchProjectTasks, fetchSeparateTasks]);
 
   useEffect(() => {
     usersApi.getAll().then((res) => setAllUsers(res.data)).catch(() => {});
+    projectsApi.getAll().then((res) => setProjectsList(res.data)).catch(() => {});
   }, []);
+
+  const handleProjectFilterChange = (e) => {
+    setProjectFilter(e.target.value);
+  };
 
   const currentList = tab === 'project' ? projectTasks : separateTasks;
   const filtered = search
@@ -150,13 +158,13 @@ export default function Tasks() {
       </div>
 
       <div className="flex gap-0 border-b border-surface-200">
-        <button data-voice="tab-project-tasks" onClick={() => { setTab('project'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
+        <button data-voice="tab-project-tasks" onClick={() => { setTab('project'); setFilter('all'); setSearch(''); setProjectFilter(''); setSelectedTask(null); }}
           className={`px-5 py-2 text-xs font-semibold cursor-pointer transition-all ${
             tab === 'project' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-surface-400 border-b-2 border-transparent hover:text-surface-600'
           }`}>
           Project Tasks
         </button>
-        <button data-voice="tab-separate-tasks" onClick={() => { setTab('separate'); setFilter('all'); setSearch(''); setSelectedTask(null); }}
+        <button data-voice="tab-separate-tasks" onClick={() => { setTab('separate'); setFilter('all'); setSearch(''); setProjectFilter(''); setSelectedTask(null); }}
           className={`px-5 py-2 text-xs font-semibold cursor-pointer transition-all ${
             tab === 'separate' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-surface-400 border-b-2 border-transparent hover:text-surface-600'
           }`}>
@@ -176,6 +184,15 @@ export default function Tasks() {
               </span>
             ))}
           </div>
+          {tab === 'project' && (
+            <select value={projectFilter} onChange={handleProjectFilterChange}
+              className="px-2 py-1 border border-surface-200 rounded-[var(--radius-lg)] text-[10px] bg-surface-50 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 max-w-[160px] transition-all cursor-pointer">
+              <option value="">All projects</option>
+              {projectsList.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+            </select>
+          )}
           <div className="ml-auto">
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
               className="px-2 py-1 border border-surface-200 rounded-[var(--radius-lg)] text-[10px] bg-surface-50 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 w-[110px] transition-all" />

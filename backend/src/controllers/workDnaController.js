@@ -70,7 +70,7 @@ exports.getDecisionTrailHandler = async (req, res, next) => {
 
 exports.getProjectDejaVuHandler = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.includes(req.params.id)) {
       return res.status(403).json({ message: 'Project not in your domain' });
     }
@@ -123,7 +123,7 @@ exports.searchDejaVu = async (req, res, next) => {
 
 exports.getWorkDnaDashboard = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const projectCount = projectIds.length;
     const taskCount = await Task.countDocuments({ project: { $in: projectIds }, isActive: true });
     const decisionCount = await DecisionJournal.countDocuments({ domain: req.user.domain });
@@ -251,18 +251,53 @@ exports.analyzeAllProjects = async (req, res, next) => {
     const month = new Date().toISOString().slice(0, 7);
     let analyzed = 0;
     let existingCount = 0;
+    const projectIds = projects.map(p => p._id);
+
+    // Batch-check all existing analyses in one query
+    const allExisting = await AiAnalysis.find({ projectId: { $in: projectIds }, analyzedMonth: month, domain }).select('projectId').lean();
+    const existingSet = new Set(allExisting.map(e => String(e.projectId)));
+    existingCount = existingSet.size;
+
+    // Batch-fetch all related data in parallel (one query per collection)
+    const [allTasks, allSprints, allBugs, allDecisions, allResources] = await Promise.all([
+      Task.find({ project: { $in: projectIds } }).populate('project', 'name').sort({ createdAt: -1 }).lean(),
+      Sprint.find({ project: { $in: projectIds } }).populate('project', 'name').sort({ createdAt: -1 }).lean(),
+      Bug.find({ project: { $in: projectIds } }).populate('project', 'name').sort({ createdAt: -1 }).lean(),
+      DecisionJournal.find({ project: { $in: projectIds } }).populate('createdBy', 'name').sort({ createdAt: -1 }).lean(),
+      Resource.find({ project: { $in: projectIds } }).sort({ createdAt: -1 }).lean(),
+    ]);
+
+    // Index by project _id string
+    const indexBy = (arr, field) => {
+      const map = new Map();
+      for (const item of arr) {
+        const key = typeof item[field] === 'object' ? String(item[field]._id || item[field]) : String(item[field]);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(item);
+      }
+      return map;
+    };
+    const tasksByProject = indexBy(allTasks, 'project');
+    const sprintsByProject = indexBy(allSprints, 'project');
+    const bugsByProject = indexBy(allBugs, 'project');
+    const decisionsByProject = indexBy(allDecisions, 'project');
+    const resourcesByProject = indexBy(allResources, 'project');
+
+    // Batch-fetch all members for projects needing analysis
+    const allMemberIds = [...new Set(projects.flatMap(p => p.members || []).map(m => String(m)))];
+    const allMembers = allMemberIds.length > 0 ? await User.find({ _id: { $in: allMemberIds } }).select('name role avatar').lean() : [];
+    const membersById = new Map(allMembers.map(m => [String(m._id), m]));
+
+    const analysisDocs = [];
 
     for (const p of projects) {
-      const existing = await AiAnalysis.findOne({ projectId: p._id, analyzedMonth: month, domain }).lean();
-      if (existing) { existingCount++; continue; }
-
-      const tasks = await Task.find({ project: p._id }).populate('project', 'name').sort({ createdAt: -1 }).limit(200).lean();
-      const sprints = await Sprint.find({ project: p._id }).populate('project', 'name').sort({ createdAt: -1 }).limit(100).lean();
-      const bugs = await Bug.find({ project: p._id }).populate('project', 'name').sort({ createdAt: -1 }).limit(100).lean();
-      const decisions = await DecisionJournal.find({ project: p._id }).populate('createdBy', 'name').sort({ createdAt: -1 }).limit(100).lean();
-
-      const resources = await Resource.find({ project: p._id }).sort({ createdAt: -1 }).limit(20).lean();
-      const members = await User.find({ _id: { $in: p.members || [] } }).select('name role avatar').lean();
+      if (existingSet.has(String(p._id))) continue;
+      const tasks = tasksByProject.get(String(p._id)) || [];
+      const sprints = sprintsByProject.get(String(p._id)) || [];
+      const bugs = bugsByProject.get(String(p._id)) || [];
+      const decisions = decisionsByProject.get(String(p._id)) || [];
+      const resources = resourcesByProject.get(String(p._id)) || [];
+      const members = (p.members || []).map(id => membersById.get(String(id))).filter(Boolean);
       const totalTasks = tasks.length;
       const doneTasks = tasks.filter(t => t.status === 'done').length;
       const overdueTasks = tasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
@@ -285,7 +320,7 @@ exports.analyzeAllProjects = async (req, res, next) => {
       }).filter(Boolean))];
 
       const projectTech = [...new Set([...(p.techStack || []), ...techStack])];
-      await AiAnalysis.create({
+      analysisDocs.push({
         projectId: p._id,
         projectName: p.name,
         projectType: p.projectType,
@@ -329,6 +364,8 @@ exports.analyzeAllProjects = async (req, res, next) => {
       });
       analyzed++;
     }
+
+    if (analysisDocs.length > 0) await AiAnalysis.insertMany(analysisDocs);
 
     const total = analyzed > 0
       ? `🧬 Analyzed ${analyzed} projects for ${month}${existingCount > 0 ? ` (${existingCount} already archived)` : ''}`

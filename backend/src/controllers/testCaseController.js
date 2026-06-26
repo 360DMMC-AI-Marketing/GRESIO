@@ -45,26 +45,35 @@ const populate = q => q
   .populate('linkedTask', 'title status')
   .populate('linkedBug', 'title status')
   .populate('createdBy', 'name')
-  .populate('executedBy', 'name');
+  .populate('executedBy', 'name')
+  .lean();
 
 exports.getTestCases = async (req, res, next) => {
   try {
     const { project, sprint, status, type, assignee } = req.query;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { isActive: true, project: { $in: projectIds } };
     if (project) filter.project = project;
     if (sprint) filter.sprint = sprint;
     if (status) filter.status = status;
     if (type) filter.type = type;
     if (assignee) filter.assignee = assignee;
-    const items = await populate(TestCase.find(filter).sort({ createdAt: -1 }));
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || null;
+    let query = populate(TestCase.find(filter).sort({ createdAt: -1 }));
+    if (page && limit) query = query.skip((page - 1) * limit).limit(limit);
+    const items = await query;
+    if (page && limit) {
+      const total = await TestCase.countDocuments(filter);
+      return res.json({ data: items, total, page, totalPages: Math.ceil(total / limit) });
+    }
     res.json(items);
   } catch (e) { next(e); }
 };
 
 exports.getTestCaseById = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await populate(TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } }));
     if (!item) return res.status(404).json({ message: 'Test case not found' });
     res.json(item);
@@ -76,7 +85,7 @@ exports.createTestCase = async (req, res, next) => {
     const { title, description, feature, type, priority, precondition, steps, project, sprint, assignee, linkedTask, tags } = req.body;
     if (!title || !project) return res.status(400).json({ message: 'Title and project are required' });
 
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === project)) {
       return res.status(403).json({ message: 'Project does not belong to your domain' });
     }
@@ -128,7 +137,7 @@ exports.createTestCase = async (req, res, next) => {
 
 exports.updateTestCase = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const old = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!old) return res.status(404).json({ message: 'Test case not found' });
 
@@ -194,7 +203,7 @@ exports.updateTestCase = async (req, res, next) => {
         actualBehavior: failedStep?.actualResult || '',
       });
       populated.linkedBug = bug._id;
-      await populated.save();
+      await TestCase.findByIdAndUpdate(populated._id, { linkedBug: bug._id });
       const repopulated = await populate(TestCase.findById(populated._id));
 
       await Activity.create({
@@ -235,7 +244,7 @@ exports.updateTestCase = async (req, res, next) => {
 
 exports.deleteTestCase = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestCase.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, { isActive: false }, { new: true });
     if (!item) return res.status(404).json({ message: 'Test case not found' });
     const { updateProjectProgress } = require('./taskController');
@@ -254,7 +263,7 @@ exports.deleteTestCase = async (req, res, next) => {
 exports.updateStepStatus = async (req, res, next) => {
   try {
     const { stepId, status, actualResult, evidence } = req.body;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!item) return res.status(404).json({ message: 'Test case not found' });
 
@@ -275,7 +284,7 @@ exports.updateStepStatus = async (req, res, next) => {
 
 exports.getProjectTestStats = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.params.projectId)) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -299,7 +308,7 @@ exports.bulkGenerate = async (req, res, next) => {
     const { project, templates } = req.body;
     if (!project || !templates?.length) return res.status(400).json({ message: 'Project and templates array required' });
 
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === project)) {
       return res.status(403).json({ message: 'Project does not belong to your domain' });
     }
@@ -327,7 +336,7 @@ exports.bulkGenerate = async (req, res, next) => {
 
 exports.addAttachment = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const item = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!item) return res.status(404).json({ message: 'Test case not found' });
     if (!req.file) return res.status(400).json({ message: 'No file provided' });
@@ -428,7 +437,7 @@ exports.autoGenerateTests = async (req, res, next) => {
   try {
     const { project, sprint, tasks } = req.body;
     if (!project) return res.status(400).json({ message: 'Project required' });
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === project)) {
       return res.status(403).json({ message: 'Project does not belong to your domain' });
     }
@@ -441,7 +450,7 @@ exports.autoGenerateTests = async (req, res, next) => {
 exports.executeTest = async (req, res, next) => {
   try {
     const { stepResults, overallResult, failureReason, screenshot, bugReport } = req.body;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const tc = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!tc) return res.status(404).json({ message: 'Test case not found' });
     if (!['ready', 'in_progress', 'retesting'].includes(tc.status)) {
@@ -551,7 +560,7 @@ exports.executeTest = async (req, res, next) => {
 
 exports.retestTest = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const tc = await TestCase.findOne({ _id: req.params.id, project: { $in: projectIds } });
     if (!tc) return res.status(404).json({ message: 'Test case not found' });
     if (tc.status !== 'failed' && tc.status !== 'retesting') {
@@ -575,9 +584,9 @@ exports.retestTest = async (req, res, next) => {
 
 exports.getAutoGeneratedTests = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const filter = { project: { $in: projectIds }, autoGenerated: true, isActive: true };
-    if (req.params.projectId) filter.project = req.params.projectId;
+    if (req.params.projectId && projectIds.includes(req.params.projectId)) filter.project = req.params.projectId;
     if (req.query.status) filter.status = req.query.status;
     const items = await populate(TestCase.find(filter).sort({ createdAt: -1 }));
     res.json(items);
@@ -586,8 +595,8 @@ exports.getAutoGeneratedTests = async (req, res, next) => {
 
 exports.generateForCompletedSprints = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
-    const projectFilter = req.query.projectId ? { project: req.query.projectId } : { project: { $in: projectIds } };
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+    const projectFilter = (req.query.projectId && projectIds.includes(req.query.projectId)) ? { project: req.query.projectId } : { project: { $in: projectIds } };
     const sprints = await Sprint.find({ status: 'completed', ...projectFilter }).populate('tasks');
 
     let totalCreated = 0;

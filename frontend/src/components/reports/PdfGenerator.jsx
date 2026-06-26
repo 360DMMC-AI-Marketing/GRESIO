@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 export default function PdfGenerator({ pdfRef, projectName, onDone }) {
   const [generating, setGenerating] = useState(false);
@@ -9,6 +7,10 @@ export default function PdfGenerator({ pdfRef, projectName, onDone }) {
     if (!pdfRef?.current) return;
     setGenerating(true);
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
       const canvas = await html2canvas(pdfRef.current, {
         scale: 2,
         useCORS: true,

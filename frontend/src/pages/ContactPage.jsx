@@ -3,6 +3,21 @@ import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 import { api } from '../services/api';
 
+const BENEFITS = [
+  { icon: '⚡', title: 'Lightning-fast response', desc: 'We typically reply within 2–4 hours during business days. No automated nonsense.' },
+  { icon: '🔒', title: 'Enterprise-grade security', desc: 'Your data is protected with SOC 2 and GDPR compliant infrastructure.' },
+  { icon: '🎯', title: 'Tailored live demo', desc: 'See GRESIO configured for your team size, project types, and workflow.' },
+  { icon: '📋', title: 'Zero pressure, pure value', desc: 'No sales pitch. Just answers, a demo, and you decide if it fits.' },
+];
+
+const TRUST_BADGES = [
+  { name: 'Enterprise Ready', icon: '🏢' },
+  { name: 'SOC 2 Compliant', icon: '🔐' },
+  { name: 'GDPR Compliant', icon: '🇪🇺' },
+  { name: '99.9% Uptime', icon: '📈' },
+  { name: '24/7 Support', icon: '🎧' },
+];
+
 export default function ContactPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -62,55 +77,55 @@ export default function ContactPage() {
       <PublicNavbar />
 
       <section className="relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(-20%, 20%)' }} />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-[0.025] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full opacity-[0.02] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-secondary), transparent 70%)', transform: 'translate(-20%, 20%)' }} />
 
         <div className="pt-36 pb-20 px-5 relative">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-14 animate-fade-in">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16 animate-fade-in">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-5 border border-[var(--glass-border)]" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', color: 'var(--brand-primary)' }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--brand-primary)' }} />
-                We typically respond within 2–4 hours
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--brand-primary)' }} />
+                Typically responds in 2–4 hours
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--text-primary)] mb-4 tracking-tight">Let&apos;s talk</h1>
-              <p className="text-lg text-[var(--text-tertiary)] max-w-xl mx-auto leading-relaxed">Have a project, a question, or just want to see GRESIO in action? We&apos;re here to help — no commitment required.</p>
+              <p className="text-lg text-[var(--text-tertiary)] max-w-2xl mx-auto leading-relaxed">Have a project, a question, or just want to see GRESIO in action? We&apos;re here to help — no commitment required.</p>
             </div>
 
-            <div className="grid md:grid-cols-5 gap-8 animate-fade-in">
-              <div className="md:col-span-3 relative">
-                <div className="absolute -top-4 -left-4 w-20 h-20 rounded-2xl opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))' }} />
-                <div className="relative rounded-2xl p-8 border border-[var(--glass-border)]" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+            <div className="grid lg:grid-cols-5 gap-8 animate-fade-in">
+              <div className="lg:col-span-3">
+                <div className="rounded-2xl p-8 border border-[var(--glass-border)]" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+                  <h2 className="text-base font-bold text-[var(--text-primary)] mb-6">Send us a message</h2>
                   {error && (
                     <div className="mb-5 px-4 py-3 rounded-xl text-sm border" style={{ background: 'var(--danger-bg)', borderColor: 'var(--danger-border)', color: 'var(--danger-text)' }}>{error}</div>
                   )}
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="group">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Full Name</label>
                         <input type="text" value={name} onChange={e => setName(e.target.value)} required
                           placeholder="John Doe"
                           className="w-full px-4 py-3 text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all duration-300 placeholder:text-[var(--text-muted)]" />
                       </div>
-                      <div className="group">
+                      <div>
                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Email</label>
                         <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                           placeholder="john@company.com"
                           className="w-full px-4 py-3 text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all duration-300 placeholder:text-[var(--text-muted)]" />
                       </div>
                     </div>
-                    <div className="group">
+                    <div>
                       <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Subject</label>
                       <input type="text" value={subject} onChange={e => setSubject(e.target.value)} required
                         placeholder="How can we help you?"
                         className="w-full px-4 py-3 text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all duration-300 placeholder:text-[var(--text-muted)]" />
                     </div>
-                    <div className="group">
+                    <div>
                       <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Message</label>
                       <textarea value={message} onChange={e => setMessage(e.target.value)} required
                         rows={5} placeholder="Tell us about your project, timeline, team size, and what you're looking for..."
                         className="w-full px-4 py-3 text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all duration-300 placeholder:text-[var(--text-muted)] resize-none"></textarea>
                     </div>
-                    <div className="flex items-center gap-3 pt-1">
+                    <div className="flex items-center justify-between pt-1">
                       <button type="submit" disabled={loading}
                         className="btn-premium px-8 py-3 text-sm font-semibold flex items-center gap-2">
                         {loading ? (
@@ -136,22 +151,21 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="md:col-span-2 space-y-4">
-                <div className="rounded-2xl p-6 border border-[var(--glass-border)] transition-all duration-300 hover:shadow-lg group" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                <div className="rounded-2xl p-6 border border-[var(--glass-border)] transition-all duration-300 hover:shadow-lg group flex-1" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3 transition-all duration-300 group-hover:scale-110" style={{ background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', color: 'white' }}>
                     📅
                   </div>
                   <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">Book a live demo</h3>
-                  <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">See GRESIO in action. We&apos;ll walk you through the platform tailored to your team&apos;s needs.</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mb-3 leading-relaxed">See GRESIO in action. We&apos;ll walk you through the platform tailored to your team&apos;s needs.</p>
                   <a href="https://360dmmc.com/contact" target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold transition-all duration-200 hover:gap-2"
                     style={{ color: 'var(--brand-primary)' }}>
-                    Schedule 30 min
-                    <span>→</span>
+                    Schedule 30 min →
                   </a>
                 </div>
 
-                <div className="rounded-2xl p-6 border border-[var(--glass-border)] transition-all duration-300 hover:shadow-lg group" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+                <div className="rounded-2xl p-6 border border-[var(--glass-border)] transition-all duration-300 hover:shadow-lg group flex-1" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3 transition-all duration-300 group-hover:scale-110" style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white' }}>
                     ✉
                   </div>
@@ -161,40 +175,34 @@ export default function ContactPage() {
                     Consult@360DMMC.com
                   </a>
                 </div>
-
-                <div className="rounded-2xl p-6 border border-[var(--glass-border)]" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4">Why contact us?</h3>
-                  <ul className="space-y-3">
-                    {[
-                      { icon: '⚡', text: 'Response in under 4 hours' },
-                      { icon: '🔒', text: 'Enterprise-grade security' },
-                      { icon: '🎯', text: 'Custom demo for your team' },
-                      { icon: '📋', text: 'No commitment or sales pressure' },
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-2.5">
-                        <span className="text-sm">{item.icon}</span>
-                        <span className="text-xs text-[var(--text-secondary)]">{item.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
             </div>
 
-            <div className="mt-16 text-center animate-fade-in">
-              <div className="rounded-2xl p-8 border border-[var(--glass-border)] max-w-2xl mx-auto" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
-                <p className="text-xs text-[var(--text-muted)] mb-4">TRUSTED BY TEAMS WORLDWIDE</p>
-                <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-                  {[
-                    { name: 'Enterprise Ready', icon: '🏢' },
-                    { name: 'SOC 2 Compliant', icon: '🔐' },
-                    { name: 'GDPR Compliant', icon: '🇪🇺' },
-                    { name: '99.9% Uptime', icon: '📈' },
-                    { name: '24/7 Support', icon: '🎧' },
-                  ].map((badge, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
-                      <span>{badge.icon}</span>
-                      <span className="font-medium">{badge.name}</span>
+            <div className="mt-20 animate-fade-in">
+              <div className="text-center mb-10">
+                <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Why reach out?</span>
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mt-2">Every conversation starts here</h2>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {BENEFITS.map((b, i) => (
+                  <div key={i} className="rounded-2xl p-6 border border-[var(--glass-border)] text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 text-lg" style={{ background: 'var(--bg-tertiary)' }}>
+                      {b.icon}
+                    </div>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">{b.title}</h3>
+                    <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">{b.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-16 animate-fade-in">
+              <div className="rounded-2xl p-8 border border-[var(--glass-border)]" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
+                <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+                  {TRUST_BADGES.map((badge, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: 'var(--bg-tertiary)' }}>{badge.icon}</span>
+                      <span className="text-xs font-semibold text-[var(--text-secondary)]">{badge.name}</span>
                     </div>
                   ))}
                 </div>

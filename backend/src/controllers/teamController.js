@@ -25,13 +25,13 @@ const populate = q => q
 exports.getMembers = async (req, res, next) => {
   try {
     const { status } = req.query;
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id.toString() === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
     const filter = { project: { $in: projectIds } };
     if (status) filter.status = status;
-    const members = await populate(ProjectMember.find(filter).sort({ createdAt: -1 }));
+    const members = await populate(ProjectMember.find(filter).sort({ createdAt: -1 })).lean();
     res.json(members);
   } catch (e) { next(e); }
 };
@@ -41,7 +41,7 @@ exports.addMember = async (req, res, next) => {
     const { email, userId, userIds, projectRole, teamGroup, message: inviteMessage } = req.body;
     const role = req.body.role || projectRole || 'developer';
 
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -71,7 +71,7 @@ exports.addMember = async (req, res, next) => {
           status: 'active',
           invitedBy: req.user._id,
         });
-        const pop = await populate(ProjectMember.findById(member._id));
+        const pop = await populate(ProjectMember.findById(member._id)).lean();
         results.push(pop);
       }
       return res.status(201).json(results);
@@ -200,7 +200,7 @@ ${inviteMessage ? `<p style="color:#6b7280;font-size:13px;line-height:1.5;paddin
 
 exports.updateMemberRole = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const updates = {};
     if (req.body.projectRole) updates.projectRole = req.body.projectRole;
     if (req.body.teamGroup !== undefined) updates.teamGroup = req.body.teamGroup || null;
@@ -216,7 +216,7 @@ exports.updateMemberRole = async (req, res, next) => {
 
 exports.removeMember = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const member = await ProjectMember.findOne({ _id: req.params.memberId, project: { $in: projectIds } });
     if (!member) return res.status(404).json({ message: 'Member not found' });
     if (member.user) {
@@ -258,7 +258,7 @@ exports.acceptInvitation = async (req, res, next) => {
       });
     }
 
-    res.json(await populate(ProjectMember.findById(member._id)));
+    res.json(await populate(ProjectMember.findById(member._id)).lean());
   } catch (e) { next(e); }
 };
 
@@ -269,7 +269,7 @@ exports.declineInvitation = async (req, res, next) => {
     if (!member) return res.status(404).json({ message: 'Invalid or expired invitation' });
 
     if (member.invitedBy) {
-      const user = await User.findOne({ email: member.email });
+      const user = await User.findOne({ email: member.email }).lean();
       await Notification.create({
         user: member.invitedBy,
         domain: user ? user.domain : req.user.domain,
@@ -286,15 +286,17 @@ exports.declineInvitation = async (req, res, next) => {
 
 exports.getSuggestedTeams = async (req, res, next) => {
   try {
-    const project = await Project.findById(req.params.projectId).select('projectType domain settings');
+    const project = await Project.findById(req.params.projectId).select('projectType domain settings').lean();
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
     const type = project.projectType || 'software';
     const suggestedNames = PROJECT_TYPE_TEAMS[type] || PROJECT_TYPE_TEAMS.software;
 
     // Get project team groups and existing members
-    const projectGroups = await TeamGroup.find({ project: req.params.projectId, isArchived: false });
-    const existingMembers = await ProjectMember.find({ project: req.params.projectId }).populate('user', 'name email avatar role');
+    const [projectGroups, existingMembers] = await Promise.all([
+      TeamGroup.find({ project: req.params.projectId, isArchived: false }).lean(),
+      ProjectMember.find({ project: req.params.projectId }).populate('user', 'name email avatar role').lean(),
+    ]);
 
     const result = [];
     for (const groupName of suggestedNames) {
@@ -338,7 +340,7 @@ exports.getSuggestedTeams = async (req, res, next) => {
 
 exports.getProjectMembersForAssign = async (req, res, next) => {
   try {
-    const projectIds = await getDomainProjectIds(req.user.domain);
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     if (!projectIds.some(id => id === req.params.projectId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -347,9 +349,10 @@ exports.getProjectMembersForAssign = async (req, res, next) => {
     const members = await ProjectMember.find(filter)
       .populate('user', 'name email avatar role')
       .populate('teamGroup', 'name icon')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     const users = members.filter(m => m.user).map(m => ({
-      ...m.user.toObject(),
+      ...m.user,
       teamGroup: m.teamGroup,
       projectRole: m.projectRole,
     }));

@@ -12,17 +12,17 @@ export default function Modal({ open, onClose, title, icon, children, footer, st
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`bg-white dark:bg-[var(--bg-secondary)] rounded-[var(--radius-xl)] border border-neutral-200 dark:border-[var(--border-primary)] shadow-2xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto animate-scale-in ${style?.boxClass || ''}`} onClick={(e) => e.stopPropagation()} style={style?.boxStyle || {}}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`bg-[var(--bg-primary)] border border-[var(--border-primary)] shadow-[var(--elevation-high)] max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto animate-scale-in rounded-[var(--radius-lg)] ${style?.boxClass || ''}`} onClick={(e) => e.stopPropagation()} style={style?.boxStyle || {}}>
         <div className="flex items-center justify-between px-6 pt-6 pb-0">
-          <span className="text-sm font-semibold text-surface-900 dark:text-[var(--text-primary)]">
+          <span className="text-sm font-semibold text-[var(--text-primary)]">
             {icon ? <span className="mr-2">{icon}</span> : null}{title}
           </span>
-          <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-[var(--radius-md)] bg-surface-100 dark:bg-[var(--bg-tertiary)] text-surface-400 dark:text-[var(--text-muted)] hover:text-surface-600 dark:hover:text-[var(--text-secondary)] hover:bg-surface-200 dark:hover:bg-[var(--border-primary)] transition-colors cursor-pointer border-none text-xs">
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none text-xs">
             ✕
           </button>
         </div>
-        <div className="px-6 py-4 text-xs text-surface-600 dark:text-[var(--text-secondary)] leading-relaxed">{children}</div>
+        <div className="px-6 py-4 text-xs text-[var(--text-secondary)] leading-relaxed">{children}</div>
         {footer && <div className="flex justify-end gap-2 px-6 pb-6">{footer}</div>}
       </div>
     </div>
@@ -38,29 +38,35 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
       icon={icon || '⚠️'}
       footer={
         <>
-          <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none">Cancel</button>
-          <button onClick={() => { onConfirm(); onClose(); }} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-colors cursor-pointer border-none" style={{background: confirmColor || '#ef4444'}}>
+          <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
+          <button onClick={() => { onConfirm(); onClose(); }} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all cursor-pointer border-none" style={{background: confirmColor || 'var(--danger-text, #ef4444)'}}>
             {confirmText || 'Delete'}
           </button>
         </>
       }
     >
-      <p className="m-0 text-xs text-surface-500">{message}</p>
+      <p className="m-0 text-xs text-[var(--text-tertiary)]">{message}</p>
     </Modal>
   );
 }
 
 export function AlertModal({ open, onClose, title, message, type }) {
-  const color = type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#2347e8';
+  const isError = type === 'error';
+  const isSuccess = type === 'success';
+  const palette = isError
+    ? { bg: 'var(--danger-bg)', border: 'var(--danger-border)', color: 'var(--danger-text)' }
+    : isSuccess
+      ? { bg: 'var(--success-bg)', border: 'var(--success-border)', color: 'var(--success-text)' }
+      : { bg: 'var(--info-bg)', border: 'var(--brand-primary)', color: 'var(--brand-primary)' };
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={title || (type === 'error' ? 'Error' : type === 'success' ? 'Success' : 'Info')}
-      icon={type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'}
-      footer={<button onClick={onClose} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-colors cursor-pointer border-none" style={{background: color}}>OK</button>}
+      title={title || (isError ? 'Error' : isSuccess ? 'Success' : 'Info')}
+      icon={isError ? '❌' : isSuccess ? '✅' : 'ℹ️'}
+      footer={<button onClick={onClose} className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer border-none" style={{background: palette.bg, color: palette.color, border: `0.5px solid ${palette.border}`}}>OK</button>}
     >
-      <p className="m-0 text-xs" style={{color}}>{message}</p>
+      <p className="m-0 text-xs" style={{color: palette.color}}>{message}</p>
     </Modal>
   );
 }
@@ -74,21 +80,21 @@ export function InputModal({ open, onClose, onSubmit, title, icon, fields, submi
       icon={icon}
       footer={
         <>
-          <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium bg-surface-100 text-surface-600 rounded-lg hover:bg-surface-200 transition-colors cursor-pointer border-none">Cancel</button>
-          <button onClick={onSubmit} className="px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer border-none">{submitText || 'Save'}</button>
+          <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
+          <button onClick={onSubmit} className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all cursor-pointer border-none btn-premium">{submitText || 'Save'}</button>
         </>
       }
     >
       {fields.map(f => (
-        <label key={f.key} className="block text-xs font-medium text-surface-700 mt-3 first:mt-0">
+        <label key={f.key} className="block text-xs font-medium text-[var(--text-secondary)] mt-3 first:mt-0">
           {f.label}
           {f.type === 'select' ? (
             <Dropdown className="mt-1" value={f.value} onChange={f.onChange}
               options={f.options} />
           ) : f.type === 'textarea' ? (
-            <textarea className="w-full px-2.5 py-1.5 text-xs border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 mt-1 resize-vertical min-h-[60px]" value={f.value} onChange={f.onChange} placeholder={f.placeholder} />
+            <textarea className="w-full px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] mt-1 resize-vertical min-h-[60px]" value={f.value} onChange={f.onChange} placeholder={f.placeholder} />
           ) : (
-            <input className="w-full px-2.5 py-1.5 text-xs border border-surface-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-primary-500 mt-1" type={f.type||'text'} value={f.value} onChange={f.onChange} placeholder={f.placeholder} />
+            <input className="w-full px-2.5 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-lg)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)] mt-1" type={f.type||'text'} value={f.value} onChange={f.onChange} placeholder={f.placeholder} />
           )}
         </label>
       ))}

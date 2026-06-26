@@ -60,7 +60,7 @@ exports.register = async (req, res, next) => {
   try {
     const { name, password, role, plan } = req.body;
     const email = (req.body.email || '').toLowerCase().trim();
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email }).lean();
     if (existing) {
       return res.status(409).json({ message: 'Email already registered' });
     }
@@ -74,7 +74,7 @@ exports.register = async (req, res, next) => {
       role: 'admin', onboardingCompleted: false,
     });
 
-    const existingCompany = await Company.findOne({ domain: bareDomain });
+    const existingCompany = await Company.findOne({ domain: bareDomain }).lean();
     if (!existingCompany) {
       await Company.create({
         name: req.body.companyName || name + "'s Company",
@@ -99,7 +99,8 @@ exports.register = async (req, res, next) => {
 exports.getMe = async (req, res) => {
   const user = await User.findById(req.user._id)
     .populate('assignedProjects')
-    .populate({ path: 'assignedProjects', populate: { path: 'tasks' } });
+    .populate({ path: 'assignedProjects', populate: { path: 'tasks' } })
+    .lean();
   res.json(user);
 };
 

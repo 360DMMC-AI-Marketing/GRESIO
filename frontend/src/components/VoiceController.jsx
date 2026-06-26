@@ -113,12 +113,12 @@ export default function VoiceController() {
   return (
     <>
       {feedback && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-2.5 rounded-full text-xs font-medium animate-scale-in shadow-elevation border backdrop-blur-md ${
-          feedback.type === 'success' ? 'bg-success-50 dark:bg-[var(--success-bg)] text-success-700 dark:text-[var(--success-text)] border-success-200 dark:border-success-800' :
-          feedback.type === 'error' ? 'bg-danger-50 text-danger-700 border-danger-200' :
-          feedback.type === 'ai' ? 'bg-indigo-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 border-indigo-200 dark:border-brand-800' :
-          feedback.type === 'wake' ? 'bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-700 dark:text-[var(--text-secondary)] border-neutral-200 dark:border-[var(--border-primary)]' :
-          'bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-600 dark:text-[var(--text-secondary)] border-neutral-200 dark:border-[var(--border-primary)]'
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-2.5 rounded-full text-xs font-medium animate-scale-in shadow-2xl border backdrop-blur-md ${
+          feedback.type === 'success' ? 'bg-[var(--success-bg)] text-[var(--success-text)] border-[var(--success-border)]' :
+          feedback.type === 'error' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)] border-[var(--danger-border)]' :
+          feedback.type === 'ai' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--glass-border)]' :
+          feedback.type === 'wake' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]' :
+          'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]'
         }`}>
           {feedback.type === 'success' && '✓ '}
           {feedback.type === 'error' && '✕ '}
