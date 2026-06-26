@@ -269,7 +269,7 @@ export default function FeaturesPage() {
               },
               { 
                 name: 'Teams', 
-                svg: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none"><rect x="2" y="3" width="20" height="18" rx="4" fill="#6264A7"/><path d="M7.5 7.5h9v2h-9zm1.5 3.5h6v2H9zm1 3.5h4v2h-4z" fill="#fff"/></svg>,
+                svg: <svg viewBox="0 0 24 24" className="w-5 h-5"><rect x="1" y="1" width="22" height="22" rx="6" fill="#6264A7"/><path d="M6.5 6.5h11v3h-11zm3 4h5v8h-5z" fill="#fff"/></svg>,
               },
               { 
                 name: 'Outlook', 

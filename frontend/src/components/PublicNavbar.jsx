@@ -89,7 +89,7 @@ export default function PublicNavbar() {
             { to: '/contact', label: 'Contact' },
           ].map(({ to, label }) => (
             <Link key={to} to={to} className="relative py-1 group">
-              <span className={`transition-colors ${location.pathname === to ? 'text-page-text font-semibold' : 'text-page-muted group-hover:text-page-text'}`}>
+              <span className={`transition-colors ${location.pathname === to ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
                 {label}
               </span>
               {location.pathname === to && (
@@ -102,25 +102,25 @@ export default function PublicNavbar() {
           <div className="relative">
             {searchOpen ? (
               <div className="flex items-center gap-2.5 bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl px-3.5 py-2 border border-[var(--glass-border)] shadow-[var(--glass-shadow)] transition-all min-w-[240px]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-page-muted shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-tertiary)] shrink-0">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
                 </svg>
                 <input ref={inputRef} type="text" placeholder="Search..." value={query}
                   onChange={e => setQuery(e.target.value)}
-                  className="flex-1 border-none outline-none text-sm text-page-text placeholder:text-page-muted bg-transparent" />
-                <span className="text-[10px] font-medium text-page-muted bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded">ESC</span>
+                  className="flex-1 border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] bg-transparent" />
+                <span className="text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded">ESC</span>
                 {query.trim() && (results.length > 0 || backendResults.length > 0) && (
                   <div className="absolute top-full left-0 right-0 mt-2 glass-panel rounded-2xl overflow-hidden max-h-96 overflow-y-auto">
                     {results.length > 0 && (
                       <>
-                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-page-muted">Pages & Content</div>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Pages & Content</div>
                         {results.map((item, i) => (
                           <button key={`page-${i}`} onClick={() => handleSelect(item.url)}
                             className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--bg-tertiary)] transition-colors text-left cursor-pointer bg-transparent border-none">
                             <span className="text-base shrink-0">{item.icon}</span>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-page-text truncate">{item.title}</p>
-                              <p className="text-[11px] text-page-muted leading-snug line-clamp-1">{item.desc}</p>
+                              <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.title}</p>
+                              <p className="text-[11px] text-[var(--text-tertiary)] leading-snug line-clamp-1">{item.desc}</p>
                               <p className="text-[9px] text-[var(--text-tertiary)] mt-0.5">{item.page}</p>
                             </div>
                           </button>
@@ -129,7 +129,7 @@ export default function PublicNavbar() {
                     )}
                     {backendResults.length > 0 && (
                       <>
-                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-page-muted border-t border-page-border">Knowledge Base</div>
+                        <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] border-t border-[var(--border-primary)]">Knowledge Base</div>
                         {backendResults.map((item, i) => {
                           const meta = SEARCH_ICONS[item.type] || { icon: '📄', color: '#6B7280' };
                           return (
@@ -137,8 +137,8 @@ export default function PublicNavbar() {
                               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--bg-tertiary)] transition-colors text-left cursor-pointer bg-transparent border-none">
                               <span className="text-base shrink-0">{meta.icon}</span>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-page-text truncate">{item.label}</p>
-                                <p className="text-[11px] text-page-muted leading-snug">{item.type}</p>
+                                <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.label}</p>
+                                <p className="text-[11px] text-[var(--text-tertiary)] leading-snug">{item.type}</p>
                               </div>
                             </button>
                           );
@@ -150,14 +150,14 @@ export default function PublicNavbar() {
                 {query.trim() && results.length === 0 && backendResults.length === 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 glass-panel rounded-2xl p-6 text-center">
                     <span className="text-2xl block mb-2">🔍</span>
-                    <p className="text-sm font-medium text-page-text mb-0.5">No results for "{query}"</p>
-                    <p className="text-xs text-page-muted">Try a different search term</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] mb-0.5">No results for "{query}"</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Try a different search term</p>
                   </div>
                 )}
               </div>
             ) : (
               <button onClick={() => setSearchOpen(true)}
-                className="flex items-center justify-center w-9 h-9 rounded-xl text-page-muted hover:text-page-text hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer bg-transparent border-none"
+                className="flex items-center justify-center w-9 h-9 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer bg-transparent border-none"
                 aria-label="Search">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>

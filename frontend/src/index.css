@@ -504,8 +504,17 @@ html { scroll-behavior: smooth; }
 }
 
 .card-premium:hover {
-  box-shadow: var(--elevation-mid);
-  transform: translateY(-2px);
+  box-shadow: var(--elevation-high);
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* Card hover elevation — more dramatic lift for featured cards */
+.card-lift {
+  transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-lift:hover {
+  box-shadow: var(--elevation-high);
+  transform: translateY(-6px) scale(1.03);
 }
 
 .animate-fade-in {
@@ -554,10 +563,22 @@ html { scroll-behavior: smooth; }
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
-  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 .glow-card:hover::before { opacity: 1; }
+
+/* Subtle floating animation for hero/featured cards */
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-float {
+  animation: card-float 4s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: card-float 4s ease-in-out 2s infinite;
+}
 
 /* Button premium */
 .btn-premium {
