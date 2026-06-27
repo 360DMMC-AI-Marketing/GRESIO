@@ -318,6 +318,43 @@ export const clickupImport = {
   syncWorkspace: (workspaceId) => api.post('/clickup-import/sync-workspace', { workspaceId }),
 };
 
+function addAsanaToken(token) {
+  return token ? { headers: { 'x-asana-token': token } } : {};
+}
+
+export const asanaImport = {
+  getWorkspaces: (token) => api.get('/asana-import/workspaces', addAsanaToken(token)),
+  getProjects: (workspaceId, token) => api.get('/asana-import/projects', { params: { workspaceId }, ...addAsanaToken(token) }),
+  getSections: (projectId, token) => api.get('/asana-import/sections', { params: { projectId }, ...addAsanaToken(token) }),
+  getTasks: (projectId, token) => api.get('/asana-import/tasks', { params: { projectId }, ...addAsanaToken(token) }),
+  execute: (projectIds, token) => api.post('/asana-import/import', { projectIds }, addAsanaToken(token)),
+};
+
+function addJiraHeaders(baseUrl, email, apiToken) {
+  const h = {};
+  if (baseUrl) h['x-jira-base-url'] = baseUrl;
+  if (email) h['x-jira-email'] = email;
+  if (apiToken) h['x-jira-api-token'] = apiToken;
+  return { headers: h };
+}
+
+export const jiraImport = {
+  getProjects: (baseUrl, email, apiToken) => api.get('/jira-import/projects', addJiraHeaders(baseUrl, email, apiToken)),
+  getUsers: (projectKey, baseUrl, email, apiToken) => api.get('/jira-import/users', { params: { projectKey }, ...addJiraHeaders(baseUrl, email, apiToken) }),
+  execute: (projectKeys, baseUrl, email, apiToken) => api.post('/jira-import/import', { projectKeys }, addJiraHeaders(baseUrl, email, apiToken)),
+};
+
+function addLinearKey(apiKey) {
+  return apiKey ? { headers: { 'x-linear-api-key': apiKey } } : {};
+}
+
+export const linearImport = {
+  getTeams: (apiKey) => api.get('/linear-import/teams', addLinearKey(apiKey)),
+  getProjects: (teamId, apiKey) => api.get('/linear-import/projects', { params: { teamId }, ...addLinearKey(apiKey) }),
+  getIssues: (projectId, apiKey) => api.get('/linear-import/issues', { params: { projectId }, ...addLinearKey(apiKey) }),
+  execute: (teamId, apiKey) => api.post('/linear-import/import', { teamId }, addLinearKey(apiKey)),
+};
+
 export const templates = {
   list: (params) => api.get('/templates', { params }),
   getById: (id) => api.get(`/templates/${id}`),

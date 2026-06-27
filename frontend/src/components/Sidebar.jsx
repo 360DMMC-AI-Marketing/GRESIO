@@ -7,7 +7,7 @@ import {
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
   Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Library,
-  Download,
+  Download, ExternalLink, Bug,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -70,6 +70,9 @@ const sidebarGroups = [
     label: 'Importation',
     icon: Download,
     items: [
+      { id: 'asana-import', label: 'Asana', icon: ExternalLink, path: '/admin/asana-import', roles: ['admin'] },
+      { id: 'jira-import', label: 'Jira', icon: Bug, path: '/admin/jira-import', roles: ['admin'] },
+      { id: 'linear-import', label: 'Linear', icon: Zap, path: '/admin/linear-import', roles: ['admin'] },
       { id: 'azure-import', label: 'Azure AD', icon: Users, path: '/admin/azure-import', roles: ['admin'] },
       { id: 'clickup-import', label: 'ClickUp', icon: ClipboardList, path: '/admin/clickup-import', roles: ['admin'] },
     ],
