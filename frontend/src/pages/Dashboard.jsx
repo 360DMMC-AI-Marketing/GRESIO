@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
 import GanttView from '../components/GanttView';
 import { useAuth } from '../context/AuthContext';
+import { LoadingState, ErrorState } from '../components/StateComponents';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
 
 const PLAN_INFO = {
@@ -141,6 +142,7 @@ export default function Dashboard() {
   const [workload, setWorkload] = useState({ workload: [], overloaded: [], avgActivityScore: 0 });
   const [companyAnalytics, setCompanyAnalytics] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [sections, setSections] = useState(loadSections);
   const [showCustomize, setShowCustomize] = useState(false);
   const [draftSections, setDraftSections] = useState(null);
@@ -159,7 +161,9 @@ export default function Dashboard() {
     usersApi.getCapacity().then(r => setCapacityData(r.data)).catch(e => { console.error('Capacity API error:', e); setCapacityError(e.message || 'Unknown error'); }).finally(() => setCapacityLoading(false));
   }, []);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(() => {
+    setLoading(true);
+    setError(null);
     Promise.all([
       analytics.getDashboard(),
       projects.getAll(),
@@ -180,12 +184,16 @@ export default function Dashboard() {
           analytics.getPredictions().then(r => setPredictions(r.data || [])).catch(() => {});
         }, 2000);
       })
-      .catch(console.error)
+      .catch((e) => setError(e.message || 'Failed to load dashboard'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
     loadCapacity();
     const interval = setInterval(loadCapacity, 30000);
     return () => clearInterval(interval);
-  }, [loadCapacity]);
+  }, [loadDashboard, loadCapacity]);
 
   const streak = useMemo(() => calculateStreak(productivity), [productivity]);
   const healthTrend = useMemo(() => getHealthTrend(productivity), [productivity]);
@@ -199,18 +207,9 @@ export default function Dashboard() {
     [predictions]
   );
 
-  if (loading) return (
-    <div className="space-y-4">
-      <div className="skeleton h-24 w-full rounded-[var(--radius-xl)]" />
-      <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-        <div className="skeleton h-32" />
-        <div className="skeleton h-32" />
-        <div className="skeleton h-32" />
-        <div className="skeleton h-32" />
-      </div>
-      <div className="skeleton h-64 rounded-[var(--radius-lg)]" />
-    </div>
-  );
+  if (loading) return <LoadingState message="Loading dashboard..." />;
+
+  if (error) return <ErrorState message={error} onRetry={loadDashboard} />;
 
   const healthScore = stats?.healthScore || 0;
   const healthColor = healthScore >= 70 ? '#22c55e' : healthScore >= 40 ? '#f59e0b' : '#ef4444';

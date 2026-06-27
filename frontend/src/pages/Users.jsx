@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api, { workLogs } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Dropdown from '../components/Dropdown';
+import { LoadingState, ErrorState, EmptyState } from '../components/StateComponents';
 import toast from 'react-hot-toast';
 
 const ROLE_STYLES = {
@@ -64,6 +65,7 @@ export default function Users() {
   const canManage = CAN_MANAGE.includes(user?.role);
   const [groupedData, setGroupedData] = useState({ groups:[], ungrouped:[] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [collapsed, setCollapsed] = useState({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({ email:'', projectRole:'developer', teamGroup:'', project:'', message:'' });
@@ -87,13 +89,18 @@ export default function Users() {
 
   const fetchData = async () => {
     try {
+      setError(null);
       const [groupedRes, projRes] = await Promise.all([
         api.get('/projects/teams/grouped'),
         api.get('/projects'),
       ]);
       setGroupedData(groupedRes.data);
       setProjects(projRes.data);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      setError(e.message || 'Failed to load team data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -212,7 +219,9 @@ export default function Users() {
   };
   function getTagStyle(tag) { return TAG_STYLES[tag.toLowerCase().trim()] || TAG_STYLES.default; }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return <LoadingState message="Loading team..." />;
+
+  if (error) return <ErrorState message={error} onRetry={fetchData} />;
 
   const renderMemberRow = (member, groupIcon) => {
     const userRole = member.user?.role || 'developer';
@@ -357,10 +366,7 @@ export default function Users() {
       )}
 
       {groupedData.groups.length === 0 && groupedData.ungrouped.length === 0 ? (
-        <div style={{ textAlign:'center', padding:'60px 0', color:'var(--text-muted)' }}>
-          <p style={{ fontSize:32, marginBottom:8 }}>👥</p>
-          <p style={{ fontSize:12 }}>No members yet</p>
-        </div>
+        <EmptyState icon="👥" title="No members yet" description="Invite team members to get started" />
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {groupedData.groups.map(g => (

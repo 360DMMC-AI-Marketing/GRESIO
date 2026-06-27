@@ -4,6 +4,7 @@ import { projects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
 import ReportChoiceModal from '../components/ReportChoiceModal';
+import { LoadingState, ErrorState, EmptyState } from '../components/StateComponents';
 import FEATURES from '../config/featureFlags';
 
 const STATUS_CLASS = {
@@ -21,6 +22,7 @@ export default function Projects() {
   const location = useLocation();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', client: '', deadline: '', projectType: 'umbrella', departments: [{ name: '', type: 'software' }] });
   const [expanded, setExpanded] = useState({});
@@ -31,9 +33,10 @@ export default function Projects() {
   const pollRef = useRef(null);
   const fetchProjects = (showLoader) => {
     if (showLoader) setLoading(true);
+    setError(null);
     projects.getAll()
       .then((res) => setList(res.data))
-      .catch(console.error)
+      .catch((e) => setError(e.message || 'Failed to load projects'))
       .finally(() => { if (showLoader) setLoading(false); });
   };
   useEffect(() => {
@@ -75,7 +78,9 @@ export default function Projects() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" /></div>;
+  if (loading) return <LoadingState message="Loading projects..." />;
+
+  if (error) return <ErrorState message={error} onRetry={() => fetchProjects(true)} />;
 
   const umbrellas = list.filter(p => p.projectType === 'umbrella' || p.children?.length > 0);
   const standalone = list.filter(p => !p.parentProject && p.projectType !== 'umbrella' && (!p.children || p.children.length === 0));
@@ -195,7 +200,7 @@ export default function Projects() {
       </Modal>
 
       {list.length === 0 ? (
-        <div className="text-center py-20 text-neutral-400"><p className="text-4xl mb-3">📁</p><p>No projects yet</p></div>
+        <EmptyState icon="📁" title="No projects yet" description="Create your first project to get started" />
       ) : (
         <div className="stagger" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           {umbrellas.map((p) => (

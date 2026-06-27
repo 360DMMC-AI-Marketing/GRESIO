@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { integrations, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { InputModal, ConfirmModal, AlertModal } from '../components/Modal';
+import { LoadingState, ErrorState } from '../components/StateComponents';
 
 const PLAN_INFO = {
   starter: { label: 'Starter', price: '$0', color: 'bg-[var(--bg-tertiary)]', textColor: 'text-[var(--text-secondary)]', users: 10, projects: 3 },
@@ -19,6 +20,7 @@ export default function Admin() {
   const { user, company, updateCompany } = useAuth();
   if (user?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [syncingPlatform, setSyncingPlatform] = useState(null);
   const [teamIdInput, setTeamIdInput] = useState('');
   const [savingTeamId, setSavingTeamId] = useState(false);
@@ -48,7 +50,7 @@ const [deleteConfirm, setDeleteConfirm] = useState(null);
         const msft = intRes.data.find(i => i.name === 'microsoft_graph');
         if (msft?.config?.teamsTeamId) setTeamIdInput(msft.config.teamsTeamId);
       })
-      .catch(console.error)
+      .catch((e) => setError(e.message || 'Failed to load settings'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -103,7 +105,9 @@ const [deleteConfirm, setDeleteConfirm] = useState(null);
     }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full"></div></div>;
+  if (loading) return <LoadingState message="Loading settings..." />;
+
+  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
 
   return (
     <div className="page-enter space-y-6">

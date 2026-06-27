@@ -3,6 +3,7 @@ import { tasks, users as usersApi, projects as projectsApi } from '../services/a
 import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
 import Dropdown from '../components/Dropdown';
+import { LoadingState, ErrorState } from '../components/StateComponents';
 import toast from 'react-hot-toast';
 
 const PRIORITY_STYLES = {
@@ -25,6 +26,7 @@ export default function Tasks() {
   const [projectTasks, setProjectTasks] = useState([]);
   const [separateTasks, setSeparateTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [subOpen, setSubOpen] = useState(null);
@@ -69,17 +71,19 @@ export default function Tasks() {
 
   const fetchProjectTasks = useCallback((f, proj) => {
     setLoading(true);
+    setError(null);
     const params = {};
     if (f !== 'all') params.status = f;
     if (proj) params.project = proj;
-    tasks.getAll(params).then((res) => setProjectTasks(res.data)).catch(console.error).finally(() => setLoading(false));
+    tasks.getAll(params).then((res) => setProjectTasks(res.data)).catch((e) => setError(e.message || 'Failed to load tasks')).finally(() => setLoading(false));
   }, []);
 
   const fetchSeparateTasks = useCallback((f) => {
     setLoading(true);
+    setError(null);
     const params = {};
     if (f !== 'all') params.status = f;
-    tasks.getSeparate(params).then((res) => setSeparateTasks(res.data)).catch(console.error).finally(() => setLoading(false));
+    tasks.getSeparate(params).then((res) => setSeparateTasks(res.data)).catch((e) => setError(e.message || 'Failed to load tasks')).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -137,8 +141,10 @@ export default function Tasks() {
   };
 
   if (loading && currentList.length === 0) {
-    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-[var(--radius-full)]" /></div>;
+    return <LoadingState message="Loading tasks..." />;
   }
+
+  if (error) return <ErrorState message={error} onRetry={() => { if (tab === 'project') fetchProjectTasks(filter, projectFilter); else fetchSeparateTasks(filter); }} />;
 
   return (
     <div className="px-4 py-5 max-w-7xl mx-auto page-enter">
