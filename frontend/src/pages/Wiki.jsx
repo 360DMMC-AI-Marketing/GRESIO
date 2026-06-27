@@ -669,7 +669,7 @@ export default function Wiki() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center animate-fade-in" style={{paddingTop:'10vh'}} onClick={() => setShowCreate(false)}>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] shadow-[var(--elevation-high)] w-full max-w-2xl mx-4 rounded-[var(--radius-lg)] animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] shadow-[var(--elevation-high)] w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto rounded-[var(--radius-lg)] animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-primary)]">
               <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2.5">
                 <Plus className="w-4 h-4 text-[var(--brand-primary)]" />
