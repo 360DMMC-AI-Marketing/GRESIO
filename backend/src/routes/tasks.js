@@ -11,7 +11,7 @@ router.get('/risk-forecast', getRiskForecast);
 router.get('/:id', getTaskById);
 router.post('/', authorize('admin', 'project_manager', 'team_lead', 'manager', 'qa_tester'), taskValidation.create, createTask);
 router.post('/separate', authorize('admin', 'project_manager', 'team_lead', 'manager'), createSeparateTask);
-router.patch('/bulk', bulkUpdateTasks);
+router.patch('/bulk', authorize('admin', 'project_manager', 'team_lead', 'manager'), bulkUpdateTasks);
 router.patch('/:id', updateTask);
 router.delete('/:id', deleteTask);
 router.post('/:id/subtasks', authorize('admin', 'project_manager', 'team_lead'), addSubtask);
