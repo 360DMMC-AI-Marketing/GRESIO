@@ -1,7 +1,0 @@
-opencode -s ses_12e6c501cffeG2pQTKiElbNRNa : gresio 
-opencode -s ses_10a506a1dffeitdGFBa7zIeHir ::::voice caller
-
-
-
-
-pk_290530878_N9JWOPVXO3DTZ5HMMG08RYF20M7SHGXK 
