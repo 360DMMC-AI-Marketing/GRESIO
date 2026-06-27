@@ -67,7 +67,7 @@ export default function Wiki() {
   const departments = [...new Set([...DEFAULT_DEPARTMENTS, ...(company?.wikiDepartments || [])])];
 
   const canManage = ['admin', 'project_manager', 'team_lead', 'manager'].includes(user?.role);
-  const canEdit = user && ['admin','team_lead','project_manager','manager','qa_tester','developer','intern','other'].includes(user.role);
+  const canEdit = user && ['admin','team_lead','project_manager','manager','qa_tester','developer','designer','business_analyst'].includes(user.role);
 
   const loadPages = async () => {
     try {

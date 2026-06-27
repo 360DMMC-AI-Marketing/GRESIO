@@ -23,7 +23,7 @@ const CATEGORIES = [
       { title: 'Task Priorities & Deadlines', desc: 'Urgent → High → Medium → Low priority levels. Overdue detection with color-coded warnings.' },
       { title: 'Subtasks & Attachments', desc: 'Like ClickUp checklists — add subtasks under any task. Upload files and link PRs or commits.' },
       { title: 'Task Assignment', desc: 'Assign tasks to team members by name or Outlook email. Filter by assignee, sprint, or priority.' },
-      { title: 'Sprint Burndown', desc: 'Visual progress bar showing completed vs total tasks per sprint. Track team velocity in real time.' },
+      { title: 'Sprint Progress', desc: 'Visual progress bar showing completed vs total tasks per sprint. Track team velocity in real time.' },
       { title: 'Team Calendar', desc: 'Month-view calendar with color-coded tasks, sprints, project deadlines, milestones, events, and reminders — everything in one view.' },
     ],
   },
@@ -63,13 +63,11 @@ const CATEGORIES = [
   {
     icon: '👥', title: 'Department Management', desc: 'Role-based access control with granular permissions, capacity planning, and intelligent team grouping.',
     features: [
-      { title: '8 User Roles', desc: 'Admin, PM, Team Lead, Manager, QA Tester, Developer, Intern, Other — each with tailored permissions.' },
+      { title: '10 User Roles', desc: 'Admin, Project Manager, Team Lead, Manager, QA Tester, Developer, Designer, Business Analyst, Intern, Other — each with tailored permissions.' },
       { title: 'Role-Based Access (RBAC)', desc: '27+ granular permissions controlling create/edit/delete for projects, sprints, tasks, test cases, and more.' },
       { title: 'Departments', desc: 'Auto-created groups: Development, QA, Design, PM, Business, Admin, Interns — with role color coding.' },
-      { title: 'Smart Invite & Suggestions', desc: 'Invite by email with role and group. AI-suggested department compositions based on project type.' },
+      { title: 'Smart Invite & Suggestions', desc: 'Invite by email with role and group. Get team composition suggestions based on project type.' },
       { title: 'Member Work Log Viewer', desc: 'Click any member to see their work logs, project assignments, and role details.' },
-      { title: 'Workload Heatmap', desc: '6-week capacity forecast per person. Green = available, amber = nearing limit, red = overbooked. Drag tasks to rebalance instantly.' },
-      { title: 'Portfolio Matrix', desc: 'Visual grid of every project across health × progress dimensions. Spot stalled projects, resource bottlenecks, and delivery risks at a glance.' },
     ],
   },
   {
@@ -77,10 +75,10 @@ const CATEGORIES = [
     features: [
       { title: 'Microsoft 365 / Azure AD', desc: 'One-click import of all company users. Auto-infer roles from job titles. Send welcome emails with temp passwords.' },
       { title: 'GitHub Integration', desc: 'Track commits, pull requests, and issues. Activity scoring: commits (10pts), PRs (8pts), issues (5pts).' },
-      { title: 'Microsoft Teams', desc: 'Auto-create Teams channels per project. Sync messages, meetings, and attendance tracking.' },
-      { title: 'Outlook Sync', desc: 'Sync emails and calendar events. View email and calendar workload insights per team member. Calendar events from Outlook appear in your GRESIO Calendar.' },
-      { title: 'Calendar Integration', desc: 'Outlook calendar events are synced and displayed in the GRESIO Calendar alongside tasks, sprints, and project deadlines — one unified view.' },
-      { title: 'ClickUp & Figma', desc: 'Map tasks by ClickUp ID. Link Figma design files with review and comment tracking in activity feed.' },
+      { title: 'Microsoft Teams', desc: 'Auto-create Teams channels per project. Sync messages and notifications.' },
+      { title: 'Outlook Sync', desc: 'Sync emails and calendar events. View email and calendar workload insights per team member.' },
+      { title: 'Calendar Integration', desc: 'Outlook calendar events are synced and displayed alongside tasks, sprints, and project deadlines — one unified view.' },
+      { title: 'ClickUp Import', desc: 'Map tasks by ClickUp ID. Import workspaces, folders, lists, and tasks from your ClickUp account.' },
     ],
   },
   {
@@ -93,14 +91,12 @@ const CATEGORIES = [
     ],
   },
   {
-    icon: '🏢', title: 'Enterprise', desc: 'Advanced features for organizations that need security, customization, and dedicated support.',
+    icon: '🏢', title: 'Enterprise', desc: 'Advanced features for organizations that need AI-powered tools and dedicated support.',
     features: [
-      { title: 'On-Premise Deployment', desc: 'Deploy GRESIO on your own infrastructure. Full data control and compliance with internal policies.' },
-      { title: 'Custom Fields & Workflows', desc: 'Tailor GRESIO to your processes. Add custom fields to projects/tasks. Define custom phase workflows.' },
-      { title: 'SLA Guarantee', desc: 'Service Level Agreement with guaranteed uptime and response times for enterprise customers.' },
-      { title: 'White-Label & API Access', desc: 'Remove GRESIO branding and add your own. Full API access for custom integrations and automation.' },
       { title: 'AI Voice Assistant', desc: 'Voice-controlled project management — say "hey gresio" to create tasks, navigate pages, assign work, and run commands hands-free through the smart assistant panel.' },
       { title: 'AI Chatbot', desc: 'Conversational AI assistant that understands your project context. Ask questions, generate reports, and execute commands through natural language chat — all inside the dashboard.' },
+      { title: 'API Access', desc: 'Full API access for custom integrations and automation. Generate API keys with scoped permissions.' },
+      { title: 'Dedicated Support', desc: 'Priority support with dedicated account manager for enterprise customers.' },
     ],
   },
   {
@@ -134,14 +130,14 @@ export default function FeaturesPage() {
         <div className="absolute top-0 right-0 w-[650px] h-[650px] rounded-full opacity-[0.04] pointer-events-none" style={{ background: 'radial-gradient(circle, var(--brand-primary), transparent 70%)', transform: 'translate(30%, -30%)' }} />
         <div className="max-w-5xl mx-auto text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', color: 'var(--brand-primary)' }}>
-            🚀 180+ features to power your workflow
+            🚀 65+ features to power your workflow
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--text-primary)] leading-tight mb-5 tracking-tight">
             Everything you need to ship
           </h1>
           <p className="text-lg md:text-xl text-[var(--text-tertiary)] max-w-3xl mx-auto mb-8 leading-relaxed">
             One platform covering the full project lifecycle — project management, sprints, 
-            tasks, testing, capacity heatmap, portfolio matrix, WorkDNA, analytics, integrations, and automation. No more juggling between tools.
+             tasks, testing, WorkDNA, analytics, integrations, and automation. No more juggling between tools.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/pricing" className="btn-premium px-8 py-3.5 text-base">
@@ -160,7 +156,7 @@ export default function FeaturesPage() {
             ['5', 'Project Types'],
             ['7', 'Lifecycle Phases'],
             ['27+', 'Granular Permissions'],
-            ['180+', 'Total Features'],
+            ['65+', 'Total Features'],
           ].map(([val, label], i) => (
             <div key={i} className="card-premium glow-card p-6 text-center">
               <p className="text-3xl font-bold text-primary-600 mb-1">{val}</p>

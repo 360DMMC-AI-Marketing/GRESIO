@@ -2034,6 +2034,7 @@ export default function ProjectDetail() {
             </div>
           </div>
 
+          {canManage && (
           <div className="settings-section" style={{borderLeft:'3px solid #8b5cf6'}}>
             <div className="settings-title">📦 Save as Template</div>
             <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:8}}>
@@ -2044,6 +2045,7 @@ export default function ProjectDetail() {
               {saving ? 'Saving…' : 'Save as Template'}
             </button>
           </div>
+          )}
 
           {canManage && (
             <div className="danger-zone">

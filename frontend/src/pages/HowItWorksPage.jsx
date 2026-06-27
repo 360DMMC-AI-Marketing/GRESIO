@@ -1,17 +1,16 @@
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 
-const PHASES = ['Discovery', 'Planning', 'Development', 'Testing', 'Review', 'Launch', 'Delivered', 'Report'];
+const PHASES = ['Discovery', 'Planning', 'Development', 'Testing', 'Review', 'Launch', 'Delivered'];
 
 const PHASE_DETAILS = [
   { num: 1, name: 'Discovery', auto: true, desc: 'Define project scope, collect requirements, and identify stakeholders. GRESIO auto-generates a project brief from initial inputs.' },
-  { num: 2, name: 'Planning', auto: true, desc: 'Break down work into sprints, assign tasks, set milestones, and allocate resources. Burndown charts are auto-created.' },
+  { num: 2, name: 'Planning', auto: true, desc: 'Break down work into sprints, assign tasks, set milestones, and allocate resources. Progress tracking is auto-created.' },
   { num: 3, name: 'Development', auto: true, desc: 'Teams execute tasks in Kanban-style boards. Progress is tracked in real-time with status updates (To Do → In Progress → Done).' },
   { num: 4, name: 'Testing', auto: true, desc: 'QA teams create and run test cases linked to features. Failed tests can auto-create bug tasks for the development team.' },
   { num: 5, name: 'Review', auto: false, desc: 'Code reviews, QA sign-offs, and stakeholder demonstrations. The project lead manually approves the review phase.' },
   { num: 6, name: 'Launch', auto: false, desc: 'Deploy to production. Only Admin, PM, or Team Lead can approve the launch phase manually.' },
-  { num: 7, name: 'Delivered', auto: false, desc: 'Project is completed and handed over. Final documentation is archived and team velocity metrics are recorded.' },
-  { num: 8, name: 'Report', auto: false, desc: 'Generate professional project reports — Admin (full audit with KPIs, tasks, sprints, testing) or Client (stakeholder summary). Both export as PDF with GRESIO + 360 DMMC branding.' },
+  { num: 7, name: 'Delivered', auto: false, desc: 'Project is completed and handed over. Final documentation is archived, team velocity metrics are recorded, and professional PDF reports can be generated.' },
 ];
 
 const FAQS = [
@@ -53,7 +52,7 @@ const FAQS = [
   },
   {
     q: 'How is my data secured?',
-    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Enterprise plans include on-premise deployment options, and SLA guarantees for data availability.',
+    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Enterprise plans include AI voice, chatbot, and dedicated support for enterprise customers.',
   },
   {
     q: 'Can I track time spent on tasks?',
@@ -82,11 +81,11 @@ export default function HowItWorksPage() {
         <div className="max-w-4xl mx-auto text-center animate-fade-in">
           <div className="glass-panel rounded-[var(--radius-xl)] p-8 md:p-12 mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-4">How It Works</h1>
-            <p className="text-lg text-[var(--text-tertiary)] max-w-xl mx-auto mb-12">Projects move through 8 phases automatically. You focus on the work, we handle the flow.</p>
+            <p className="text-lg text-[var(--text-tertiary)] max-w-xl mx-auto mb-12">Projects move through 7 phases automatically. You focus on the work, we handle the flow.</p>
 
             <div className="relative mb-16">
               <div className="hidden md:block absolute top-5 left-0 right-0 h-0.5 bg-[var(--border-primary)]" />
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-0">
+              <div className="grid grid-cols-4 md:grid-cols-7 gap-3 md:gap-0">
                 {PHASES.map((phase, i) => (
                   <div key={i} className="flex flex-col items-center relative z-10">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 ${i < 4 ? 'bg-primary-600 text-white border-primary-600' : i === 4 ? 'bg-amber-500 text-white border-amber-500' : i === 5 ? 'bg-indigo-600 text-white border-indigo-600' : i === 6 ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-primary)]'}`}>

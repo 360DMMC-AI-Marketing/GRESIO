@@ -11,7 +11,7 @@ router.get('/', c.getPages);
 router.get('/slug/:slug', c.getPageBySlug);
 router.get('/:id', c.getPageById);
 router.post('/', authorize('admin', 'project_manager', 'team_lead', 'manager'), wikiValidation.create, c.createPage);
-router.patch('/:id', c.updatePage);
+router.patch('/:id', authorize('admin', 'team_lead', 'project_manager', 'manager', 'qa_tester', 'developer', 'designer', 'business_analyst'), c.updatePage);
 router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), c.deletePage);
 router.post('/:id/upload', authorize('admin', 'project_manager', 'team_lead', 'manager'), upload.single('file'), c.uploadFile);
 router.delete('/:id/files/:fileId', authorize('admin', 'project_manager', 'team_lead'), c.deleteFile);

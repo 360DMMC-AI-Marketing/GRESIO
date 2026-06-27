@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { integrations, companies } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal, { InputModal, ConfirmModal, AlertModal } from '../components/Modal';
@@ -16,6 +17,7 @@ function fmtLimit(val) {
 
 export default function Admin() {
   const { user, company, updateCompany } = useAuth();
+  if (user?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   const [loading, setLoading] = useState(true);
   const [syncingPlatform, setSyncingPlatform] = useState(null);
   const [teamIdInput, setTeamIdInput] = useState('');

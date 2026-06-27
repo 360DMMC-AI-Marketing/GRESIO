@@ -102,7 +102,7 @@ export default function Landing() {
             {[
               { title: 'Leadership', desc: 'Portfolio-level visibility, resource allocation, and delivery metrics to guide strategic decisions.', link: '/features', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
               { title: 'Project Managers', desc: 'Sprint planning, milestone tracking, workload balancing, and auto status flows that save hours every week.', link: '/how-it-works', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-              { title: 'Developers & Designers', desc: 'Kanban boards, task management, test case execution, and deep integrations with GitHub, Figma, and more.', link: '/features', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+              { title: 'Developers & Designers', desc: 'Kanban boards, task management, test case execution, and deep integrations with GitHub and more.', link: '/features', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
               { title: 'Clients & Stakeholders', desc: 'Dedicated client view with progress reports, milestone summaries, and direct communication channels.', link: '/pricing', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
             ].map((item, i) => (
               <div key={i} className="glass-panel glow-card rounded-2xl p-7 text-left transition-all hover:-translate-y-1 group" style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>
@@ -125,14 +125,14 @@ export default function Landing() {
       <section className="py-28 px-5" style={{ background: 'var(--bg-primary)' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16 animate-fade-in">
-            <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--brand-primary)' }}>By the numbers</span>
+            <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--brand-primary)' }}>Built for teams</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 stagger">
             {[
-              ['500+', 'Projects Managed'],
-              ['10K+', 'Tasks Completed'],
-              ['120+', 'Active Teams'],
-              ['99.9%', 'Uptime SLA'],
+              ['5', 'Project Types'],
+              ['7', 'Lifecycle Phases'],
+              ['10', 'User Roles'],
+              ['27+', 'Granular Permissions'],
             ].map(([val, label], i) => (
               <div key={i} className="glass-panel rounded-2xl p-8 text-center transition-all hover:-translate-y-1" style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>
                 <p className="text-4xl font-bold mb-2 num-mono" style={{ background: 'linear-gradient(135deg, var(--brand-primary), #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{val}</p>
