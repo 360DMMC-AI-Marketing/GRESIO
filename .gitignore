@@ -9,3 +9,5 @@ dist/
 .opencode/
 
 test-import.csv
+backend.err
+e2e_*.ps1
