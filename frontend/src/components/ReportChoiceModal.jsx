@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { reportsService } from '../services/reports';
+import Modal from './Modal';
 import toast from 'react-hot-toast';
 
 export default function ReportChoiceModal({ projectId, projectName, onClose, onGenerated }) {
@@ -37,8 +38,8 @@ export default function ReportChoiceModal({ projectId, projectName, onClose, onG
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-8">
+    <Modal open={true} onClose={onClose}>
+      <div className="max-w-lg w-full mx-4 p-8">
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-600">
@@ -112,6 +113,6 @@ export default function ReportChoiceModal({ projectId, projectName, onClose, onG
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

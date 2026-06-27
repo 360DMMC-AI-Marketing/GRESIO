@@ -67,7 +67,7 @@ function executeNavigateAction(payload) {
   if (typeof payload === 'number') {
     window.history.go(payload);
   } else {
-    window.location.href = payload;
+    window.history.pushState({}, '', payload);
   }
   return { success: true, message: `Navigating to ${payload}` };
 }
@@ -669,7 +669,7 @@ function executeAiAction(text) {
       if (data.navigateTo && window.location.pathname !== data.navigateTo) {
         dispatchResponse({ message: data.message || 'Done', success: true, isAi: true, action: true });
         if (data.navigateTo !== -1) {
-          setTimeout(() => { window.location.href = data.navigateTo; }, 400);
+          setTimeout(() => { window.history.pushState({}, '', data.navigateTo); }, 400);
         } else {
           window.history.back();
         }
@@ -735,7 +735,7 @@ function fallbackToChat(text, projectId, page, fetchOptions, dispatchResponse) {
         msg = msg.replace(/NAVIGATE:\s*\/\S*/i, '').trim();
         dispatchResponse({ message: msg || 'Navigating...', success: true, isAi: true });
         if (window.location.pathname !== path) {
-          setTimeout(() => { window.location.href = path; }, 500);
+          setTimeout(() => { window.history.pushState({}, '', path); }, 500);
         }
       } else {
         dispatchResponse({ message: msg || 'Got it. What else?', success: true, isAi: true });
@@ -813,7 +813,7 @@ export default function executeCommand(text) {
         const targetPath = PAGE_PATHS[best.page];
         if (targetPath && window.location.pathname !== targetPath) {
           sessionStorage.setItem('voice_pending', JSON.stringify({ command: text }));
-          window.location.href = targetPath;
+          window.history.pushState({}, '', targetPath);
           return { success: true, message: 'Navigating...', stopListening: true };
         }
       }
@@ -828,7 +828,7 @@ export default function executeCommand(text) {
           const targetPath = PAGE_PATHS[best.page];
           if (targetPath && window.location.pathname !== targetPath) {
             sessionStorage.setItem('voice_pending', JSON.stringify({ command: text }));
-            window.location.href = targetPath;
+            window.history.pushState({}, '', targetPath);
             return { success: true, message: 'Navigating...', stopListening: true };
           }
         }
@@ -852,7 +852,7 @@ export default function executeCommand(text) {
         const targetPath = PAGE_PATHS[p];
         if (targetPath && window.location.pathname !== targetPath) {
           sessionStorage.setItem('voice_pending', JSON.stringify({ command: text }));
-          window.location.href = targetPath;
+          window.history.pushState({}, '', targetPath);
           return { success: true, message: 'Navigating...', stopListening: true };
         }
         action = a;

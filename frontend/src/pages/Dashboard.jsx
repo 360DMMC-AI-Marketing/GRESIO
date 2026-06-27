@@ -483,7 +483,12 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </div>
-                <span className="prog-text">{p.progress}%</span>
+                                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:60,height:4,background:'var(--bg-tertiary)',borderRadius:3,overflow:'hidden'}}>
+                      <div style={{width:`${p.progress}%`,height:'100%',background:p.progress>=80?'#22c55e':p.progress>=40?'#f59e0b':'#ef4444',borderRadius:3,transition:'width 0.5s ease'}} />
+                    </div>
+                    <span className="prog-text">{p.progress}%</span>
+                  </div>
               </Link>
             );
           })}

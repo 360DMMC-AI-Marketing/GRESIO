@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { projects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,11 @@ const STATUS_CLASS = {
   on_track:'bg-success-50 text-success-700', at_risk:'bg-warning-50 text-warning-700',
   delayed:'bg-danger-50 text-danger-700', ready_to_test:'bg-info-50 text-info-700',
   completed:'bg-neutral-100 text-neutral-600',
+};
+const PROGRESS_COLOR = (val) => {
+  if (val >= 80) return '#22c55e';
+  if (val >= 40) return '#f59e0b';
+  return '#ef4444';
 };
 export default function Projects() {
   const navigate = useNavigate();
@@ -23,12 +28,18 @@ export default function Projects() {
   const [reportProject, setReportProject] = useState(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    setLoading(true);
+  const pollRef = useRef(null);
+  const fetchProjects = (showLoader) => {
+    if (showLoader) setLoading(true);
     projects.getAll()
       .then((res) => setList(res.data))
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => { if (showLoader) setLoading(false); });
+  };
+  useEffect(() => {
+    fetchProjects(true);
+    pollRef.current = setInterval(() => fetchProjects(false), 15000);
+    return () => clearInterval(pollRef.current);
   }, [location.state?.refresh]);
 
   const handleCreate = async () => {
@@ -211,9 +222,14 @@ export default function Projects() {
                   <span>📅 {p.deadline ? new Date(p.deadline).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : 'No deadline'}</span>
                   <span>🏢 {(p.children || []).length} sub-project(s)</span>
                 </div>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-muted)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-muted)',alignItems:'center'}}>
                   <span><span className="num-mono">{p.members?.length || 0}</span> members</span>
-                  <span style={{fontWeight:600,color:'var(--text-primary)'}}><span className="num-mono">{p.progress || 0}</span>%</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:80,height:5,background:'var(--bg-tertiary)',borderRadius:4,overflow:'hidden'}}>
+                      <div style={{width:`${p.progress || 0}%`,height:'100%',background:PROGRESS_COLOR(p.progress || 0),borderRadius:4,transition:'width 0.5s ease'}} />
+                    </div>
+                    <span style={{fontWeight:600,color:'var(--text-primary)'}}><span className="num-mono">{p.progress || 0}</span>%</span>
+                  </div>
                 </div>
               </div>
               {expanded[p._id] && (p.children || []).map((child) => (
@@ -229,9 +245,14 @@ export default function Projects() {
                       {(child.phase || 'planning').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
                     </span>
                   </div>
-                  <div style={{display:'flex',fontSize:9,color:'var(--text-muted)',gap:6,flexWrap:'wrap'}}>
+                  <div style={{display:'flex',fontSize:9,color:'var(--text-muted)',gap:6,flexWrap:'wrap',alignItems:'center'}}>
                     <span>👥 <span className="num-mono">{child.members?.length || 0}</span> members · ️<span className="num-mono">{child.tasks?.length || 0}</span> tasks</span>
-                    <span style={{fontWeight:600,color:'var(--text-primary)',marginLeft:'auto'}}><span className="num-mono">{child.progress || 0}</span>%</span>
+                    <div style={{display:'flex',alignItems:'center',gap:6,marginLeft:'auto'}}>
+                      <div style={{width:60,height:4,background:'var(--bg-tertiary)',borderRadius:3,overflow:'hidden'}}>
+                        <div style={{width:`${child.progress || 0}%`,height:'100%',background:PROGRESS_COLOR(child.progress || 0),borderRadius:3,transition:'width 0.5s ease'}} />
+                      </div>
+                      <span style={{fontWeight:600,color:'var(--text-primary)'}}><span className="num-mono">{child.progress || 0}</span>%</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -259,9 +280,14 @@ export default function Projects() {
                 <span>📅 Deadline: {p.deadline ? new Date(p.deadline).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : 'N/A'}</span>
                 <span>🕐 Created: {new Date(p.createdAt).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'})}</span>
               </div>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-muted)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-muted)',alignItems:'center'}}>
                 <span><span className="num-mono">{p.members?.length || 0}</span> members · <span className="num-mono">{p.tasks?.length || 0}</span> tasks</span>
-                <span style={{fontWeight:600,color:'var(--text-primary)'}}><span className="num-mono">{p.progress}</span>%</span>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{width:80,height:5,background:'var(--bg-tertiary)',borderRadius:4,overflow:'hidden'}}>
+                    <div style={{width:`${p.progress}%`,height:'100%',background:PROGRESS_COLOR(p.progress),borderRadius:4,transition:'width 0.5s ease'}} />
+                  </div>
+                  <span style={{fontWeight:600,color:'var(--text-primary)'}}><span className="num-mono">{p.progress}</span>%</span>
+                </div>
               </div>
               {(p.status === 'completed' || p.phase === 'delivered') && ['admin','project_manager','manager','team_lead'].includes(user?.role) && (
                 <div style={{display:'flex',gap:4,marginTop:8}}>

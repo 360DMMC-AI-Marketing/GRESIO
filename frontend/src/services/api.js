@@ -13,7 +13,7 @@ function createAxios(baseURL) {
       if (err.response?.status === 401) {
         localStorage.removeItem('gresio_token');
         localStorage.removeItem('gresio_user');
-        window.location.href = '/login';
+        window.location.pathname = '/login';
       }
       return Promise.reject(err);
     }

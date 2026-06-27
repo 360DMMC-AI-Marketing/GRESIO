@@ -13,7 +13,7 @@ async function request(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
     ...options,
   });
-  if (res.status === 401) { localStorage.removeItem('sa_token'); window.location.href = '/login'; }
+  if (res.status === 401) { localStorage.removeItem('sa_token'); window.location.pathname = '/login'; }
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Request failed');
   return data;

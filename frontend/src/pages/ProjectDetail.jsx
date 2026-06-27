@@ -865,9 +865,14 @@ export default function ProjectDetail() {
               <div style={{background:'var(--bg-secondary)',borderRadius:9,border:'0.5px solid var(--border-secondary)',padding:11}}>
                 <div style={{fontSize:11,fontWeight:600,color:'var(--text-primary)',marginBottom:8}}>Project health</div>
                 <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,alignItems:'center'}}>
                     <span style={{color:'var(--text-muted)'}}>Completion</span>
-                    <span style={{fontWeight:600,color:'#22c55e'}}>{pct}%</span>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <div style={{width:60,height:4,background:'var(--bg-tertiary)',borderRadius:3,overflow:'hidden'}}>
+                        <div style={{width:`${pct}%`,height:'100%',background:pct>=80?'#22c55e':pct>=40?'#f59e0b':'#ef4444',borderRadius:3,transition:'width 0.5s ease'}} />
+                      </div>
+                      <span style={{fontWeight:600,color:pct>=80?'#22c55e':pct>=40?'#f59e0b':'#ef4444'}}>{pct}%</span>
+                    </div>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:10}}>
                     <span style={{color:'var(--text-muted)'}}>Overdue tasks</span>

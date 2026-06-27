@@ -7,7 +7,7 @@ export default function WelcomeWizard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (loading || !user || user.onboardingCompleted) return null;
+  if (loading || !user || user.role === 'super_admin' || user.onboardingCompleted) return null;
   if (location.pathname === '/onboarding-guide') return null;
 
   return (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { integrations, users, projects as projectsApi } from '../services/api';
 
 export default function Teams() {
@@ -176,10 +177,10 @@ export default function Teams() {
               )}
             </div>
           </div>
-          <a data-voice="go-admin-integrations" href="/admin"
+          <Link data-voice="go-admin-integrations" to="/admin"
             className="shrink-0 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline transition-colors">
             Admin → Integrations
-          </a>
+          </Link>
         </div>
       </div>
     </div>
