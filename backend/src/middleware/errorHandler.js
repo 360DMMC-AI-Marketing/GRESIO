@@ -1,3 +1,5 @@
+const env = require('../config/env');
+
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err.message);
 
@@ -15,9 +17,12 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
 
-  res.status(err.statusCode || 500).json({
-    message: err.message || 'Internal server error',
-  });
+  const statusCode = err.statusCode || 500;
+  const message = statusCode === 500 && env.NODE_ENV === 'production'
+    ? 'Internal server error'
+    : err.message || 'Internal server error';
+
+  res.status(statusCode).json({ message });
 };
 
 module.exports = errorHandler;

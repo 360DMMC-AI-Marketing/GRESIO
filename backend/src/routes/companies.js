@@ -1,12 +1,13 @@
 const { Router } = require('express');
 const c = require('../controllers/companyController');
 const { auth, authorize } = require('../middleware/auth');
+const { company } = require('../middleware/validate');
 const r = Router();
 r.use(auth);
 r.get('/', c.getCompanies);
 r.get('/:id', c.getCompanyById);
-r.post('/', authorize('admin'), c.createCompany);
-r.patch('/:id', authorize('admin'), c.updateCompany);
+r.post('/', authorize('admin'), company.create, c.createCompany);
+r.patch('/:id', authorize('admin'), company.update, c.updateCompany);
 r.delete('/:id', authorize('admin'), c.deleteCompany);
 r.patch('/:id/plan', authorize('admin'), c.updatePlan);
 r.post('/:id/downgrade', authorize('admin'), c.downgradePlan);

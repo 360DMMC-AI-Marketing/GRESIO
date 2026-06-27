@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const cluster = require('cluster');
@@ -59,7 +60,8 @@ const io = new Server(server, {
 });
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+app.use(mongoSanitize());
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: false }));
 app.use(compression());
 
@@ -104,7 +106,7 @@ const keyGenerator = (req) => {
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator,
@@ -113,7 +115,7 @@ const authLimiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 100,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator,
@@ -123,10 +125,12 @@ const registerLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', registerLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/change-password', authLimiter);
+app.use('/api/contact', authLimiter);
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator,

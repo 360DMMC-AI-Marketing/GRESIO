@@ -20,6 +20,24 @@ const auth = {
     body('password').notEmpty().withMessage('Password is required'),
     handleErrors,
   ],
+  updateProfile: [
+    body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    handleErrors,
+  ],
+  changePassword: [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    handleErrors,
+  ],
+  forgotPassword: [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    handleErrors,
+  ],
+  resetPassword: [
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    handleErrors,
+  ],
 };
 
 const project = {
@@ -48,13 +66,25 @@ const user = {
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('role').isIn(['admin', 'project_manager', 'developer', 'qa_tester', 'intern', 'team_lead']).withMessage('Valid role is required'),
+    body('role').isIn(['admin', 'project_manager', 'developer', 'qa_tester', 'intern', 'team_lead', 'manager', 'designer', 'business_analyst']).withMessage('Valid role is required'),
     handleErrors,
   ],
   update: [
     body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
     body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
-    body('role').optional().isIn(['admin', 'project_manager', 'developer', 'qa_tester', 'intern', 'team_lead']).withMessage('Valid role is required'),
+    body('role').optional().isIn(['admin', 'project_manager', 'developer', 'qa_tester', 'intern', 'team_lead', 'manager', 'designer', 'business_analyst']).withMessage('Valid role is required'),
+    handleErrors,
+  ],
+};
+
+const company = {
+  create: [
+    body('name').trim().notEmpty().withMessage('Company name is required'),
+    body('domain').trim().notEmpty().withMessage('Domain is required'),
+    handleErrors,
+  ],
+  update: [
+    body('name').optional().trim().notEmpty().withMessage('Company name cannot be empty'),
     handleErrors,
   ],
 };
@@ -131,4 +161,31 @@ const testing = {
   ],
 };
 
-module.exports = { auth, project, task, user, integration, sprint, bug, workLog, wiki, testCase, testing, idParam };
+const contact = {
+  submit: [
+    body('name').trim().notEmpty().withMessage('Name is required'),
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('subject').trim().notEmpty().withMessage('Subject is required'),
+    body('message').trim().notEmpty().withMessage('Message is required'),
+    handleErrors,
+  ],
+};
+
+const calendarEvent = {
+  create: [
+    body('title').trim().notEmpty().withMessage('Event title is required'),
+    body('date').optional().isISO8601().withMessage('Valid date is required'),
+    handleErrors,
+  ],
+  update: [
+    body('title').optional().trim().notEmpty().withMessage('Event title cannot be empty'),
+    handleErrors,
+  ],
+};
+
+const notificationAction = [
+  body('action').trim().notEmpty().withMessage('Action is required'),
+  handleErrors,
+];
+
+module.exports = { auth, project, task, user, company, integration, sprint, bug, workLog, wiki, testCase, testing, contact, calendarEvent, notificationAction, idParam };

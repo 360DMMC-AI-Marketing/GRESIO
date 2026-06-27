@@ -3,17 +3,17 @@ const router = express.Router();
 const { auth, authorize } = require('../middleware/auth');
 const ApiKey = require('../models/ApiKey');
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, async (req, res, next) => {
   try {
     const keys = await ApiKey.find({ user: req.user._id })
       .select('name prefix scopes lastUsed active createdAt expiresAt')
       .sort({ createdAt: -1 })
       .lean();
     res.json({ data: keys });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { next(err); }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, async (req, res, next) => {
   try {
     const { name, scopes } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
@@ -33,16 +33,16 @@ router.post('/', auth, async (req, res) => {
     if (err.name === 'ValidationError') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res, next) => {
   try {
     const key = await ApiKey.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     if (!key) return res.status(404).json({ error: 'API key not found' });
     res.json({ message: 'API key deleted' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

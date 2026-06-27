@@ -18,7 +18,12 @@ exports.createCompany = async (req, res, next) => {
   try {
     const existing = await Company.findOne({ domain: req.body.domain?.toLowerCase() });
     if (existing) return res.status(400).json({ message: 'Domain already registered' });
-    const company = await Company.create({ ...req.body, createdBy: req.user._id, domain: req.body.domain?.toLowerCase() });
+    const company = await Company.create({
+      name: req.body.name,
+      domain: req.body.domain?.toLowerCase(),
+      createdBy: req.user._id,
+      ...(req.body.plan && { plan: req.body.plan }),
+    });
     res.status(201).json(company);
   } catch (e) { next(e); }
 };

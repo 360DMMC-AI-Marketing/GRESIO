@@ -10,18 +10,18 @@ function getApiKey(req) {
 router.use(auth);
 router.use(authorize('admin'));
 
-router.get('/teams', async (req, res) => {
+router.get('/teams', async (req, res, next) => {
   try {
     const apiKey = getApiKey(req);
     if (!apiKey) return res.status(400).json({ error: 'API key is required' });
     const teams = await clickupService.getAuthorizedTeams(apiKey);
     res.json({ teams });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.get('/spaces', async (req, res) => {
+router.get('/spaces', async (req, res, next) => {
   try {
     const { teamId } = req.query;
     if (!teamId) return res.status(400).json({ error: 'teamId required' });
@@ -29,11 +29,11 @@ router.get('/spaces', async (req, res) => {
     const spaces = await clickupService.getTeamSpaces(teamId, apiKey);
     res.json({ spaces });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.get('/folders', async (req, res) => {
+router.get('/folders', async (req, res, next) => {
   try {
     const { spaceId } = req.query;
     if (!spaceId) return res.status(400).json({ error: 'spaceId required' });
@@ -41,11 +41,11 @@ router.get('/folders', async (req, res) => {
     const folders = await clickupService.getSpaceFolders(spaceId, apiKey);
     res.json({ folders });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.get('/lists', async (req, res) => {
+router.get('/lists', async (req, res, next) => {
   try {
     const { folderId, spaceId } = req.query;
     const apiKey = getApiKey(req);
@@ -59,11 +59,11 @@ router.get('/lists', async (req, res) => {
     }
     res.json({ lists });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.get('/tasks', async (req, res) => {
+router.get('/tasks', async (req, res, next) => {
   try {
     const { listId } = req.query;
     if (!listId) return res.status(400).json({ error: 'listId required' });
@@ -71,11 +71,11 @@ router.get('/tasks', async (req, res) => {
     const tasks = await clickupService.getListTasks(listId, { includeClosed: true, subtasks: false }, apiKey);
     res.json({ tasks });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.post('/save-config', async (req, res) => {
+router.post('/save-config', async (req, res, next) => {
   try {
     const { apiKey, workspaceIds, workspaces } = req.body;
     const Integration = require('../models/Integration');
@@ -97,35 +97,35 @@ router.post('/save-config', async (req, res) => {
       { upsert: true, new: true }
     );
     res.json({ message: 'Config saved', workspaceIds: workspaceIds || [] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { next(err); }
 });
 
-router.get('/config', async (req, res) => {
+router.get('/config', async (req, res, next) => {
   try {
     const Integration = require('../models/Integration');
     const integration = await Integration.findOne({ name: 'clickup' });
     if (!integration) return res.json({ apiKey: '', workspaceIds: [] });
     const creds = integration.getDecryptedCredentials();
     res.json({
-      apiKey: creds?.apiKey ? '••••' + creds.apiKey.slice(-4) : '',
+      apiKey: creds?.apiKey ? '\u2022\u2022\u2022\u2022' + creds.apiKey.slice(-4) : '',
       workspaceIds: integration.config?.workspaceIds || [],
       workspaces: integration.config?.workspaces || [],
       workspaceSyncTimes: integration.config?.workspaceSyncTimes || {},
       lastSync: integration.lastSync,
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { next(err); }
 });
 
-router.post('/cleanup', async (req, res) => {
+router.post('/cleanup', async (req, res, next) => {
   try {
     const result = await clickupService.cleanupImport();
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.post('/import-all', async (req, res) => {
+router.post('/import-all', async (req, res, next) => {
   try {
     const { teamId, spaceId } = req.body;
     const apiKey = getApiKey(req);
@@ -133,11 +133,11 @@ router.post('/import-all', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Import All error:', err.stack || err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.post('/sync-workspace', async (req, res) => {
+router.post('/sync-workspace', async (req, res, next) => {
   try {
     const { workspaceId } = req.body;
     if (!workspaceId) return res.status(400).json({ error: 'workspaceId required' });
@@ -157,10 +157,10 @@ router.post('/sync-workspace', async (req, res) => {
       { $set: { 'config.workspaceSyncTimes': workspaceSyncTimes, lastSync: now } }
     );
     res.json({ message: 'Sync complete', result });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { next(err); }
 });
 
-router.post('/import', async (req, res) => {
+router.post('/import', async (req, res, next) => {
   try {
     const { plan } = req.body;
     if (!plan || !plan.length) return res.status(400).json({ error: 'plan array required' });
@@ -169,7 +169,7 @@ router.post('/import', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Import All error:', err.stack || err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 

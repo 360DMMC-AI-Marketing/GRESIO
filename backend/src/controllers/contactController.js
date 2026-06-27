@@ -1,5 +1,6 @@
 const env = require('../config/env');
 const { sendEmail } = require('../services/emailService');
+const sanitizeHtml = require('sanitize-html');
 
 exports.submitContact = async (req, res, next) => {
   try {
@@ -8,15 +9,17 @@ exports.submitContact = async (req, res, next) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    const clean = (str) => sanitizeHtml(str, { allowedTags: [], allowedAttributes: {} });
+
     const html = `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <h2 style="color:#1e293b">New Contact Form Submission</h2>
         <table style="width:100%;border-collapse:collapse;margin:16px 0">
-          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Name</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${name}</td></tr>
-          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Email</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${email}</td></tr>
-          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Subject</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${subject}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Name</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${clean(name)}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Email</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${clean(email)}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border:1px solid #e2e8f0">Subject</td><td style="padding:8px 12px;border:1px solid #e2e8f0;color:#1e293b">${clean(subject)}</td></tr>
         </table>
-        <div style="padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#334155;line-height:1.6;white-space:pre-wrap">${message}</div>
+        <div style="padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#334155;line-height:1.6;white-space:pre-wrap">${clean(message)}</div>
       </div>
     `;
 

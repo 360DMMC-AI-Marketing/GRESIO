@@ -49,7 +49,7 @@ exports.getUsers = async (req, res, next) => {
     const filter = { domain: req.user.domain, isActive: { $ne: false } };
     if (role) filter.role = role;
     if (status) filter.status = status;
-    if (search) filter.name = { $regex: search, $options: 'i' };
+    if (search) filter.name = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (hasOutlook === 'true') filter.outlookEmail = { $ne: '' };
 
     const page = parseInt(req.query.page);

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 function createAxios(baseURL) {
   const instance = axios.create({ baseURL });
@@ -14,6 +15,9 @@ function createAxios(baseURL) {
         localStorage.removeItem('gresio_token');
         localStorage.removeItem('gresio_user');
         window.location.pathname = '/login';
+      } else if (err.response?.status >= 400) {
+        const msg = err.response.data?.message || err.response.data?.error || 'Something went wrong';
+        toast.error(msg);
       }
       return Promise.reject(err);
     }
@@ -35,6 +39,9 @@ superApi.interceptors.response.use(
       localStorage.removeItem('gresio_token');
       localStorage.removeItem('gresio_user');
       window.location.href = '/login';
+    } else if (err.response?.status >= 400) {
+      const msg = err.response.data?.message || err.response.data?.error || 'Something went wrong';
+      toast.error(msg);
     }
     return Promise.reject(err);
   }
