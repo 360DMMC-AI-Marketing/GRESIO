@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { auth } from '../services/api';
 import Logo from '../components/Logo';
 
 export default function Login() {
@@ -12,6 +13,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  const [mustChange, setMustChange] = useState(false);
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [changing, setChanging] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
@@ -28,11 +33,29 @@ export default function Login() {
       const res = await login(email, password);
       if (res.requiresTwoFactor) {
         setTempToken(res.tempToken);
+      } else if (res.user?.mustChangePassword) {
+        setMustChange(true);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChangePw = async (e) => {
+    e.preventDefault();
+    if (newPw.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (newPw !== confirmPw) { setError('Passwords do not match'); return; }
+    setChanging(true);
+    setError('');
+    try {
+      await auth.changePassword({ currentPassword: password, newPassword: newPw });
+      setMustChange(false);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setChanging(false);
     }
   };
 
@@ -141,6 +164,28 @@ export default function Login() {
           </div>
         </div>
       </div>
-    </div>
+
+      {mustChange && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm" style={{paddingTop:'10vh'}} onClick={() => setError('')}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] shadow-[var(--elevation-high)] max-w-md w-full mx-4 rounded-[var(--radius-lg)] p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Change your password</h2>
+            <p className="text-xs text-[var(--text-tertiary)] mb-4">You're using a temporary password. Please set a new one.</p>
+            {error && <div className="mb-3 px-3 py-2 bg-[var(--danger-bg)] border border-[var(--danger-border)] rounded-lg text-xs text-[var(--danger-text)]">{error}</div>}
+            <form onSubmit={handleChangePw}>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">New password</label>
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} required minLength={6}
+                className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] outline-none bg-[var(--bg-primary)] focus:ring-2 focus:ring-[var(--brand-primary)] mb-3" />
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Confirm new password</label>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required minLength={6}
+                className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] outline-none bg-[var(--bg-primary)] focus:ring-2 focus:ring-[var(--brand-primary)] mb-4" />
+              <button type="submit" disabled={changing}
+                className="btn-premium w-full py-2 text-sm font-semibold disabled:opacity-50">
+                {changing ? 'Updating\u2026' : 'Update password'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div> // line 167 originally
   );
 }

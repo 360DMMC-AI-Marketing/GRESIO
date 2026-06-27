@@ -148,6 +148,7 @@ exports.changePassword = async (req, res, next) => {
     }
 
     user.password = newPassword;
+    user.mustChangePassword = false;
     await user.save();
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
@@ -214,6 +215,7 @@ exports.resetPassword = async (req, res, next) => {
     }
 
     user.password = password;
+    user.mustChangePassword = false;
     user.resetPasswordToken = '';
     user.resetPasswordExpire = null;
     await user.save();

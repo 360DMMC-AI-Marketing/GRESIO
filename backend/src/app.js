@@ -2,7 +2,12 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const mongoose = require('mongoose');
 const cron = require('node-cron');
+const cluster = require('cluster');
+const os = require('os');
 const fs = require('fs');
 const path = require('path');
 
@@ -55,6 +60,8 @@ const io = new Server(server, {
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: false }));
+app.use(compression());
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -686,29 +693,60 @@ app.post('/api/check-overdue-projects', auth, authorize('admin'), async (req, re
 console.log('GRESIO backend starting...');
 
 const PORT = env.PORT;
-connectDB().then(async () => {
-  try {
-    const db = require('mongoose').connection.db;
-    const indexes = await db.collection('testcases').indexes();
-    for (const idx of indexes) {
-      if (idx.unique && idx.key?.testCaseId) {
-        if (Object.keys(idx.key).length === 1) {
-          await db.collection('testcases').dropIndex(idx.name);
-          console.log(`Dropped global unique index ${idx.name} on testCaseId`);
+const isCluster = process.env.CLUSTER_MODE === 'true';
+
+if (isCluster && cluster.isMaster) {
+  const { setupMaster } = require('@socket.io/sticky');
+  setupMaster(server, { loadBalancingMethod: 'least-connection' });
+  const numWorkers = parseInt(process.env.CLUSTER_WORKERS, 10) || os.cpus().length;
+  console.log(`Master PID ${process.pid} forking ${numWorkers} workers...`);
+  for (let i = 0; i < numWorkers; i++) cluster.fork();
+  cluster.on('exit', (worker) => {
+    console.log(`Worker ${worker.process.pid} died, forking replacement...`);
+    cluster.fork();
+  });
+} else {
+  if (isCluster) {
+    const { createAdapter } = require('@socket.io/cluster-adapter');
+    io.adapter(createAdapter());
+  }
+  console.log(`PID ${process.pid} starting...`);
+  connectDB().then(async () => {
+    try {
+      const db = require('mongoose').connection.db;
+      const indexes = await db.collection('testcases').indexes();
+      for (const idx of indexes) {
+        if (idx.unique && idx.key?.testCaseId) {
+          if (Object.keys(idx.key).length === 1) {
+            await db.collection('testcases').dropIndex(idx.name);
+            console.log(`Dropped global unique index ${idx.name} on testCaseId`);
+          }
         }
       }
+    } catch (e) {
+      if (e.code !== 27) console.warn('Index cleanup:', e.message);
     }
-  } catch (e) {
-    if (e.code !== 27) console.warn('Index cleanup:', e.message);
-  }
-  const migrateSuperAdmin = require('./scripts/migrateSuperAdmin');
-  await migrateSuperAdmin();
-  await seedSuperAdmin();
-  server.listen(PORT, () => {
-    console.log(`GRESIO backend running on port ${PORT}`);
-    startNotificationPolling();
+    const migrateSuperAdmin = require('./scripts/migrateSuperAdmin');
+    await migrateSuperAdmin();
+    await seedSuperAdmin();
+    server.listen(PORT, () => {
+      console.log(`GRESIO backend running on port ${PORT} [${env.NODE_ENV || 'development'}]`);
+      startNotificationPolling();
+    });
   });
-});
+}
+
+function shutdown(signal) {
+  console.log(`\n${signal} received — shutting down gracefully...`);
+  server.close(() => {
+    mongoose.disconnect().catch(() => {});
+    console.log('Server closed, DB disconnected.');
+    process.exit(0);
+  });
+  setTimeout(() => { console.error('Forced shutdown after 10s'); process.exit(1); }, 10000);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 module.exports = { app, server, io };
 

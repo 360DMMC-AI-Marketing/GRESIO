@@ -117,6 +117,7 @@ exports.addMember = async (req, res, next) => {
         domain: req.user.domain,
         role: 'developer',
         isActive: true,
+        mustChangePassword: true,
         onboardingCompleted: false,
       });
       accountCreated = true;

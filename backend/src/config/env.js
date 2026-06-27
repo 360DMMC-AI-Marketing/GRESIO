@@ -26,6 +26,9 @@ const env = {
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
   GRAPH_SENDER_EMAIL: process.env.GRAPH_SENDER_EMAIL || '',
+  AZURE_COMMUNICATION_CONNECTION_STRING: process.env.AZURE_COMMUNICATION_CONNECTION_STRING || '',
+  AZURE_SENDER_EMAIL: process.env.AZURE_SENDER_EMAIL || '',
+  NODE_ENV: process.env.NODE_ENV || 'development',
 };
 
 module.exports = env;

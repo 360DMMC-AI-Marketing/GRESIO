@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   lastActive: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true },
   onboardingCompleted: { type: Boolean, default: false },
+  mustChangePassword: { type: Boolean, default: false },
   theme: { type: String, enum: ['light', 'dark'], default: 'light' },
   resetPasswordToken: { type: String, default: '' },
   resetPasswordExpire: { type: Date, default: null },

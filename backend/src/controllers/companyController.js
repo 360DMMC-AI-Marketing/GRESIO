@@ -298,6 +298,7 @@ exports.importCompanyUsers = async (req, res, next) => {
         teamsId: gu.id || '',
         domain: company.domain,
         isActive: true,
+        mustChangePassword: true,
         _tempPassword: tempPassword,
       });
       imported++;
