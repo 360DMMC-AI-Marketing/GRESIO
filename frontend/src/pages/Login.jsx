@@ -64,7 +64,11 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await verify2fa(tempToken, code);
+      const res = await verify2fa(tempToken, code);
+      if (res.user?.mustChangePassword) {
+        setMustChange(true);
+        setTempToken('');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid verification code');
       setLoading(false);
