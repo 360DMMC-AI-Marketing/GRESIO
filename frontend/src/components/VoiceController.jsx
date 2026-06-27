@@ -113,16 +113,18 @@ export default function VoiceController() {
   return (
     <>
       {feedback && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-2.5 rounded-full text-xs font-medium animate-scale-in shadow-2xl border backdrop-blur-md ${
-          feedback.type === 'success' ? 'bg-[var(--success-bg)] text-[var(--success-text)] border-[var(--success-border)]' :
-          feedback.type === 'error' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)] border-[var(--danger-border)]' :
-          feedback.type === 'ai' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--glass-border)]' :
-          feedback.type === 'wake' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]' :
-          'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]'
-        }`}>
-          {feedback.type === 'success' && '✓ '}
-          {feedback.type === 'error' && '✕ '}
-          {feedback.text}
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[99999]`}>
+          <div className={`px-5 py-2.5 rounded-full text-xs font-medium animate-scale-in shadow-2xl border backdrop-blur-md whitespace-nowrap ${
+            feedback.type === 'success' ? 'bg-[var(--success-bg)] text-[var(--success-text)] border-[var(--success-border)]' :
+            feedback.type === 'error' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)] border-[var(--danger-border)]' :
+            feedback.type === 'ai' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--glass-border)]' :
+            feedback.type === 'wake' ? 'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]' :
+            'glass-panel bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--glass-border)]'
+          }`}>
+            {feedback.type === 'success' && '✓ '}
+            {feedback.type === 'error' && '✕ '}
+            {feedback.text}
+          </div>
         </div>
       )}
     </>

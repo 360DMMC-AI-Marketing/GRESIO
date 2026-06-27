@@ -250,8 +250,9 @@ export default function WorkLogs() {
       {showForm && (
         <>
           <div className="fixed inset-0 z-[1001] bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-[420px] max-h-[85vh] overflow-y-auto z-[1002] p-6 animate-scale-in">
-            <div className="flex items-center justify-between mb-4">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1002]">
+            <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-[420px] max-h-[85vh] overflow-y-auto p-6 animate-scale-in">
+              <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-[var(--text-primary)]">{editingId ? 'Edit Entry' : 'Log Today\'s Work'}</h3>
               <button onClick={() => setShowForm(false)}
                 className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer border-none text-xs">✕</button>
@@ -343,6 +344,7 @@ export default function WorkLogs() {
                 </div>
               </>
             )}
+            </div>
           </div>
         </>
       )}
