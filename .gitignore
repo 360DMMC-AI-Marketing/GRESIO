@@ -1,7 +1,9 @@
 node_modules/
 .env
 uploads/*
+backend/uploads/*
 !uploads/.gitkeep
+!backend/uploads/.gitkeep
 dist/
 .vite/
 *.log
