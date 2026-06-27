@@ -1,6 +1,7 @@
 const Company = require('../models/Company');
 const User = require('../models/User');
-const { enforceUserLimit, getCompanyUsage, getPlanLimit } = require('../config/planLimits');
+const SuperNotification = require('../models/SuperNotification');
+const { enforceUserLimit, getCompanyUsage, getPlanLimit, validateDowngrade, performCleanup } = require('../config/planLimits');
 
 exports.getCompanies = async (req, res, next) => {
   try {
@@ -343,8 +344,90 @@ exports.updatePlan = async (req, res, next) => {
     if (!validPlans.includes(plan)) {
       return res.status(400).json({ message: `Invalid plan. Must be one of: ${validPlans.join(', ')}` });
     }
-    const company = await Company.findByIdAndUpdate(req.params.id, { plan }, { new: true });
+    const company = await Company.findById(req.params.id);
     if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    const previousPlan = company.plan;
+    const planOrder = { starter: 0, team: 1, enterprise: 2 };
+    const isUpgrade = planOrder[plan] > planOrder[previousPlan];
+
+    company.plan = plan;
+    await company.save();
+
+    await SuperNotification.create({
+      title: isUpgrade ? 'Plan upgraded' : 'Plan changed',
+      message: `${company.name} ${isUpgrade ? 'upgraded' : 'changed'} from ${previousPlan} to ${plan}.`,
+      type: 'upgrade',
+      companyId: company._id,
+      metadata: { from: previousPlan, to: plan, changedBy: req.user?._id },
+    }).catch(() => {});
+
+    try {
+      const ps = require('../services/paymentService');
+      if (ps.isConfigured() && company.billingEmail) {
+
+      }
+    } catch (_) {}
+
+    const usage = await getCompanyUsage(company.domain);
+    res.json({ ...company.toObject(), usage });
+  } catch (e) { next(e); }
+};
+
+exports.downgradePlan = async (req, res, next) => {
+  try {
+    const { targetPlan } = req.body;
+    const validPlans = ['starter', 'team', 'enterprise'];
+    if (!validPlans.includes(targetPlan)) {
+      return res.status(400).json({ message: `Invalid plan. Must be one of: ${validPlans.join(', ')}` });
+    }
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    const planOrder = { starter: 0, team: 1, enterprise: 2 };
+    if (planOrder[targetPlan] >= planOrder[company.plan]) {
+      return res.status(400).json({ message: 'Target plan is not a downgrade. Use /plan to upgrade.' });
+    }
+
+    const previousPlan = company.plan;
+
+    const validation = await validateDowngrade(company.domain, targetPlan);
+    if (!validation.canDowngrade) {
+      const cleaned = await performCleanup(company.domain, targetPlan);
+      const recheck = await validateDowngrade(company.domain, targetPlan);
+      if (!recheck.canDowngrade) {
+        const details = recheck.issues.map(i => {
+          if (i.type === 'users') return `Deactivate ${i.excess} user(s) to keep only ${i.max}`;
+          if (i.type === 'projects') return `Delete ${i.excess} project(s) to keep only ${i.max}`;
+          return `${i.excess} excess ${i.type}`;
+        }).join(', ');
+        return res.status(400).json({
+          canDowngrade: false,
+          issues: recheck.issues,
+          cleanup: { deactivatedUsers: cleaned.deletedUsers, deactivatedProjects: cleaned.deletedProjects },
+          message: `Cannot downgrade. ${details}. Make the changes manually and try again.`,
+        });
+      }
+    }
+
+    company.plan = targetPlan;
+    await company.save();
+
+    await SuperNotification.create({
+      title: 'Plan downgraded',
+      message: `${company.name} downgraded from ${previousPlan} to ${targetPlan}.`,
+      type: 'upgrade',
+      companyId: company._id,
+      metadata: { from: previousPlan, to: targetPlan, changedBy: req.user?._id },
+    }).catch(() => {});
+
+    try {
+      const ps = require('../services/paymentService');
+      if (ps.isConfigured() && company.billingEmail) {
+
+      }
+    } catch (_) {}
+
     const usage = await getCompanyUsage(company.domain);
     res.json({ ...company.toObject(), usage });
   } catch (e) { next(e); }

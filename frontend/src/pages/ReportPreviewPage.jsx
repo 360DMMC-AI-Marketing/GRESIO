@@ -6,6 +6,11 @@ import toast from 'react-hot-toast';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 import ShareReportModal from '../components/ShareReportModal';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  RadialBarChart, RadialBar, Legend,
+} from 'recharts';
 
 export default function ReportPreviewPage() {
   const { id } = useParams();
@@ -116,22 +121,58 @@ export default function ReportPreviewPage() {
         <ShareReportModal open={showShare} onClose={() => setShowShare(false)} reportId={report?._id} />
 
         <div ref={reportRef} className="card-premium glow-card bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--glass-border)] rounded-[var(--radius-xl)] shadow-elevation overflow-hidden animate-scale-in">
+          {/* COVER PAGE */}
+          <div className={`px-12 py-16 ${isAdmin ? 'bg-gradient-to-br from-[var(--brand-primary)] to-blue-900' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
+            <div className="flex flex-col items-start min-h-[300px] justify-between">
+              <div>
+                <Logo variant="textOnly" size="lg" inverted />
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-white/40 text-xs">|</span>
+                  <span className="text-white/50 text-xs font-medium tracking-wider uppercase">Certified by 360 DMMC</span>
+                </div>
+              </div>
+              <div className="mt-auto">
+                <div className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider mb-4 ${isAdmin ? 'bg-white/20 text-white' : 'bg-amber-500/20 text-amber-300'}`}>
+                  {isAdmin ? 'PROJECT CLOSURE REPORT' : 'CLIENT DELIVERY REPORT'}
+                </div>
+                <h1 className="text-4xl font-bold text-white leading-tight mb-2">{d?.project?.name || 'Project Report'}</h1>
+                <p className="text-white/60 text-sm max-w-xl">
+                  {isAdmin
+                    ? `Comprehensive project performance analysis — ${d?.project?.type || 'project'} engagement`
+                    : `Final delivery report for ${d?.client || d?.project?.client || 'client'} — detailed account of work completed, milestones achieved, and quality metrics`}
+                </p>
+                <div className="flex items-center gap-4 mt-6 text-white/50 text-xs">
+                  <span>Prepared: {new Date(d?.generatedAt || report.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  {d?.project?.duration && (
+                    <>
+                      <span className="w-px h-3 bg-white/20" />
+                      <span>Duration: {d.project.duration} days</span>
+                    </>
+                  )}
+                  {d?.team?.totalMembers > 0 && (
+                    <>
+                      <span className="w-px h-3 bg-white/20" />
+                      <span>Team: {d.team.totalMembers} members</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* HEADER */}
-          <div className={`px-10 py-8 ${isAdmin ? 'bg-[var(--brand-primary)]' : 'bg-[var(--bg-primary)]'}`}>
+          <div className={`px-10 py-5 ${isAdmin ? 'bg-[var(--brand-primary)]/5' : 'bg-[var(--bg-primary)]'} border-b border-[var(--border-primary)]`}>
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Logo variant="textOnly" size="md" inverted />
-                  <span className="text-white/40 text-sm">|</span>
-                  <span className="text-white/70 text-sm font-medium">Certified by 360 DMMC</span>
-                </div>
-                <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-1 ${isAdmin ? 'bg-white/20 text-white' : 'bg-[var(--brand-primary)] text-white'}`}>
-                  {isAdmin ? 'PROJECT CLOSURE REPORT — ADMIN' : 'DELIVERY REPORT — CLIENT'}
+                <div className="flex items-center gap-3 mb-1">
+                  <Logo variant="textOnly" size="md" />
+                  <span className="text-[var(--text-muted)] text-sm">|</span>
+                  <span className="text-[var(--text-muted)] text-sm font-medium">Certified by 360 DMMC</span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-white/60 text-xs">Generated</p>
-                <p className="text-white font-medium text-sm">{new Date(d?.generatedAt || report.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-[var(--text-muted)] text-xs">Generated</p>
+                <p className="text-[var(--text-primary)] font-medium text-sm">{new Date(d?.generatedAt || report.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
               </div>
             </div>
           </div>
@@ -219,17 +260,38 @@ export default function ReportPreviewPage() {
                 <h3 className="text-sm font-bold text-[var(--brand-primary)] uppercase tracking-wider mb-3">Task Completion</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-[var(--text-tertiary)]">Done</span>
-                      <span className="text-xs font-bold text-green-600 num-mono">{d?.tasks?.done || 0}</span>
-                    </div>
-                    <div className="w-full h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 rounded-full" style={{ width: `${d?.tasks?.completionRate || 0}%` }} />
-                    </div>
-                    <div className="flex items-center justify-between mt-1 text-[10px] text-[var(--text-muted)]">
-                      <span>In Progress: <span className="num-mono">{d?.tasks?.inProgress || 0}</span></span>
-                      <span>Todo: <span className="num-mono">{d?.tasks?.todo || 0}</span></span>
-                      <span>Delayed: <span className="num-mono">{d?.tasks?.delayed || 0}</span></span>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-3">Status Distribution</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-28 h-28 shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[
+                              { name: 'Done', value: d?.tasks?.done || 0, color: '#10b981' },
+                              { name: 'In Progress', value: d?.tasks?.inProgress || 0, color: '#3b82f6' },
+                              { name: 'Todo', value: d?.tasks?.todo || 0, color: '#6b7280' },
+                              { name: 'Delayed', value: d?.tasks?.delayed || 0, color: '#f59e0b' },
+                            ].filter(i => i.value > 0)} cx="50%" cy="50%" innerRadius={28} outerRadius={48} dataKey="value" startAngle={90} endAngle={-270}>
+                              {[].map((_, i) => <Cell key={i} />)}
+                              {['#10b981','#3b82f6','#6b7280','#f59e0b'].slice(0, (['Done','In Progress','Todo','Delayed'].filter((_,i) => [d?.tasks?.done||0,d?.tasks?.inProgress||0,d?.tasks?.todo||0,d?.tasks?.delayed||0][i]>0).length)).map((c, i) => <Cell key={i} fill={c} />)}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="space-y-1.5">
+                        {[
+                          { label: 'Done', count: d?.tasks?.done || 0, color: '#10b981' },
+                          { label: 'In Progress', count: d?.tasks?.inProgress || 0, color: '#3b82f6' },
+                          { label: 'Todo', count: d?.tasks?.todo || 0, color: '#6b7280' },
+                          { label: 'Delayed', count: d?.tasks?.delayed || 0, color: '#f59e0b' },
+                        ].filter(i => i.count > 0).map((p, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                            <span className="text-[var(--text-secondary)]">{p.label}</span>
+                            <span className="font-medium text-[var(--text-primary)] num-mono">{p.count}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-4">
@@ -274,16 +336,17 @@ export default function ReportPreviewPage() {
                 <section>
                   <h3 className="text-sm font-bold text-[var(--brand-primary)] uppercase tracking-wider mb-3">Sprint Performance</h3>
                   <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                    <div className="space-y-2">
-                      {d.sprints.velocity.map((s, i) => (
-                        <div key={i} className="flex items-center gap-3 text-xs">
-                          <span className="w-40 font-medium text-[var(--text-secondary)] truncate">{s.name}</span>
-                          <div className="flex-1 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
-                            <div className="h-full bg-[var(--brand-primary)] rounded-full" style={{ width: `${s.total > 0 ? (s.done / s.total) * 100 : 0}%` }} />
-                          </div>
-                          <span className="text-[var(--text-tertiary)] w-16 text-right num-mono">{s.done}/{s.total} done</span>
-                        </div>
-                      ))}
+                    <div className="h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={d.sprints.velocity} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
+                          <YAxis tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
+                          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border-primary)' }} />
+                          <Bar dataKey="done" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="total" name="Total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </section>
@@ -708,8 +771,52 @@ export default function ReportPreviewPage() {
               {/* 12. FINANCIAL SUMMARY */}
               <section>
                 <h3 className="text-sm font-bold text-[var(--brand-primary)] uppercase tracking-wider mb-3">Financial Summary</h3>
-                <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-5">
-                  <p className="text-xs text-[var(--text-muted)] text-center py-4">Financial details are available in the original project proposal and contract. Contact your GRESIO account manager for a detailed financial breakdown.</p>
+                <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-5 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4 text-center">
+                      <p className="text-2xl font-bold text-[var(--brand-primary)] num-mono">{d?.tasks?.loggedHours || 0}h</p>
+                      <p className="text-[10px] text-[var(--text-muted)]">Total Hours Invested</p>
+                    </div>
+                    <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4 text-center">
+                      <p className="text-2xl font-bold text-[var(--text-primary)] num-mono">{d?.tasks?.estimatedHours || 0}h</p>
+                      <p className="text-[10px] text-[var(--text-muted)]">Hours Estimated</p>
+                    </div>
+                    <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4 text-center">
+                      <p className={`text-2xl font-bold num-mono ${(d?.effortVariance || 0) > 10 ? 'text-amber-600' : 'text-green-600'}`}>
+                        {d?.effortVariance > 0 ? '+' : ''}{d?.effortVariance || 0}%
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)]">Effort Variance</p>
+                    </div>
+                    <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4 text-center">
+                      <p className="text-2xl font-bold text-[var(--text-primary)] num-mono">{d?.avgHoursPerTask || 0}h</p>
+                      <p className="text-[10px] text-[var(--text-muted)]">Avg Hours / Task</p>
+                    </div>
+                  </div>
+                  {d?.effortVariance !== undefined && (
+                    <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4">
+                      <p className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Effort Breakdown</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--text-secondary)]">Estimated</span>
+                          <span className="font-medium text-[var(--text-primary)] num-mono">{d?.tasks?.estimatedHours || 0}h</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--text-secondary)]">Actual (Logged)</span>
+                          <span className="font-medium text-[var(--brand-primary)] num-mono">{d?.tasks?.loggedHours || 0}h</span>
+                        </div>
+                        <div className="w-full h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${Math.min((d?.tasks?.loggedHours || 0) / Math.max(d?.tasks?.estimatedHours || 1, 1) * 100, 100)}%`, backgroundColor: (d?.effortVariance || 0) > 10 ? '#f59e0b' : '#10b981' }} />
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          {d.effortVariance > 0
+                            ? `${d.effortVariance}% over the estimated baseline — ${d.effortVariance > 20 ? 'scope may have expanded during development.' : 'within acceptable tolerance.'}`
+                            : d.effortVariance < 0
+                              ? `${Math.abs(d.effortVariance)}% under the estimated baseline — delivered efficiently.`
+                              : 'On target with estimates.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 

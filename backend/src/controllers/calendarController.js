@@ -143,7 +143,7 @@ exports.getCalendarEvents = async (req, res, next) => {
 
 exports.createCalendarEvent = async (req, res, next) => {
   try {
-    const { title, date, endDate, type, description, link, project } = req.body;
+    const { title, date, endDate, type, description, link, project, syncToOutlook } = req.body;
     const domain = req.user.domain;
 
     if (type === 'task') {

@@ -94,6 +94,8 @@ class ClickUpService {
   async executeImportPlan(plan, userId, apiKey) {
     const User = require('../models/User');
     const Project = require('../models/Project');
+    const Sprint = require('../models/Sprint');
+    const Task = require('../models/Task');
     const domain = (await User.findById(userId))?.domain || 'unknown';
     const results = { projects: [], totalTasks: 0, errors: [] };
 
@@ -102,7 +104,7 @@ class ClickUpService {
 
       try {
         if (item.action === 'create_project') {
-          const tasks = await this.getListTasks(item.clickupListId, { includeClosed: true, subtasks: false }, apiKey);
+          const clickupTasks = await this.getListTasks(item.clickupListId, { includeClosed: true, subtasks: false }, apiKey);
 
           const project = await Project.create({
             name: item.projectName || 'Imported Project',
@@ -114,10 +116,34 @@ class ClickUpService {
             members: [userId],
             clickupListId: item.clickupListId || '',
           });
+
+          let startDate = new Date();
+          let endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+          if (clickupTasks.length > 0) {
+            const dueDates = clickupTasks
+              .map(t => t.due_date ? new Date(parseInt(t.due_date)) : null)
+              .filter(d => d && !isNaN(d.getTime()));
+            if (dueDates.length > 0) {
+              startDate = new Date(Math.min(...dueDates.map(d => d.getTime())));
+              startDate.setDate(startDate.getDate() - 1);
+              endDate = new Date(Math.max(...dueDates.map(d => d.getTime())));
+            }
+          }
+
+          const sprint = await Sprint.create({
+            name: item.projectName || 'Sprint 1',
+            project: project._id,
+            startDate,
+            endDate,
+            status: 'planning',
+            createdBy: userId,
+            clickupListId: item.clickupListId || '',
+          });
+
           let taskCount = 0;
           const assigneeIds = new Set();
 
-          for (const t of tasks) {
+          for (const t of clickupTasks) {
             const taskType = item.taskTypes?.[t.id] || 'task';
             const taskStatus = item.statusMapping?.[t.status?.status] || mapClickUpStatus(t.status?.status);
             let assignee = null;
@@ -141,11 +167,13 @@ class ClickUpService {
                 type: taskType,
                 clickupTaskId: t.id,
                 project: project._id,
+                sprint: sprint._id,
                 domain,
                 assignee,
                 priority: mapPriorityFromClickUp(t.priority),
                 deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
               });
+              await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: createdTask._id } });
               await Project.findByIdAndUpdate(project._id, { $push: { tasks: createdTask._id } });
               taskCount++;
             } catch (e) {
@@ -327,7 +355,7 @@ class ClickUpService {
 
             for (const { list, tasks } of allListTasks) {
               try {
-                const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
+                const existingSprint = await Sprint.findOne({ clickupListId: list.id });
                 if (existingSprint) {
                   result.skipped.sprints++;
                   continue;
@@ -361,11 +389,6 @@ class ClickUpService {
 
                 for (const t of tasks) {
                   const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
-                  if (existingTask) {
-                    result.skipped.tasks++;
-                    continue;
-                  }
-
                   let assigneeId = null;
                   if (t.assignees && t.assignees.length > 0) {
                     for (const a of t.assignees) {
@@ -381,22 +404,36 @@ class ClickUpService {
                   }
 
                   try {
-                    const task = await Task.create({
-                      title: t.name,
-                      description: t.description || '',
-                      status: mapClickUpStatus(t.status?.status),
-                      priority: mapPriorityFromClickUp(t.priority),
-                      project: project._id,
-                      sprint: sprint._id,
-                      domain,
-                      clickupTaskId: t.id,
-                      assignee: assigneeId,
-                      deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
-                    });
+                    if (existingTask) {
+                      await Task.findByIdAndUpdate(existingTask._id, {
+                        status: mapClickUpStatus(t.status?.status),
+                        priority: mapPriorityFromClickUp(t.priority),
+                        assignee: assigneeId,
+                        deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                        sprint: sprint._id,
+                      });
+                      if (!existingTask.sprint) {
+                        await Sprint.findByIdAndUpdate(sprint._id, { $addToSet: { tasks: existingTask._id } });
+                      }
+                      result.tasks++;
+                    } else {
+                      const task = await Task.create({
+                        title: t.name,
+                        description: t.description || '',
+                        status: mapClickUpStatus(t.status?.status),
+                        priority: mapPriorityFromClickUp(t.priority),
+                        project: project._id,
+                        sprint: sprint._id,
+                        domain,
+                        clickupTaskId: t.id,
+                        assignee: assigneeId,
+                        deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                      });
 
-                    await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: task._id } });
-                    await Project.findByIdAndUpdate(project._id, { $push: { tasks: task._id } });
-                    result.tasks++;
+                      await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: task._id } });
+                      await Project.findByIdAndUpdate(project._id, { $push: { tasks: task._id } });
+                      result.tasks++;
+                    }
                   } catch (e) {
                     result.errors.push(`Task "${t.name}": ${e.message}`);
                   }
@@ -466,11 +503,6 @@ class ClickUpService {
 
             for (const t of tasks) {
               const existingTask = await Task.findOne({ clickupTaskId: t.id, isActive: true });
-              if (existingTask) {
-                result.skipped.tasks++;
-                continue;
-              }
-
               let assigneeId = null;
               if (t.assignees && t.assignees.length > 0) {
                 for (const a of t.assignees) {
@@ -486,22 +518,36 @@ class ClickUpService {
               }
 
               try {
-                const task = await Task.create({
-                  title: t.name,
-                  description: t.description || '',
-                  status: mapClickUpStatus(t.status?.status),
-                  priority: mapPriorityFromClickUp(t.priority),
-                  project: project._id,
-                  sprint: sprint._id,
-                  domain,
-                  clickupTaskId: t.id,
-                  assignee: assigneeId,
-                  deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
-                });
+                if (existingTask) {
+                  await Task.findByIdAndUpdate(existingTask._id, {
+                    status: mapClickUpStatus(t.status?.status),
+                    priority: mapPriorityFromClickUp(t.priority),
+                    assignee: assigneeId,
+                    deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                    sprint: sprint._id,
+                  });
+                  if (!existingTask.sprint) {
+                    await Sprint.findByIdAndUpdate(sprint._id, { $addToSet: { tasks: existingTask._id } });
+                  }
+                  result.tasks++;
+                } else {
+                  const task = await Task.create({
+                    title: t.name,
+                    description: t.description || '',
+                    status: mapClickUpStatus(t.status?.status),
+                    priority: mapPriorityFromClickUp(t.priority),
+                    project: project._id,
+                    sprint: sprint._id,
+                    domain,
+                    clickupTaskId: t.id,
+                    assignee: assigneeId,
+                    deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                  });
 
-                await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: task._id } });
-                await Project.findByIdAndUpdate(project._id, { $push: { tasks: task._id } });
-                result.tasks++;
+                  await Sprint.findByIdAndUpdate(sprint._id, { $push: { tasks: task._id } });
+                  await Project.findByIdAndUpdate(project._id, { $push: { tasks: task._id } });
+                  result.tasks++;
+                }
               } catch (e) {
                 result.errors.push(`Task "${t.name}": ${e.message}`);
               }
@@ -573,7 +619,7 @@ class ClickUpService {
             const lists = await this.getFolderLists(folder.id, apiKey);
             for (const list of lists) {
               try {
-                const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
+                const existingSprint = await Sprint.findOne({ clickupListId: list.id });
                 let sprint;
                 if (existingSprint) {
                   await Sprint.findByIdAndUpdate(existingSprint._id, { name: list.name });
@@ -605,7 +651,11 @@ class ClickUpService {
                         title: t.name, description: t.description || '',
                         status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
                         assignee: assigneeId, deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                        sprint: sprint._id,
                       });
+                      if (!existingTask.sprint) {
+                        await Sprint.findByIdAndUpdate(sprint._id, { $addToSet: { tasks: existingTask._id } });
+                      }
                       result.tasksUpdated++;
                     } else {
                       const created = await Task.create({
@@ -643,7 +693,7 @@ class ClickUpService {
               result.projectsCreated++;
             }
 
-            const existingSprint = await Sprint.findOne({ clickupListId: list.id, isActive: true });
+            const existingSprint = await Sprint.findOne({ clickupListId: list.id });
             let sprint;
             if (existingSprint) {
               await Sprint.findByIdAndUpdate(existingSprint._id, { name: list.name });
@@ -675,7 +725,11 @@ class ClickUpService {
                     title: t.name, description: t.description || '',
                     status: mapClickUpStatus(t.status?.status), priority: mapPriorityFromClickUp(t.priority),
                     assignee: assigneeId, deadline: t.due_date ? new Date(parseInt(t.due_date)) : null,
+                    sprint: sprint._id,
                   });
+                  if (!existingTask.sprint) {
+                    await Sprint.findByIdAndUpdate(sprint._id, { $addToSet: { tasks: existingTask._id } });
+                  }
                   result.tasksUpdated++;
                 } else {
                   const created = await Task.create({

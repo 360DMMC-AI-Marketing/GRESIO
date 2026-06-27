@@ -147,6 +147,7 @@ export const companies = {
   create: (data) => api.post('/companies', data),
   update: (id, data) => api.patch(`/companies/${id}`, data),
   updatePlan: (id, plan) => api.patch(`/companies/${id}/plan`, { plan }),
+  downgradePlan: (id, targetPlan) => api.post(`/companies/${id}/downgrade`, { targetPlan }),
   importUsers: (id, data) => api.post(`/companies/${id}/import`, data),
   addWikiDepartment: (id, name) => api.patch(`/companies/${id}/wiki-department`, { name }),
   remove: (id) => api.delete(`/companies/${id}`),

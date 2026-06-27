@@ -172,6 +172,14 @@ async function buildReportData(projectId, type) {
       byPriority: taskByPriority,
       byAssignee: Object.values(taskByAssignee),
     },
+    effort: {
+      estimatedHours: totalEstimated,
+      loggedHours: totalLogged,
+      variance: totalEstimated > 0 ? Math.round(((totalLogged - totalEstimated) / totalEstimated) * 100) : 0,
+      varianceLabel: totalEstimated > 0
+        ? (totalLogged > totalEstimated ? `${Math.round(((totalLogged - totalEstimated) / totalEstimated) * 100)}% over budget` : `${Math.round(((totalEstimated - totalLogged) / totalEstimated) * 100)}% under budget`)
+        : 'No estimates recorded',
+    },
     sprints: {
       total: sprints.length,
       active: activeSprints.length,
@@ -313,6 +321,9 @@ async function buildReportData(projectId, type) {
     analysis: { label: 'Analysis', desc: 'Data analysis' },
   };
 
+  const effortVariance = totalEstimated > 0 ? Math.round(((totalLogged - totalEstimated) / totalEstimated) * 100) : 0;
+  const avgHoursPerTask = doneTasks > 0 ? Math.round((totalLogged / doneTasks) * 10) / 10 : 0;
+
   return {
     ...baseData,
     reportType: 'client',
@@ -334,7 +345,18 @@ async function buildReportData(projectId, type) {
       'next-steps',
       'appendices',
     ],
-    clientSummary: `${project.name} — a ${project.projectType || 'custom'} project for ${project.client || settings.clientName || 'the client'} — was successfully delivered. The project achieved a ${completionRate}% task completion rate (${doneTasks}/${totalTasks} tasks completed) and a ${tcPassRate}% test pass rate.${featureCount > 0 ? ` A total of ${featureCount} features were delivered.` : ''}${bugTotalCount > 0 ? ` ${bugFixedCount}/${bugTotalCount} bugs were resolved.` : ''}${decisionCount > 0 ? ` ${decisionCount} key decisions were documented throughout the project lifecycle.` : ''} The project spanned ${computePhaseDuration(project, phaseOrder)} days from start to delivery.`,
+    clientSummary: (() => {
+      const duration = computePhaseDuration(project, phaseOrder);
+      const parts = [];
+      parts.push(`${project.name} — a premier ${project.projectType || 'custom'} engagement for ${project.client || settings.clientName || 'the client'} — has been successfully completed and delivered.`);
+      parts.push(`Over the course of ${duration} days, the team delivered ${doneTasks} of ${totalTasks} planned tasks, achieving a ${completionRate}% completion rate with a ${tcPassRate}% quality assurance pass rate across ${tcTotal} test scenarios.`);
+      if (featureCount > 0) parts.push(`A total of ${featureCount} distinct features and modules were built, tested, and deployed.`);
+      if (bugTotalCount > 0) parts.push(`${bugFixedCount} of ${bugTotalCount} identified issues were resolved throughout the development lifecycle, ensuring production readiness.`);
+      if (decisionCount > 0) parts.push(`${decisionCount} strategic decisions were documented, providing full transparency into the project's evolution.`);
+      if (totalLogged > 0) parts.push(`The team invested ${totalLogged} hours of engineering effort${totalEstimated > 0 ? ` against ${totalEstimated} hours estimated (${effortVariance > 0 ? `${effortVariance}% above` : `${Math.abs(effortVariance)}% below`} baseline)` : ''}.`);
+      parts.push(`This report provides a detailed account of what was delivered, key milestones achieved, and recommendations for the path forward.`);
+      return parts.join(' ');
+    })(),
     phaseTimeline: phaseOrder.map((phase, i) => ({
       phase,
       label: phaseDescriptions[phase]?.label || phase.replace(/_/g, ' '),
@@ -349,6 +371,8 @@ async function buildReportData(projectId, type) {
     decisionCount,
     bugFixedCount,
     bugTotalCount,
+    effortVariance,
+    avgHoursPerTask,
     overallHealth: (() => {
       if (project.status === 'completed' || project.phase === 'delivered') return 'green';
       if (project.status === 'at_risk' || project.status === 'delayed') return 'yellow';

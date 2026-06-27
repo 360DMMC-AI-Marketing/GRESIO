@@ -132,7 +132,10 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
     try {
       const res = await notifications.handleAction(n._id, actionName);
       const status = res.data?.status;
-      if (status === 'active' || status === 'declined') {
+      if (status === 'active') {
+        fetchNotifs();
+        if (n.link) navigate(n.link);
+      } else if (status === 'declined') {
         fetchNotifs();
       }
     } catch (err) { console.error(err); }
@@ -303,6 +306,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
   };
 
   return (
+    <>
     <header style={{ left: sidebarWidth }} className="h-14 glass-panel border-b border-[var(--border-primary)] dark:border-[var(--glass-border)] fixed top-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out shadow-sm rounded-none">
       {showHamburger && (
         <button onClick={onHamburgerClick}
@@ -312,11 +316,7 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
           </svg>
         </button>
       )}
-      {toast && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] glass-panel bg-[var(--bg-secondary)] border border-[var(--glass-border)] shadow-2xl px-4 py-2.5 rounded-full text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in">
-          {toast.title}
-        </div>
-      )}
+      {/* toast moved outside header below */}
       <div className="relative" ref={searchRef}>
         <div className="flex items-center gap-2 bg-[var(--bg-tertiary)] dark:bg-[var(--bg-tertiary)] border border-[var(--border-primary)] dark:border-[var(--border-primary)] rounded-[var(--radius-lg)] px-3 py-1.5 w-[240px] focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20 transition-all">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-muted)] shrink-0">
@@ -533,6 +533,12 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
           </svg>
         </button>
       </div>
+    </header>
+      {toast && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[10001] glass-panel bg-[var(--bg-secondary)] border border-[var(--glass-border)] shadow-2xl px-4 py-2.5 rounded-full text-xs font-medium max-w-[400px] pointer-events-none animate-fade-in">
+          {toast.title}
+        </div>
+      )}
       {showNotifSettings && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30" onClick={() => setShowNotifSettings(false)}>
           <div className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-[340px] p-6 space-y-4 border border-[var(--border-primary)]" onClick={e => e.stopPropagation()}>
@@ -562,6 +568,6 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

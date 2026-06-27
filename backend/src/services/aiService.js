@@ -7,16 +7,15 @@ const Bug = require('../models/Bug');
 const DecisionJournal = require('../models/DecisionJournal');
 const Activity = require('../models/Activity');
 const User = require('../models/User');
+const { embed, embedBatch, cosineSimilarity } = require('./embeddingsService');
 
 let _openai = null;
-let _mockMode = false;
+let _fallbackClient = null;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function getClient() {
-  if (!env.OPENAI_API_KEY) {
-    _mockMode = true;
-    return null;
-  }
-  _mockMode = false;
+  if (!env.OPENAI_API_KEY) return null;
   if (!_openai) {
     const config = { apiKey: env.OPENAI_API_KEY };
     if (env.OPENAI_BASE_URL) config.baseURL = env.OPENAI_BASE_URL;
@@ -25,115 +24,220 @@ function getClient() {
   return _openai;
 }
 
-function getLastUserMessage(messages) {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'user') return messages[i].content;
+function getFallbackClient() {
+  if (!env.OPENAI_API_KEY) return null;
+  if (!_fallbackClient) {
+    _fallbackClient = new OpenAI({ apiKey: env.OPENAI_API_KEY });
   }
-  return '';
+  return _fallbackClient;
 }
 
-const mockResponses = {
-  greetings: /^(hello|hi|hey|bonjour|salut|coucou)/i,
-  projectStatus: /(project|projet).*(status|progress|state|état|avancement)/i,
-  tasksList: /(list|show|affiche|donne).*(task|tâche)/i,
-  taskCreate: /(create|crée|ajoute|add|new).*(task|tâche)/i,
-  taskUpdate: /(mark|update|change|set|passe).*(task|tâche|status|done|terminé)/i,
-  report: /(report|rapport|summary|résumé|generate)/i,
-  risk: /(risk|risque|danger|health|santé)/i,
-  overload: /(overload|overworked|surcharge|too many|trop)/i,
-  deadline: /(deadline|due|échéance|date limite)/i,
-  member: /(member|team|membre|équipe|assign)/i,
-};
+function classifyError(err) {
+  if (!err) return { type: 'unknown', message: 'No response from AI.' };
+  const status = err.status || err.response?.status;
+  const msg = (err.message || '').toLowerCase();
+  if (status === 429 || msg.includes('rate limit')) return { type: 'rate_limit', message: 'AI service is rate-limited. Please wait a moment and try again.' };
+  if (status === 401 || status === 403 || msg.includes('auth') || msg.includes('api key')) return { type: 'auth', message: 'AI service authentication failed. Check API key.' };
+  if (status === 502 || status === 503 || msg.includes('overloaded') || msg.includes('unavailable')) return { type: 'overloaded', message: 'AI service is temporarily overloaded. Retrying with fallback...' };
+  if (status === 400 && msg.includes('context_length') || msg.includes('token')) return { type: 'context_too_long', message: 'Conversation too long. Will retry with truncated context.' };
+  if (status === 408 || msg.includes('timeout')) return { type: 'timeout', message: 'AI request timed out. Retrying...' };
+  return { type: 'unknown', message: `AI error: ${err.message}` };
+}
 
-async function mockChat(messages, options = {}) {
-  const lastMsg = getLastUserMessage(messages);
-  const isJson = options.responseFormat;
-
-  if (isJson) {
-    const allText = messages.map(m => m.content).join(' ');
-    const userMsg = getLastUserMessage(messages);
-
-    if (allText.includes('estimate') || allText.includes('duration') || allText.includes('hours')) {
-      return JSON.stringify({ hours: 8 });
-    }
-    if (allText.includes('risk') || allText.includes('risque') || allText.includes('health')) {
-      return JSON.stringify([
-        { risk: 'Delayed tasks', explanation: 'Some tasks are past their deadline', recommendation: 'Review and reassign', severity: 'medium' },
-        { risk: 'Team overload', explanation: 'One team member has too many open tasks', recommendation: 'Distribute workload', severity: 'high' },
-      ]);
-    }
-    if (allText.includes('parse') || allText.includes('command') || allText.includes('interpret') || allText.includes('Parse')) {
-      const cmdMatch = userMsg.match(/Command:\s+"([^"]+)"/);
-      const cmd = cmdMatch ? cmdMatch[1] : userMsg;
-      if (/create|crée|ajoute|add|new/i.test(cmd)) {
-        const title = cmd.replace(/create|crée|ajoute|add|new\s+(task|tâche)\s+/i, '').trim();
-        return JSON.stringify({ action: 'create', entity: title ? 'task' : 'project', params: { title: title || cmd }, summary: `Create ${title || 'item'}` });
-      }
-      if (/report|rapport/i.test(cmd)) {
-        return JSON.stringify({ action: 'report', entity: 'report', params: {}, summary: 'Generate report' });
-      }
-      if (/assign|attribue/i.test(cmd)) {
-        return JSON.stringify({ action: 'assign', entity: 'task', params: { title: cmd.replace(/assign\s+(the\s+)?/i, '').replace(/\s+to\s+.*/, '').trim(), assignee: cmd.match(/to\s+(.+)/i)?.[1]?.trim() || 'member' }, summary: 'Assign task' });
-      }
-      if (/mark|done|terminé|update/i.test(cmd)) {
-        return JSON.stringify({ action: 'update', entity: 'task', params: { status: 'done' }, summary: 'Update task status' });
-      }
-      return JSON.stringify({ action: 'unknown', entity: 'unknown', params: {}, summary: 'Question or unknown command' });
-    }
-    if (allText.includes('template') || allText.includes('plan') || allText.includes('phases')) {
-      return JSON.stringify({
-        name: 'New Project',
-        description: 'Generated project plan',
-        phases: [{ name: 'Planning', tasks: [{ title: 'Define scope', description: 'Set project boundaries', estimatedHours: 4 }] }],
-        suggestedRoles: ['Project Manager', 'Developer'],
-      });
-    }
-    return JSON.stringify({ success: true, message: 'Done' });
+function truncateMessages(messages, maxTokens = 8000) {
+  const system = messages.filter(m => m.role === 'system');
+  const nonSystem = messages.filter(m => m.role !== 'system');
+  const reserved = system.reduce((a, m) => a + (m.content?.length || 0), 0);
+  let total = reserved;
+  const kept = [];
+  for (const m of nonSystem.slice(-1)) {
+    kept.push(m);
+    total += m.content?.length || 0;
   }
-
-  // Conversational responses
-  if (mockResponses.greetings.test(lastMsg)) {
-    return 'Hey! How can I help you with your projects today?';
+  for (const m of nonSystem.slice(0, -1).reverse()) {
+    if (total + (m.content?.length || 0) > maxTokens * 4) break;
+    kept.unshift(m);
+    total += m.content?.length || 0;
   }
-  if (mockResponses.projectStatus.test(lastMsg)) {
-    return 'Let me check your project status... I can see the project is progressing well. Most tasks are on track. Would you like me to pull up a specific project?';
-  }
-  if (mockResponses.tasksList.test(lastMsg)) {
-    return 'Here are your current tasks: I can see there are several in progress and a few to do. Head to the Tasks tab to see the full list with details.';
-  }
-  if (mockResponses.taskCreate.test(lastMsg)) {
-    return 'Sure, I can create that task for you. Just tell me the title, project, and who to assign it to.';
-  }
-  if (mockResponses.report.test(lastMsg)) {
-    return "I'll generate a report for you. Which project would you like the report for?";
-  }
-  if (mockResponses.risk.test(lastMsg)) {
-    return "I've analyzed the project health. There are a couple of things to watch: one team member has a heavy load, and a few tasks are overdue. Want me to suggest specific actions?";
-  }
-  if (mockResponses.deadline.test(lastMsg)) {
-    return "Let me check the deadlines... There are tasks due this week. I'd recommend prioritizing those. Want me to list them out?";
-  }
-  return "I'm your GRESIO AI assistant. I can help you manage projects, create tasks, generate reports, and more. What would you like to do?";
+  return [...system, ...kept];
 }
 
 async function chat(messages, options = {}) {
   const client = getClient();
   if (!client) {
-    if (_mockMode) return mockChat(messages, options);
-    return null;
+    return options.responseFormat
+      ? JSON.stringify({ error: 'AI not configured. Set OPENAI_API_KEY in .env' })
+      : 'AI service is not configured. Ask your admin to set the OPENAI_API_KEY.';
   }
+
   const isKimi = env.OPENAI_BASE_URL?.includes('moonshot');
-  const response = await client.chat.completions.create({
-    model: env.OPENAI_MODEL || 'gpt-4o-mini',
+  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+  const fallbackModel = isKimi ? 'gpt-4o-mini' : null;
+  const maxRetries = 2;
+  const errors = [];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const activeModel = attempt === 0 ? model : (attempt === 1 && fallbackModel ? fallbackModel : model);
+    const activeClient = activeModel === model ? client : (getFallbackClient() || client);
+
+    try {
+      if (attempt > 0) await sleep(Math.min(1000 * Math.pow(2, attempt - 1), 4000));
+
+      let msgs = messages;
+      if (attempt > 0) {
+        msgs = truncateMessages(messages, 6000);
+      }
+
+      const response = await activeClient.chat.completions.create({
+        model: activeModel,
+        messages: msgs,
+        temperature: options.temperature ?? (isKimi ? 0.6 : 0.3),
+        max_tokens: options.maxTokens ?? 2000,
+        timeout: 30000,
+        response_format: options.responseFormat ? { type: 'json_object' } : undefined,
+      });
+
+      const msg = response.choices?.[0]?.message;
+      const content = msg?.content || msg?.reasoning_content || '';
+      if (content) return content;
+
+      if (attempt < maxRetries) {
+        errors.push({ attempt, model: activeModel, error: 'Empty response' });
+        continue;
+      }
+      return options.responseFormat ? JSON.stringify({ error: 'Empty AI response' }) : 'I had trouble generating a response. Please try again.';
+    } catch (err) {
+      const classified = classifyError(err);
+      errors.push({ attempt, model: activeModel, type: classified.type, message: classified.message });
+
+      if (fallbackModel && attempt === 0 && classified.type !== 'auth') {
+        continue;
+      }
+      if (attempt < maxRetries && classified.type !== 'auth') {
+        continue;
+      }
+
+      const lastError = errors[errors.length - 1];
+      if (options.responseFormat) return JSON.stringify({ error: lastError.message });
+      return lastError.type === 'auth'
+        ? 'AI service needs to be configured. Contact your admin.'
+        : `I ran into an issue: ${lastError.message}`;
+    }
+  }
+
+  return options.responseFormat
+    ? JSON.stringify({ error: 'AI request failed after retries.' })
+    : "I'm having trouble connecting. Please try again in a moment.";
+}
+
+async function* chatStream(messages, options = {}) {
+  const client = getClient();
+  if (!client) {
+    yield 'AI service is not configured. Set OPENAI_API_KEY.';
+    return;
+  }
+
+  const isKimi = env.OPENAI_BASE_URL?.includes('moonshot');
+  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+
+  const stream = await client.chat.completions.create({
+    model,
     messages,
-    temperature: isKimi ? 0.6 : (options.temperature ?? 0.3),
+    temperature: options.temperature ?? (isKimi ? 0.6 : 0.3),
     max_tokens: options.maxTokens ?? 2000,
+    stream: true,
     timeout: 30000,
-    response_format: options.responseFormat ? { type: 'json_object' } : undefined,
-    ...(isKimi ? { thinking: { type: 'disabled' } } : {}),
   });
-  const msg = response.choices?.[0]?.message;
-  return msg?.content || msg?.reasoning_content || '';
+
+  for await (const chunk of stream) {
+    const token = chunk.choices?.[0]?.delta?.content || '';
+    if (token) yield token;
+  }
+}
+
+// -------------------------------------------------- //
+//  RAG (Semantic Search via Embeddings)              //
+// -------------------------------------------------- //
+
+async function ragSearch(query, items, topK = 5) {
+  if (!items || items.length === 0) return [];
+  try {
+    const queryEmbed = await embed(query);
+    if (!queryEmbed?.success) return [];
+
+    const texts = items.map(i => i.title || i.name || i.content || JSON.stringify(i));
+    const batchEmbed = await embedBatch(texts);
+    if (!batchEmbed?.success) return [];
+
+    const scored = items.map((item, i) => ({
+      item,
+      score: cosineSimilarity(queryEmbed.data, batchEmbed.data[i]),
+    }));
+
+    return scored.sort((a, b) => b.score - a.score).slice(0, topK);
+  } catch {
+    return [];
+  }
+}
+
+async function buildRagContext(projectId, userMessage) {
+  try {
+    const tasks = await Task.find({ project: projectId }).select('title description status assignee dueDate priority').limit(50).lean();
+    const decisions = await DecisionJournal.find({ project: projectId }).select('decision outcome').limit(20).lean();
+    const bugs = await Bug.find({ project: projectId }).select('title status').limit(20).lean();
+    const sprints = await Sprint.find({ project: projectId }).select('name goal status').limit(10).lean();
+
+    const items = [
+      ...tasks.map(t => ({ ...t, _type: 'task', content: `${t.title} ${t.description || ''} ${t.status} ${t.priority || ''}` })),
+      ...decisions.map(d => ({ ...d, _type: 'decision', content: `${d.decision} ${d.outcome || ''}` })),
+      ...bugs.map(b => ({ ...b, _type: 'bug', content: `${b.title} ${b.status}` })),
+    ];
+
+    const results = await ragSearch(userMessage, items, 8);
+    if (results.length === 0) return '';
+
+    let str = '\n\n## Semantically Related Items (from embeddings search)\n';
+    for (const r of results) {
+      const item = r.item;
+      if (item._type === 'task') {
+        str += `- Task: "${item.title}" [${item.status}] Assignee: ${item.assignee || 'unassigned'}\n`;
+      } else if (item._type === 'decision') {
+        str += `- Decision: ${item.decision} → ${item.outcome || 'pending'}\n`;
+      } else if (item._type === 'bug') {
+        str += `- Bug: "${item.title}" [${item.status}]\n`;
+      }
+    }
+    return str;
+  } catch {
+    return '';
+  }
+}
+
+// -------------------------------------------------- //
+//  RESPONSE VALIDATION (auto-re-prompt on bad JSON)   //
+// -------------------------------------------------- //
+
+async function validateAndParseJson(messages, result, parseFn, errorMessage) {
+  if (!result) return null;
+  try {
+    const parsed = JSON.parse(result);
+    const validated = parseFn(parsed);
+    if (validated !== undefined) return validated;
+  } catch {}
+
+  const retryResult = await chat([
+    ...messages.slice(0, -1),
+    { role: 'assistant', content: result || '' },
+    { role: 'user', content: errorMessage || 'Previous response was not valid JSON. Respond with ONLY valid JSON. No extra text, no markdown, no explanation.' },
+  ], { responseFormat: true, temperature: 0.1 });
+
+  if (!retryResult) return null;
+  try {
+    const parsed = JSON.parse(retryResult);
+    const validated = parseFn(parsed);
+    if (validated !== undefined) return validated;
+  } catch {}
+  return null;
 }
 
 // -------------------------------------------------- //
@@ -472,16 +576,18 @@ Description: "${description || 'N/A'}"
 
 Estimate how many hours this task will take. Return ONLY a JSON object with a single field "hours" (a number).`;
 
-  const result = await chat([
+  const messages = [
     { role: 'system', content: 'You are a project estimation expert. Return only valid JSON.' },
     { role: 'user', content: prompt },
-  ], { responseFormat: true, temperature: 0.2 });
+  ];
 
+  const result = await chat(messages, { responseFormat: true, temperature: 0.2 });
   if (!result) return null;
-  try {
-    const parsed = JSON.parse(result);
-    return parsed.hours || null;
-  } catch { return null; }
+
+  return validateAndParseJson(messages, result,
+    (parsed) => parsed.hours || null,
+    'Previous response was not a valid estimation. Return ONLY {"hours": <number>}.'
+  );
 }
 
 // -------------------------------------------------- //
@@ -527,16 +633,18 @@ Data: ${JSON.stringify(data, null, 2)}
 
 Return a JSON array of risks: [{ "risk": "string", "explanation": "string", "recommendation": "string", "severity": "low"|"medium"|"high" }]`;
 
-  const result = await chat([
+  const messages = [
     { role: 'system', content: 'You are a project risk analyst. Return only valid JSON.' },
     { role: 'user', content: prompt },
-  ], { responseFormat: true, temperature: 0.3 });
+  ];
 
+  const result = await chat(messages, { responseFormat: true, temperature: 0.3 });
   if (!result) return [];
-  try {
-    const parsed = JSON.parse(result);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch { return []; }
+
+  return validateAndParseJson(messages, result,
+    (parsed) => Array.isArray(parsed) ? parsed : [],
+    'Previous response was not a valid risk array. Return ONLY a JSON array of risk objects.'
+  ) || [];
 }
 
 // -------------------------------------------------- //
@@ -548,24 +656,27 @@ async function chatWithProject(projectId, messages, conversationHistory = []) {
   if (!ctx) throw new Error('Project not found');
 
   const contextStr = formatProjectContext(ctx);
+  const lastUserMsg = messages.filter(m => m.role === 'user').pop()?.content || '';
+  const ragStr = await buildRagContext(projectId, lastUserMsg);
 
-  const systemPrompt = `You are GRESIO AI. You answer questions about this project using the data below. Do ONLY what the user literally asks. Do NOT add extra suggestions or actions.
+  const systemPrompt = `You are GRESIO AI — a senior project assistant. You think like an experienced project manager who knows this project inside out.
 
 Project context:
-${contextStr}
+${contextStr}${ragStr}
 
 RULES:
-1. Answer only what was asked. Do not add extra information or suggestions.
-2. If the user says "do X", only do X — do not add Y and Z.
-3. If the user asks a question, answer it with the data provided. No extra commentary.
+1. Be smart and proactive. Connect dots between tasks, people, and deadlines.
+2. If the user's request is vague, make a reasonable assumption based on the data.
+3. Answer questions with specific data (numbers, names, dates) from the context.
 4. If the user asks to create/assign/update something, respond with ACTION: lines.
-5. Be concise. One or two sentences per answer.
-6. Use natural language, but no emojis or celebrations unless the user does.
-7. Never ask "Want me to..." or "What's next?" unless the user explicitly asks.`;
+5. If you notice related issues (e.g., someone is overloaded, a task is at risk), mention it naturally.
+6. Be conversational and warm — you're a teammate, not a robot.
+7. Keep responses concise but thorough. 2-4 sentences is usually right.
+8. Use emojis naturally when appropriate (🎯 for goals, ⚠️ for warnings, ✅ for completions).`;
 
   const apiMessages = [
     { role: 'system', content: systemPrompt },
-    ...conversationHistory.slice(-10),
+    ...conversationHistory.slice(-20),
     ...messages,
   ];
 
@@ -744,7 +855,7 @@ ${pageContext ? `The user is currently on the "${pageContext}" page.` : 'Page co
 
   const apiMessages = [
     { role: 'system', content: systemPrompt },
-    ...priorMessages.slice(-10),
+    ...priorMessages.slice(-20),
     { role: 'user', content: message },
   ];
 
@@ -791,15 +902,18 @@ Generate a complete project template as JSON:
 
 Generate 4-6 phases with 3-6 tasks each. Make it realistic and actionable.`;
 
-  const result = await chat([
+  const messages = [
     { role: 'system', content: 'You are a project planning expert. Return only valid JSON.' },
     { role: 'user', content: prompt },
-  ], { responseFormat: true, temperature: 0.5, maxTokens: 3000 });
+  ];
 
+  const result = await chat(messages, { responseFormat: true, temperature: 0.5, maxTokens: 3000 });
   if (!result) return null;
-  try {
-    return JSON.parse(result);
-  } catch { return null; }
+
+  return validateAndParseJson(messages, result,
+    (parsed) => parsed?.name && parsed?.phases ? parsed : null,
+    'Previous response was not a valid project template. Return ONLY a JSON object with "name", "description", "phases", and "suggestedRoles".'
+  );
 }
 
 // -------------------------------------------------- //
@@ -848,18 +962,20 @@ Examples:
 - "take me to dashboard" → {"action":"navigate","entity":"unknown","params":{"path":"/dashboard"}}
 - "show me the team" → {"action":"navigate","entity":"unknown","params":{"path":"/users"}}`;
 
-  const result = await chat([
+  const messages = [
     { role: 'system', content: 'You parse project management commands into JSON. Return only valid JSON.' },
     { role: 'user', content: prompt },
-  ], { responseFormat: true, temperature: 0.2 });
+  ];
+
+  const result = await chat(messages, { responseFormat: true, temperature: 0.2 });
 
   const unknown = { action: 'unknown', entity: 'unknown', params: {}, summary: 'Could not parse command.' };
   if (!result) return unknown;
-  try {
-    return JSON.parse(result);
-  } catch {
-    return unknown;
-  }
+
+  return validateAndParseJson(messages, result,
+    (parsed) => parsed?.action ? parsed : unknown,
+    'Previous response was not a valid command parse. Return ONLY a JSON object with "action", "entity", "params", and "summary".'
+  ) || unknown;
 }
 
 // -------------------------------------------------- //
@@ -1182,18 +1298,18 @@ Be smart about it:
 - Skip empty lists or meta lists
 - Suggest project names that make sense from list/folder/space context`;
 
-  const result = await chat([
+  const messages = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: prompt },
-  ], { responseFormat: true, temperature: 0.3, maxTokens: 4000 });
+  ];
 
+  const result = await chat(messages, { responseFormat: true, temperature: 0.3, maxTokens: 4000 });
   if (!result) return null;
-  try {
-    const parsed = JSON.parse(result);
-    return Array.isArray(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
+
+  return validateAndParseJson(messages, result,
+    (parsed) => Array.isArray(parsed) ? parsed : null,
+    'Previous response was not a valid import plan. Return ONLY a JSON array of conversion plan objects.'
+  );
 }
 
 module.exports = {
@@ -1211,4 +1327,7 @@ module.exports = {
   buildAppContext,
   formatAppContext,
   analyzeClickupForImport,
+  chatStream,
+  buildRagContext,
+  chat,
 };

@@ -73,4 +73,59 @@ async function getDomainProjectIds(domain, user = null) {
   return projects.map(p => String(p._id));
 }
 
-module.exports = { PLAN_LIMITS, getPlanLimit, enforceUserLimit, enforceProjectLimit, getCompanyUsage, getDomainProjectIds, getUserAccessibleProjectIds };
+async function validateDowngrade(domain, targetPlan) {
+  const usage = await getCompanyUsage(domain);
+  const limits = PLAN_LIMITS[targetPlan];
+  if (!limits) return { canDowngrade: false, issues: [], message: 'Invalid target plan' };
+  const issues = [];
+  if (limits.users !== Infinity && usage.userCount > limits.users) {
+    issues.push({ type: 'users', current: usage.userCount, max: limits.users, excess: usage.userCount - limits.users });
+  }
+  if (limits.projects !== Infinity && usage.projectCount > limits.projects) {
+    issues.push({ type: 'projects', current: usage.projectCount, max: limits.projects, excess: usage.projectCount - limits.projects });
+  }
+  return { canDowngrade: issues.length === 0, issues };
+}
+
+async function performCleanup(domain, targetPlan) {
+  const validation = await validateDowngrade(domain, targetPlan);
+  if (validation.canDowngrade) return { deletedUsers: 0, deletedProjects: 0 };
+  const limits = PLAN_LIMITS[targetPlan];
+  const result = { deletedUsers: 0, deletedProjects: 0 };
+
+  const userIssue = validation.issues.find(i => i.type === 'users');
+  if (userIssue) {
+    const User = require('../models/User');
+    const excessUsers = await User.find({ domain, isActive: true })
+      .sort({ createdAt: -1 })
+      .limit(userIssue.excess)
+      .select('_id');
+    const ids = excessUsers.map(u => u._id);
+    if (ids.length > 0) {
+      await User.updateMany({ _id: { $in: ids } }, { isActive: false });
+      result.deletedUsers = ids.length;
+    }
+  }
+
+  const projectIssue = validation.issues.find(i => i.type === 'projects');
+  if (projectIssue) {
+    const Project = require('../models/Project');
+    const Task = require('../models/Task');
+    const Sprint = require('../models/Sprint');
+    const excessProjects = await Project.find({ domain, isActive: true })
+      .sort({ createdAt: -1 })
+      .limit(projectIssue.excess)
+      .select('_id');
+    const ids = excessProjects.map(p => p._id);
+    if (ids.length > 0) {
+      await Task.updateMany({ project: { $in: ids } }, { isActive: false });
+      await Sprint.updateMany({ project: { $in: ids } }, { isActive: false });
+      await Project.updateMany({ _id: { $in: ids } }, { isActive: false });
+      result.deletedProjects = ids.length;
+    }
+  }
+
+  return result;
+}
+
+module.exports = { PLAN_LIMITS, getPlanLimit, enforceUserLimit, enforceProjectLimit, getCompanyUsage, getDomainProjectIds, getUserAccessibleProjectIds, validateDowngrade, performCleanup };

@@ -13,6 +13,12 @@ exports.create = async (req, res, next) => {
     if (!date) {
       return res.status(400).json({ message: 'Date is required' });
     }
+    if (project) {
+      const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+      if (!projectIds.includes(project.toString())) {
+        return res.status(403).json({ message: 'Project not in your domain' });
+      }
+    }
     const doc = await WorkLog.create({
       user: req.user._id, date, project, task, taskTitle, hours,
       category: category || 'development', description: description || '',
@@ -79,7 +85,7 @@ exports.getMyLogs = async (req, res, next) => {
   try {
     const { date } = req.query;
     const projectIds = await getDomainProjectIds(req.user.domain, req.user);
-    const filter = { user: req.user._id, project: { $in: projectIds }, isActive: true };
+    const filter = { user: req.user._id, project: { $in: projectIds } };
     if (date) filter.date = date;
     const page = parseInt(req.query.page) || null;
     const limit = parseInt(req.query.limit) || null;
@@ -103,7 +109,7 @@ exports.getTeamLogs = async (req, res, next) => {
     }
     const projectIds = await getDomainProjectIds(req.user.domain, req.user);
     const { date } = req.query;
-    const filter = { project: { $in: projectIds }, isActive: true };
+    const filter = { project: { $in: projectIds } };
     if (date) filter.date = date;
     else {
       const today = new Date().toISOString().slice(0, 10);

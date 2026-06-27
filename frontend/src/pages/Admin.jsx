@@ -20,9 +20,13 @@ export default function Admin() {
   const [syncingPlatform, setSyncingPlatform] = useState(null);
   const [teamIdInput, setTeamIdInput] = useState('');
   const [savingTeamId, setSavingTeamId] = useState(false);
-  const [upgrading, setUpgrading] = useState(null);
-  const [alertModal, setAlertModal] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+const [upgrading, setUpgrading] = useState(null);
+const [upgradeTarget, setUpgradeTarget] = useState(null);
+const [downgradeTarget, setDowngradeTarget] = useState(null);
+const [downgradeIssues, setDowngradeIssues] = useState(null);
+const [downgrading, setDowngrading] = useState(false);
+const [alertModal, setAlertModal] = useState(null);
+const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const handleDeleteCompany = async () => {
     try {
@@ -56,6 +60,29 @@ export default function Admin() {
       setAlertModal({ title: 'Upgrade Failed', message: e.response?.data?.message || e.message, type: 'error' });
     } finally {
       setUpgrading(null);
+    }
+  };
+
+  const handleDowngrade = async () => {
+    if (!company || !downgradeTarget) return;
+    setDowngrading(true);
+    try {
+      const res = await companies.downgradePlan(company._id, downgradeTarget);
+      updateCompany(res.data);
+      setAlertModal({ title: 'Plan Downgraded', message: `Downgraded to ${PLAN_INFO[downgradeTarget]?.label || downgradeTarget} successfully.`, type: 'success' });
+      setDowngradeTarget(null);
+      setDowngradeIssues(null);
+    } catch (e) {
+      const data = e.response?.data;
+      if (data?.canDowngrade === false) {
+        setDowngradeIssues(data.issues);
+      } else {
+        setAlertModal({ title: 'Downgrade Failed', message: data?.message || e.message, type: 'error' });
+        setDowngradeTarget(null);
+        setDowngradeIssues(null);
+      }
+    } finally {
+      setDowngrading(false);
     }
   };
 
@@ -116,18 +143,20 @@ export default function Admin() {
                     <span className="text-[var(--text-secondary)] font-medium">Users</span>
                     <span className="text-[var(--text-muted)] text-xs"><span className="num-mono">{userCount}</span>{maxUsers !== Infinity ? ` / <span class="num-mono">${maxUsers}</span>` : ''}</span>
                   </div>
-                  <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-primary)] rounded-full transition-all" style={{ width: `${userPct}%` }} />
+                    <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${userPct >= 100 ? 'bg-red-500' : userPct >= 80 ? 'bg-amber-500' : 'bg-[var(--brand-primary)]'}`} style={{ width: `${userPct}%` }} />
+                    </div>
+                    {userPct >= 100 && <p className="text-[10px] text-red-400 mt-1">⚠️ User limit reached</p>}
                   </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1.5">
-                    <span className="text-[var(--text-secondary)] font-medium">Projects</span>
-                    <span className="text-[var(--text-muted)] text-xs"><span className="num-mono">{projectCount}</span>{maxProjects !== Infinity ? ` / <span class="num-mono">${maxProjects}</span>` : ''}</span>
-                  </div>
-                  <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-primary)] rounded-full transition-all" style={{ width: `${projPct}%` }} />
-                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-sm mb-1.5">
+                      <span className="text-[var(--text-secondary)] font-medium">Projects</span>
+                      <span className="text-[var(--text-muted)] text-xs"><span className="num-mono">{projectCount}</span>{maxProjects !== Infinity ? ` / <span class="num-mono">${maxProjects}</span>` : ''}</span>
+                    </div>
+                    <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${projPct >= 100 ? 'bg-red-500' : projPct >= 80 ? 'bg-amber-500' : 'bg-[var(--brand-primary)]'}`} style={{ width: `${projPct}%` }} />
+                    </div>
+                    {projPct >= 100 && <p className="text-[10px] text-red-400 mt-1">⚠️ Project limit reached</p>}
                 </div>
               </div>
             );
@@ -137,6 +166,11 @@ export default function Admin() {
             <div className="grid grid-cols-3 gap-3">
               {Object.entries(PLAN_INFO).map(([key, info]) => {
                 const isCurrent = (company.usage?.plan || company.plan || 'starter') === key;
+                const planOrder = ['starter', 'team', 'enterprise'];
+                const currentIdx = planOrder.indexOf(company.usage?.plan || company.plan || 'starter');
+                const thisIdx = planOrder.indexOf(key);
+                const isDowngrade = !isCurrent && thisIdx < currentIdx;
+                const isUpgrade = !isCurrent && thisIdx > currentIdx;
                 return (
                   <div key={key} className={`p-3 rounded-xl border text-center ${isCurrent ? 'border-[var(--brand-primary)] bg-[var(--bg-tertiary)]/30' : 'border-[var(--border-primary)] bg-[var(--bg-tertiary)]'}`}>
                     <p className={`text-sm font-semibold ${isCurrent ? 'text-[var(--brand-secondary)]' : 'text-[var(--text-secondary)]'}`}>{info.label}</p>
@@ -152,12 +186,18 @@ export default function Admin() {
                     )}
                     {isCurrent ? (
                       <span className="inline-block mt-2 text-[10px] font-semibold text-[var(--brand-primary)] uppercase">Current</span>
-                    ) : (
-              <button data-voice="upgrade-plan" onClick={() => handleUpgrade(key)} disabled={upgrading === key}
+                    ) : isDowngrade ? (
+              <button onClick={() => { setDowngradeTarget(key); setDowngradeIssues(null); }}
+                disabled={downgrading}
+                className="btn-premium mt-2 w-full py-1.5 text-[10px] font-semibold !border-red-500/30 !text-red-400 hover:!bg-red-500/10">
+                        {downgrading ? '...' : 'Downgrade'}
+                      </button>
+                    ) : isUpgrade ? (
+              <button data-voice="upgrade-plan" onClick={() => setUpgradeTarget(key)} disabled={upgrading === key}
                 className="btn-premium mt-2 w-full py-1.5 text-[10px] font-semibold">
                         {upgrading === key ? '...' : 'Upgrade'}
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -302,6 +342,85 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+      <Modal open={!!upgradeTarget} onClose={() => setUpgradeTarget(null)}
+        title="Confirm Upgrade"
+        icon="⬆️"
+        footer={
+          <div className="flex gap-2">
+            <button onClick={() => setUpgradeTarget(null)}
+              className="btn-premium px-4 py-1.5 text-xs font-medium">Cancel</button>
+            <button onClick={() => { const p = upgradeTarget; setUpgradeTarget(null); handleUpgrade(p); }} disabled={upgrading === upgradeTarget}
+              className="btn-premium px-4 py-1.5 text-xs font-medium">
+              {upgrading === upgradeTarget ? 'Upgrading...' : `Upgrade to ${PLAN_INFO[upgradeTarget]?.label || upgradeTarget}`}
+            </button>
+          </div>
+        }>
+        <div>
+          <p className="text-xs text-[var(--text-tertiary)]">
+            You are about to upgrade from <strong>{PLAN_INFO[company?.usage?.plan || company?.plan || 'starter']?.label}</strong> to <strong>{PLAN_INFO[upgradeTarget]?.label}</strong>.
+          </p>
+          <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700/30">
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{PLAN_INFO[upgradeTarget]?.price}</p>
+            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">This plan will cost additional money. Make sure you are ready to proceed.</p>
+          </div>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-[var(--text-muted)]">
+              {PLAN_INFO[upgradeTarget]?.users === Infinity ? '✓ Unlimited users' : `✓ Up to ${PLAN_INFO[upgradeTarget]?.users} users`}
+            </p>
+            <p className="text-xs text-[var(--text-muted)]">
+              {PLAN_INFO[upgradeTarget]?.projects === Infinity ? '✓ Unlimited projects' : `✓ Up to ${PLAN_INFO[upgradeTarget]?.projects} projects`}
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={!!downgradeTarget} onClose={() => { setDowngradeTarget(null); setDowngradeIssues(null); }}
+        title={downgradeIssues ? 'Downgrade Not Possible' : 'Downgrade Plan'}
+        icon={downgradeIssues ? '⚠️' : '⬇️'}
+        footer={downgradeIssues ? (
+          <button onClick={() => { setDowngradeTarget(null); setDowngradeIssues(null); }}
+            className="btn-premium px-4 py-1.5 text-xs font-medium">Understood</button>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={() => { setDowngradeTarget(null); setDowngradeIssues(null); }}
+              className="btn-premium px-4 py-1.5 text-xs font-medium">Cancel</button>
+            <button onClick={handleDowngrade} disabled={downgrading}
+              className="btn-premium px-4 py-1.5 text-xs font-medium">
+              {downgrading ? 'Checking...' : `Continue to ${PLAN_INFO[downgradeTarget]?.label || downgradeTarget}`}
+            </button>
+          </div>
+        )}>
+        {downgradeIssues ? (
+          <div>
+            <p className="text-xs text-[var(--text-tertiary)] mb-3">
+              Your usage exceeds <strong>{PLAN_INFO[downgradeTarget]?.label}</strong> limits.
+              Make these changes manually, then try downgrading again:
+            </p>
+            <div className="space-y-2">
+              {downgradeIssues.map((issue, i) => (
+                <div key={i} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <p className="text-xs font-semibold text-red-600 dark:text-red-400 capitalize">{issue.type}</p>
+                  <p className="text-[10px] text-red-500/80">
+                    Currently {issue.current}, max {issue.max} — delete/deactivate {issue.excess}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              Are you sure you want to downgrade from <strong>{PLAN_INFO[company?.usage?.plan || company?.plan || 'starter']?.label}</strong> to <strong>{PLAN_INFO[downgradeTarget]?.label}</strong>?
+            </p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-2">
+              {PLAN_INFO[downgradeTarget]?.users === Infinity ? 'Unlimited users' : `Up to ${PLAN_INFO[downgradeTarget]?.users} users`}
+              {' · '}
+              {PLAN_INFO[downgradeTarget]?.projects === Infinity ? 'Unlimited projects' : `Up to ${PLAN_INFO[downgradeTarget]?.projects} projects`}
+            </p>
+          </div>
+        )}
+      </Modal>
 
       <ConfirmModal
         open={!!deleteConfirm}

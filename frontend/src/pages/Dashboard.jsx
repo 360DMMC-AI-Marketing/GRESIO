@@ -260,46 +260,46 @@ export default function Dashboard() {
              }}
                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[11px] font-semibold cursor-pointer border-none transition-all bg-neutral-50 dark:bg-[var(--bg-tertiary)] text-neutral-500 dark:text-[var(--text-tertiary)] hover:text-neutral-700 dark:hover:text-[var(--text-secondary)]">
                <span className="text-xs">✎</span> Customize</button>
-
-              {showCustomize && draftSections && (
-                <Modal open onClose={() => { setShowCustomize(false); setDraftSections(null); }} title="Customize Dashboard"
-                  footer={
-                    <>
-                      <button onClick={() => { setShowCustomize(false); setDraftSections(null); }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
-                      <button onClick={() => {
-                        setSections(draftSections);
-                        localStorage.setItem('dash_sections', JSON.stringify(draftSections));
-                        setShowCustomize(false);
-                        setDraftSections(null);
-                      }}
-                        className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all cursor-pointer border-none btn-premium"
-                        style={{padding:'0.375rem 0.75rem'}}>Save</button>
-                    </>
-                  }>
-                  <div className="space-y-1">
-                    {[
-                      { key: 'statsGrid', label: 'Stats Grid' },
-                      { key: 'insights', label: "Today's Pulse" },
-                      { key: 'atRisk', label: 'Projects at Risk' },
-                      { key: 'projects', label: 'Projects' },
-                      { key: 'capacity', label: 'Department Workload' },
-                      { key: 'plan', label: 'Plan' },
-                      { key: 'matrix', label: 'Portfolio Matrix' },
-                    ].map(item => (
-                      <div key={item.key} onClick={() => setDraftSections(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                        className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-[var(--radius-lg)] text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${draftSections[item.key] ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)]' : 'border-[var(--border-primary)] bg-transparent'}`}>
-                          {draftSections[item.key] && <span className="text-white text-[10px] leading-none font-bold">✓</span>}
-                        </div>
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Modal>
-              )}
         </div>
       </div>
+
+      {showCustomize && draftSections && (
+        <Modal open onClose={() => { setShowCustomize(false); setDraftSections(null); }} title="Customize Dashboard"
+          footer={
+            <>
+              <button onClick={() => { setShowCustomize(false); setDraftSections(null); }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg text-[var(--text-secondary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-all cursor-pointer border-none">Cancel</button>
+              <button onClick={() => {
+                setSections(draftSections);
+                localStorage.setItem('dash_sections', JSON.stringify(draftSections));
+                setShowCustomize(false);
+                setDraftSections(null);
+              }}
+                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all cursor-pointer border-none btn-premium"
+                style={{padding:'0.375rem 0.75rem'}}>Save</button>
+            </>
+          }>
+          <div className="space-y-1">
+            {[
+              { key: 'statsGrid', label: 'Stats Grid' },
+              { key: 'insights', label: "Today's Pulse" },
+              { key: 'atRisk', label: 'Projects at Risk' },
+              { key: 'projects', label: 'Projects' },
+              { key: 'capacity', label: 'Department Workload' },
+              { key: 'plan', label: 'Plan' },
+              { key: 'matrix', label: 'Portfolio Matrix' },
+            ].map(item => (
+              <div key={item.key} onClick={() => setDraftSections(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-[var(--radius-lg)] text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${draftSections[item.key] ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)]' : 'border-[var(--border-primary)] bg-transparent'}`}>
+                  {draftSections[item.key] && <span className="text-white text-[10px] leading-none font-bold">✓</span>}
+                </div>
+                <span className="font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
 
       {/* ── Company Profile ── */}
       {company && (

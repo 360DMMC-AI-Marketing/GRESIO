@@ -4,6 +4,7 @@ const { auth, authorize } = require('../middleware/auth');
 const c = require('../controllers/aiController');
 
 router.post('/chat/:projectId', auth, c.chat);
+router.get('/chat/:projectId/stream', auth, c.chatStream);
 router.get('/chat/:projectId/history', auth, c.history);
 router.delete('/chat/:projectId', auth, c.clearHistory);
 

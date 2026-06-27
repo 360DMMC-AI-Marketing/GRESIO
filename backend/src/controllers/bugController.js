@@ -252,7 +252,7 @@ exports.triggerRetest = async (req, res, next) => {
   try {
     const bug = await Bug.findById(req.params.id);
     if (!bug) return res.status(404).json({ message: 'Bug not found' });
-    if (bug.status !== 'closed') return res.status(400).json({ message: 'Bug must be resolved before retesting' });
+    if (!['closed', 'fixed'].includes(bug.status)) return res.status(400).json({ message: 'Bug must be resolved before retesting' });
     bug.status = 'in_progress';
     await bug.save();
     if (bug.testCase) {

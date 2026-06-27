@@ -12,7 +12,7 @@ export default function Modal({ open, onClose, title, icon, children, footer, st
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm" style={{paddingTop:'10vh'}} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`bg-[var(--bg-primary)] border border-[var(--border-primary)] shadow-[var(--elevation-high)] max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto animate-scale-in rounded-[var(--radius-lg)] ${style?.boxClass || ''}`} onClick={(e) => e.stopPropagation()} style={style?.boxStyle || {}}>
         <div className="flex items-center justify-between px-6 pt-6 pb-0">
           <span className="text-sm font-semibold text-[var(--text-primary)]">

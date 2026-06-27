@@ -69,6 +69,7 @@ exports.update = async (req, res) => {
   try {
     const template = await Template.findById(req.params.id);
     if (!template) return res.status(404).json({ error: 'Template not found' });
+    if (template.domain !== req.user.domain) return res.status(404).json({ error: 'Template not found' });
     if (template.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
@@ -85,6 +86,7 @@ exports.remove = async (req, res) => {
   try {
     const template = await Template.findById(req.params.id);
     if (!template) return res.status(404).json({ error: 'Template not found' });
+    if (template.domain !== req.user.domain) return res.status(404).json({ error: 'Template not found' });
     if (template.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
@@ -199,7 +201,7 @@ exports.fromProject = async (req, res) => {
     const Task = require('../models/Task');
     const Sprint = require('../models/Sprint');
 
-    const project = await Project.findById(req.params.projectId).lean();
+    const project = await Project.findOne({ _id: req.params.projectId, domain: req.user.domain }).lean();
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     const sprints = await Sprint.find({ project: project._id }).sort({ startDate: 1 }).lean();

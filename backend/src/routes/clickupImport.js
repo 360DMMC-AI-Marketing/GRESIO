@@ -13,6 +13,7 @@ router.use(authorize('admin'));
 router.get('/teams', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
+    if (!apiKey) return res.status(400).json({ error: 'API key is required' });
     const teams = await clickupService.getAuthorizedTeams(apiKey);
     res.json({ teams });
   } catch (err) {

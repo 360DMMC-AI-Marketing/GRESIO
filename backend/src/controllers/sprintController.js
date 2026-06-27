@@ -17,7 +17,7 @@ const populate = q => q
 exports.getSprints = async (req, res, next) => {
   try {
     const projectIds = await getDomainProjectIds(req.user.domain, req.user);
-    const filter = { project: { $in: projectIds }, isActive: true };
+    const filter = { project: { $in: projectIds }, isActive: { $ne: false } };
     if (req.query.project) filter.project = req.query.project;
     if (req.query.status) filter.status = req.query.status;
     const page = parseInt(req.query.page) || null;

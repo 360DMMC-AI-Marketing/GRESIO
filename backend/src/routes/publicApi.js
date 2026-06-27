@@ -5,6 +5,7 @@ const Project = require('../models/Project');
 const Task = require('../models/Task');
 const Sprint = require('../models/Sprint');
 const Report = require('../models/Report');
+const { getDomainProjectIds } = require('../config/planLimits');
 
 router.use(apiAuth);
 
@@ -35,6 +36,8 @@ router.get('/projects/:id', requireScope('projects:read'), async (req, res) => {
 
 router.get('/projects/:id/tasks', requireScope('tasks:read'), async (req, res) => {
   try {
+    const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain }).lean();
+    if (!project) return res.status(404).json({ error: 'Project not found' });
     const { page = 1, limit = 50, status } = req.query;
     const filter = { project: req.params.id };
     if (status) filter.status = status;
@@ -53,6 +56,8 @@ router.post('/tasks', requireScope('tasks:write'), async (req, res) => {
   try {
     const { title, description, projectId, assignee, priority, estimatedHours } = req.body;
     if (!title || !projectId) return res.status(400).json({ error: 'title and projectId required' });
+    const project = await Project.findOne({ _id: projectId, domain: req.user.domain }).lean();
+    if (!project) return res.status(404).json({ error: 'Project not found' });
     const task = await Task.create({
       title, description, project: projectId,
       assignee: assignee || req.user._id,
@@ -66,6 +71,8 @@ router.post('/tasks', requireScope('tasks:write'), async (req, res) => {
 
 router.get('/projects/:id/reports', requireScope('reports:read'), async (req, res) => {
   try {
+    const project = await Project.findOne({ _id: req.params.id, domain: req.user.domain }).lean();
+    if (!project) return res.status(404).json({ error: 'Project not found' });
     const reports = await Report.find({ project: req.params.id })
       .select('type generatedAt downloadCount')
       .sort({ generatedAt: -1 })
@@ -76,8 +83,11 @@ router.get('/projects/:id/reports', requireScope('reports:read'), async (req, re
 
 router.get('/reports/:id', requireScope('reports:read'), async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id).lean();
+    const report = await Report.findById(req.params.id).populate('project', 'domain').lean();
     if (!report) return res.status(404).json({ error: 'Report not found' });
+    if (report.project && report.project.domain !== req.user.domain) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
     res.json({ data: report });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -85,8 +95,14 @@ router.get('/reports/:id', requireScope('reports:read'), async (req, res) => {
 router.get('/sprints', requireScope('sprints:read'), async (req, res) => {
   try {
     const { page = 1, limit = 20, projectId } = req.query;
-    const filter = {};
-    if (projectId) filter.project = projectId;
+    const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+    const filter = { project: { $in: projectIds } };
+    if (projectId) {
+      if (!projectIds.some(pid => pid.toString() === projectId)) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      filter.project = projectId;
+    }
     const sprints = await Sprint.find(filter)
       .sort({ startDate: -1 })
       .skip((page - 1) * limit)

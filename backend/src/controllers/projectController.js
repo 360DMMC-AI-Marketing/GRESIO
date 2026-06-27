@@ -64,16 +64,6 @@ exports.getProjects = async (req, res, next) => {
       });
     }
 
-    const ops = [];
-    for (const p of projects) {
-      const correct = calcPhaseProgress(p.projectType, p.phase);
-      if (p.progress !== correct) {
-        ops.push(Project.updateOne({ _id: p._id }, { progress: correct }));
-        p.progress = correct;
-      }
-    }
-    if (ops.length) await Promise.all(ops);
-
     // For umbrella projects, attach their children count
     const umbrellaIds = projects.filter(p => p.projectType === 'umbrella').map(p => p._id);
     const childrenMap = {};
@@ -120,11 +110,6 @@ exports.getProjectById = async (req, res, next) => {
     const project = await Project.findOne(filter)
       .populate('members', 'name email avatar role activityScore status');
     if (!project) return res.status(404).json({ message: 'Project not found' });
-    const progress = calcPhaseProgress(project.projectType, project.phase);
-    if (project.progress !== progress) {
-      project.progress = progress;
-      await project.save();
-    }
     const result = project.toObject ? project.toObject() : project;
 
     // If umbrella, attach children
@@ -331,7 +316,7 @@ exports.getProjectAnalytics = async (req, res, next) => {
     const overdueTasks = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
     const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-    const sprints = await Sprint.find({ project: { $in: projectIds }, isActive: true });
+    const sprints = await Sprint.find({ project: { $in: projectIds } });
     const testCases = await TestCase.find({ project: { $in: projectIds }, isActive: true });
     const bugs = await Bug.find({ project: { $in: projectIds }, isActive: true });
 

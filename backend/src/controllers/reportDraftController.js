@@ -9,6 +9,7 @@ const ProjectMember = require('../models/ProjectMember');
 const User = require('../models/User');
 const ReportDraft = require('../models/ReportDraft');
 const Report = require('../models/Report');
+const { getDomainProjectIds } = require('../config/planLimits');
 
 const CLIENT_SECTIONS = [
   { key: 'executive_summary', title: 'Executive Summary', visible: true, order: 0 },
@@ -107,9 +108,15 @@ function generateSectionContent(key, autoData, type) {
   }
 }
 
+async function verifyProjectAccess(projectId, req) {
+  const projectIds = await getDomainProjectIds(req.user.domain, req.user);
+  return projectIds.some(pid => pid.toString() === projectId);
+}
+
 exports.getDraft = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!await verifyProjectAccess(id, req)) return res.status(404).json({ message: 'Project not found' });
     const { type } = req.query;
     let draft = await ReportDraft.findOne({ project: id, type }).lean();
     const autoData = await buildAutoContent(id, type);
@@ -131,15 +138,18 @@ exports.getDraft = async (req, res) => {
 exports.saveDraft = async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, sections } = req.body;
+    if (!await verifyProjectAccess(id, req)) return res.status(404).json({ message: 'Project not found' });
+    const { type, sections, design, cover } = req.body;
     if (!type || !sections) return res.status(400).json({ message: 'type and sections required' });
 
     let draft = await ReportDraft.findOne({ project: id, type });
     if (draft) {
       draft.sections = sections;
+      if (design) draft.design = design;
+      if (cover) draft.cover = cover;
       draft.version += 1;
     } else {
-      draft = new ReportDraft({ project: id, type, sections, createdBy: req.user._id });
+      draft = new ReportDraft({ project: id, type, sections, design, cover, createdBy: req.user._id });
     }
     await draft.save();
     res.json(draft);
@@ -151,7 +161,8 @@ exports.saveDraft = async (req, res) => {
 exports.saveCustomReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, sections } = req.body;
+    if (!await verifyProjectAccess(id, req)) return res.status(404).json({ message: 'Project not found' });
+    const { type, sections, design, cover } = req.body;
     if (!type || !sections) return res.status(400).json({ message: 'type and sections required' });
 
     const autoData = await buildAutoContent(id, type);
@@ -160,6 +171,8 @@ exports.saveCustomReport = async (req, res) => {
     const reportData = {
       ...autoData,
       customSections: sections.filter(s => s.visible),
+      design,
+      cover,
       edited: true,
     };
 
@@ -176,7 +189,7 @@ exports.saveCustomReport = async (req, res) => {
     const ReportDraft = require('../models/ReportDraft');
     await ReportDraft.findOneAndUpdate(
       { project: id, type },
-      { project: id, type, sections, createdBy: req.user._id, version: 1 },
+      { project: id, type, sections, design, cover, createdBy: req.user._id, version: 1 },
       { upsert: true }
     );
 
@@ -189,6 +202,7 @@ exports.saveCustomReport = async (req, res) => {
 exports.generateCustomPdf = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!await verifyProjectAccess(id, req)) return res.status(404).json({ message: 'Project not found' });
     const { type, sections } = req.body;
     if (!type || !sections) return res.status(400).json({ message: 'type and sections required' });
 

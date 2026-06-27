@@ -85,7 +85,10 @@ export default function NotificationsPage() {
     try {
       const res = await notifications.handleAction(n._id, actionName);
       const status = res.data?.status;
-      if (status === 'active' || status === 'declined') {
+      if (status === 'active') {
+        setNotifs(prev => prev.filter(item => item._id !== n._id));
+        if (n.link) navigate(n.link);
+      } else if (status === 'declined') {
         setNotifs(prev => prev.filter(item => item._id !== n._id));
       }
     } catch (err) { console.error(err); }

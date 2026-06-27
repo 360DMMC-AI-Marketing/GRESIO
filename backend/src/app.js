@@ -39,6 +39,8 @@ const { router: superAdminRoutes, seedSuperAdmin, startNotificationPolling } = r
 const app = express();
 const server = http.createServer(app);
 
+app.set('trust proxy', 1);
+
 const allowedOrigins = env.FRONTEND_URL ? env.FRONTEND_URL.split(',') : ['http://localhost:5173', 'http://localhost:3000'];
 const corsOrigin = (origin, cb) => {
   if (!origin || allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app') || origin.startsWith('https://gresio')) {
@@ -75,19 +77,39 @@ app.post('/api/seed-demo', auth, authorize('admin'), async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+const ipKey = (ip) => {
+  if (require('node:net').isIPv6(ip)) {
+    const { Address6 } = require('ip-address');
+    const addr = new Address6(ip);
+    if (addr.is4()) return addr.to4().correctForm();
+    return new Address6(`${ip}/56`).networkForm();
+  }
+  return ip;
+};
+
+const { ipKeyGenerator } = require('express-rate-limit');
+
+const keyGenerator = (req) => {
+  if (req.user && req.user.domain) return `user:${req.user.domain}:${req.user._id}`;
+  if (req.apiKey && req.apiKey.domain) return `apikey:${req.apiKey.domain}:${req.apiKey._id}`;
+  return `ip:${ipKeyGenerator(req.ip)}`;
+};
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator,
   message: { error: 'Too many attempts. Try again in 15 minutes.' },
 });
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator,
   message: { error: 'Too many registration attempts. Try again later.' },
 });
 
@@ -97,9 +119,10 @@ app.use('/api/auth/forgot-password', authLimiter);
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 10000,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator,
   message: { error: 'Too many requests. Try again later.' },
 });
 app.use('/api', globalLimiter);

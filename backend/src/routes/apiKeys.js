@@ -29,7 +29,12 @@ router.post('/', auth, async (req, res) => {
       domain: req.user.domain,
     });
     res.status(201).json({ key: rawKey, data: { _id: keyDoc._id, name: keyDoc.name, prefix: keyDoc.prefix, scopes: keyDoc.scopes, active: keyDoc.active, createdAt: keyDoc.createdAt } });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.delete('/:id', auth, async (req, res) => {

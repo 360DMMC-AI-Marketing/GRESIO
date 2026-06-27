@@ -77,7 +77,7 @@ export default function PublicNavbar() {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'glass-panel' : 'bg-transparent'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white/90 dark:bg-[var(--bg-primary)]/90 border-b border-[var(--border-primary)]' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-5 h-20 flex items-center justify-between">
         <Link to="/">
           <Logo size="lg" />
