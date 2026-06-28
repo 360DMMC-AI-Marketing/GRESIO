@@ -172,6 +172,10 @@ app.use('/api/templates', require('./routes/templates'));
 app.use('/api/wiki', require('./routes/wiki'));
 app.use('/api/company-profile', require('./routes/companyProfile'));
 app.use('/api/project-cortex', require('./routes/projectCortex'));
+app.use('/api/cerebrum', require('./routes/cerebrum'));
+
+const oracleNotifier = require('./services/oracleNotifier');
+oracleNotifier.startAutoCheck();
 
 app.use('/super-api', superAdminRoutes);
 

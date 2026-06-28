@@ -387,6 +387,21 @@ export const companyProfile = {
   update: (data) => api.put('/company-profile', data),
 };
 
+export const cerebrum = {
+  getOracle: () => api.get('/cerebrum/oracle'),
+  getOracleProject: (id) => api.get(`/cerebrum/oracle/${id}`),
+  killRecommendation: (projectId) => api.post('/cerebrum/kill', { projectId }),
+  searchMemory: (q) => api.get(`/cerebrum/memory/search?q=${encodeURIComponent(q)}`),
+  getPatterns: (id) => api.get(`/cerebrum/memory/patterns/${id}`),
+  ingestMemory: (data) => api.post('/cerebrum/memory/ingest', data),
+  getExpertise: () => api.get('/cerebrum/memory/expertise'),
+  getAlignment: () => api.get('/cerebrum/strategy/alignment'),
+  getRebalance: () => api.get('/cerebrum/strategy/rebalance'),
+  getGoals: () => api.get('/cerebrum/strategy/goals'),
+  createGoal: (data) => api.post('/cerebrum/strategy/goals', data),
+  predict: (projectId, message) => api.post(`/cerebrum/predict/${projectId}`, { message }),
+};
+
 export const projectCortex = {
   getEvents: (projectId) => api.get(`/project-cortex/events/${projectId}`),
   collectEvent: (data) => api.post('/project-cortex/events', data),

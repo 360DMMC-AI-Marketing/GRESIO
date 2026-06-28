@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
-  Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Lightbulb, Library,
+  Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Lightbulb, Library, Search, Sparkles,
   Download, ExternalLink, Bug,
 } from 'lucide-react';
 
@@ -70,7 +70,11 @@ const sidebarGroups = [
     label: 'Cerebrum',
     icon: Lightbulb,
     items: [
-      { id: 'project-cortex', label: 'Project Cortex', icon: Activity, path: '/project-cortex', roles: ALL },
+      { id: 'cerebrum-oracle', label: 'Viability Oracle', icon: Activity, path: '/cerebrum/oracle', roles: ALL },
+      { id: 'cerebrum-memory', label: 'Corporate Memory', icon: Search, path: '/cerebrum/memory', roles: ALL },
+      { id: 'cerebrum-strategy', label: 'Strategy Bridge', icon: BarChart3, path: '/cerebrum/strategy', roles: MANAGERS },
+      { id: 'cerebrum-galaxy', label: 'Neural Map', icon: Sparkles, path: '/cerebrum/galaxy', roles: ALL },
+      { id: 'project-cortex', label: 'Project Cortex', icon: BrainCircuit, path: '/project-cortex', roles: ALL },
     ],
   },
   {
