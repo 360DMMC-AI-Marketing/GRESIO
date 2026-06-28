@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Folder, Users, BookOpen, Settings,
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
-  Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Library,
+  Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Lightbulb, Library,
   Download, ExternalLink, Bug,
 } from 'lucide-react';
 
@@ -66,6 +66,14 @@ const sidebarGroups = [
     ],
   },
   {
+    id: 'intelligence',
+    label: 'Cerebrum',
+    icon: Lightbulb,
+    items: [
+      { id: 'project-cortex', label: 'Project Cortex', icon: Activity, path: '/project-cortex', roles: ALL },
+    ],
+  },
+  {
     id: 'importation',
     label: 'Importation',
     icon: Download,
@@ -90,6 +98,7 @@ const standaloneItems = [
 const bottomItems = [
   { id: 'onboarding', label: 'Onboarding Guide', icon: BookOpen, path: '/onboarding-guide', roles: ALL },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/admin', roles: ['admin'] },
+  { id: 'company-profile', label: 'Company Profile', icon: Building2, path: '/admin/company-profile', roles: ['admin'] },
   { id: 'super-settings', label: 'Super Settings', icon: Settings, path: '/super/settings', roles: ['super_admin'] },
   { id: 'super-health', label: 'System Health', icon: Activity, path: '/super/health', roles: ['super_admin'] },
 ];
@@ -216,6 +225,10 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
     setOpenGroup(prev => prev === id ? '' : id);
   };
 
+  const filteredGroups = sidebarGroups.filter(g => {
+    if (g.id === 'intelligence') return company?.plan === 'enterprise';
+    return true;
+  });
   const filteredStandalone = standaloneItems.filter(i => i.roles?.includes(user?.role));
   const filteredBottom = bottomItems.filter(i => i.roles?.includes(user?.role));
 
@@ -293,7 +306,7 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
           <nav className="flex-1 py-3 overflow-y-auto px-3">
             {filteredStandalone.map(item => renderNavLink(item, onMobileClose))}
             <div className="mx-1 my-3" style={{borderBottom: '0.5px solid rgba(255,255,255,0.06)'}} />
-            {sidebarGroups.map(group => (
+            {filteredGroups.map(group => (
               <SidebarGroup key={group.id} group={group} isOpen={openGroup === group.id} onToggle={handleToggle} user={user} />
             ))}
             {filteredBottom.length > 0 && <div className="mx-1 my-3" style={{borderTop: '0.5px solid rgba(255,255,255,0.06)'}} />}
@@ -314,7 +327,7 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
         </div>
         <nav className="flex-1 px-2 py-3 flex flex-col gap-1 overflow-y-auto">
           {filteredStandalone.map(item => renderCollapsedIcon(item))}
-          {sidebarGroups.map(group => {
+          {filteredGroups.map(group => {
             const hasAccess = group.items.some(i => i.roles?.includes(user?.role));
             if (!hasAccess) return null;
             return renderCollapsedIcon(group, true);

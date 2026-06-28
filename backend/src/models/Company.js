@@ -25,6 +25,24 @@ const companySchema = new mongoose.Schema({
   timezone: { type: String, default: '' },
   website: { type: String, default: '' },
   tagline: { type: String, default: '' },
+  description: { type: String, default: '' },
+  departments: [{
+    name: { type: String, default: '' },
+    headcount: { type: Number, default: 0 },
+    type: { type: String, default: '' },
+  }],
+  typicalProjects: [String],
+  techStack: [String],
+  profileCompleted: { type: Boolean, default: false },
+  foundedYear: { type: Number, default: null },
+  companySize: { type: String, default: '' },
+  mission: { type: String, default: '' },
+  vision: { type: String, default: '' },
+  coreValues: [String],
+  linkedin: { type: String, default: '' },
+  twitter: { type: String, default: '' },
+  github: { type: String, default: '' },
+  brandColor: { type: String, default: '#6366f1' },
 }, { timestamps: true, toJSON: { getters: true } });
 
 companySchema.pre('save', function (next) {

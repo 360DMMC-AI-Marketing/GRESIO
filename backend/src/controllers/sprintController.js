@@ -6,6 +6,7 @@ const { updateProjectProgress } = require('./taskController');
 const { generateTestsFromTasks } = require('./testCaseController');
 const { evaluateProjectPhase } = require('../services/phaseService');
 const { getDomainProjectIds } = require('../config/planLimits');
+const eventCollector = require('../services/eventCollector');
 
 const populate = q => q
   .populate('project', 'name status')
@@ -72,6 +73,7 @@ exports.createSprint = async (req, res, next) => {
         }
       }
     }
+    eventCollector.collect({ projectId: req.body.project, domain: req.user.domain, eventType: 'sprint_create', actor: req.user._id, after: { name: sprint.name }, reason: `Sprint "${sprint.name}" created` });
     res.status(201).json(await populate(Sprint.findById(sprint._id)));
   } catch (e) { next(e); }
 };
@@ -117,6 +119,9 @@ exports.updateSprint = async (req, res, next) => {
     const sprint = await populate(Sprint.findOneAndUpdate({ _id: req.params.id, project: { $in: projectIds } }, updates, { new: true }));
     if (!sprint) return res.status(404).json({ message: 'Sprint not found' });
     if (sprint.project && !isReopen) { updateProjectProgress(sprint.project); await evaluateProjectPhase(sprint.project); }
+    if (req.body.status) {
+      eventCollector.collect({ projectId: sprint.project, domain: req.user.domain, eventType: 'status_change', actor: req.user._id, after: { status: req.body.status }, reason: `Sprint "${sprint.name}" → ${req.body.status}` });
+    }
     res.json(sprint);
   } catch (e) { next(e); }
 };
@@ -156,6 +161,7 @@ exports.deleteSprint = async (req, res, next) => {
     const projectId = sprint?.project;
     await Sprint.findOneAndDelete({ _id: req.params.id, project: { $in: projectIds } });
     if (projectId) { updateProjectProgress(projectId); await evaluateProjectPhase(projectId); }
+    eventCollector.collect({ projectId, domain: req.user.domain, eventType: 'sprint_close', actor: req.user._id, before: { name: sprint.name }, reason: `Sprint "${sprint.name}" deleted` });
     res.json({ message: 'Sprint deleted' });
   } catch (e) { next(e); }
 };

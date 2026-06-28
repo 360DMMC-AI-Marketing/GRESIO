@@ -170,6 +170,8 @@ app.use('/api/v1', require('./routes/publicApi'));
 app.use('/api/api-keys', require('./routes/apiKeys'));
 app.use('/api/templates', require('./routes/templates'));
 app.use('/api/wiki', require('./routes/wiki'));
+app.use('/api/company-profile', require('./routes/companyProfile'));
+app.use('/api/project-cortex', require('./routes/projectCortex'));
 
 app.use('/super-api', superAdminRoutes);
 

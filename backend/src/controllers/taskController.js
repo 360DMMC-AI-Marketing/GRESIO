@@ -8,6 +8,7 @@ const Notification = require('../models/Notification');
 const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { generateTestsFromTasks } = require('./testCaseController');
 const { getDomainProjectIds } = require('../config/planLimits');
+const eventCollector = require('../services/eventCollector');
 const { notifyAdmins } = require('../services/notificationService');
 
 function getIO() {
@@ -202,6 +203,8 @@ exports.createTask = async (req, res, next) => {
       `New task: ${finalTask.title}`,
       `${req.user.name} created task "${finalTask.title}" in ${finalTask.project?.name || 'project'}`,
       `/tasks?tab=project&taskId=${finalTask._id}`, { taskId: finalTask._id, projectId: finalTask.project?._id });
+
+    eventCollector.collect({ projectId: finalTask.project || finalTask._id, domain: req.user.domain, eventType: 'task_create', actor: req.user._id, after: { title: finalTask.title, status: finalTask.status, assignee: finalTask.assignee }, reason: `Task "${finalTask.title}" created` });
 
     res.status(201).json(finalTask);
   } catch (error) {
@@ -448,6 +451,13 @@ exports.updateTask = async (req, res, next) => {
         { taskId: updated._id, projectId: updated.project?._id });
     }
 
+    if (req.body.status && req.body.status !== oldStatus) {
+      eventCollector.collect({ projectId: updated.project || updated._id, domain: req.user.domain, eventType: req.body.status === 'done' ? 'task_complete' : 'status_change', actor: req.user._id, before: { status: oldStatus }, after: { status: req.body.status }, reason: `Task "${updated.title}" → ${req.body.status}` });
+    }
+    if (req.body.assignee && String(req.body.assignee) !== String(oldAssignee || '')) {
+      eventCollector.collect({ projectId: updated.project || updated._id, domain: req.user.domain, eventType: 'task_assign', actor: req.user._id, before: { assignee: oldAssignee }, after: { assignee: req.body.assignee }, reason: `Task "${updated.title}" reassigned` });
+    }
+
     res.json(updated);
   } catch (error) {
     next(error);
@@ -478,6 +488,8 @@ exports.deleteTask = async (req, res, next) => {
       `${req.user.name} deleted task "${task.title}"`,
       task.scope === 'project' ? `/tasks?tab=project` : `/tasks?tab=separate`,
       { taskId: task._id, projectId: task.project?._id });
+
+    eventCollector.collect({ projectId: task.project || task._id, domain: req.user.domain, eventType: 'status_change', actor: req.user._id, before: { isActive: true }, after: { isActive: false }, reason: `Task "${task.title}" deleted` });
 
     res.json({ message: 'Task deactivated' });
   } catch (error) {

@@ -54,6 +54,9 @@ const TemplateMarketplace = lazy(() => import('./pages/TemplateMarketplace'));
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const CreateTemplate = lazy(() => import('./pages/CreateTemplate'));
 const Wiki = lazy(() => import('./pages/Wiki'));
+const CompanyOnboarding = lazy(() => import('./pages/CompanyOnboarding'));
+const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
+const ProjectCortex = lazy(() => import('./pages/ProjectCortex'));
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
 const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
 const SuperAdminCompanyDetail = lazy(() => import('./pages/super-admin/CompanyDetail'));
@@ -140,6 +143,9 @@ export default function App() {
               <Route path="/templates/:id" element={<TemplateDetail />} />
               <Route path="/templates/create" element={<CreateTemplate />} />
               <Route path="/wiki" element={<Wiki />} />
+              <Route path="/company-onboarding" element={<CompanyOnboarding />} />
+              <Route path="/admin/company-profile" element={<CompanyProfile />} />
+              <Route path="/project-cortex" element={<ProjectCortex />} />
             </Route>
             <Route element={<SuperAdminLayout />}>
               <Route path="/super/dashboard" element={<SuperAdminDashboard />} />

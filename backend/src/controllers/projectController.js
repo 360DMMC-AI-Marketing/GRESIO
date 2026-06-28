@@ -12,6 +12,7 @@ const Company = require('../models/Company');
 const microsoftGraphService = require('../services/microsoftGraphService');
 const { evaluateProjectPhase, calcPhaseProgress } = require('../services/phaseService');
 const { enforceProjectLimit, getUserAccessibleProjectIds } = require('../config/planLimits');
+const eventCollector = require('../services/eventCollector');
 
 
 exports.getProjects = async (req, res, next) => {
@@ -201,6 +202,8 @@ exports.createProject = async (req, res, next) => {
 
     autoCreateTeamsChannel(project, req.user).catch(() => {});
 
+    eventCollector.collect({ projectId: project._id, domain: req.user.domain, eventType: 'status_change', actor: req.user._id, after: { name: project.name, status: 'discovery' }, reason: `Project "${project.name}" created` });
+
     res.status(201).json(project);
   } catch (error) {
     next(error);
@@ -249,6 +252,12 @@ exports.updateProject = async (req, res, next) => {
     if (!req.body.phase && !req.body.progress) {
       await evaluateProjectPhase(req.params.id);
     }
+    if (req.body.phase) {
+      eventCollector.collect({ projectId: project._id, domain: req.user.domain, eventType: 'phase_change', actor: req.user._id, before: { phase: project.phase }, after: { phase: req.body.phase }, reason: `Project phase → ${req.body.phase}` });
+    }
+    if (req.body.status) {
+      eventCollector.collect({ projectId: project._id, domain: req.user.domain, eventType: 'status_change', actor: req.user._id, before: { status: project.status }, after: { status: req.body.status }, reason: `Project status → ${req.body.status}` });
+    }
     res.json(project);
   } catch (error) {
     next(error);
@@ -291,6 +300,8 @@ exports.deleteProject = async (req, res, next) => {
         await cascadeDeactivate(sub._id);
       }
     }
+
+    eventCollector.collect({ projectId: project._id, domain: req.user.domain, eventType: 'status_change', actor: req.user._id, before: { isActive: true }, after: { isActive: false }, reason: `Project "${project.name}" deleted` });
 
     res.json({ message: 'Project deactivated' });
   } catch (error) {

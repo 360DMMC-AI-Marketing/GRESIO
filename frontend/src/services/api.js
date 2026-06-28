@@ -382,6 +382,22 @@ export const wiki = {
   rate: (id, value) => api.post(`/wiki/${id}/rate`, { value }),
 };
 
+export const companyProfile = {
+  get: () => api.get('/company-profile'),
+  update: (data) => api.put('/company-profile', data),
+};
+
+export const projectCortex = {
+  getEvents: (projectId) => api.get(`/project-cortex/events/${projectId}`),
+  collectEvent: (data) => api.post('/project-cortex/events', data),
+  getVitals: (projectId) => api.get(`/project-cortex/vitals/${projectId}`),
+  getPredict: (projectId) => api.get(`/project-cortex/predict/${projectId}`),
+  getAutopsy: (projectId) => api.get(`/project-cortex/autopsy/${projectId}`),
+  getSimilar: (projectId) => api.get(`/project-cortex/similar/${projectId}`),
+  getTeamMemory: () => api.get('/project-cortex/team-memory'),
+  chat: (projectId, message) => api.post('/project-cortex/chat', { projectId, message }),
+};
+
 export const reportShare = {
   share: (id, data) => api.post(`/reports/${id}/share`, data),
   getSettings: (id) => api.get(`/reports/${id}/share`),

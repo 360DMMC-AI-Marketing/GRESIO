@@ -282,6 +282,7 @@ async function buildProjectContext(projectId) {
   const bugs = await Bug.find({ project: projectId }).sort({ createdAt: -1 }).lean();
   const decisions = await DecisionJournal.find({ project: projectId }).sort({ createdAt: -1 }).limit(10).lean();
   const recentActivity = await Activity.find({ project: projectId }).sort({ createdAt: -1 }).limit(15).populate('user', 'name').lean();
+  const autopsyEvents = await require('../models/AutopsyEvent').find({ projectId }).sort({ timestamp: -1 }).limit(20).populate('actor', 'name').lean();
 
   // Task breakdown
   const statusCounts = { todo: 0, in_progress: 0, review: 0, done: 0, delayed: 0 };
@@ -353,11 +354,13 @@ async function buildProjectContext(projectId) {
     overloadedUsers,
     activeSprintInfo,
     teamActivityStr,
+    autopsyEvents,
   };
 }
 
 function formatProjectContext(ctx) {
   const p = ctx.project;
+  const autopsyEvents = ctx.autopsyEvents || [];
   let str = '';
 
   str += `Project: ${p.name}\n`;
@@ -422,6 +425,13 @@ function formatProjectContext(ctx) {
 
   if (ctx.teamActivityStr) {
     str += `\nRecent team activity:\n${ctx.teamActivityStr}\n`;
+  }
+
+  if (autopsyEvents.length > 0) {
+    str += `\nAutopsy events (event log — recent ${autopsyEvents.length}):\n`;
+    for (const e of autopsyEvents) {
+      str += `  [${e.eventType}] ${e.actor?.name || 'System'} — ${e.reason || 'No details'} (${new Date(e.timestamp).toLocaleDateString()})\n`;
+    }
   }
 
   return str;

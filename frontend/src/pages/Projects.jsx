@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal, { ConfirmModal } from '../components/Modal';
 import ReportChoiceModal from '../components/ReportChoiceModal';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateComponents';
+import { Search } from 'lucide-react';
 import FEATURES from '../config/featureFlags';
 
 const STATUS_CLASS = {
@@ -28,6 +29,7 @@ export default function Projects() {
   const [expanded, setExpanded] = useState({});
   const [confirmState, setConfirmState] = useState(null);
   const [reportProject, setReportProject] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
 
   const pollRef = useRef(null);
@@ -82,21 +84,31 @@ export default function Projects() {
 
   if (error) return <ErrorState message={error} onRetry={() => fetchProjects(true)} />;
 
-  const umbrellas = list.filter(p => p.projectType === 'umbrella' || p.children?.length > 0);
-  const standalone = list.filter(p => !p.parentProject && p.projectType !== 'umbrella' && (!p.children || p.children.length === 0));
+  const q = searchQuery.trim().toLowerCase();
+  const filtered = q ? list.filter(p => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)) : list;
+  const umbrellas = filtered.filter(p => p.projectType === 'umbrella' || p.children?.length > 0);
+  const standalone = filtered.filter(p => !p.parentProject && p.projectType !== 'umbrella' && (!p.children || p.children.length === 0));
 
   return (
     <div className="page-enter">
-      <div className="flex items-center justify-between mb-3 glass-panel" style={{padding:'10px 14px',borderRadius:'var(--radius-lg)'}}>
-        <div>
-          <div className="text-lg font-bold text-neutral-900">Projects</div>
-          <div className="text-[11px] text-neutral-400 mt-0.5"><span className="num-mono">{list.length}</span> active projects</div>
+      <div className="flex items-center justify-between mb-3 glass-panel" style={{padding:'8px 14px',borderRadius:'var(--radius-lg)'}}>
+        <div className="shrink-0">
+          <div className="text-sm font-bold text-neutral-900">Projects</div>
+          <div className="text-[10px] text-neutral-400 mt-0.5"><span className="num-mono">{filtered.length}</span> active</div>
         </div>
-        {['admin', 'project_manager'].includes(user?.role) && (
-          <button data-voice="new-project" onClick={() => setShowForm(!showForm)} className="btn-premium">
-            + New Project
-          </button>
-        )}
+        <div className="flex items-center gap-2 ml-3">
+          <div className="relative w-[180px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[var(--text-muted)]" />
+            <input type="text" placeholder="Search projects..."
+              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-[var(--border-primary)] rounded-[var(--radius-md)] bg-[var(--bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/15 focus:border-[var(--brand-primary)] transition-all placeholder:text-[var(--text-muted)] text-[var(--text-primary)]" />
+          </div>
+          {['admin', 'project_manager'].includes(user?.role) && (
+            <button data-voice="new-project" onClick={() => setShowForm(!showForm)} className="btn-premium shrink-0">
+              + New Project
+            </button>
+          )}
+        </div>
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="New Project" icon="📁"
@@ -199,8 +211,8 @@ export default function Projects() {
         </div>
       </Modal>
 
-      {list.length === 0 ? (
-        <EmptyState icon="📁" title="No projects yet" description="Create your first project to get started" />
+      {filtered.length === 0 ? (
+        <EmptyState icon="📁" title={list.length === 0 ? "No projects yet" : "No results"} description={list.length === 0 ? "Create your first project to get started" : `No projects matching "${searchQuery}"`} />
       ) : (
         <div className="stagger" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           {umbrellas.map((p) => (
