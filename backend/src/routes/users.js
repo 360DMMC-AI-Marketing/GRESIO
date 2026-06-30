@@ -6,6 +6,7 @@ const router = Router();
 router.use(auth);
 router.get('/', getUsers);
 router.get('/capacity', getCapacity);
+router.get('/profile', (req, res, next) => { req.params.id = req.user._id; next(); }, getUserProfile);
 router.get('/:id/activity', getUserActivity);
 router.get('/:id/profile', getUserProfile);
 router.get('/:id', getUserById);

@@ -24,6 +24,8 @@ export default function Admin() {
   const [syncingPlatform, setSyncingPlatform] = useState(null);
   const [teamIdInput, setTeamIdInput] = useState('');
   const [savingTeamId, setSavingTeamId] = useState(false);
+  const [githubToken, setGithubToken] = useState('');
+  const [savingGithubToken, setSavingGithubToken] = useState(false);
 const [upgrading, setUpgrading] = useState(null);
 const [upgradeTarget, setUpgradeTarget] = useState(null);
 const [downgradeTarget, setDowngradeTarget] = useState(null);
@@ -49,6 +51,8 @@ const [deleteConfirm, setDeleteConfirm] = useState(null);
       .then((intRes) => {
         const msft = intRes.data.find(i => i.name === 'microsoft_graph');
         if (msft?.config?.teamsTeamId) setTeamIdInput(msft.config.teamsTeamId);
+        const gh = intRes.data.find(i => i.name === 'github');
+        if (gh?.credentials?.token) setGithubToken(gh.credentials.token);
       })
       .catch((e) => setError(e.message || 'Failed to load settings'))
       .finally(() => setLoading(false));
@@ -242,11 +246,30 @@ const [deleteConfirm, setDeleteConfirm] = useState(null);
                   <p className="text-lg font-bold text-[var(--text-primary)]">Auto-synced</p>
                 </div>
               </div>
+              <div style={{textAlign:'left',marginTop:12}}>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">GitHub Personal Access Token</label>
+                <div style={{display:'flex',gap:6}}>
+                  <input className="s-input" style={{flex:1}} value={githubToken} type="password"
+                    onChange={e => setGithubToken(e.target.value)}
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+                  <button onClick={async () => {
+                    setSavingGithubToken(true);
+                    try {
+                      await integrations.update('github', { credentials: { token: githubToken } });
+                      setAlertModal({ title: 'Saved', message: 'GitHub token saved. Click Sync Now to fetch data.', type: 'success' });
+                    } catch (e) { setAlertModal({ title: 'Error', message: e.response?.data?.message || e.message, type: 'error' }); }
+                    finally { setSavingGithubToken(false); }
+                  }} disabled={savingGithubToken}
+                    className="btn-premium px-3 py-1.5 text-xs font-medium">
+                    {savingGithubToken ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
               <button data-voice="sync-github" onClick={() => handlePlatformSync('github')} disabled={syncingPlatform === 'github'}
                 className="btn-premium mt-3 px-4 py-1.5 text-xs font-medium">
                 {syncingPlatform === 'github' ? 'Syncing...' : 'Sync Now'}
               </button>
-              <p className="text-xs text-[var(--text-muted)] mt-2">Configure GitHub token in .env file</p>
+              <p className="text-xs text-[var(--text-muted)] mt-2">Enter your GitHub token, click Save, then Sync Now</p>
             </div>
           </div>
 

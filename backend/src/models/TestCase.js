@@ -35,7 +35,7 @@ const testCaseSchema = new mongoose.Schema({
   feature: { type: String, default: '' },
   type: {
     type: String,
-    enum: ['integration', 'unit', 'e2e', 'security', 'performance', 'manual'],
+    enum: ['integration', 'unit', 'e2e', 'security', 'performance', 'manual', 'functional'],
     default: 'manual',
   },
   priority: {

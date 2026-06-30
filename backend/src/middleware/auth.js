@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const User = require('../models/User');
+const Company = require('../models/Company');
 
 const auth = async (req, res, next) => {
   try {
@@ -33,4 +34,14 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { auth, authorize };
+const requireEnterprise = async (req, res, next) => {
+  try {
+    const company = await Company.findOne({ domain: req.user.domain });
+    if (!company || company.plan !== 'enterprise') {
+      return res.status(403).json({ error: 'This feature requires the Enterprise plan' });
+    }
+    next();
+  } catch (err) { next(err); }
+};
+
+module.exports = { auth, authorize, requireEnterprise };

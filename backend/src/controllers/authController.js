@@ -101,7 +101,8 @@ exports.getMe = async (req, res) => {
     .populate('assignedProjects')
     .populate({ path: 'assignedProjects', populate: { path: 'tasks' } })
     .lean();
-  res.json(user);
+  const company = await Company.findOne({ domain: user.domain }).select('name logo plan domains industry').lean();
+  res.json({ ...user, company });
 };
 
 exports.updateProfile = async (req, res, next) => {

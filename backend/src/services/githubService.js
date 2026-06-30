@@ -4,11 +4,27 @@ const Activity = require('../models/Activity');
 const User = require('../models/User');
 
 class GitHubService {
-  constructor() {
-    this.api = axios.create({
+  constructor(token) {
+    this._token = token || '';
+  }
+
+  async _getApi() {
+    let token = this._token;
+    if (!token) {
+      try {
+        const Integration = require('../models/Integration');
+        const integration = await Integration.findOne({ name: 'github' });
+        if (integration) {
+          const creds = integration.getDecryptedCredentials();
+          token = creds?.token || '';
+        }
+      } catch {}
+    }
+    if (!token) token = env.GITHUB_TOKEN;
+    return axios.create({
       baseURL: 'https://api.github.com',
       headers: {
-        Authorization: `token ${env.GITHUB_TOKEN}`,
+        Authorization: `token ${token}`,
         Accept: 'application/vnd.github.v3+json',
       },
     });
@@ -16,10 +32,11 @@ class GitHubService {
 
   async syncRepoActivity(repoFullName, projectId) {
     try {
+      const api = await this._getApi();
       const [commits, pulls, issues] = await Promise.all([
-        this.api.get(`/repos/${repoFullName}/commits`, { params: { per_page: 30 } }),
-        this.api.get(`/repos/${repoFullName}/pulls`, { params: { state: 'all', per_page: 20 } }),
-        this.api.get(`/repos/${repoFullName}/issues`, { params: { state: 'all', per_page: 20, filter: 'all' } }),
+        api.get(`/repos/${repoFullName}/commits`, { params: { per_page: 30 } }),
+        api.get(`/repos/${repoFullName}/pulls`, { params: { state: 'all', per_page: 20 } }),
+        api.get(`/repos/${repoFullName}/issues`, { params: { state: 'all', per_page: 20, filter: 'all' } }),
       ]);
 
       for (const commit of commits.data) {
@@ -78,10 +95,40 @@ class GitHubService {
 
   async getUserRepos(username) {
     try {
-      const { data } = await this.api.get(`/users/${username}/repos`, { params: { per_page: 50, sort: 'updated' } });
+      const api = await this._getApi();
+      const { data } = await api.get(`/users/${username}/repos`, { params: { per_page: 50, sort: 'updated' } });
       return data.map((r) => ({ name: r.full_name, url: r.html_url, description: r.description }));
     } catch {
       return [];
+    }
+  }
+
+  async createBranch(repoFullName, branchName, baseBranch) {
+    try {
+      const api = await this._getApi();
+      const { data: ref } = await api.get(`/repos/${repoFullName}/git/ref/heads/${baseBranch || 'main'}`);
+      await api.post(`/repos/${repoFullName}/git/refs`, {
+        ref: `refs/heads/${branchName}`,
+        sha: ref.object.sha,
+      });
+      return { branch: branchName, sha: ref.object.sha };
+    } catch (error) {
+      return { error: error.response?.data?.message || error.message };
+    }
+  }
+
+  async createPR(repoFullName, title, body, headBranch, baseBranch) {
+    try {
+      const api = await this._getApi();
+      const { data } = await api.post(`/repos/${repoFullName}/pulls`, {
+        title,
+        body: body || '',
+        head: headBranch,
+        base: baseBranch || 'main',
+      });
+      return { url: data.html_url, number: data.number, id: data.id };
+    } catch (error) {
+      return { error: error.response?.data?.message || error.message };
     }
   }
 

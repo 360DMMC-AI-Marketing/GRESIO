@@ -16,6 +16,11 @@ const Company = require('./models/Company');
 const TeamGroup = require('./models/TeamGroup');
 const Counter = require('./models/Counter');
 const TestCase = require('./models/TestCase');
+const ProjectViability = require('./models/ProjectViability');
+const AutopsyEvent = require('./models/AutopsyEvent');
+const DecisionJournal = require('./models/DecisionJournal');
+const CorporateMemory = require('./models/CorporateMemory');
+const StrategyGoal = require('./models/StrategyGoal');
 const { DEFAULT_GROUPS } = TeamGroup;
 
 async function seed() {
@@ -36,6 +41,11 @@ async function seed() {
       TeamGroup.deleteMany({}),
       Counter.deleteMany({}),
       TestCase.deleteMany({}),
+      ProjectViability.deleteMany({}),
+      AutopsyEvent.deleteMany({}),
+      DecisionJournal.deleteMany({}),
+      CorporateMemory.deleteMany({}),
+      StrategyGoal.deleteMany({}),
     ]);
 
     await Company.create({ name: "Admin's Company", domain: 'admin@gresio.com', plan: 'enterprise' });
@@ -45,23 +55,24 @@ async function seed() {
       { name: 'James Wilson', email: 'pm@gresio.com', password: 'password123', role: 'project_manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 85, isActive: true, githubUsername: 'jwilson', clickupId: 'james-w', teamsId: 'james.wilson', outlookEmail: 'james@company.com', lastActive: new Date(Date.now() - 3600000) },
       { name: 'Marcus Johnson', email: 'dev@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'active', activityScore: 78, isActive: true, githubUsername: 'marcusj', clickupId: 'marcus-j', teamsId: 'marcus.johnson', outlookEmail: 'marcus@company.com', figmaUsername: 'marcusj', lastActive: new Date(Date.now() - 1800000) },
       { name: 'Aisha Patel', email: 'qa@gresio.com', password: 'password123', role: 'qa_tester', domain: 'admin@gresio.com', status: 'active', activityScore: 88, isActive: true, githubUsername: 'aishapatel', clickupId: 'aisha-p', teamsId: 'aisha.patel', outlookEmail: 'aisha@company.com', lastActive: new Date(Date.now() - 900000) },
-      { name: 'Ryan Kim', email: 'intern@gresio.com', password: 'password123', role: 'intern', domain: 'admin@gresio.com', status: 'idle', activityScore: 45, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
+      { name: 'Ryan Kim', email: 'intern@gresio.com', password: 'password123', role: 'intern', domain: 'admin@gresio.com', status: 'active', activityScore: 65, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
       { name: 'Emily Rodriguez', email: 'manager@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'active', activityScore: 90, isActive: true, githubUsername: 'emilyr', clickupId: 'emily-r', teamsId: 'emily.rodriguez', outlookEmail: 'emily@company.com', lastActive: new Date(Date.now() - 2700000) },
       { name: 'Olivia Tanaka', email: 'designer@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'inactive', activityScore: 72, isActive: true, githubUsername: 'oliviatanaka', clickupId: 'olivia-t', teamsId: 'olivia.tanaka', outlookEmail: 'olivia@company.com', figmaUsername: 'oliviatanaka', lovableUsername: 'olivia_t', lastActive: new Date(Date.now() - 86400000) },
       { name: 'David Mohammed', email: 'analyst@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 68, isActive: true, githubUsername: 'dmohammed', clickupId: 'david-m', teamsId: 'david.mohammed', outlookEmail: 'david@company.com', lastActive: new Date(Date.now() - 5400000) },
       { name: 'Lisa Thompson', email: 'scrum@gresio.com', password: 'password123', role: 'team_lead', domain: 'admin@gresio.com', status: 'active', activityScore: 82, isActive: true, githubUsername: 'lthompson', clickupId: 'lisa-t', teamsId: 'lisa.thompson', outlookEmail: 'lisa@company.com', lastActive: new Date(Date.now() - 3600000) },
-      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'offline', activityScore: 15, isActive: true, lastActive: new Date(Date.now() - 172800000) },
+      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'offline', activityScore: 45, isActive: true, lastActive: new Date(Date.now() - 172800000) },
       { name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@gresio.com', status: 'active', activityScore: 95, isActive: true, githubUsername: 'demouser', clickupId: 'demo-user', teamsId: 'demo.user', outlookEmail: 'demo@company.com', lastActive: new Date() },
     ]);
     const [admin, pm, dev, qa, intern, manager, designer, analyst, scrum] = allUsers;
 
     const allUserIds = [admin._id, pm._id, dev._id, qa._id, intern._id, manager._id, designer._id, analyst._id, scrum._id];
-    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@gresio.com' });
-    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: allUserIds, domain: 'admin@gresio.com' });
-    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@gresio.com' });
-    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@gresio.com' });
-    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@gresio.com' });
-    const projectMarketing = await Project.create({ name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@gresio.com' });
+    const today2 = new Date();
+    const projectWeb = await Project.create({ name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date(today2.getTime() + 30*86400000), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectMobile = await Project.create({ name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date(today2.getTime() + 90*86400000), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectApi = await Project.create({ name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date(today2.getTime() - 10*86400000), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectEcom = await Project.create({ name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date(today2.getTime() + 45*86400000), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectDashboard = await Project.create({ name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date(today2.getTime() + 60*86400000), members: allUserIds, domain: 'admin@gresio.com' });
+    const projectMarketing = await Project.create({ name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date(today2.getTime() + 75*86400000), members: allUserIds, domain: 'admin@gresio.com' });
 
     // Create default team groups for each project
     const allProjects = [projectWeb, projectMobile, projectApi, projectEcom, projectDashboard, projectMarketing];
@@ -100,27 +111,27 @@ async function seed() {
     }
 
     const tasks = await Task.create([
-      { title: 'Design homepage mockup', status: 'done', priority: 'high', project: projectWeb._id, assignee: dev._id, deadline: new Date('2025-06-15'), estimatedHours: 20, loggedHours: 18 },
-      { title: 'Implement responsive navbar', status: 'in_progress', priority: 'medium', project: projectWeb._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 15, loggedHours: 8 },
-      { title: 'Set up CI/CD pipeline', status: 'todo', priority: 'high', project: projectWeb._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 10 },
-      { title: 'User authentication flow', status: 'in_progress', priority: 'urgent', project: projectMobile._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 30, loggedHours: 12 },
-      { title: 'Push notification service', status: 'todo', priority: 'medium', project: projectMobile._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 15 },
-      { title: 'API rate limiting', status: 'done', priority: 'high', project: projectApi._id, assignee: dev._id, deadline: new Date('2025-05-15'), estimatedHours: 12, loggedHours: 14 },
-      { title: 'Documentation', status: 'in_progress', priority: 'low', project: projectApi._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 8, loggedHours: 4 },
-      { title: 'Database migration script', status: 'delayed', priority: 'urgent', project: projectApi._id, assignee: dev._id, deadline: new Date('2025-05-20'), estimatedHours: 25, loggedHours: 20 },
-      { title: 'Payment gateway integration', status: 'done', priority: 'high', project: projectEcom._id, assignee: dev._id, deadline: new Date('2025-06-01'), estimatedHours: 40, loggedHours: 38 },
-      { title: 'Product catalog API', status: 'done', priority: 'high', project: projectEcom._id, assignee: dev._id, deadline: new Date('2025-06-15'), estimatedHours: 30, loggedHours: 28 },
-      { title: 'Shopping cart UI', status: 'in_progress', priority: 'medium', project: projectEcom._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 20, loggedHours: 10 },
-      { title: 'Order management system', status: 'todo', priority: 'high', project: projectEcom._id, assignee: pm._id, deadline: new Date('2025-07-10'), estimatedHours: 25 },
-      { title: 'QA test suite for checkout', status: 'in_progress', priority: 'medium', project: projectEcom._id, assignee: qa._id, deadline: new Date('2025-07-05'), estimatedHours: 15, loggedHours: 6 },
-      { title: 'Dashboard data pipeline', status: 'done', priority: 'high', project: projectDashboard._id, assignee: dev._id, deadline: new Date('2025-06-20'), estimatedHours: 20, loggedHours: 18 },
-      { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: projectDashboard._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 25, loggedHours: 12 },
-      { title: 'Report export feature', status: 'todo', priority: 'low', project: projectDashboard._id, assignee: dev._id, deadline: new Date('2025-08-01'), estimatedHours: 12 },
-      { title: 'User permission system', status: 'in_progress', priority: 'high', project: projectDashboard._id, assignee: pm._id, deadline: new Date('2025-07-20'), estimatedHours: 18, loggedHours: 8 },
-      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: projectMarketing._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 15, loggedHours: 14 },
-      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 20, loggedHours: 8 },
-      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: projectMarketing._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 25 },
-      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date('2025-08-15'), estimatedHours: 12 },
+      { title: 'Design homepage mockup', status: 'done', priority: 'high', project: projectWeb._id, assignee: dev._id, deadline: new Date(today2.getTime() - 15*86400000), estimatedHours: 20, loggedHours: 18 },
+      { title: 'Implement responsive navbar', status: 'in_progress', priority: 'medium', project: projectWeb._id, assignee: dev._id, deadline: new Date(today2.getTime() + 10*86400000), estimatedHours: 15, loggedHours: 8 },
+      { title: 'Set up CI/CD pipeline', status: 'todo', priority: 'high', project: projectWeb._id, assignee: dev._id, deadline: new Date(today2.getTime() + 20*86400000), estimatedHours: 10 },
+      { title: 'User authentication flow', status: 'in_progress', priority: 'urgent', project: projectMobile._id, assignee: dev._id, deadline: new Date(today2.getTime() + 5*86400000), estimatedHours: 30, loggedHours: 12 },
+      { title: 'Push notification service', status: 'todo', priority: 'medium', project: projectMobile._id, assignee: intern._id, deadline: new Date(today2.getTime() + 25*86400000), estimatedHours: 15 },
+      { title: 'API rate limiting', status: 'done', priority: 'high', project: projectApi._id, assignee: dev._id, deadline: new Date(today2.getTime() - 30*86400000), estimatedHours: 12, loggedHours: 14 },
+      { title: 'Documentation', status: 'in_progress', priority: 'low', project: projectApi._id, assignee: pm._id, deadline: new Date(today2.getTime() - 5*86400000), estimatedHours: 8, loggedHours: 4 },
+      { title: 'Database migration script', status: 'delayed', priority: 'urgent', project: projectApi._id, assignee: dev._id, deadline: new Date(today2.getTime() - 20*86400000), estimatedHours: 25, loggedHours: 20 },
+      { title: 'Payment gateway integration', status: 'done', priority: 'high', project: projectEcom._id, assignee: dev._id, deadline: new Date(today2.getTime() - 10*86400000), estimatedHours: 40, loggedHours: 38 },
+      { title: 'Product catalog API', status: 'done', priority: 'high', project: projectEcom._id, assignee: dev._id, deadline: new Date(today2.getTime() + 5*86400000), estimatedHours: 30, loggedHours: 28 },
+      { title: 'Shopping cart UI', status: 'in_progress', priority: 'medium', project: projectEcom._id, assignee: dev._id, deadline: new Date(today2.getTime() + 15*86400000), estimatedHours: 20, loggedHours: 10 },
+      { title: 'Order management system', status: 'todo', priority: 'high', project: projectEcom._id, assignee: pm._id, deadline: new Date(today2.getTime() + 30*86400000), estimatedHours: 25 },
+      { title: 'QA test suite for checkout', status: 'in_progress', priority: 'medium', project: projectEcom._id, assignee: qa._id, deadline: new Date(today2.getTime() + 20*86400000), estimatedHours: 15, loggedHours: 6 },
+      { title: 'Dashboard data pipeline', status: 'done', priority: 'high', project: projectDashboard._id, assignee: dev._id, deadline: new Date(today2.getTime() - 5*86400000), estimatedHours: 20, loggedHours: 18 },
+      { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: projectDashboard._id, assignee: dev._id, deadline: new Date(today2.getTime() + 25*86400000), estimatedHours: 25, loggedHours: 12 },
+      { title: 'Report export feature', status: 'todo', priority: 'low', project: projectDashboard._id, assignee: dev._id, deadline: new Date(today2.getTime() + 40*86400000), estimatedHours: 12 },
+      { title: 'User permission system', status: 'in_progress', priority: 'high', project: projectDashboard._id, assignee: pm._id, deadline: new Date(today2.getTime() + 15*86400000), estimatedHours: 18, loggedHours: 8 },
+      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: projectMarketing._id, assignee: pm._id, deadline: new Date(today2.getTime() - 20*86400000), estimatedHours: 15, loggedHours: 14 },
+      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date(today2.getTime() + 10*86400000), estimatedHours: 20, loggedHours: 8 },
+      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: projectMarketing._id, assignee: intern._id, deadline: new Date(today2.getTime() + 35*86400000), estimatedHours: 25 },
+      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: projectMarketing._id, assignee: dev._id, deadline: new Date(today2.getTime() + 45*86400000), estimatedHours: 12 },
     ]);
 
     await Project.findByIdAndUpdate(projectWeb._id, { $push: { tasks: { $each: tasks.slice(0, 3).map((t) => t._id) } } });
@@ -192,27 +203,27 @@ async function seed() {
       userDomainMap[u._id.toString()] = u.domain;
     }
     const activityData = [
-      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_commit', source: 'github', description: 'feat: add user auth middleware', score: 10 },
-      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_commit', source: 'github', description: 'fix: resolve navbar overflow issue', score: 8 },
-      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_pr', source: 'github', description: 'PR: Authentication flow implementation', score: 8 },
-      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Updated task: Implement responsive navbar', score: 6 },
-      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Created sprint planning document', score: 6 },
-      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'teams_message', source: 'teams', description: 'Discussion about API gateway architecture', score: 4 },
-      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'teams_message', source: 'teams', description: 'Code review request for auth module', score: 4 },
-      { user: intern._id, domain: userDomainMap[intern._id.toString()], type: 'teams_message', source: 'teams', description: 'Question about push notification service', score: 3 },
-      { user: admin._id, domain: userDomainMap[admin._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Weekly project status report', score: 3 },
-      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'outlook_calendar', source: 'outlook', description: 'Sprint review meeting', score: 5 },
-      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_message', source: 'teams', description: 'Team lead sync: sprint goals review', score: 5 },
-      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Updated design system components', score: 7 },
-      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 4 },
-      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 3 },
-      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 6 },
-      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 3 },
-      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 4 },
-      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 4 },
-      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 6 },
-      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 5 },
-      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 4 },
+      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_commit', source: 'github', description: 'feat: add user auth middleware', score: 50 },
+      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_commit', source: 'github', description: 'fix: resolve navbar overflow issue', score: 40 },
+      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'github_pr', source: 'github', description: 'PR: Authentication flow implementation', score: 40 },
+      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Updated task: Implement responsive navbar', score: 30 },
+      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Created sprint planning document', score: 30 },
+      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'teams_message', source: 'teams', description: 'Discussion about API gateway architecture', score: 20 },
+      { user: dev._id, domain: userDomainMap[dev._id.toString()], type: 'teams_message', source: 'teams', description: 'Code review request for auth module', score: 20 },
+      { user: intern._id, domain: userDomainMap[intern._id.toString()], type: 'teams_message', source: 'teams', description: 'Question about push notification service', score: 15 },
+      { user: admin._id, domain: userDomainMap[admin._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Weekly project status report', score: 15 },
+      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'outlook_calendar', source: 'outlook', description: 'Sprint review meeting', score: 25 },
+      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_message', source: 'teams', description: 'Team lead sync: sprint goals review', score: 25 },
+      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'clickup_update', source: 'clickup', description: 'Updated design system components', score: 35 },
+      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 20 },
+      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 15 },
+      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 30 },
+      { user: qa._id, domain: userDomainMap[qa._id.toString()], type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 15 },
+      { user: designer._id, domain: userDomainMap[designer._id.toString()], type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 20 },
+      { user: analyst._id, domain: userDomainMap[analyst._id.toString()], type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 20 },
+      { user: pm._id, domain: userDomainMap[pm._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 30 },
+      { user: manager._id, domain: userDomainMap[manager._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 25 },
+      { user: scrum._id, domain: userDomainMap[scrum._id.toString()], type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 20 },
     ];
 
     for (let i = 0; i < activityData.length; i++) {
@@ -220,6 +231,64 @@ async function seed() {
       a.createdAt = new Date(now - i * 3600000);
       await Activity.create(a);
     }
+
+    const events = [];
+    const projectEventTypes = ['task_create', 'task_complete', 'status_change', 'scope_change', 'blocker', 'deadline_shift', 'decision', 'member_add'];
+    const reasons = ['Requirement changed by client', 'Technical dependency uncovered', 'Resource reallocation needed', 'Third-party API delay', 'Scope expanded per stakeholder request', 'Critical bug found in production'];
+
+    for (const proj of allProjects) {
+      const numEvents = 8 + Math.floor(Math.random() * 10);
+      for (let i = 0; i < numEvents; i++) {
+        const eventType = projectEventTypes[Math.floor(Math.random() * projectEventTypes.length)];
+        const daysAgo = Math.floor(Math.random() * 60);
+        events.push({
+          projectId: proj._id,
+          domain: 'admin@gresio.com',
+          timestamp: new Date(now - daysAgo * 86400000),
+          eventType,
+          actor: allUserIds[Math.floor(Math.random() * allUserIds.length)],
+          reason: reasons[Math.floor(Math.random() * reasons.length)],
+          daysSinceProjectStart: Math.floor(Math.random() * 90),
+        });
+      }
+    }
+    // Ensure at least some critical events exist for specific projects
+    events.push(
+      { projectId: projectApi._id, domain: 'admin@gresio.com', timestamp: new Date(now - 5*86400000), eventType: 'blocker', actor: dev._id, reason: 'Database migration script failed due to schema conflict', daysSinceProjectStart: 45 },
+      { projectId: projectApi._id, domain: 'admin@gresio.com', timestamp: new Date(now - 8*86400000), eventType: 'blocker', actor: dev._id, reason: 'API rate limiting library incompatible with Node 18', daysSinceProjectStart: 40 },
+      { projectId: projectApi._id, domain: 'admin@gresio.com', timestamp: new Date(now - 12*86400000), eventType: 'blocker', actor: pm._id, reason: 'Awaiting security audit clearance', daysSinceProjectStart: 35 },
+      { projectId: projectApi._id, domain: 'admin@gresio.com', timestamp: new Date(now - 3*86400000), eventType: 'deadline_shift', actor: pm._id, reason: 'Client requested additional endpoints', daysSinceProjectStart: 50 },
+      { projectId: projectApi._id, domain: 'admin@gresio.com', timestamp: new Date(now - 2*86400000), eventType: 'scope_change', actor: admin._id, reason: 'New compliance requirements added', daysSinceProjectStart: 55 },
+      { projectId: projectWeb._id, domain: 'admin@gresio.com', timestamp: new Date(now - 15*86400000), eventType: 'scope_change', actor: admin._id, reason: 'Homepage design changed to match new brand guidelines', daysSinceProjectStart: 20 },
+      { projectId: projectWeb._id, domain: 'admin@gresio.com', timestamp: new Date(now - 10*86400000), eventType: 'scope_change', actor: designer._id, reason: 'Added dark mode support requirement', daysSinceProjectStart: 25 },
+      { projectId: projectWeb._id, domain: 'admin@gresio.com', timestamp: new Date(now - 4*86400000), eventType: 'blocker', actor: dev._id, reason: 'CI/CD pipeline failing due to outdated dependencies', daysSinceProjectStart: 30 },
+      { projectId: projectEcom._id, domain: 'admin@gresio.com', timestamp: new Date(now - 7*86400000), eventType: 'deadline_shift', actor: pm._id, reason: 'Payment gateway integration requires additional certification', daysSinceProjectStart: 38 },
+      { projectId: projectEcom._id, domain: 'admin@gresio.com', timestamp: new Date(now - 6*86400000), eventType: 'scope_change', actor: admin._id, reason: 'Added multi-currency support requirement', daysSinceProjectStart: 42 },
+      { projectId: projectMarketing._id, domain: 'admin@gresio.com', timestamp: new Date(now - 2*86400000), eventType: 'blocker', actor: intern._id, reason: 'Email automation tool API key expired', daysSinceProjectStart: 10 },
+    );
+    await AutopsyEvent.create(events);
+
+    await StrategyGoal.create([
+      { domain: 'admin@gresio.com', title: 'Improve Project Delivery Rate', description: 'Increase on-time project delivery from current rate to 80%', category: 'operations', weight: 100, active: true, kpis: [{ name: 'On-time Delivery', target: 80, current: 50, unit: '%' }], createdBy: admin._id },
+      { domain: 'admin@gresio.com', title: 'Boost Team Engagement', description: 'Improve team participation scores across all projects', category: 'people', weight: 75, active: true, kpis: [{ name: 'Avg Participation Score', target: 70, current: 32, unit: '%' }, { name: 'Active Users', target: 8, current: 5, unit: 'users' }], createdBy: admin._id },
+      { domain: 'admin@gresio.com', title: 'Reduce Technical Debt', description: 'Decrease blocker frequency and overdue tasks', category: 'engineering', weight: 50, active: true, kpis: [{ name: 'Blocker Count', target: 2, current: 5, unit: 'blockers/week' }, { name: 'Overdue Tasks', target: 5, current: 15, unit: 'tasks' }], createdBy: admin._id },
+    ]);
+
+    await DecisionJournal.create([
+      { refType: 'project', refId: String(projectWeb._id), project: projectWeb._id, decision: 'Use Tailwind CSS for redesign', alternatives: 'Considered Material UI and Chakra', rationale: 'Faster development and smaller bundle size with Tailwind\'s utility-first approach', createdBy: dev._id, domain: 'admin@gresio.com', tags: ['tech-stack', 'frontend'] },
+      { refType: 'project', refId: String(projectWeb._id), project: projectWeb._id, decision: 'Drop IE11 support', alternatives: 'Polyfills and graceful degradation', rationale: 'Only 2% of users use IE11, not worth maintenance burden', createdBy: pm._id, domain: 'admin@gresio.com', tags: ['browser-support', 'frontend'] },
+      { refType: 'project', refId: String(projectApi._id), project: projectApi._id, decision: 'Use Kong for API Gateway', alternatives: 'AWS API Gateway, Express Gateway', rationale: 'Self-hosted, open-source, better rate limiting and plugin ecosystem', createdBy: dev._id, domain: 'admin@gresio.com', tags: ['architecture', 'infrastructure'] },
+      { refType: 'project', refId: String(projectEcom._id), project: projectEcom._id, decision: 'Stripe as primary payment processor', alternatives: 'PayPal, Braintree, Square', rationale: 'Best developer experience, strong documentation, global reach', createdBy: pm._id, domain: 'admin@gresio.com', tags: ['payment', 'integration'] },
+      { refType: 'task', refId: String(tasks[0]._id), project: projectWeb._id, decision: 'Use Next.js Image component for optimization', alternatives: 'Manual img tags with lazy loading', rationale: 'Automatic optimization, responsive images, better Core Web Vitals', createdBy: dev._id, domain: 'admin@gresio.com', tags: ['performance', 'frontend'] },
+    ]);
+
+    await CorporateMemory.create([
+      { domain: 'admin@gresio.com', type: 'lesson', title: 'Dashboard Redesign Increased Engagement', body: 'After redesigning the analytics dashboard with real-time components, user engagement increased by 40%. Key insight: users want to see data change in real-time, not static charts.', tags: ['dashboard', 'ux', 'engagement'], outcome: 'success', createdBy: admin._id },
+      { domain: 'admin@gresio.com', type: 'lesson', title: 'API Gateway Migration Challenges', body: 'Migrating to Kong API Gateway took 3x longer than estimated due to custom plugin compatibility issues. Future API projects should allocate more time for middleware configuration.', tags: ['api', 'infrastructure', 'migration'], outcome: 'failure', createdBy: dev._id },
+      { domain: 'admin@gresio.com', type: 'pattern', title: 'Scope Creep Pattern in Q3 Projects', body: 'Projects with ambiguous requirements at the start show 60% higher likelihood of scope creep. Early requirement finalization is critical.', tags: ['scope', 'pattern', 'risk'], outcome: 'neutral', createdBy: pm._id },
+      { domain: 'admin@gresio.com', type: 'expertise', title: 'Marcus Johnson - Frontend & React Specialist', body: 'Marcus has deep expertise in React, Next.js, and Tailwind CSS. Led 3 major frontend redesigns successfully. Go-to person for frontend architecture decisions.', tags: ['expertise', 'frontend', 'react'], createdBy: admin._id },
+      { domain: 'admin@gresio.com', type: 'decision', title: 'Standardize on Tailwind CSS Across Projects', body: 'Decision made to use Tailwind CSS as the standard styling framework for all new frontend projects. Existing projects will migrate gradually.', tags: ['decision', 'frontend', 'standardization'], outcome: 'success', createdBy: admin._id },
+    ]);
 
     await Resource.create([
       { project: projectWeb._id, title: 'Frontend Repository', category:'dev', type:'github', url:'https://github.com/company/website-redesign', description:'Main frontend repo for the website redesign', addedBy: pm._id },

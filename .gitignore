@@ -13,3 +13,5 @@ dist/
 test-import.csv
 backend.err
 e2e_*.ps1
+test_screenshots/
+__*.js

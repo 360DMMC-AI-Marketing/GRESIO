@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { auth, companies } from '../services/api';
+import { auth, companies, integrations } from '../services/api';
 import toast from 'react-hot-toast';
 import { AlertModal } from '../components/Modal';
 
@@ -207,6 +207,35 @@ export default function Profile() {
               <input value={form.figmaUsername} onChange={(e) => setForm({ ...form, figmaUsername: e.target.value })}
                 className="w-full px-4 py-2.5 border border-[var(--border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none text-sm" placeholder="your-figma-handle" />
             </div>
+            {form.outlookEmail && (
+              <div className="md:col-span-2 flex items-center gap-3 pt-2">
+                <span className="text-xs text-[var(--text-tertiary)]">📧 Outlook:</span>
+                <button type="button" onClick={async () => {
+                  try {
+                    const r = await integrations.writeAction('microsoft_graph', 'send-email', {
+                      userEmail: form.outlookEmail,
+                      subject: 'Test from GRESIO',
+                      description: 'This is a test email sent from your GRESIO profile.',
+                      toRecipients: [form.outlookEmail]
+                    });
+                    toast.success(r.data.result?.success ? 'Email sent!' : 'Email queued');
+                  } catch (e) { toast.error(e.response?.data?.message || e.message); }
+                }} className="text-xs font-medium text-[var(--brand-primary)] hover:underline bg-transparent border-none cursor-pointer">Send test email</button>
+                <span className="text-[var(--text-muted)]">·</span>
+                <button type="button" onClick={async () => {
+                  try {
+                    const r = await integrations.writeAction('microsoft_graph', 'create-calendar-event', {
+                      userEmail: form.outlookEmail,
+                      title: 'GRESIO Sync Test',
+                      startDateTime: new Date(Date.now() + 3600000).toISOString(),
+                      endDateTime: new Date(Date.now() + 7200000).toISOString(),
+                      description: 'Calendar event created from GRESIO profile.'
+                    });
+                    toast.success(r.data.result?.id ? 'Event created!' : 'Event queued');
+                  } catch (e) { toast.error(e.response?.data?.message || e.message); }
+                }} className="text-xs font-medium text-[var(--brand-primary)] hover:underline bg-transparent border-none cursor-pointer">Create test event</button>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Lovable Username</label>
               <input value={form.lovableUsername} onChange={(e) => setForm({ ...form, lovableUsername: e.target.value })}

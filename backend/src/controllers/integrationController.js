@@ -51,6 +51,48 @@ exports.syncIntegration = async (req, res, next) => {
   }
 };
 
+exports.writeAction = async (req, res, next) => {
+  try {
+    const { integration, action } = req.params;
+    const { repoFullName, branchName, baseBranch, title, body, headBranch, projectName, message, teamId, channelId, userEmail, subject, startDateTime, endDateTime, description, toRecipients } = req.body;
+
+    const service = getSyncService(integration);
+    if (!service) return res.status(400).json({ message: `No service for ${integration}` });
+
+    const Integration = require('../models/Integration');
+    const intRecord = await Integration.findOne({ name: integration });
+    const creds = intRecord ? intRecord.getDecryptedCredentials() : {};
+
+    let result;
+    switch (action) {
+      // GitHub
+      case 'create-branch':
+        result = await service.createBranch(repoFullName, branchName, baseBranch);
+        break;
+      case 'create-pr':
+        result = await service.createPR(repoFullName, title, body, headBranch, baseBranch);
+        break;
+      // Teams
+      case 'send-message':
+        result = await service.sendChannelMessage(teamId, channelId, message, creds);
+        break;
+      // Outlook
+      case 'send-email':
+        result = await service.sendOutlookEmail(userEmail, subject, description, toRecipients, creds);
+        break;
+      case 'create-calendar-event':
+        result = await service.createOutlookCalendarEvent(userEmail, title, startDateTime, endDateTime, description, creds);
+        break;
+      default:
+        return res.status(400).json({ message: `Unknown action: ${action}` });
+    }
+
+    res.json({ action, integration, result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createMeeting = async (req, res, next) => {
   try {
     const { subject, startDateTime, endDateTime, userEmail } = req.body;

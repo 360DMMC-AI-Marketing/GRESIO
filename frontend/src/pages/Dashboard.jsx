@@ -300,44 +300,7 @@ export default function Dashboard() {
         </Modal>
       )}
 
-      {/* ── Company Profile ── */}
-      {company && (
-        <div className="card-premium bg-white dark:bg-[var(--bg-secondary)] border border-neutral-200 dark:border-[var(--border-primary)] p-5 mb-4 animate-fade-in">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-[var(--radius-lg)] bg-gradient-to-br from-primary-500 to-primary-700 dark:from-brand-600 dark:to-brand-800 flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-md">
-                {company.name?.charAt(0)?.toUpperCase() || 'C'}
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-neutral-900 dark:text-[var(--text-primary)]">{company.name}</h2>
-                {company.tagline && (
-                  <p className="text-sm text-neutral-500 dark:text-[var(--text-tertiary)] mt-0.5">{company.tagline}</p>
-                )}
-                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                  {company.industry && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 dark:bg-brand-900/20 text-primary-700 dark:text-brand-400 font-medium">
-                      {company.industry}
-                    </span>
-                  )}
-                  {company.country && (
-                    <span className="text-[11px] text-neutral-500 dark:text-[var(--text-tertiary)] flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      {company.country}
-                    </span>
-                  )}
-                  {(company.domain || company.website) && (
-                    <a href={`https://${company.domain || company.website}`} target="_blank" rel="noopener noreferrer"
-                      className="text-[11px] text-primary-600 dark:text-brand-400 hover:text-primary-700 dark:hover:text-brand-300 font-medium flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                      {company.domain || company.website}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* ── Stats Grid ── */}
       {sections.statsGrid && (

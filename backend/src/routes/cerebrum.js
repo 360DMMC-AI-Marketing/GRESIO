@@ -1,36 +1,28 @@
 const { Router } = require('express');
 const router = Router();
-const { auth } = require('../middleware/auth');
-const Company = require('../models/Company');
+const { auth, requireEnterprise } = require('../middleware/auth');
 const Project = require('../models/Project');
 const ProjectViability = require('../models/ProjectViability');
 const StrategyGoal = require('../models/StrategyGoal');
 const viabilityService = require('../services/viabilityService');
+const briefingService = require('../services/briefingService');
 const patternMatcherService = require('../services/patternMatcherService');
 const strategyBridgeService = require('../services/strategyBridgeService');
 const oracleNotifier = require('../services/oracleNotifier');
+const teamInsightService = require('../services/teamInsightService');
 
 router.use(auth);
-
-router.use(async (req, res, next) => {
-  try {
-    const company = await Company.findOne({ domain: req.user.domain });
-    if (!company || company.plan !== 'enterprise') {
-      return res.status(403).json({ error: 'Cerebrum requires the Enterprise plan' });
-    }
-    next();
-  } catch (err) { next(err); }
-});
+router.use(requireEnterprise);
 
 router.get('/oracle', async (req, res, next) => {
   try {
     const board = await viabilityService.getOracleBoard(req.user.domain);
     const stats = {
       total: board.length,
-      atRisk: board.filter(v => v.score < 55).length,
+      atRisk: board.filter(v => (v.score || 0) < 55).length,
       recommendedKill: board.filter(v => v.recommendation === 'kill').length,
       projectedSavings: board.reduce((sum, v) => sum + (v.projectedSavings || 0), 0),
-      averageScore: board.length > 0 ? Math.round(board.reduce((sum, v) => sum + v.score, 0) / board.length) : 0,
+      averageScore: board.length > 0 ? Math.round(board.reduce((sum, v) => sum + (v.score || 0), 0) / board.length) : 0,
     };
     res.json({ projects: board, stats });
   } catch (err) { next(err); }
@@ -44,12 +36,115 @@ router.get('/oracle/:projectId', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.get('/briefing', async (req, res, next) => {
+  try {
+    const briefing = await briefingService.generateBriefing(req.user.domain);
+    res.json(briefing);
+  } catch (err) { next(err); }
+});
+
+router.get('/briefing/search', async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json({ results: [] });
+    const result = await briefingService.deepSearch(req.user.domain, q);
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
 router.post('/kill', async (req, res, next) => {
   try {
     const { projectId } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId required' });
     const result = await viabilityService.getKillRecommendation(projectId);
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+router.post('/kill/execute', async (req, res, next) => {
+  try {
+    const { projectId, reason } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId required' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    project.isActive = false;
+    project.settings.isArchived = true;
+    project.settings.archivedAt = new Date();
+    project.status = 'completed';
+    await project.save();
+
+    const savings = await viabilityService.computeProjectedSavings(
+      { domain: project.domain, members: project.members },
+      project.viability?.score || 50, 0
+    );
+
+    try {
+      const CorporateMemory = require('../models/CorporateMemory');
+      await CorporateMemory.create({
+        domain: project.domain, type: 'lesson',
+        title: `Kill Analysis: ${project.name}`,
+        body: [
+          `Project "${project.name}" killed on ${new Date().toISOString().split('T')[0]}.`,
+          `Viability score: ${project.viability?.score || 'N/A'}/100.`,
+          `Projected savings: $${savings.toLocaleString()}.`,
+          reason ? `Reason: ${reason}` : '',
+          `Signals: ${(project.viability?.earlySignals || []).map(s => s.message).join(', ')}`,
+        ].filter(Boolean).join('\n'),
+        tags: [...(project.techStack || []), project.projectType, 'killed', 'postmortem'],
+        projectId: project._id, projectName: project.name, outcome: 'failure', createdBy: req.user._id,
+      });
+    } catch (memErr) { console.error('[Kill] Postmortem error:', memErr.message); }
+
+    try {
+      const Notification = require('../models/Notification');
+      const User = require('../models/User');
+      const { getIO } = require('../socket/ioProvider');
+      const io = getIO();
+      const admins = await User.find({ domain: project.domain, role: 'admin' }).select('_id').lean();
+      const recipients = [...new Set([
+        ...(project.members || []).map(m => m.toString()),
+        ...admins.map(a => a._id.toString()),
+      ])];
+      const docs = recipients.map(user => ({
+        user, domain: project.domain, type: 'project_killed',
+        title: `Project Killed: ${project.name}`,
+        message: reason ? `${project.name} killed. Reason: ${reason}. Savings: ~$${savings.toLocaleString()}.` : `${project.name} killed. Savings: ~$${savings.toLocaleString()}.`,
+        link: '/cerebrum/decisions',
+        metadata: { projectId: String(project._id), savings, reason: reason || '' },
+      }));
+      const created = await Notification.insertMany(docs);
+      for (const n of created) { try { if (io) io.to(`user:${n.user}`).emit('notification', n.toObject()); } catch (e) {} }
+    } catch (notifErr) { console.error('[Kill] Notification error:', notifErr.message); }
+
+    res.json({
+      success: true, projectId: project._id, projectName: project.name, savings,
+      message: `"${project.name}" archived. ~$${savings.toLocaleString()} projected savings.`,
+    });
+  } catch (err) { next(err); }
+});
+
+router.post('/kill/undo', async (req, res, next) => {
+  try {
+    const { projectId } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId required' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    if (project.settings.archivedAt && Date.now() - new Date(project.settings.archivedAt).getTime() > 30000) {
+      return res.status(400).json({ error: 'Undo window has expired (30 seconds)' });
+    }
+
+    project.isActive = true;
+    project.settings.isArchived = false;
+    project.settings.restoredAt = new Date();
+    project.settings.archivedAt = undefined;
+    project.status = 'on_track';
+    await project.save();
+
+    res.json({ success: true, projectId: project._id, projectName: project.name, message: `"${project.name}" restored.` });
   } catch (err) { next(err); }
 });
 
@@ -111,6 +206,13 @@ router.get('/memory/expertise', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.get('/team-insights', async (req, res, next) => {
+  try {
+    const insights = await teamInsightService.getTeamInsights(req.user.domain);
+    res.json(insights);
+  } catch (err) { next(err); }
+});
+
 router.get('/strategy/alignment', async (req, res, next) => {
   try {
     const alignment = await strategyBridgeService.computeAlignment(req.user.domain);
@@ -158,16 +260,10 @@ router.post('/predict/:projectId', async (req, res, next) => {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: 'Message required' });
 
-    const project = await Project.findById(projectId).select('name').lean();
-    const viability = await viabilityService.getSingleOracle(projectId);
-    const patterns = await patternMatcherService.findSimilarPatterns(projectId, req.user.domain);
-
     const aiService = require('../services/aiService');
-    const context = `Project: ${project?.name || 'Unknown'}\nViability Score: ${viability?.score || 'N/A'}/100\nRecommendation: ${viability?.recommendation || 'unknown'}\nPatterns Found: ${patterns.length} similar projects\n\nUser Question: ${message}`;
+    const reply = await aiService.chatWithProject(projectId, [{ role: 'user', content: message }]);
 
-    const reply = await aiService.chat('You are Cerebrum, the corporate project intelligence system. Answer concisely based on the context provided.', [{ role: 'user', content: context }]);
-
-    res.json({ reply, context: `Project viability: ${viability?.score || 'N/A'}/100 | ${patterns.length} similar patterns found` });
+    res.json({ reply });
   } catch (err) { next(err); }
 });
 

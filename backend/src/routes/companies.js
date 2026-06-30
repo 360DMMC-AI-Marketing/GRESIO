@@ -4,7 +4,7 @@ const { auth, authorize } = require('../middleware/auth');
 const { company } = require('../middleware/validate');
 const r = Router();
 r.use(auth);
-r.get('/', c.getCompanies);
+r.get('/', authorize('admin'), c.getCompanies);
 r.get('/:id', c.getCompanyById);
 r.post('/', authorize('admin'), company.create, c.createCompany);
 r.patch('/:id', authorize('admin'), company.update, c.updateCompany);

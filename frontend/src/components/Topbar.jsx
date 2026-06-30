@@ -475,6 +475,13 @@ export default function Topbar({ sidebarWidth, showHamburger, onHamburgerClick }
           )}
         </div>
         <div className="w-px h-6 bg-[var(--border-primary)]" />
+        <Link to="/admin/company-profile" className="flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 border border-[var(--border-primary)] hover:border-[var(--brand-primary)]/30 hover:shadow-sm transition-all cursor-pointer no-underline">
+          <div className="w-5 h-5 rounded-sm bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+            {company?.name?.charAt(0)?.toUpperCase() || 'C'}
+          </div>
+          <span className="text-[var(--text-primary)]">Company Profile</span>
+        </Link>
+        <div className="w-px h-6 bg-[var(--border-primary)]" />
         {(() => {
           const plan = company?.plan || 'starter';
           const info = PLAN_INFO[plan] || PLAN_INFO.starter;

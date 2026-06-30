@@ -32,7 +32,7 @@ exports.calculateActivityScore = async (userId) => {
     totalScore += (WEIGHTS[a.type] || 1) * a.score;
   });
 
-  const score = Math.min(100, Math.round(totalScore / 10));
+  const score = Math.min(100, Math.round(totalScore / 3));
   return score;
 };
 

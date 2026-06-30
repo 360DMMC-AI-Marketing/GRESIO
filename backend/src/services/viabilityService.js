@@ -13,6 +13,31 @@ const SCORE_WEIGHTS = {
 };
 
 const DAYS_THRESHOLD = 30;
+const VITALS_LOOKBACK_DAYS = 7;
+
+const EVENT_SOURCE_MAP = {
+  scope_change: 'clickup',
+  task_complete: 'clickup',
+  task_create: 'clickup',
+  deadline_shift: 'jira',
+  sprint_start: 'jira',
+  sprint_end: 'jira',
+  blocker: 'github',
+  pr_merge: 'github',
+  commit: 'github',
+  status_change: 'teams',
+  comment: 'teams',
+  budget_update: 'stripe',
+  payment: 'stripe',
+};
+
+const RISK_SOURCE_MAP = {
+  'Blocker Frequency': 'github',
+  'Scope Instability': 'clickup',
+  'Deadline Drift': 'jira',
+  'No Decision Logging': 'teams',
+  'Task Overdue': 'clickup',
+};
 const CRITICAL_SIGNALS = {
   scope_drift: { weight: 25, label: 'Scope Drift' },
   blocker_cluster: { weight: 20, label: 'Blocker Cluster' },
@@ -34,7 +59,7 @@ async function computeViability(projectId) {
   const patternScore = await computePatternMatchScore(project, events);
   const decisionScore = computeDecisionQualityScore(decisions, events);
   const velocityScore = computeVelocityAndBlockingScore(tasks, sprints, events);
-  const teamScore = computeTeamExperienceScore(project.domain, projectId, tasks);
+  const teamScore = await computeTeamExperienceScore(project.domain, projectId, tasks);
 
   const totalScore = Math.round(
     patternScore * SCORE_WEIGHTS.patternMatch +
@@ -79,7 +104,7 @@ async function computeViability(projectId) {
     { projectId },
     payload,
     { upsert: true, new: true }
-  ).populate('projectId', 'name status progress phase');
+  ).populate('projectId', 'name status progress phase budget');
 }
 
 async function computePatternMatchScore(project, events) {
@@ -184,14 +209,16 @@ async function detectEarlySignals(projectId, events) {
     eventTypes[e.eventType] = (eventTypes[e.eventType] || 0) + 1;
     if (!e.daysSinceProjectStart || e.daysSinceProjectStart > DAYS_THRESHOLD) continue;
 
+    const source = EVENT_SOURCE_MAP[e.eventType] || 'internal';
+
     if (e.eventType === 'scope_change' && eventTypes[e.eventType] >= 2) {
-      signals.push({ type: 'scope_drift', severity: 'medium', day: e.daysSinceProjectStart, message: 'Multiple scope changes detected early', resolved: false });
+      signals.push({ type: 'scope_drift', severity: 'medium', day: e.daysSinceProjectStart, message: 'Multiple scope changes detected early', resolved: false, source, reference: e._id?.toString() });
     }
     if (e.eventType === 'blocker' && eventTypes[e.eventType] >= 3) {
-      signals.push({ type: 'blocker_cluster', severity: 'high', day: e.daysSinceProjectStart, message: 'Blocker cluster forming', resolved: false });
+      signals.push({ type: 'blocker_cluster', severity: 'high', day: e.daysSinceProjectStart, message: 'Blocker cluster forming', resolved: false, source, reference: e._id?.toString() });
     }
     if (e.eventType === 'deadline_shift' && eventTypes[e.eventType] >= 2) {
-      signals.push({ type: 'deadline_shift', severity: 'high', day: e.daysSinceProjectStart, message: 'Deadline shifted multiple times', resolved: false });
+      signals.push({ type: 'deadline_shift', severity: 'high', day: e.daysSinceProjectStart, message: 'Deadline shifted multiple times', resolved: false, source, reference: e._id?.toString() });
     }
   }
 
@@ -202,20 +229,20 @@ function computeRiskFactors(events, decisions, tasks) {
   const factors = [];
 
   const blockers = events.filter(e => e.eventType === 'blocker').length;
-  if (blockers > 2) factors.push({ factor: 'Blocker Frequency', impact: Math.min(100, blockers * 15), description: `${blockers} blockers logged` });
+  if (blockers > 2) factors.push({ factor: 'Blocker Frequency', impact: Math.min(100, blockers * 15), description: `${blockers} blockers logged`, category: RISK_SOURCE_MAP['Blocker Frequency'] || 'internal' });
 
   const scopeChanges = events.filter(e => e.eventType === 'scope_change').length;
-  if (scopeChanges > 1) factors.push({ factor: 'Scope Instability', impact: Math.min(100, scopeChanges * 20), description: `Scope changed ${scopeChanges} times` });
+  if (scopeChanges > 1) factors.push({ factor: 'Scope Instability', impact: Math.min(100, scopeChanges * 20), description: `Scope changed ${scopeChanges} times`, category: RISK_SOURCE_MAP['Scope Instability'] || 'internal' });
 
   const deadlineShifts = events.filter(e => e.eventType === 'deadline_shift').length;
-  if (deadlineShifts > 0) factors.push({ factor: 'Deadline Drift', impact: Math.min(100, deadlineShifts * 25), description: `Deadline shifted ${deadlineShifts} times` });
+  if (deadlineShifts > 0) factors.push({ factor: 'Deadline Drift', impact: Math.min(100, deadlineShifts * 25), description: `Deadline shifted ${deadlineShifts} times`, category: RISK_SOURCE_MAP['Deadline Drift'] || 'internal' });
 
   if (decisions.length === 0 && events.length > 5) {
-    factors.push({ factor: 'No Decision Logging', impact: 30, description: 'Key decisions are not being recorded' });
+    factors.push({ factor: 'No Decision Logging', impact: 30, description: 'Key decisions are not being recorded', category: RISK_SOURCE_MAP['No Decision Logging'] || 'internal' });
   }
 
   const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
-  if (overdueTasks > 2) factors.push({ factor: 'Task Overdue', impact: Math.min(100, overdueTasks * 10), description: `${overdueTasks} tasks past due` });
+  if (overdueTasks > 2) factors.push({ factor: 'Task Overdue', impact: Math.min(100, overdueTasks * 10), description: `${overdueTasks} tasks past due`, category: RISK_SOURCE_MAP['Task Overdue'] || 'internal' });
 
   return factors;
 }
@@ -267,6 +294,31 @@ async function findSimilarProjects(domain, currentEvents, currentDecisions) {
   return scored.sort((a, b) => b.similarity - a.similarity).slice(0, 10);
 }
 
+async function computeVitals(projectId) {
+  const cutoff = new Date(Date.now() - VITALS_LOOKBACK_DAYS * 86400000);
+  const events = await AutopsyEvent.find({
+    projectId,
+    timestamp: { $gte: cutoff },
+  }).sort({ timestamp: -1 }).lean();
+
+  const completedTasks = events.filter(e => e.eventType === 'task_complete').length;
+  const blockers = events.filter(e => e.eventType === 'blocker').length;
+  const deadlineShifts = events.filter(e => e.eventType === 'deadline_shift').length;
+  const scopeChanges = events.filter(e => e.eventType === 'scope_change').length;
+  const statusChanges = events.filter(e => e.eventType === 'status_change').length;
+
+  const pulse = completedTasks > 0 ? Math.min(100, Math.round((completedTasks / 7) * 20)) : 0;
+  const temp = blockers > 3 ? Math.max(0, 100 - blockers * 15) : 100;
+  const oxygen = deadlineShifts > 2 ? Math.max(0, 100 - deadlineShifts * 20) : 100;
+
+  return {
+    pulse: { value: pulse, label: pulse > 60 ? 'Stable' : pulse > 30 ? 'Low' : 'Critical', score: pulse },
+    temperature: { value: temp, label: temp > 70 ? 'Normal' : temp > 40 ? 'Warm' : 'Hot', score: temp },
+    oxygen: { value: oxygen, label: oxygen > 70 ? 'Good' : oxygen > 40 ? 'Low' : 'Critical', score: oxygen },
+    summary: { completedTasks, blockers, deadlineShifts, scopeChanges, statusChanges, totalEvents: events.length },
+  };
+}
+
 function computeProjectedSavings(project, score, daysElapsed) {
   if (score > 60) return 0;
   const avgProjectCostPerDay = 5000;
@@ -285,7 +337,6 @@ async function getOracleBoard(domain) {
     .select('_id name')
     .lean();
 
-  const activeIds = new Set(activeProjects.map(p => p._id.toString()));
   const missingIds = activeProjects.filter(p => !viabilities.find(v => v.projectId?._id?.toString() === p._id.toString()));
 
   for (const p of missingIds) {
@@ -303,10 +354,13 @@ async function getSingleOracle(projectId) {
 
   if (!viability) {
     viability = await computeViability(projectId);
-    if (viability) viability = viability.toObject();
+    if (!viability) return null;
+    viability = viability.toObject();
   }
 
-  return viability;
+  const vitals = await computeVitals(projectId);
+
+  return { ...viability, vitals };
 }
 
 async function getKillRecommendation(projectId) {
@@ -324,12 +378,12 @@ async function getKillRecommendation(projectId) {
   if (viability.trajectory === 'crash') {
     killReasons.push('Project trajectory is in crash mode');
   }
-  if (viability.earlySignals.filter(s => s.severity === 'critical' || s.severity === 'high').length > 2) {
-    killReasons.push(`${viability.earlySignals.filter(s => s.severity === 'high' || s.severity === 'critical').length} critical early warnings active`);
+  if ((viability.earlySignals || []).filter(s => s.severity === 'critical' || s.severity === 'high').length > 2) {
+    killReasons.push(`${(viability.earlySignals || []).filter(s => s.severity === 'high' || s.severity === 'critical').length} critical early warnings active`);
   }
-  if (viability.patternMatches.some(m => m.outcome === 'Failed' && m.similarity > 70)) {
-    const badMatches = viability.patternMatches.filter(m => m.outcome === 'Failed' && m.similarity > 70);
-    killReasons.push(`Project matches ${badMatches.length} failed projects with >70% similarity`);
+  const badPatternMatches = (viability.patternMatches || []).filter(m => m.outcome === 'Failed' && m.similarity > 70);
+  if (badPatternMatches.length > 0) {
+    killReasons.push(`Project matches ${badPatternMatches.length} failed projects with >70% similarity`);
   }
 
   if (viability.recommendation === 'kill') {
@@ -353,7 +407,9 @@ async function getKillRecommendation(projectId) {
 
 module.exports = {
   computeViability,
+  computeVitals,
   getOracleBoard,
   getSingleOracle,
   getKillRecommendation,
+  computeProjectedSavings,
 };

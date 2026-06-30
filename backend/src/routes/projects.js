@@ -15,6 +15,7 @@ router.get('/:id', getProjectById);
 router.get('/:id/analytics', getProjectAnalytics);
 router.get('/:id/departments', getDepartments);
 router.post('/', authorize('admin', 'project_manager', 'team_lead'), projectValidation.create, createProject);
+router.put('/:id', authorize('admin', 'project_manager', 'team_lead', 'manager'), updateProject);
 router.patch('/:id', authorize('admin', 'project_manager', 'team_lead', 'manager'), updateProject);
 router.delete('/:id', authorize('admin', 'project_manager', 'team_lead'), deleteProject);
 router.patch('/:id/launch', authorize('admin', 'project_manager'), markLaunched);

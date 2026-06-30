@@ -1,6 +1,5 @@
 const Notification = require('../models/Notification');
 const ProjectViability = require('../models/ProjectViability');
-const Project = require('../models/Project');
 
 const CRITICAL_SCORE_THRESHOLD = 35;
 const WARNING_SCORE_THRESHOLD = 55;
@@ -9,16 +8,18 @@ const CHECK_INTERVAL_MS = 3600000;
 let intervalHandle = null;
 
 async function checkProject(viability) {
-  if (!viability.projectId) return;
+  const populated = viability.projectId;
+  if (!populated || !populated._id || !populated.domain) return;
 
-  const project = await Project.findById(viability.projectId).select('name domain').lean();
-  if (!project) return;
-
+  const projectId = populated._id;
+  const projectName = populated.name || 'Unknown';
+  const domain = populated.domain;
   const score = viability.score;
+
   const existingNotifications = await Notification.countDocuments({
-    domain: project.domain,
+    domain,
     type: 'warning',
-    title: { $regex: `Cerebrum: ${project.name}`, $options: 'i' },
+    title: { $regex: `Cerebrum: ${projectName}`, $options: 'i' },
     createdAt: { $gte: new Date(Date.now() - 86400000) },
   });
 
@@ -27,12 +28,12 @@ async function checkProject(viability) {
   if (score < CRITICAL_SCORE_THRESHOLD) {
     await Notification.create({
       user: null,
-      domain: project.domain,
+      domain,
       type: 'warning',
-      title: `Cerebrum: ${project.name} — Critical Viability`,
+      title: `Cerebrum: ${projectName} — Critical Viability`,
       message: `Viability score dropped to ${score}/100. ${viability.recommendation === 'kill' ? 'Recommendation: KILL this project to save ~$' + (viability.projectedSavings || 0).toLocaleString() : 'Immediate attention required.'}`,
-      link: `/cerebrum/oracle/${viability.projectId}`,
-      metadata: { projectId: viability.projectId, score, recommendation: viability.recommendation },
+      link: `/cerebrum/oracle/${projectId}`,
+      metadata: { projectId, score, recommendation: viability.recommendation },
     });
     return;
   }
@@ -40,12 +41,12 @@ async function checkProject(viability) {
   if (score < WARNING_SCORE_THRESHOLD) {
     await Notification.create({
       user: null,
-      domain: project.domain,
+      domain,
       type: 'warning',
-      title: `Cerebrum: ${project.name} — Needs Attention`,
+      title: `Cerebrum: ${projectName} — Needs Attention`,
       message: `Viability score is ${score}/100. ${viability.trajectory === 'falling' ? 'Score is declining. ' : ''}Review recommendations.`,
-      link: `/cerebrum/oracle/${viability.projectId}`,
-      metadata: { projectId: viability.projectId, score, trajectory: viability.trajectory },
+      link: `/cerebrum/oracle/${projectId}`,
+      metadata: { projectId, score, trajectory: viability.trajectory },
     });
   }
 }

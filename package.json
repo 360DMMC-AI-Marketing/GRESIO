@@ -28,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/360DMMC-AI-Marketing/GRESIO/issues"
   },
-  "homepage": "https://github.com/360DMMC-AI-Marketing/GRESIO#readme"
+  "homepage": "https://github.com/360DMMC-AI-Marketing/GRESIO#readme",
+  "dependencies": {
+    "puppeteer": "^25.2.1"
+  }
 }

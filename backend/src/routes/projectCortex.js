@@ -1,22 +1,12 @@
 const { Router } = require('express');
 const router = Router();
-const { auth, authorize } = require('../middleware/auth');
+const { auth, requireEnterprise } = require('../middleware/auth');
 const AutopsyEvent = require('../models/AutopsyEvent');
-const Company = require('../models/Company');
 const eventCollector = require('../services/eventCollector');
 const teamMemoryService = require('../services/teamMemoryService');
 
 router.use(auth);
-
-router.use(async (req, res, next) => {
-  try {
-    const company = await Company.findOne({ domain: req.user.domain });
-    if (!company || company.plan !== 'enterprise') {
-      return res.status(403).json({ error: 'Cerebrum features require the Enterprise plan' });
-    }
-    next();
-  } catch (err) { next(err); }
-});
+router.use(requireEnterprise);
 
 router.get('/events/:projectId', async (req, res, next) => {
   try {

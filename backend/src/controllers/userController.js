@@ -3,6 +3,7 @@ const Company = require('../models/Company');
 const ProjectMember = require('../models/ProjectMember');
 const TeamGroup = require('../models/TeamGroup');
 const Activity = require('../models/Activity');
+const Task = require('../models/Task');
 const WorkLog = require('../models/WorkLog');
 const { enforceUserLimit } = require('../config/planLimits');
 

@@ -29,6 +29,12 @@ async function isUserProjectMember(projectId, userId) {
     await Project.findByIdAndUpdate(projectId, { $addToSet: { members: userId } });
     return true;
   }
+  const user = await User.findById(userId).select('_id email');
+  if (user) {
+    await Project.findByIdAndUpdate(projectId, { $addToSet: { members: userId } });
+    await ProjectMember.create({ project: projectId, user: userId, email: user.email, status: 'active', invitedBy: userId, invitedAt: new Date(), acceptedAt: new Date() }).catch(() => {});
+    return true;
+  }
   return false;
 }
 

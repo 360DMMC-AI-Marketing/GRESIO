@@ -299,6 +299,24 @@ class MicrosoftGraphService {
       return { error: error.message };
     }
   }
+
+  async sendOutlookEmail(userEmail, subject, body, toRecipients, creds) {
+    try {
+      if (!userEmail) return { error: 'No user email' };
+      const client = await this.getClient(creds?.tenantId, creds?.clientId, creds?.clientSecret);
+      if (!client) return { error: 'Graph not configured' };
+      const message = {
+        subject,
+        body: { contentType: 'text', content: body },
+        toRecipients: toRecipients.map(r => ({ emailAddress: { address: r } })),
+      };
+      const { data } = await client.post(`/users/${userEmail}/sendMail`, { message, saveToSentItems: true });
+      return { success: true, messageId: data?.id };
+    } catch (error) {
+      console.error('Send Outlook email error:', error.message);
+      return { error: error.response?.data?.error?.message || error.message };
+    }
+  }
 }
 
 module.exports = new MicrosoftGraphService();

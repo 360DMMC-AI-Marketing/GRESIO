@@ -1,3 +1,10 @@
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -221,24 +228,25 @@ app.get('/api/seed', auth, authorize('admin'), async (req, res) => {
       { name: 'James Wilson', email: 'pm@gresio.com', password: 'password123', role: 'project_manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 85, isActive: true, githubUsername: 'jwilson', clickupId: 'james-w', teamsId: 'james.wilson', outlookEmail: 'james@company.com', lastActive: new Date(Date.now() - 3600000) },
       { name: 'Marcus Johnson', email: 'dev@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'active', activityScore: 78, isActive: true, githubUsername: 'marcusj', clickupId: 'marcus-j', teamsId: 'marcus.johnson', outlookEmail: 'marcus@company.com', figmaUsername: 'marcusj', lastActive: new Date(Date.now() - 1800000) },
       { name: 'Aisha Patel', email: 'qa@gresio.com', password: 'password123', role: 'qa_tester', domain: 'admin@gresio.com', status: 'active', activityScore: 88, isActive: true, githubUsername: 'aishapatel', clickupId: 'aisha-p', teamsId: 'aisha.patel', outlookEmail: 'aisha@company.com', lastActive: new Date(Date.now() - 900000) },
-      { name: 'Ryan Kim', email: 'intern@gresio.com', password: 'password123', role: 'intern', domain: 'admin@gresio.com', status: 'idle', activityScore: 45, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
+      { name: 'Ryan Kim', email: 'intern@gresio.com', password: 'password123', role: 'intern', domain: 'admin@gresio.com', status: 'active', activityScore: 65, isActive: true, githubUsername: 'ryankim', clickupId: 'ryan-k', teamsId: 'ryan.kim', outlookEmail: 'ryan@company.com', lastActive: new Date(Date.now() - 7200000) },
       { name: 'Emily Rodriguez', email: 'manager@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'active', activityScore: 90, isActive: true, githubUsername: 'emilyr', clickupId: 'emily-r', teamsId: 'emily.rodriguez', outlookEmail: 'emily@company.com', lastActive: new Date(Date.now() - 2700000) },
       { name: 'Olivia Tanaka', email: 'designer@gresio.com', password: 'password123', role: 'developer', domain: 'admin@gresio.com', status: 'inactive', activityScore: 72, isActive: true, githubUsername: 'oliviatanaka', clickupId: 'olivia-t', teamsId: 'olivia.tanaka', outlookEmail: 'olivia@company.com', figmaUsername: 'oliviatanaka', lovableUsername: 'olivia_t', lastActive: new Date(Date.now() - 86400000) },
       { name: 'David Mohammed', email: 'analyst@gresio.com', password: 'password123', role: 'manager', domain: 'admin@gresio.com', status: 'in_meeting', activityScore: 68, isActive: true, githubUsername: 'dmohammed', clickupId: 'david-m', teamsId: 'david.mohammed', outlookEmail: 'david@company.com', lastActive: new Date(Date.now() - 5400000) },
       { name: 'Lisa Thompson', email: 'scrum@gresio.com', password: 'password123', role: 'team_lead', domain: 'admin@gresio.com', status: 'active', activityScore: 82, isActive: true, githubUsername: 'lthompson', clickupId: 'lisa-t', teamsId: 'lisa.thompson', outlookEmail: 'lisa@company.com', lastActive: new Date(Date.now() - 3600000) },
-      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'offline', activityScore: 15, isActive: true, lastActive: new Date(Date.now() - 172800000) },
+      { name: 'Alex Rivera', email: 'test@demo.com', password: 'password123', role: 'admin', domain: 'admin@gresio.com', status: 'offline', activityScore: 45, isActive: true, lastActive: new Date(Date.now() - 172800000) },
       { name: 'Demo User', email: 'demo@demo.com', password: 'demo1234', role: 'admin', domain: 'admin@gresio.com', status: 'active', activityScore: 95, isActive: true, githubUsername: 'demouser', clickupId: 'demo-user', teamsId: 'demo.user', outlookEmail: 'demo@company.com', lastActive: new Date() },
     ]);
     const [admin, pm, dev, qa, intern, manager, designer, analyst, scrum] = allUsers;
     const allUserIds = allUsers.map(u => u._id);
 
+    const today = new Date();
     const projects = await Project.create([
-      { name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date('2025-08-01'), members: allUserIds, domain: 'admin@gresio.com' },
-      { name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date('2025-09-15'), members: allUserIds, domain: 'admin@gresio.com' },
-      { name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date('2025-06-01'), members: allUserIds, domain: 'admin@gresio.com' },
-      { name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date('2025-07-15'), members: allUserIds, domain: 'admin@gresio.com' },
-      { name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date('2025-09-01'), members: allUserIds, domain: 'admin@gresio.com' },
-      { name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date('2025-09-30'), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'Website Redesign', projectType: 'software', description: 'Redesign company website with modern stack', status: 'on_track', phase: 'development', progress: 33, deadline: new Date(today.getTime() + 30*86400000), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'Mobile App v2', projectType: 'design', description: 'Version 2 of the mobile application', status: 'completed', phase: 'launched', progress: 100, deadline: new Date(today.getTime() + 90*86400000), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'API Gateway', projectType: 'business', description: 'Build unified API gateway for microservices', status: 'delayed', phase: 'business_growth', progress: 33, deadline: new Date(today.getTime() - 10*86400000), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'E-commerce Platform', projectType: 'content', description: 'Full-stack e-commerce platform with payment integration', status: 'ready_to_test', phase: 'content_creation', progress: 40, deadline: new Date(today.getTime() + 45*86400000), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'Analytics Dashboard', projectType: 'research', description: 'Real-time analytics dashboard with charts and reporting', status: 'on_track', phase: 'research', progress: 25, deadline: new Date(today.getTime() + 60*86400000), members: allUserIds, domain: 'admin@gresio.com' },
+      { name: 'Marketing Campaign Q3', projectType: 'business', description: 'Q3 marketing campaign planning, execution, and performance tracking', status: 'on_track', phase: 'planning', progress: 15, deadline: new Date(today.getTime() + 75*86400000), members: allUserIds, domain: 'admin@gresio.com' },
     ]);
     const [pWeb, pMobile, pApi, pEcom, pDash, pMarketing] = projects;
 
@@ -285,27 +293,27 @@ app.get('/api/seed', auth, authorize('admin'), async (req, res) => {
     }
 
     const tasks = await Task.create([
-      { title: 'Design homepage mockup', status: 'done', priority: 'high', project: pWeb._id, assignee: dev._id, deadline: new Date('2025-06-15'), estimatedHours: 20, loggedHours: 18 },
-      { title: 'Implement responsive navbar', status: 'in_progress', priority: 'medium', project: pWeb._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 15, loggedHours: 8 },
-      { title: 'Set up CI/CD pipeline', status: 'todo', priority: 'high', project: pWeb._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 10 },
-      { title: 'User authentication flow', status: 'in_progress', priority: 'urgent', project: pMobile._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 30, loggedHours: 12 },
-      { title: 'Push notification service', status: 'todo', priority: 'medium', project: pMobile._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 15 },
-      { title: 'API rate limiting', status: 'done', priority: 'high', project: pApi._id, assignee: dev._id, deadline: new Date('2025-05-15'), estimatedHours: 12, loggedHours: 14 },
-      { title: 'Documentation', status: 'in_progress', priority: 'low', project: pApi._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 8, loggedHours: 4 },
-      { title: 'Database migration script', status: 'delayed', priority: 'urgent', project: pApi._id, assignee: dev._id, deadline: new Date('2025-05-20'), estimatedHours: 25, loggedHours: 20 },
-      { title: 'Payment gateway integration', status: 'done', priority: 'high', project: pEcom._id, assignee: dev._id, deadline: new Date('2025-06-01'), estimatedHours: 40, loggedHours: 38 },
-      { title: 'Product catalog API', status: 'done', priority: 'high', project: pEcom._id, assignee: dev._id, deadline: new Date('2025-06-15'), estimatedHours: 30, loggedHours: 28 },
-      { title: 'Shopping cart UI', status: 'in_progress', priority: 'medium', project: pEcom._id, assignee: dev._id, deadline: new Date('2025-07-01'), estimatedHours: 20, loggedHours: 10 },
-      { title: 'Order management system', status: 'todo', priority: 'high', project: pEcom._id, assignee: pm._id, deadline: new Date('2025-07-10'), estimatedHours: 25 },
-      { title: 'QA test suite for checkout', status: 'in_progress', priority: 'medium', project: pEcom._id, assignee: qa._id, deadline: new Date('2025-07-05'), estimatedHours: 15, loggedHours: 6 },
-      { title: 'Dashboard data pipeline', status: 'done', priority: 'high', project: pDash._id, assignee: dev._id, deadline: new Date('2025-06-20'), estimatedHours: 20, loggedHours: 18 },
-      { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: pDash._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 25, loggedHours: 12 },
-      { title: 'Report export feature', status: 'todo', priority: 'low', project: pDash._id, assignee: dev._id, deadline: new Date('2025-08-01'), estimatedHours: 12 },
-      { title: 'User permission system', status: 'in_progress', priority: 'high', project: pDash._id, assignee: pm._id, deadline: new Date('2025-07-20'), estimatedHours: 18, loggedHours: 8 },
-      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: pMarketing._id, assignee: pm._id, deadline: new Date('2025-06-10'), estimatedHours: 15, loggedHours: 14 },
-      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date('2025-07-15'), estimatedHours: 20, loggedHours: 8 },
-      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: pMarketing._id, assignee: intern._id, deadline: new Date('2025-08-01'), estimatedHours: 25 },
-      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date('2025-08-15'), estimatedHours: 12 },
+      { title: 'Design homepage mockup', status: 'done', priority: 'high', project: pWeb._id, assignee: dev._id, deadline: new Date(today.getTime() - 15*86400000), estimatedHours: 20, loggedHours: 18 },
+      { title: 'Implement responsive navbar', status: 'in_progress', priority: 'medium', project: pWeb._id, assignee: dev._id, deadline: new Date(today.getTime() + 10*86400000), estimatedHours: 15, loggedHours: 8 },
+      { title: 'Set up CI/CD pipeline', status: 'todo', priority: 'high', project: pWeb._id, assignee: dev._id, deadline: new Date(today.getTime() + 20*86400000), estimatedHours: 10 },
+      { title: 'User authentication flow', status: 'in_progress', priority: 'urgent', project: pMobile._id, assignee: dev._id, deadline: new Date(today.getTime() + 5*86400000), estimatedHours: 30, loggedHours: 12 },
+      { title: 'Push notification service', status: 'todo', priority: 'medium', project: pMobile._id, assignee: intern._id, deadline: new Date(today.getTime() + 25*86400000), estimatedHours: 15 },
+      { title: 'API rate limiting', status: 'done', priority: 'high', project: pApi._id, assignee: dev._id, deadline: new Date(today.getTime() - 30*86400000), estimatedHours: 12, loggedHours: 14 },
+      { title: 'Documentation', status: 'in_progress', priority: 'low', project: pApi._id, assignee: pm._id, deadline: new Date(today.getTime() - 5*86400000), estimatedHours: 8, loggedHours: 4 },
+      { title: 'Database migration script', status: 'delayed', priority: 'urgent', project: pApi._id, assignee: dev._id, deadline: new Date(today.getTime() - 20*86400000), estimatedHours: 25, loggedHours: 20 },
+      { title: 'Payment gateway integration', status: 'done', priority: 'high', project: pEcom._id, assignee: dev._id, deadline: new Date(today.getTime() - 10*86400000), estimatedHours: 40, loggedHours: 38 },
+      { title: 'Product catalog API', status: 'done', priority: 'high', project: pEcom._id, assignee: dev._id, deadline: new Date(today.getTime() + 5*86400000), estimatedHours: 30, loggedHours: 28 },
+      { title: 'Shopping cart UI', status: 'in_progress', priority: 'medium', project: pEcom._id, assignee: dev._id, deadline: new Date(today.getTime() + 15*86400000), estimatedHours: 20, loggedHours: 10 },
+      { title: 'Order management system', status: 'todo', priority: 'high', project: pEcom._id, assignee: pm._id, deadline: new Date(today.getTime() + 30*86400000), estimatedHours: 25 },
+      { title: 'QA test suite for checkout', status: 'in_progress', priority: 'medium', project: pEcom._id, assignee: qa._id, deadline: new Date(today.getTime() + 20*86400000), estimatedHours: 15, loggedHours: 6 },
+      { title: 'Dashboard data pipeline', status: 'done', priority: 'high', project: pDash._id, assignee: dev._id, deadline: new Date(today.getTime() - 5*86400000), estimatedHours: 20, loggedHours: 18 },
+      { title: 'Real-time chart components', status: 'in_progress', priority: 'medium', project: pDash._id, assignee: dev._id, deadline: new Date(today.getTime() + 25*86400000), estimatedHours: 25, loggedHours: 12 },
+      { title: 'Report export feature', status: 'todo', priority: 'low', project: pDash._id, assignee: dev._id, deadline: new Date(today.getTime() + 40*86400000), estimatedHours: 12 },
+      { title: 'User permission system', status: 'in_progress', priority: 'high', project: pDash._id, assignee: pm._id, deadline: new Date(today.getTime() + 15*86400000), estimatedHours: 18, loggedHours: 8 },
+      { title: 'Campaign strategy document', status: 'done', priority: 'high', project: pMarketing._id, assignee: pm._id, deadline: new Date(today.getTime() - 20*86400000), estimatedHours: 15, loggedHours: 14 },
+      { title: 'Social media content calendar', status: 'in_progress', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date(today.getTime() + 10*86400000), estimatedHours: 20, loggedHours: 8 },
+      { title: 'Email campaign automation', status: 'todo', priority: 'high', project: pMarketing._id, assignee: intern._id, deadline: new Date(today.getTime() + 35*86400000), estimatedHours: 25 },
+      { title: 'Performance dashboard setup', status: 'todo', priority: 'medium', project: pMarketing._id, assignee: dev._id, deadline: new Date(today.getTime() + 45*86400000), estimatedHours: 12 },
     ]);
 
     const projTasks = {
@@ -320,7 +328,6 @@ app.get('/api/seed', auth, authorize('admin'), async (req, res) => {
       await Project.findByIdAndUpdate(pid, { $push: { tasks: { $each: tids } } });
     }
 
-    const today = new Date();
     await Sprint.create([
       // Completed sprints (past)
       { name: 'MVP Launch — Homepage', project: pWeb._id, startDate: new Date(today - 60*86400000), endDate: new Date(today - 30*86400000), status: 'completed', goal: 'Initial homepage MVP launch', tasks: [tasks[0]], createdBy: pm._id },
@@ -339,27 +346,27 @@ app.get('/api/seed', auth, authorize('admin'), async (req, res) => {
 
     const now = new Date();
     const activityData = [
-      { user: dev._id, domain: 'admin@gresio.com', type: 'github_commit', source: 'github', description: 'feat: add user auth middleware', score: 10 },
-      { user: dev._id, domain: 'admin@gresio.com', type: 'github_commit', source: 'github', description: 'fix: resolve navbar overflow issue', score: 8 },
-      { user: dev._id, domain: 'admin@gresio.com', type: 'github_pr', source: 'github', description: 'PR: Authentication flow implementation', score: 8 },
-      { user: dev._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Updated task: Implement responsive navbar', score: 6 },
-      { user: pm._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Created sprint planning document', score: 6 },
-      { user: pm._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Discussion about API gateway architecture', score: 4 },
-      { user: dev._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Code review request for auth module', score: 4 },
-      { user: intern._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Question about push notification service', score: 3 },
-      { user: admin._id, domain: 'admin@gresio.com', type: 'outlook_email', source: 'outlook', description: 'Weekly project status report', score: 3 },
-      { user: pm._id, domain: 'admin@gresio.com', type: 'outlook_calendar', source: 'outlook', description: 'Sprint review meeting', score: 5 },
-      { user: manager._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Team lead sync: sprint goals review', score: 5 },
-      { user: designer._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Updated design system components', score: 7 },
-      { user: analyst._id, domain: 'admin@gresio.com', type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 4 },
-      { user: scrum._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 3 },
-      { user: qa._id, domain: 'admin@gresio.com', type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 6 },
-      { user: qa._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 3 },
-      { user: designer._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 4 },
-      { user: analyst._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 4 },
-      { user: pm._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 6 },
-      { user: manager._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 5 },
-      { user: scrum._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 4 },
+      { user: dev._id, domain: 'admin@gresio.com', type: 'github_commit', source: 'github', description: 'feat: add user auth middleware', score: 50 },
+      { user: dev._id, domain: 'admin@gresio.com', type: 'github_commit', source: 'github', description: 'fix: resolve navbar overflow issue', score: 40 },
+      { user: dev._id, domain: 'admin@gresio.com', type: 'github_pr', source: 'github', description: 'PR: Authentication flow implementation', score: 40 },
+      { user: dev._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Updated task: Implement responsive navbar', score: 30 },
+      { user: pm._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Created sprint planning document', score: 30 },
+      { user: pm._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Discussion about API gateway architecture', score: 20 },
+      { user: dev._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Code review request for auth module', score: 20 },
+      { user: intern._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Question about push notification service', score: 15 },
+      { user: admin._id, domain: 'admin@gresio.com', type: 'outlook_email', source: 'outlook', description: 'Weekly project status report', score: 15 },
+      { user: pm._id, domain: 'admin@gresio.com', type: 'outlook_calendar', source: 'outlook', description: 'Sprint review meeting', score: 25 },
+      { user: manager._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Team lead sync: sprint goals review', score: 25 },
+      { user: designer._id, domain: 'admin@gresio.com', type: 'clickup_update', source: 'clickup', description: 'Updated design system components', score: 35 },
+      { user: analyst._id, domain: 'admin@gresio.com', type: 'outlook_email', source: 'outlook', description: 'Market research report for Q3', score: 20 },
+      { user: scrum._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Facilitated daily standup meeting', score: 15 },
+      { user: qa._id, domain: 'admin@gresio.com', type: 'github_pr', source: 'github', description: 'QA test suite for checkout flow', score: 30 },
+      { user: qa._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Requested clarification on checkout test steps', score: 15 },
+      { user: designer._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Shared updated design system mockups', score: 20 },
+      { user: analyst._id, domain: 'admin@gresio.com', type: 'teams_message', source: 'teams', description: 'Posted Q3 market analysis findings', score: 20 },
+      { user: pm._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Sprint planning meeting', score: 30 },
+      { user: manager._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Weekly team lead sync', score: 25 },
+      { user: scrum._id, domain: 'admin@gresio.com', type: 'teams_meeting', source: 'teams', description: 'Daily standup facilitation', score: 20 },
     ];
     for (let i = 0; i < activityData.length; i++) {
       await Activity.create({ ...activityData[i], createdAt: new Date(now - i * 3600000) });

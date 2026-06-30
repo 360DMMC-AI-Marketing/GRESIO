@@ -1,26 +1,48 @@
 import { useState, useEffect } from 'react';
 import { cerebrum } from '../services/api';
 import { LoadingState, ErrorState } from '../components/StateComponents';
-import { BarChart3, Target, TrendingUp, AlertTriangle, CheckCircle, Plus, X, DollarSign, Zap, Shield, Layers } from 'lucide-react';
+import { BarChart3, Target, TrendingUp, AlertTriangle, CheckCircle, Plus, DollarSign, Zap, Shield, Layers, Flag, Lightbulb, ArrowRight, Gauge } from 'lucide-react';
 import Modal from '../components/Modal';
 
-function AlignmentGauge({ value }) {
-  const color = value > 70 ? '#22c55e' : value > 40 ? '#eab308' : '#ef4444';
+function StatBox({ label, value }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-16 h-16">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-          <circle cx="32" cy="32" r="28" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round"
-            strokeDasharray="175.92" strokeDashoffset={175.92 - (value / 100) * 175.92}
-            transform="rotate(-90 32 32)" style={{ transition: 'stroke-dashoffset 1s ease' }} />
-          <text x="32" y="38" textAnchor="middle" fill="white" fontSize="14" fontWeight="700">{Math.round(value)}</text>
-        </svg>
+    <div style={{ background: 'rgba(148,163,184,0.03)', borderRadius: 8, padding: '14px 18px', border: '1px solid rgba(148,163,184,0.06)' }}>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'white' }}>{value}</div>
+    </div>
+  );
+}
+
+function GoalCard({ goal, index }) {
+  const barColor = goal.alignmentPercentage > 50 ? '#22c55e' : goal.alignmentPercentage > 25 ? '#eab308' : '#ef4444';
+  return (
+    <div style={{ background: 'rgba(148,163,184,0.02)', borderRadius: 10, padding: 16, border: '1px solid rgba(148,163,184,0.06)', borderLeft: `2px solid ${barColor}`, transition: 'all 0.15s ease', animation: `fadeIn 0.2s ease ${index * 20}ms both` }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(148,163,184,0.035)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(148,163,184,0.02)'; }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Target size={14} color="#6366f1" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>{goal.title}</span>
+          {goal.category && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: 'rgba(148,163,184,0.05)', color: '#64748b' }}>{goal.category}</span>}
+        </div>
+        <span style={{ fontSize: 11, color: '#64748b' }}>Weight: {goal.weight}%</span>
       </div>
-      <div>
-        <div className="text-[10px] text-slate-500 uppercase tracking-wider">Alignment</div>
-        <div className="text-lg font-bold text-white">{value}%</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(148,163,184,0.06)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 3, background: barColor, width: `${goal.alignmentPercentage}%`, transition: 'width 0.5s ease' }} />
+        </div>
+        <span style={{ fontSize: 11, color: barColor, fontWeight: 600, whiteSpace: 'nowrap' }}>{goal.alignedTasks}/{goal.totalTasks} ({goal.alignmentPercentage}%)</span>
       </div>
+      {goal.kpis?.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {goal.kpis.map((kpi, j) => (
+            <div key={j} style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, background: 'rgba(148,163,184,0.03)', color: '#64748b' }}>
+              {kpi.name}: <span style={{ color: 'white', fontWeight: 600 }}>{kpi.current}/{kpi.target}</span>
+              {kpi.unit && <> {kpi.unit}</>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -34,24 +56,17 @@ export default function CerebrumStrategy() {
   const [newGoal, setNewGoal] = useState({ title: '', description: '', category: '', weight: 50, kpis: [] });
   const [refresh, setRefresh] = useState(0);
 
-  useEffect(() => {
-    loadData();
-  }, [refresh]);
+  useEffect(() => { loadData(); }, [refresh]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [alignRes, rebRes] = await Promise.all([
-        cerebrum.getAlignment(),
-        cerebrum.getRebalance(),
-      ]);
-      setAlignment(alignRes.data);
+      const [alignRes, rebRes] = await Promise.all([cerebrum.getAlignment(), cerebrum.getRebalance()]);
+      setAlignment(alignRes.data || { message: 'No strategic goals defined yet. Set your first goal to start tracking alignment.' });
       setRebalance(rebRes.data.recommendations || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load strategy data');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleCreateGoal = async () => {
@@ -61,40 +76,42 @@ export default function CerebrumStrategy() {
       setShowGoalModal(false);
       setNewGoal({ title: '', description: '', category: '', weight: 50, kpis: [] });
       setRefresh(r => r + 1);
-    } catch (err) {
-      console.error('Failed to create goal', err);
-    }
+    } catch (err) { console.error('Failed to create goal', err); }
   };
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={loadData} />;
 
   return (
-    <div className="page-enter" style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
-            <BarChart3 className="w-5 h-5 text-white" />
+    <div className="page-enter" style={{ maxWidth: 960, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BarChart3 size={20} color="#22c55e" />
           </div>
           <div>
-            <div className="text-xl font-bold text-white">Strategy Bridge</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Connect leadership vision to execution reality</div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'white' }}>Strategy Bridge</h2>
+            <p style={{ fontSize: 12, color: '#64748b', marginTop: 1 }}>Connect leadership vision to execution reality</p>
           </div>
         </div>
         <button onClick={() => setShowGoalModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-white border-none cursor-pointer transition-all"
-          style={{ background: 'linear-gradient(135deg, var(--brand-primary), #6366f1)' }}>
-          <Plus className="w-3 h-3" /> New Goal
+          style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 16px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.1)', color: '#818cf8', transition: 'all 0.15s ease' }}
+          onMouseEnter={e => { e.target.style.background = 'rgba(99,102,241,0.2)'; }}
+          onMouseLeave={e => { e.target.style.background = 'rgba(99,102,241,0.1)'; }}>
+          <Plus size={14} /> New Goal
         </button>
       </div>
 
       {alignment?.message && (
-        <div className="glass-panel rounded-xl p-6 mb-6 text-center">
-          <Target className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <div className="text-slate-400 text-sm">{alignment.message}</div>
+        <div style={{ background: 'rgba(148,163,184,0.02)', borderRadius: 10, padding: 28, textAlign: 'center', border: '1px solid rgba(148,163,184,0.06)' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(148,163,184,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <Target size={20} color="#475569" />
+          </div>
+          <p style={{ fontSize: 13, color: '#64748b', marginBottom: 14 }}>{alignment.message}</p>
           <button onClick={() => setShowGoalModal(true)}
-            className="mt-4 px-4 py-2 text-xs font-medium rounded-lg text-white border-none cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, var(--brand-primary), #6366f1)' }}>
+            style={{ padding: '8px 18px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.1)', color: '#818cf8', transition: 'all 0.15s ease' }}
+            onMouseEnter={e => { e.target.style.background = 'rgba(99,102,241,0.2)'; }}
+            onMouseLeave={e => { e.target.style.background = 'rgba(99,102,241,0.1)'; }}>
             Set Your First Strategic Goal
           </button>
         </div>
@@ -102,35 +119,27 @@ export default function CerebrumStrategy() {
 
       {alignment && !alignment.message && (
         <>
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="glass-panel rounded-xl p-4">
-              <AlignmentGauge value={alignment.alignment} />
-            </div>
-            <div className="glass-panel rounded-xl p-4">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Total Tasks</div>
-              <div className="text-2xl font-bold text-white">{alignment.totalTasks}</div>
-            </div>
-            <div className="glass-panel rounded-xl p-4">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Active Projects</div>
-              <div className="text-2xl font-bold text-white">{alignment.totalProjects}</div>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+            <StatBox label="Alignment Score" value={<span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Gauge size={16} color={alignment.alignment > 70 ? '#22c55e' : alignment.alignment > 40 ? '#eab308' : '#ef4444'} />{alignment.alignment}%</span>} />
+            <StatBox label="Total Tasks" value={alignment.totalTasks} />
+            <StatBox label="Active Projects" value={alignment.totalProjects} />
           </div>
 
           {alignment.gapAnalysis && alignment.gapAnalysis.unalignedPercentage > 30 && (
-            <div className="glass-panel rounded-xl p-4 mb-6" style={{ borderLeft: '3px solid #f97316' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-orange-400" />
-                <span className="text-sm font-semibold text-orange-400">Gap Detected</span>
+            <div style={{ background: 'rgba(249,115,22,0.04)', borderRadius: 10, padding: 14, marginBottom: 20, border: '1px solid rgba(249,115,22,0.1)', borderLeft: '2px solid #f97316' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <AlertTriangle size={14} color="#f97316" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#f97316' }}>Strategy Gap Detected</span>
               </div>
-              <div className="text-xs text-slate-400">
+              <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>
                 {alignment.gapAnalysis.unalignedPercentage}% of tasks ({alignment.gapAnalysis.unalignedTasks}) are not aligned with any strategic goal.
-              </div>
+              </p>
               {alignment.gapAnalysis.recommendedRebalance?.length > 0 && (
-                <div className="mt-2 space-y-1">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
                   {alignment.gapAnalysis.recommendedRebalance.map((rec, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                      <Zap className="w-3 h-3 text-yellow-400 mt-0.5 shrink-0" />
-                      <span>{rec}</span>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                      <Lightbulb size={11} color="#eab308" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>{rec}</span>
                     </div>
                   ))}
                 </div>
@@ -138,59 +147,36 @@ export default function CerebrumStrategy() {
             </div>
           )}
 
-          <div className="mb-6">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Goals & Alignment</div>
-            <div className="space-y-3">
-              {alignment.goals?.map((goal, i) => (
-                <div key={goal.goalId || i} className="glass-panel rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-[var(--brand-primary)]" />
-                      <span className="text-sm font-semibold text-white">{goal.title}</span>
-                      {goal.category && <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-slate-500">{goal.category}</span>}
-                    </div>
-                    <span className="text-xs text-slate-500">Weight: {goal.weight}%</span>
-                  </div>
-
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{
-                        width: `${goal.alignmentPercentage}%`,
-                        background: goal.alignmentPercentage > 50 ? '#22c55e' : goal.alignmentPercentage > 25 ? '#eab308' : '#ef4444'
-                      }} />
-                    </div>
-                    <span className="text-xs text-slate-400 shrink-0">{goal.alignedTasks}/{goal.totalTasks} tasks ({goal.alignmentPercentage}%)</span>
-                  </div>
-
-                  {goal.kpis?.length > 0 && (
-                    <div className="flex gap-3 mt-2 flex-wrap">
-                      {goal.kpis.map((kpi, j) => (
-                        <div key={j} className="text-[10px] px-2 py-1 rounded bg-white/[0.03] text-slate-400">
-                          {kpi.name}: <span className="text-white font-medium">{kpi.current}/{kpi.target}</span> {kpi.unit}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+              <Flag size={14} color="#64748b" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Goals & Alignment</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {alignment.goals?.map((goal, i) => <GoalCard key={goal.goalId || i} goal={goal} index={i} />)}
             </div>
           </div>
 
           {rebalance.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Recommended Rebalancing</div>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                <Layers size={14} color="#64748b" />
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Rebalancing</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {rebalance.map((rec, i) => (
-                  <div key={i} className="glass-panel rounded-xl p-4" style={{ borderLeft: '3px solid #a78bfa' }}>
-                    <div className="flex items-start gap-2">
-                      <Layers className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+                  <div key={i} style={{ background: 'rgba(148,163,184,0.02)', borderRadius: 10, padding: 14, border: '1px solid rgba(148,163,184,0.06)', borderLeft: '2px solid #a78bfa' }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(167,139,250,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Layers size={12} color="#a78bfa" />
+                      </div>
                       <div>
-                        <div className="text-sm font-medium text-white mb-1">{rec.goal}</div>
-                        <div className="text-xs text-slate-400">{rec.suggestedAction}</div>
-                        <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
-                          <span>Current: {rec.currentAlignment}%</span>
-                          <TrendingUp className="w-3 h-3 text-green-400" />
-                          <span>Target: {rec.targetAlignment}%</span>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'white', marginBottom: 2 }}>{rec.goal}</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>{rec.suggestedAction}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 10, color: '#475569' }}>
+                          <span>Current: <span style={{ color: '#94a3b8', fontWeight: 600 }}>{rec.currentAlignment}%</span></span>
+                          <ArrowRight size={9} color="#475569" />
+                          <span>Target: <span style={{ color: '#22c55e', fontWeight: 600 }}>{rec.targetAlignment}%</span></span>
                         </div>
                       </div>
                     </div>
@@ -228,7 +214,7 @@ export default function CerebrumStrategy() {
           </div>
           <button onClick={handleCreateGoal} disabled={!newGoal.title}
             className="w-full py-2.5 text-sm font-medium rounded-lg text-white border-none cursor-pointer disabled:opacity-40 transition-all"
-            style={{ background: 'linear-gradient(135deg, var(--brand-primary), #6366f1)' }}>
+            style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8' }}>
             Create Goal
           </button>
         </div>

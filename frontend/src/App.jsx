@@ -58,9 +58,11 @@ const CompanyOnboarding = lazy(() => import('./pages/CompanyOnboarding'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
 const ProjectCortex = lazy(() => import('./pages/ProjectCortex'));
 const CerebrumOracle = lazy(() => import('./pages/CerebrumOracle'));
+const DailyBriefing = lazy(() => import('./pages/DailyBriefing'));
 const CerebrumMemory = lazy(() => import('./pages/CerebrumMemory'));
 const CerebrumStrategy = lazy(() => import('./pages/CerebrumStrategy'));
-const CerebrumGalaxy = lazy(() => import('./pages/CerebrumGalaxy'));
+
+
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
 const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
 const SuperAdminCompanyDetail = lazy(() => import('./pages/super-admin/CompanyDetail'));
@@ -154,7 +156,9 @@ export default function App() {
               <Route path="/cerebrum/oracle/:projectId" element={<CerebrumOracle />} />
               <Route path="/cerebrum/memory" element={<CerebrumMemory />} />
               <Route path="/cerebrum/strategy" element={<CerebrumStrategy />} />
-              <Route path="/cerebrum/galaxy" element={<CerebrumGalaxy />} />
+              <Route path="/cerebrum/briefing" element={<DailyBriefing />} />
+
+
             </Route>
             <Route element={<SuperAdminLayout />}>
               <Route path="/super/dashboard" element={<SuperAdminDashboard />} />

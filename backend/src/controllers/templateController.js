@@ -3,8 +3,8 @@ const Template = require('../models/Template');
 exports.list = async (req, res) => {
   try {
     const { type, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
-    const filter = { approved: true };
-    if (req.user.role !== 'admin') filter.domain = req.user.domain;
+    const filter = {};
+    if (req.user.role !== 'admin') { filter.approved = true; filter.domain = req.user.domain; }
     if (type) filter.projectType = type;
     if (category) filter.category = category;
     if (minPrice || maxPrice) {

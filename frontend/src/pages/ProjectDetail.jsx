@@ -84,6 +84,8 @@ export default function ProjectDetail() {
   const canManage = CAN_MANAGE.includes(user?.role);
   const [modalAlert, setModalAlert] = useState(null);
   const [confirmState, setConfirmState] = useState(null); // { title, message, onConfirm }
+  const [actionModal, setActionModal] = useState(null); // null | { type:'teams-notify'|'github-pr' }
+  const [actionForm, setActionForm] = useState({ message:'', taskTitle:'', taskBranch:'' });
   const [showAddMember, setShowAddMember] = useState(false);
   const [addMemberForm, setAddMemberForm] = useState({ email:'', role:'developer', teamGroup:'', message:'' });
   const [addMemberMode, setAddMemberMode] = useState('department');
@@ -2029,6 +2031,32 @@ export default function ProjectDetail() {
                       Open in Teams ↗
                     </a>
                   )}
+                  {settingsForm.teamsChannelId && (
+                    <button className="btn btn-blue" style={{fontSize:10,padding:'6px 12px'}}
+                      onClick={() => setActionModal({type:'teams-notify'})}>
+                      💬 Notify Channel
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="settings-section" style={{borderLeft:'3px solid #24292f'}}>
+            <div className="settings-title">🐙 GitHub Actions</div>
+            <div className="settings-grid">
+              <div className="s-field" style={{gridColumn:'1/-1'}}>
+                <label className="s-label">Repository (e.g. owner/repo)</label>
+                <input className="select" value={settingsForm.githubRepo || ''}
+                  onChange={e => setSettingsForm({...settingsForm, githubRepo: e.target.value})} disabled={!canManage}
+                  placeholder="owner/repo-name" />
+              </div>
+              {canManage && (
+                <div className="s-field" style={{gridColumn:'1/-1',display:'flex',gap:8}}>
+                  <button className="btn btn-blue" style={{fontSize:10,padding:'6px 12px'}}
+                    onClick={() => setActionModal({type:'github-pr'})}>
+                    🐙 Create PR from task
+                  </button>
                 </div>
               )}
             </div>
@@ -2397,6 +2425,78 @@ export default function ProjectDetail() {
             placeholder="Enter a summary of what was discussed..."
           />
         </label>
+      </Modal>
+
+      {/* ===== TEAMS NOTIFY MODAL ===== */}
+      <Modal open={actionModal?.type === 'teams-notify'} onClose={() => { setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''}); }}
+        title="💬 Notify Teams Channel" icon="💬" style={{maxWidth:440}}
+        footer={
+          <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+            <button className="btn btn-gray" onClick={() => { setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''}); }}
+              style={{fontSize:10,padding:'5px 12px'}}>Cancel</button>
+            <button className="btn btn-blue" onClick={async () => {
+              try {
+                const r = await integrations.writeAction('microsoft_graph', 'send-message', {
+                  teamId: project?.teamsTeamId || settingsForm.teamsChannelId,
+                  channelId: settingsForm.teamsChannelId,
+                  message: actionForm.message || `Update from project: ${project?.name}`
+                });
+                setModalAlert({ title:'Sent', message:r.data.result?.id ? 'Message sent to Teams channel' : 'Message sent', type:'success' });
+                setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''});
+              } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
+            }} style={{fontSize:10,padding:'5px 12px'}} disabled={!actionForm.message.trim()}>Send</button>
+          </div>
+        }>
+        <label style={{display:'flex',flexDirection:'column',gap:4}}>
+          <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Message</span>
+          <textarea style={{width:'100%',padding:'6px 10px',fontSize:11,border:'0.5px solid #d1d5db',borderRadius:6,outline:'none',boxSizing:'border-box',minHeight:80,resize:'vertical'}}
+            value={actionForm.message}
+            onChange={e => setActionForm(f => ({...f, message:e.target.value}))}
+            placeholder="Type your message to the team channel..." />
+        </label>
+      </Modal>
+
+      {/* ===== GITHUB PR MODAL ===== */}
+      <Modal open={actionModal?.type === 'github-pr'} onClose={() => { setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''}); }}
+        title="🐙 Create Pull Request" icon="🐙" style={{maxWidth:440}}
+        footer={
+          <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+            <button className="btn btn-gray" onClick={() => { setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''}); }}
+              style={{fontSize:10,padding:'5px 12px'}}>Cancel</button>
+            <button className="btn btn-blue" onClick={async () => {
+              try {
+                const repo = settingsForm.githubRepo || project?.githubRepo;
+                if (!repo) { setModalAlert({ title:'Error', message:'No GitHub repository configured. Set it in the GitHub Actions section above.', type:'error' }); return; }
+                if (!actionForm.taskTitle.trim()) { setModalAlert({ title:'Error', message:'Task title is required', type:'error' }); return; }
+                const branchName = actionForm.taskBranch || `task-${Date.now()}`;
+                await integrations.writeAction('github', 'create-branch', { repoFullName: repo, branchName, baseBranch: 'main' });
+                const pr = await integrations.writeAction('github', 'create-pr', {
+                  repoFullName: repo,
+                  title: actionForm.taskTitle,
+                  body: `Task: ${actionForm.taskTitle}\n\nAuto-created from ${project?.name}`,
+                  headBranch: branchName,
+                  baseBranch: 'main'
+                });
+                setModalAlert({ title:'PR Created', message:`PR #${pr.data.result?.number || ''} created: ${pr.data.result?.url || ''}`, type:'success' });
+                setActionModal(null); setActionForm({message:'',taskTitle:'',taskBranch:''});
+              } catch (e) { setModalAlert({ title:'Error', message:e.response?.data?.message || e.message, type:'error' }); }
+            }} style={{fontSize:10,padding:'5px 12px'}} disabled={!actionForm.taskTitle.trim()}>Create PR</button>
+          </div>
+        }>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <label style={{display:'flex',flexDirection:'column',gap:4}}>
+            <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Task Title (becomes PR title)</span>
+            <input className="s-input" value={actionForm.taskTitle}
+              onChange={e => setActionForm(f => ({...f, taskTitle:e.target.value}))}
+              placeholder="e.g. Add user authentication" />
+          </label>
+          <label style={{display:'flex',flexDirection:'column',gap:4}}>
+            <span style={{fontSize:10,fontWeight:600,color:'var(--text-secondary)'}}>Branch name (optional)</span>
+            <input className="s-input" value={actionForm.taskBranch}
+              onChange={e => setActionForm(f => ({...f, taskBranch:e.target.value}))}
+              placeholder="feature/add-auth (auto-generated if empty)" />
+          </label>
+        </div>
       </Modal>
 
       {/* ===== MEMBER DETAIL SIDE PANEL ===== */}

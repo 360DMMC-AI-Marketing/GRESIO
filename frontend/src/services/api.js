@@ -136,6 +136,7 @@ export const integrations = {
   sync: (name) => api.post(`/integrations/${name}/sync`),
   syncPlatform: (name, platform) => api.post(`/integrations/${name}/sync${platform ? `?platform=${platform}` : ''}`),
   createMeeting: (data) => api.post('/integrations/create-meeting', data),
+  writeAction: (integration, action, data) => api.post(`/integrations/actions/${integration}/${action}`, data),
 };
 
 export const sprints = {
@@ -388,6 +389,8 @@ export const companyProfile = {
 };
 
 export const cerebrum = {
+  getBriefing: () => api.get('/cerebrum/briefing'),
+  searchBriefing: (q) => api.get(`/cerebrum/briefing/search?q=${encodeURIComponent(q)}`),
   getOracle: () => api.get('/cerebrum/oracle'),
   getOracleProject: (id) => api.get(`/cerebrum/oracle/${id}`),
   killRecommendation: (projectId) => api.post('/cerebrum/kill', { projectId }),
@@ -400,6 +403,9 @@ export const cerebrum = {
   getGoals: () => api.get('/cerebrum/strategy/goals'),
   createGoal: (data) => api.post('/cerebrum/strategy/goals', data),
   predict: (projectId, message) => api.post(`/cerebrum/predict/${projectId}`, { message }),
+  executeKill: (projectId, reason) => api.post('/cerebrum/kill/execute', { projectId, reason }),
+  undoKill: (projectId) => api.post('/cerebrum/kill/undo', { projectId }),
+  getTeamInsights: () => api.get('/cerebrum/team-insights'),
 };
 
 export const projectCortex = {

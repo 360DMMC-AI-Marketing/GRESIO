@@ -7,7 +7,7 @@ import {
   ChevronDown, FolderOpen, Zap, CheckSquare, FlaskConical,
   Group, Clock, BarChart3, FileText, CalendarDays,
   Building2, Bell as BellIcon, Activity, ClipboardList, BrainCircuit, Lightbulb, Library, Search, Sparkles,
-  Download, ExternalLink, Bug,
+  Download, ExternalLink, Bug, Radio,
 } from 'lucide-react';
 
 export const ROLE_LABELS = {
@@ -70,11 +70,7 @@ const sidebarGroups = [
     label: 'Cerebrum',
     icon: Lightbulb,
     items: [
-      { id: 'cerebrum-oracle', label: 'Viability Oracle', icon: Activity, path: '/cerebrum/oracle', roles: ALL },
-      { id: 'cerebrum-memory', label: 'Corporate Memory', icon: Search, path: '/cerebrum/memory', roles: ALL },
-      { id: 'cerebrum-strategy', label: 'Strategy Bridge', icon: BarChart3, path: '/cerebrum/strategy', roles: MANAGERS },
-      { id: 'cerebrum-galaxy', label: 'Neural Map', icon: Sparkles, path: '/cerebrum/galaxy', roles: ALL },
-      { id: 'project-cortex', label: 'Project Cortex', icon: BrainCircuit, path: '/project-cortex', roles: ALL },
+      { id: 'cerebrum-briefing', label: 'Briefing', icon: Radio, path: '/cerebrum/briefing', roles: ALL },
     ],
   },
   {
@@ -102,7 +98,7 @@ const standaloneItems = [
 const bottomItems = [
   { id: 'onboarding', label: 'Onboarding Guide', icon: BookOpen, path: '/onboarding-guide', roles: ALL },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/admin', roles: ['admin'] },
-  { id: 'company-profile', label: 'Company Profile', icon: Building2, path: '/admin/company-profile', roles: ['admin'] },
+
   { id: 'super-settings', label: 'Super Settings', icon: Settings, path: '/super/settings', roles: ['super_admin'] },
   { id: 'super-health', label: 'System Health', icon: Activity, path: '/super/health', roles: ['super_admin'] },
 ];
@@ -250,7 +246,7 @@ export default function Sidebar({ user, collapsed, onToggle, isMobile, mobileOpe
   } : {};
 
   const renderNavLink = (item, onClick) => (
-    <NavLink key={item.id} to={item.path} onClick={onClick}
+    <NavLink key={item.id} to={item.path} onClick={onClick} end
       className={navLinkClasses}
       style={navLinkStyles}>
       <item.icon className="w-[26px] h-[26px] shrink-0 transition-all duration-200" />

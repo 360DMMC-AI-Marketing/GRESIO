@@ -1,59 +1,34 @@
 const AutopsyEvent = require('../models/AutopsyEvent');
 const Project = require('../models/Project');
+const patternMatcherService = require('./patternMatcherService');
 
 async function findSimilarProjects(projectId, domain, limit = 5) {
-  const currentEvents = await AutopsyEvent.find({ projectId }).sort({ timestamp: 1 }).lean();
-  if (currentEvents.length < 3) return [];
-
-  const currentPattern = currentEvents.map(e => e.eventType);
-  const currentDuration = currentEvents.length > 1
-    ? (new Date(currentEvents[currentEvents.length - 1].timestamp) - new Date(currentEvents[0].timestamp)) / 86400000
-    : 1;
-
-  const allProjectIds = await Project.find({
-    domain,
-    _id: { $ne: projectId },
-    isActive: { $in: [true, false] },
-  }).select('_id name status progress phase').lean();
-
-  const scored = [];
-
-  for (const p of allProjectIds) {
-    const otherEvents = await AutopsyEvent.find({ projectId: p._id }).sort({ timestamp: 1 }).lean();
-    if (otherEvents.length < 3) continue;
-
-    const otherPattern = otherEvents.map(e => e.eventType);
+  const results = await patternMatcherService.findSimilarPatterns(projectId, domain);
+  const enriched = await Promise.all(results.map(async (r) => {
+    const otherEvents = await AutopsyEvent.find({ projectId: r.projectId }).sort({ timestamp: 1 }).lean();
     const otherDuration = otherEvents.length > 1
       ? (new Date(otherEvents[otherEvents.length - 1].timestamp) - new Date(otherEvents[0].timestamp)) / 86400000
       : 1;
 
-    // Pattern similarity — compare sequences
-    const matches = currentPattern.filter((type, i) => type === otherPattern[i]).length;
-    const maxLen = Math.max(currentPattern.length, otherPattern.length);
-    const patternScore = maxLen > 0 ? (matches / maxLen) * 100 : 0;
+    return {
+      project: {
+        _id: r.projectId,
+        name: r.name,
+        status: r.status,
+        progress: null,
+        phase: null,
+      },
+      similarity: r.similarity,
+      patterns: {
+        eventCount: r.totalEvents || otherEvents.length,
+        duration: Math.round(otherDuration),
+        dominantEvents: getDominantEvents(otherEvents),
+      },
+      warnings: r.warnings || [],
+    };
+  }));
 
-    // Event density similarity
-    const densityDiff = Math.abs(currentEvents.length / currentDuration - otherEvents.length / otherDuration);
-    const densityScore = Math.max(0, 100 - densityDiff * 10);
-
-    // Weighted score
-    const totalScore = patternScore * 0.7 + densityScore * 0.3;
-
-    if (totalScore > 30) {
-      scored.push({
-        project: { _id: p._id, name: p.name, status: p.status, progress: p.progress, phase: p.phase },
-        similarity: Math.round(totalScore),
-        patterns: {
-          eventCount: otherEvents.length,
-          duration: Math.round(otherDuration),
-          dominantEvents: getDominantEvents(otherEvents),
-        },
-        warnings: generateWarnings(otherEvents, otherDuration),
-      });
-    }
-  }
-
-  return scored.sort((a, b) => b.similarity - a.similarity).slice(0, limit);
+  return enriched.slice(0, limit);
 }
 
 function getDominantEvents(events) {
